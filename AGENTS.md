@@ -90,6 +90,20 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 
 ---
 
+## Convención de nombres de archivos
+
+- No usar snake_case en nombres de archivos
+- Usar camelCase en nombres de archivos
+- Si el archivo exporta una clase, el nombre empieza con mayúscula
+- Si el archivo exporta una función, el nombre empieza con minúscula
+
+## Documentación de features
+
+- Para cada feature nueva, crear un archivo `.md` en `/docs/features` con un resumen conciso
+- Incluir endpoints, ejemplos de request/response, y notas de implementación relevantes
+
+---
+
 ## Cuando haya dudas
 
 - Pedir aclaración antes de decidir
