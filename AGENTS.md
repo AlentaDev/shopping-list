@@ -99,7 +99,7 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 
 ## Documentación de features
 
-- Para cada feature nueva, crear un archivo `.md` en `/docs` con un resumen conciso
+- Para cada feature nueva, crear un archivo `.md` en `/docs/features` con un resumen conciso
 - Incluir endpoints, ejemplos de request/response, y notas de implementación relevantes
 
 ---
