@@ -2,7 +2,7 @@ import request from "supertest";
 import { vi } from "vitest";
 import { createApp } from "../src/app";
 import { createCatalogModule } from "../src/modules/catalog/catalogModule";
-import { ROOT_CATEGORIES_CACHE_KEY, categoryDetailCacheKey } from "../src/modules/catalog/application/cacheKeys";
+import { ROOT_CATEGORIES_CACHE_KEY } from "../src/modules/catalog/application/cacheKeys";
 import type { CatalogProvider } from "../src/modules/catalog/domain/catalogProvider";
 import type {
   GetCategoryDetailResponse,
@@ -104,7 +104,9 @@ describe("catalog endpoints", () => {
     ],
   };
 
-  function createProvider(overrides?: Partial<CatalogProvider>): CatalogProvider {
+  function createProvider(
+    overrides?: Partial<CatalogProvider>
+  ): CatalogProvider {
     return {
       getRootCategories: vi.fn().mockResolvedValue(rootCategoriesResponse),
       getCategoryDetail: vi.fn().mockResolvedValue(categoryDetailResponse),

@@ -15,7 +15,7 @@ import type {
 export class GetCategoryDetail {
   constructor(
     private readonly provider: CatalogProvider,
-    private readonly cache: CatalogCache,
+    private readonly cache: CatalogCache
   ) {}
 
   async execute(id: string): Promise<GetCategoryDetailResponse> {
@@ -31,18 +31,24 @@ export class GetCategoryDetail {
 
       this.cache.set(cacheKey, mapped, CATEGORY_DETAIL_TTL_MS);
       return mapped;
-    } catch (error) {
+    } catch (_error) {
       const stale = this.cache.getStale<GetCategoryDetailResponse>(cacheKey);
       if (stale) {
         return stale;
       }
 
-      throw new AppError(502, "catalog_provider_unavailable", "Catalog provider unavailable");
+      throw new AppError(
+        502,
+        "catalog_provider_unavailable",
+        "Catalog provider unavailable"
+      );
     }
   }
 }
 
-function mapCategoryDetail(response: MercadonaCategoryDetailResponse): GetCategoryDetailResponse {
+function mapCategoryDetail(
+  response: MercadonaCategoryDetailResponse
+): GetCategoryDetailResponse {
   return {
     id: String(response.id),
     name: response.name,
