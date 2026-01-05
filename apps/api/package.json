@@ -9,7 +9,9 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc --noEmit",
+    "quality": "pnpm lint && pnpm typecheck && pnpm test",
+    "verify": "pnpm quality && pnpm build"
   },
   "dependencies": {
     "cors": "^2.8.5",
