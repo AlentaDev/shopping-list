@@ -1,0 +1,21 @@
+{
+  "name": "lista-compra",
+  "version": "1.0.0",
+  "description": "Aplicación para gestionar una lista de la compra",
+  "main": "index.js",
+  "type": "module",  
+    "scripts": {
+      "web": "pnpm -C apps/web dev",
+      "api": "pnpm -C apps/api dev",
+      "dev": "pnpm -r --parallel dev",
+      "test": "pnpm -r test",
+      "test:api": "pnpm --filter @app/api test",
+      "test:web": "pnpm --filter @app/web test",
+      "lint": "pnpm -r lint",
+      "typecheck": "pnpm -r typecheck"
+    },  
+  "keywords": [],
+  "author": "AlentaDev juangalenta@gmail.com",
+  "license": "ISC",
+  "packageManager": "pnpm@10.23.0"
+}
