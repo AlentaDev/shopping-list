@@ -7,5 +7,6 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    exclude: ["e2e/**", "playwright.config.ts"],
   },
 });
