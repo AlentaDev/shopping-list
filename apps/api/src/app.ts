@@ -1,15 +1,23 @@
 import express from "express";
 import { ZodError } from "zod";
 import { createAuthModule } from "./modules/auth/authModule";
+import { createCatalogModule } from "./modules/catalog/catalogModule";
 import { AppError } from "./shared/errors/appError";
 
-export function createApp() {
+type AppDependencies = {
+  catalogModule?: ReturnType<typeof createCatalogModule>;
+};
+
+export function createApp(deps: AppDependencies = {}) {
   const app = express();
 
   app.use(express.json());
 
   const authModule = createAuthModule();
   app.use("/api/auth", authModule.router);
+
+  const catalogModule = deps.catalogModule ?? createCatalogModule();
+  app.use("/api/catalog", catalogModule.router);
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });

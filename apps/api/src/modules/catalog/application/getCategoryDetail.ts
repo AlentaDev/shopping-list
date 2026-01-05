@@ -1,0 +1,69 @@
+import { AppError } from "../../../shared/errors/appError";
+import { categoryDetailCacheKey } from "./cacheKeys";
+import { CATEGORY_DETAIL_TTL_MS } from "./cacheTtl";
+import type { CatalogCache } from "../domain/catalogCache";
+import type {
+  CatalogProvider,
+  MercadonaCategoryDetailResponse,
+  MercadonaCategoryProduct,
+} from "../domain/catalogProvider";
+import type {
+  CatalogProductSummary,
+  GetCategoryDetailResponse,
+} from "../domain/catalogTypes";
+
+export class GetCategoryDetail {
+  constructor(
+    private readonly provider: CatalogProvider,
+    private readonly cache: CatalogCache,
+  ) {}
+
+  async execute(id: string): Promise<GetCategoryDetailResponse> {
+    const cacheKey = categoryDetailCacheKey(id);
+    const cached = this.cache.get<GetCategoryDetailResponse>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    try {
+      const response = await this.provider.getCategoryDetail(id);
+      const mapped = mapCategoryDetail(response);
+
+      this.cache.set(cacheKey, mapped, CATEGORY_DETAIL_TTL_MS);
+      return mapped;
+    } catch (error) {
+      const stale = this.cache.getStale<GetCategoryDetailResponse>(cacheKey);
+      if (stale) {
+        return stale;
+      }
+
+      throw new AppError(502, "catalog_provider_unavailable", "Catalog provider unavailable");
+    }
+  }
+}
+
+function mapCategoryDetail(response: MercadonaCategoryDetailResponse): GetCategoryDetailResponse {
+  return {
+    id: String(response.id),
+    name: response.name,
+    subcategories: response.categories.map((category) => ({
+      id: String(category.id),
+      name: category.name,
+      products: category.products.map(mapProduct),
+    })),
+  };
+}
+
+function mapProduct(product: MercadonaCategoryProduct): CatalogProductSummary {
+  return {
+    id: String(product.id),
+    name: product.display_name,
+    thumbnail: product.thumbnail ?? null,
+    packaging: product.packaging ?? null,
+    price: Number(product.price_instructions.unit_price),
+    unitSize: product.price_instructions.unit_size ?? null,
+    unitFormat: product.price_instructions.size_format ?? null,
+    unitPrice: Number(product.price_instructions.bulk_price),
+    isApproxSize: Boolean(product.price_instructions.approx_size),
+  };
+}
