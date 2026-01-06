@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import CategoriesPanel from "./features/catalog/CategoriesPanel";
 import type {
   CatalogCategoryNode,
@@ -75,9 +75,6 @@ function App() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
-  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(
-    null
-  );
   const [itemsStatus, setItemsStatus] = useState<FetchStatus>("idle");
   const [itemsError, setItemsError] = useState<string | null>(null);
   const [items, setItems] = useState<CatalogProductSummary[]>([]);
@@ -148,14 +145,12 @@ function App() {
 
     if (!defaultCategory) {
       setSelectedCategoryId(null);
-      setSelectedCategoryName(null);
       setItems([]);
       setItemsStatus("success");
       return;
     }
 
     setSelectedCategoryId(defaultCategory.id);
-    setSelectedCategoryName(defaultCategory.name);
   }, [categories, categoriesStatus, selectedCategoryId]);
 
   useEffect(() => {
@@ -168,22 +163,12 @@ function App() {
 
   const handleSelectCategory = (id: string) => {
     setSelectedCategoryId(id);
-    const selectedCategory = categories.find((category) => category.id === id);
-    setSelectedCategoryName(selectedCategory?.name ?? null);
   };
 
   const categoriesEmpty =
     categoriesStatus === "success" && categories.length === 0;
   const itemsEmpty =
     itemsStatus === "success" && items.length === 0 && !categoriesEmpty;
-
-  const headerSubtitle = useMemo(() => {
-    if (!selectedCategoryName) {
-      return null;
-    }
-
-    return `Categoría: ${selectedCategoryName}`;
-  }, [selectedCategoryName]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -194,9 +179,6 @@ function App() {
               <h1 className="text-xl font-semibold sm:text-2xl">
                 La lista de la compra
               </h1>
-              {headerSubtitle ? (
-                <p className="text-xs text-slate-500">{headerSubtitle}</p>
-              ) : null}
             </div>
             <div className="relative">
               <svg
@@ -214,7 +196,7 @@ function App() {
                 <circle cx="18" cy="20" r="1.5" />
               </svg>
               {hasItems ? (
-                <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-semibold text-white">
+                <span className="absolute -right-2 -top-2 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500 px-1 text-[11px] font-semibold text-white">
                   {items.length}
                 </span>
               ) : null}
