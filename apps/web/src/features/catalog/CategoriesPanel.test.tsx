@@ -16,8 +16,8 @@ describe("CategoriesPanel", () => {
   });
 
   it("does not render or fetch when closed", () => {
-    const fetchMock = vi.fn();
-    global.fetch = fetchMock;
+    const fetchMock = vi.fn<() => Promise<unknown>>();
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<CategoriesPanel isOpen={false} />);
 
@@ -26,7 +26,7 @@ describe("CategoriesPanel", () => {
   });
 
   it("fetches categories on first open and renders only levels 0 and 1", async () => {
-    const fetchMock = vi.fn<[], Promise<FetchResponse>>().mockResolvedValue({
+    const fetchMock = vi.fn<() => Promise<FetchResponse>>().mockResolvedValue({
       ok: true,
       json: async () => ({
         categories: [
@@ -36,7 +36,7 @@ describe("CategoriesPanel", () => {
         ],
       }),
     });
-    global.fetch = fetchMock;
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<CategoriesPanel isOpen />);
 
@@ -49,7 +49,7 @@ describe("CategoriesPanel", () => {
 
   it("shows retry on error and refetches", async () => {
     const fetchMock = vi
-      .fn<[], Promise<FetchResponse>>()
+      .fn<() => Promise<FetchResponse>>()
       .mockResolvedValueOnce({
         ok: false,
         json: async () => ({ message: "Error" }),
@@ -60,7 +60,7 @@ describe("CategoriesPanel", () => {
           categories: [{ id: "1", name: "Panadería", order: 1, level: 0 }],
         }),
       });
-    global.fetch = fetchMock;
+    vi.stubGlobal("fetch", fetchMock);
 
     render(<CategoriesPanel isOpen />);
 
