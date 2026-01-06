@@ -43,7 +43,7 @@ describe("CategoriesPanel", () => {
     expect(screen.queryByText("Categorías")).toBeNull();
   });
 
-  it("renders level 0 headers and level 1 cards with selection", () => {
+  it("expands the selected parent category", () => {
     render(
       <CategoriesPanel
         open
@@ -54,13 +54,11 @@ describe("CategoriesPanel", () => {
     );
 
     expect(screen.getByText("Frutas")).toBeInTheDocument();
-    expect(screen.getByText("Verduras")).toBeInTheDocument();
-
-    const selected = screen.getByRole("button", { name: "Cítricos" });
-    expect(selected).toHaveClass("bg-emerald-50");
+    expect(screen.getByRole("button", { name: "Cítricos" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hojas" })).toBeNull();
   });
 
-  it("notifies when a category is selected", async () => {
+  it("selects the first child when expanding another category", async () => {
     const onSelectCategory = vi.fn();
 
     render(
@@ -72,7 +70,7 @@ describe("CategoriesPanel", () => {
       />
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "Hojas" }));
+    await userEvent.click(screen.getByRole("button", { name: "Verduras" }));
 
     expect(onSelectCategory).toHaveBeenCalledWith("child-2");
   });

@@ -175,7 +175,7 @@ describe("App", () => {
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Categorías" }));
-
+    await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
     await userEvent.click(
       await screen.findByRole("button", { name: "Yogures" })
     );

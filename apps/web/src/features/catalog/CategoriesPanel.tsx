@@ -47,6 +47,18 @@ const CategoriesPanel = ({
     return map;
   }, [categories]);
 
+  const expandedParentId = useMemo(() => {
+    if (!selectedCategoryId) {
+      return null;
+    }
+
+    const selectedCategory = categories.find(
+      (category) => category.id === selectedCategoryId
+    );
+
+    return selectedCategory?.parentId ?? null;
+  }, [categories, selectedCategoryId]);
+
   if (!open) {
     return null;
   }
@@ -78,30 +90,47 @@ const CategoriesPanel = ({
             </div>
           ) : null}
           {!loadingCategories && !errorCategories ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {parents
                 .sort((a, b) => a.order - b.order)
                 .map((parent) => {
                   const children = childrenByParent.get(parent.id) ?? [];
-                  const isSelectedSection = children.some(
-                    (child) => child.id === selectedCategoryId
-                  );
+                  const isExpanded = expandedParentId === parent.id;
 
                   return (
                     <div
                       key={parent.id}
                       className="rounded-xl border border-slate-200 bg-white"
                     >
-                      <div
-                        className={`flex w-full items-center px-3 py-2 text-left text-sm font-semibold text-slate-900 transition ${
-                          isSelectedSection ? "bg-emerald-50" : "bg-white"
-                        }`}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const firstChild = children[0];
+                          if (firstChild) {
+                            onSelectCategory(firstChild.id);
+                          }
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-900"
                       >
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          className={`h-4 w-4 text-slate-500 transition-transform ${
+                            isExpanded ? "rotate-90" : "rotate-0"
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="9 6 15 12 9 18" />
+                        </svg>
                         <span className="truncate">{parent.name}</span>
-                      </div>
+                      </button>
 
-                      {children.length > 0 ? (
-                        <div className="grid grid-cols-2 gap-2 border-t border-slate-100 px-3 py-3 lg:grid-cols-4">
+                      {isExpanded && children.length > 0 ? (
+                        <div className="space-y-1 border-t border-slate-100 px-3 py-2">
                           {children.map((child) => {
                             const isActive = child.id === selectedCategoryId;
                             return (
@@ -109,15 +138,13 @@ const CategoriesPanel = ({
                                 key={child.id}
                                 type="button"
                                 onClick={() => onSelectCategory(child.id)}
-                                className={`flex items-center justify-center rounded-lg px-2 py-2 text-center text-xs font-semibold transition ${
+                                className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold transition ${
                                   isActive
                                     ? "bg-emerald-50 text-emerald-700"
                                     : "text-slate-700 hover:bg-slate-50"
                                 }`}
                               >
-                                <span className="line-clamp-2">
-                                  {child.name}
-                                </span>
+                                {child.name}
                               </button>
                             );
                           })}
