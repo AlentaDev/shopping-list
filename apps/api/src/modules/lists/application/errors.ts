@@ -17,3 +17,9 @@ export class ItemNotFoundError extends AppError {
     super(404, "item_not_found", "Item not found");
   }
 }
+
+export class CatalogProviderError extends AppError {
+  constructor() {
+    super(502, "catalog_provider_failed", "Catalog provider failed");
+  }
+}

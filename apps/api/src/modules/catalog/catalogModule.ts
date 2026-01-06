@@ -31,5 +31,5 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
     getCategoryDetail,
   });
 
-  return { router };
+  return { router, provider };
 }

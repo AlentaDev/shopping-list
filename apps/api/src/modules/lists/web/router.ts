@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { Request, RequestHandler } from "express";
 import { AppError } from "../../../shared/errors/appError";
 import type { AuthenticatedRequest } from "../../../shared/web/requireAuth";
+import { AddCatalogItem } from "../application/AddCatalogItem";
 import { AddManualItem } from "../application/AddManualItem";
 import { CreateList } from "../application/CreateList";
 import { GetList } from "../application/GetList";
@@ -9,6 +10,7 @@ import { ListLists } from "../application/ListLists";
 import { RemoveItem } from "../application/RemoveItem";
 import { UpdateItem } from "../application/UpdateItem";
 import {
+  addCatalogItemSchema,
   addItemSchema,
   createListSchema,
   itemParamsSchema,
@@ -21,6 +23,7 @@ type ListsRouterDependencies = {
   listLists: ListLists;
   getList: GetList;
   addManualItem: AddManualItem;
+  addCatalogItem: AddCatalogItem;
   updateItem: UpdateItem;
   removeItem: RemoveItem;
   requireAuth: RequestHandler;
@@ -78,6 +81,25 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         userId,
         listId: params.id,
         name: input.name,
+        qty: input.qty,
+        note: input.note,
+      });
+
+      res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/items/from-catalog", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const input = addCatalogItemSchema.parse(req.body);
+      const userId = getUserId(req);
+      const response = await deps.addCatalogItem.execute({
+        userId,
+        listId: params.id,
+        productId: input.productId,
         qty: input.qty,
         note: input.note,
       });

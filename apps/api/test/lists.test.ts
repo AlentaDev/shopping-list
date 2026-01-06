@@ -1,5 +1,10 @@
 import request from "supertest";
 import { createApp } from "../src/app";
+import { createCatalogModule } from "../src/modules/catalog/catalogModule";
+import type {
+  CatalogProvider,
+  MercadonaProductDetail,
+} from "../src/modules/catalog/public";
 
 type TestUser = {
   name: string;
@@ -24,6 +29,38 @@ async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
   return response.headers["set-cookie"]?.[0] as string;
 }
 
+const sampleProduct: MercadonaProductDetail = {
+  id: "123",
+  display_name: "Whole Milk",
+  thumbnail: "https://cdn.example.com/milk-thumb.jpg",
+  photos: [{ thumbnail: "https://cdn.example.com/milk-photo-thumb.jpg" }],
+  price_instructions: {
+    unit_price: 1.35,
+    unit_size: 1,
+    bulk_price: 1.35,
+    approx_size: false,
+    size_format: "L",
+  },
+};
+
+const catalogProvider: CatalogProvider = {
+  async getRootCategories() {
+    return { count: 0, next: null, previous: null, results: [] };
+  },
+  async getCategoryDetail() {
+    return { id: 1, name: "root", categories: [] };
+  },
+  async getProduct() {
+    return sampleProduct;
+  },
+};
+
+function createAppWithCatalogProvider(provider: CatalogProvider) {
+  const catalogModule = createCatalogModule({ provider });
+
+  return createApp({ catalogModule });
+}
+
 describe("lists endpoints", () => {
   it.each([
     { method: "post", path: "/api/lists", body: { title: "Groceries" } },
@@ -42,6 +79,11 @@ describe("lists endpoints", () => {
     {
       method: "delete",
       path: "/api/lists/any-list/items/any-item",
+    },
+    {
+      method: "post",
+      path: "/api/lists/any-list/items/from-catalog",
+      body: { source: "mercadona", productId: "123" },
     },
   ])("%s returns 401 without session", async ({ method, path, body }) => {
     const app = createApp();
@@ -158,6 +200,7 @@ describe("lists endpoints", () => {
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
       id: expect.any(String),
+      kind: "manual",
       name: "Milk",
       qty: 1,
       checked: false,
@@ -189,6 +232,7 @@ describe("lists endpoints", () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
       id: itemResponse.body.id,
+      kind: "manual",
       name: "Eggs",
       qty: 2,
       checked: true,
@@ -255,6 +299,206 @@ describe("lists endpoints", () => {
     expect(invalidItemResponse.body).toEqual({
       error: "validation_error",
       details: expect.any(Array),
+    });
+  });
+
+  it("POST /api/lists/:id/items/from-catalog returns 404 when list is missing", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const response = await request(app)
+      .post("/api/lists/missing/items/from-catalog")
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ error: "list_not_found" });
+  });
+
+  it("POST /api/lists/:id/items/from-catalog returns 403 for other user", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const ownerCookie = await loginUser(app, defaultUser);
+    const otherCookie = await loginUser(app, {
+      name: "Bob",
+      email: "bob@example.com",
+      password: "secret123",
+      postalCode: "54321",
+    });
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", ownerCookie)
+      .send({ title: "Shared" });
+
+    const response = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", otherCookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({ error: "forbidden" });
+  });
+
+  it("POST /api/lists/:id/items/from-catalog adds a catalog item snapshot", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Groceries" });
+
+    const response = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123", qty: 2, note: "Promo" });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      id: expect.any(String),
+      kind: "catalog",
+      name: "Whole Milk",
+      qty: 2,
+      checked: false,
+      note: "Promo",
+      updatedAt: expect.any(String),
+      thumbnail: "https://cdn.example.com/milk-thumb.jpg",
+      price: 1.35,
+      unitSize: 1,
+      unitFormat: "L",
+      unitPrice: 1.35,
+      isApproxSize: false,
+      source: "mercadona",
+      sourceProductId: "123",
+    });
+  });
+
+  it("POST /api/lists/:id/items/from-catalog defaults qty and validates bounds", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Groceries" });
+
+    const defaultQtyResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    expect(defaultQtyResponse.status).toBe(201);
+    expect(defaultQtyResponse.body).toEqual(
+      expect.objectContaining({ qty: 1 })
+    );
+
+    const invalidMinResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123", qty: 0 });
+
+    expect(invalidMinResponse.status).toBe(400);
+    expect(invalidMinResponse.body).toEqual({
+      error: "validation_error",
+      details: expect.any(Array),
+    });
+
+    const invalidMaxResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123", qty: 1000 });
+
+    expect(invalidMaxResponse.status).toBe(400);
+    expect(invalidMaxResponse.body).toEqual({
+      error: "validation_error",
+      details: expect.any(Array),
+    });
+  });
+
+  it("POST /api/lists/:id/items/from-catalog returns 502 on provider failure", async () => {
+    const failingProvider: CatalogProvider = {
+      async getRootCategories() {
+        return { count: 0, next: null, previous: null, results: [] };
+      },
+      async getCategoryDetail() {
+        return { id: 1, name: "root", categories: [] };
+      },
+      async getProduct() {
+        throw new Error("Provider down");
+      },
+    };
+
+    const app = createAppWithCatalogProvider(failingProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Groceries" });
+
+    const response = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    expect(response.status).toBe(502);
+    expect(response.body).toEqual({ error: "catalog_provider_failed" });
+  });
+
+  it("GET /api/lists/:id returns manual and catalog items normalized", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    const manualResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items`)
+      .set("Cookie", cookie)
+      .send({ name: "Bananas" });
+
+    const catalogResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    const response = await request(app)
+      .get(`/api/lists/${listResponse.body.id}`)
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: listResponse.body.id,
+      title: "Weekly",
+      items: [
+        {
+          id: manualResponse.body.id,
+          kind: "manual",
+          name: "Bananas",
+          qty: 1,
+          checked: false,
+          updatedAt: expect.any(String),
+        },
+        {
+          id: catalogResponse.body.id,
+          kind: "catalog",
+          name: "Whole Milk",
+          qty: 1,
+          checked: false,
+          updatedAt: expect.any(String),
+          thumbnail: "https://cdn.example.com/milk-thumb.jpg",
+          price: 1.35,
+          unitSize: 1,
+          unitFormat: "L",
+          unitPrice: 1.35,
+          isApproxSize: false,
+          source: "mercadona",
+          sourceProductId: "123",
+        },
+      ],
+      updatedAt: expect.any(String),
     });
   });
 });

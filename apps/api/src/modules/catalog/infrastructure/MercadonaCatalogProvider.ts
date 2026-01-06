@@ -1,6 +1,7 @@
 import type {
   CatalogProvider,
   MercadonaCategoryDetailResponse,
+  MercadonaProductDetail,
   MercadonaRootCategoriesResponse,
 } from "../domain/catalogProvider";
 import { MercadonaHttpClient } from "./MercadonaHttpClient";
@@ -14,5 +15,9 @@ export class MercadonaCatalogProvider implements CatalogProvider {
 
   getCategoryDetail(id: string): Promise<MercadonaCategoryDetailResponse> {
     return this.httpClient.getJson<MercadonaCategoryDetailResponse>(`/categories/${id}/`);
+  }
+
+  getProduct(id: string): Promise<MercadonaProductDetail> {
+    return this.httpClient.getJson<MercadonaProductDetail>(`/products/${id}/`);
   }
 }

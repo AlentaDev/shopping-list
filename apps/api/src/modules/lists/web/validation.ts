@@ -10,6 +10,13 @@ export const addItemSchema = z.object({
   note: z.string().max(240).optional(),
 });
 
+export const addCatalogItemSchema = z.object({
+  source: z.literal("mercadona"),
+  productId: z.string().min(1),
+  qty: z.number().int().min(1).max(999).optional(),
+  note: z.string().max(240).optional(),
+});
+
 export const patchItemSchema = z.object({
   name: z.string().min(1).max(120).optional(),
   qty: z.number().int().min(1).max(999).optional(),
