@@ -209,8 +209,8 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex flex-col gap-6 sm:flex-row">
-          <div className="w-full sm:w-80 sm:flex-shrink-0">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="w-full sm:sticky sm:top-[84px] sm:w-80 sm:flex-shrink-0 sm:self-start">
             <CategoriesPanel
               open={isCategoriesOpen}
               categories={categories}
