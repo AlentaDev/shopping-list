@@ -97,10 +97,29 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 - Si el archivo exporta una clase, el nombre empieza con mayúscula
 - Si el archivo exporta una función, el nombre empieza con minúscula
 
+## Arquitectura web (resumen operativo)
+
+- La app web vive en `apps/web`.
+- El código UI se organiza **feature-first** en `apps/web/src/features`.
+  - Cada feature puede tener `components/`, sus tests y un `index.ts`.
+- Los contextos globales viven en `apps/web/src/app/context`:
+  - `CartContext*`, `ToastContext*`, `useCart`, `useToast` e `index.ts`.
+- El módulo `apps/web/src/shared` se reserva para utilidades y componentes reutilizables,
+  con esta estructura establecida:
+  - `components/` (Skeleton, Toast y tests)
+  - `constants/` (businessRules, ui)
+  - `data/` (products)
+  - `hooks/` (index)
+  - `strategies/` (estrategias de descuento y tests)
+  - `types/` (index)
+  - `utils/` (cálculos, formato, validaciones y tests)
+
 ## Documentación de features
 
-- Para cada feature nueva, crear un archivo `.md` en `/docs/features` con un resumen conciso
-- Incluir endpoints, ejemplos de request/response, y notas de implementación relevantes
+- Para cada feature nueva, crear un archivo `.md` con un resumen conciso.
+- Features **web**: documentar en `/docs/features/web`.
+- Features **api**: documentar en `/docs/features/api`.
+- Incluir endpoints, ejemplos de request/response, y notas de implementación relevantes.
 
 ---
 
