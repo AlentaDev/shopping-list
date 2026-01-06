@@ -210,17 +210,27 @@ function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-          <div className="w-full sm:sticky sm:top-[72px] sm:flex sm:h-[calc(100vh-72px)] sm:w-80 sm:flex-shrink-0 sm:items-center sm:self-start">
-            <CategoriesPanel
-              open={isCategoriesOpen}
-              categories={categories}
-              selectedCategoryId={selectedCategoryId}
-              onSelectCategory={handleSelectCategory}
-              loadingCategories={categoriesStatus === "loading"}
-              errorCategories={categoriesError}
-              onRetryLoadCategories={loadCategories}
-            />
-          </div>
+          {isCategoriesOpen ? (
+            <>
+              <div className="hidden sm:block sm:w-80 sm:flex-shrink-0" />
+              <div
+                className="w-full sm:fixed sm:top-[72px] sm:z-40 sm:flex sm:h-[calc(100vh-72px)] sm:w-80 sm:flex-shrink-0 sm:items-center"
+                style={{
+                  left: "max(16px, calc(50% - 640px + 16px))",
+                }}
+              >
+                <CategoriesPanel
+                  open={isCategoriesOpen}
+                  categories={categories}
+                  selectedCategoryId={selectedCategoryId}
+                  onSelectCategory={handleSelectCategory}
+                  loadingCategories={categoriesStatus === "loading"}
+                  errorCategories={categoriesError}
+                  onRetryLoadCategories={loadCategories}
+                />
+              </div>
+            </>
+          ) : null}
           <section className="flex-1">
             {itemsStatus === "loading" ? (
               <p className="text-sm text-slate-500">Cargando productos...</p>
