@@ -31,7 +31,9 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   const children = categories
     .filter(
       (category) =>
-        category.level === 1 && category.parentId && category.parentId === parent.id
+        category.level === 1 &&
+        category.parentId &&
+        category.parentId === parent.id
     )
     .sort((a, b) => a.order - b.order);
 
@@ -126,7 +128,8 @@ function App() {
       setItems(products);
       setItemsStatus("success");
     } catch (error) {
-      const message = error instanceof Error ? error.message : ITEMS_ERROR_MESSAGE;
+      const message =
+        error instanceof Error ? error.message : ITEMS_ERROR_MESSAGE;
       setItemsError(message);
       setItemsStatus("error");
     }
@@ -226,7 +229,7 @@ function App() {
       </header>
 
       {isCategoriesOpen ? (
-        <div 
+        <div
           className="pointer-events-none fixed top-24 z-30 w-80"
           style={{
             left: "calc((100vw - 80rem) / 2 + 1rem)",
@@ -279,7 +282,9 @@ function App() {
             ) : null}
             {itemsStatus === "success" && hasItems ? (
               <div className="flex justify-center transition-opacity duration-300">
-                <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen)}`}>
+                <div
+                  className={`grid gap-4 ${getGridClasses(isCategoriesOpen)}`}
+                >
                   {items.map((item) => (
                     <article
                       key={item.id}
