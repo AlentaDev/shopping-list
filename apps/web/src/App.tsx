@@ -13,6 +13,11 @@ type FetchStatus = "idle" | "loading" | "error" | "success";
 const CATEGORIES_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
 const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
 
+const getGridClasses = (isCategoriesOpen: boolean) =>
+  isCategoriesOpen
+    ? "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
+    : "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48";
+
 const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   const parents = categories
     .filter((category) => category.level === 0)
@@ -33,6 +38,35 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   return children[0] ?? null;
 };
 
+type ProductSkeletonGridProps = {
+  count: number;
+  isCategoriesOpen: boolean;
+};
+
+const ProductSkeletonGrid = ({
+  count,
+  isCategoriesOpen,
+}: ProductSkeletonGridProps) => (
+  <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen)}`}>
+    {Array.from({ length: count }).map((_, index) => (
+      <div
+        key={`skeleton-${index}`}
+        className="flex h-full flex-col rounded-2xl bg-white shadow-sm"
+      >
+        <div className="flex flex-col gap-3 p-3">
+          <div className="aspect-square animate-pulse rounded-xl bg-slate-200" />
+          <div className="space-y-2">
+            <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-4 w-1/3 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-3 w-2/5 animate-pulse rounded-full bg-slate-100" />
+          </div>
+          <div className="mt-2 h-8 animate-pulse rounded-full bg-slate-200" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 function App() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>("idle");
@@ -49,6 +83,7 @@ function App() {
   const [items, setItems] = useState<CatalogProductSummary[]>([]);
 
   const hasItems = items.length > 0;
+  const skeletonCount = 8;
 
   const loadCategories = useCallback(async () => {
     setCategoriesStatus("loading");
@@ -233,7 +268,13 @@ function App() {
           ) : null}
           <section className="flex-1">
             {itemsStatus === "loading" ? (
-              <p className="text-sm text-slate-500">Cargando productos...</p>
+              <div className="space-y-4">
+                <p className="text-sm text-slate-500">Cargando productos...</p>
+                <ProductSkeletonGrid
+                  count={skeletonCount}
+                  isCategoriesOpen={isCategoriesOpen}
+                />
+              </div>
             ) : null}
             {itemsStatus === "error" ? (
               <div className="space-y-3">
@@ -252,14 +293,8 @@ function App() {
               </div>
             ) : null}
             {itemsStatus === "success" && hasItems ? (
-              <div className="flex justify-center">
-                <div
-                  className={`grid gap-4 ${
-                    isCategoriesOpen
-                      ? "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
-                      : "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48"
-                  }`}
-                >
+              <div className="flex justify-center transition-opacity duration-300">
+                <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen)}`}>
                   {items.map((item) => (
                     <article
                       key={item.id}
