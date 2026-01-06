@@ -24,11 +24,35 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
   const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [expandedParentId, setExpandedParentId] = useState<string | null>(null);
 
-  const visibleCategories = useMemo(
-    () => categories.filter((category) => category.level <= 1),
-    [categories],
+  const parents = useMemo(
+    () =>
+      categories.filter(
+        (category) =>
+          category.level === 0 || (category.level === 1 && !category.parentId)
+      ),
+    [categories]
   );
+
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, CatalogCategoryNode[]>();
+    categories
+      .filter((category) => category.level === 1 && category.parentId)
+      .forEach((child) => {
+        const list = map.get(child.parentId!) ?? [];
+        list.push(child);
+        map.set(child.parentId!, list);
+      });
+    // ordenar por order asc
+    map.forEach((list, key) => {
+      map.set(
+        key,
+        [...list].sort((a, b) => a.order - b.order)
+      );
+    });
+    return map;
+  }, [categories]);
 
   const fetchCategories = useCallback(async () => {
     setStatus("loading");
@@ -68,7 +92,7 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
   }
 
   return (
-    <aside className="w-full lg:w-80">
+    <aside className="w-full sm:w-80">
       <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-900">Categorías</h2>
@@ -92,27 +116,74 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
             </div>
           ) : null}
           {status === "success" ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {visibleCategories.map((category) => {
-                const isActive = category.id === activeCategoryId;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setActiveCategoryId(category.id)}
-                    className={`rounded-xl border px-3 py-2 text-left text-xs font-semibold transition ${
-                      isActive
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200"
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              {parents
+                .sort((a, b) => a.order - b.order)
+                .map((parent) => {
+                  const children = childrenByParent.get(parent.id) ?? [];
+                  const isExpanded = expandedParentId === parent.id;
+
+                  return (
+                    <div
+                      key={parent.id}
+                      className="rounded-xl border border-slate-200 bg-white"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpandedParentId((prev) =>
+                            prev === parent.id ? null : parent.id
+                          );
+                          if (children.length > 0) {
+                            setActiveCategoryId(children[0].id);
+                          }
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-900"
+                      >
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          className={`h-4 w-4 text-slate-500 transition-transform ${
+                            isExpanded ? "rotate-180" : "rotate-90"
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                        <span className="truncate">{parent.name}</span>
+                      </button>
+
+                      {isExpanded && children.length > 0 ? (
+                        <div className="space-y-1 border-t border-slate-100 px-3 py-2">
+                          {children.map((child) => {
+                            const isActive = child.id === activeCategoryId;
+                            return (
+                              <button
+                                key={child.id}
+                                type="button"
+                                onClick={() => setActiveCategoryId(child.id)}
+                                className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-semibold transition ${
+                                  isActive
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                {child.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
             </div>
           ) : null}
-          {status === "success" && visibleCategories.length === 0 ? (
+          {status === "success" && parents.length === 0 ? (
             <p className="text-sm text-slate-500">
               No hay categorías disponibles.
             </p>

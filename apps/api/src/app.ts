@@ -16,6 +16,27 @@ export function createApp(deps: AppDependencies = {}) {
 
   app.use(express.json());
 
+  // CORS configuration
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    res.header("Access-Control-Allow-Credentials", "true");
+
+    if (req.method === "OPTIONS") {
+      res.sendStatus(200);
+      return;
+    }
+
+    next();
+  });
+
   const authModule = deps.authModule ?? createAuthModule();
   app.use("/api/auth", authModule.router);
 
@@ -34,19 +55,28 @@ export function createApp(deps: AppDependencies = {}) {
     res.status(200).json({ status: "ok" });
   });
 
-  app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    if (error instanceof ZodError) {
-      res.status(400).json({ error: "validation_error", details: error.issues });
-      return;
-    }
+  app.use(
+    (
+      error: unknown,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      if (error instanceof ZodError) {
+        res
+          .status(400)
+          .json({ error: "validation_error", details: error.issues });
+        return;
+      }
 
-    if (error instanceof AppError) {
-      res.status(error.status).json({ error: error.code });
-      return;
-    }
+      if (error instanceof AppError) {
+        res.status(error.status).json({ error: error.code });
+        return;
+      }
 
-    res.status(500).json({ error: "internal_server_error" });
-  });
+      res.status(500).json({ error: "internal_server_error" });
+    }
+  );
 
   return app;
 }

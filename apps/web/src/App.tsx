@@ -85,9 +85,11 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold">La lista de la compra</h1>
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full items-center justify-between gap-3 sm:flex-1 sm:w-auto sm:justify-start">
+            <h1 className="text-xl font-semibold sm:text-2xl">
+              La lista de la compra
+            </h1>
             <div className="relative">
               <svg
                 aria-hidden="true"
@@ -110,7 +112,7 @@ function App() {
               ) : null}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="mt-4 flex w-full items-center gap-2 sm:mt-0 sm:w-auto sm:justify-end">
             <button
               type="button"
               onClick={() => setIsCategoriesOpen((prev) => !prev)}
@@ -134,11 +136,18 @@ function App() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex flex-col gap-6 sm:flex-row">
+          <CategoriesPanel isOpen={isCategoriesOpen} />
           <section className="flex-1">
             {hasItems ? (
               <div className="flex justify-center">
-                <div className="grid gap-4 grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:w-48">
+                <div
+                  className={`grid gap-4 ${
+                    isCategoriesOpen
+                      ? "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
+                      : "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48"
+                  }`}
+                >
                   {items.map((item) => (
                     <article
                       key={item.id}
@@ -196,7 +205,6 @@ function App() {
               </div>
             )}
           </section>
-          <CategoriesPanel isOpen={isCategoriesOpen} />
         </div>
       </main>
     </div>
