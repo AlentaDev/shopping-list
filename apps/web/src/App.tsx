@@ -225,29 +225,31 @@ function App() {
         </div>
       </header>
 
+      {isCategoriesOpen ? (
+        <div 
+          className="pointer-events-none fixed top-24 z-30 w-80"
+          style={{
+            left: "calc((100vw - 80rem) / 2 + 1rem)",
+          }}
+        >
+          <div className="pointer-events-auto">
+            <CategoriesPanel
+              open={isCategoriesOpen}
+              categories={categories}
+              selectedCategoryId={selectedCategoryId}
+              onSelectCategory={handleSelectCategory}
+              loadingCategories={categoriesStatus === "loading"}
+              errorCategories={categoriesError}
+              onRetryLoadCategories={loadCategories}
+            />
+          </div>
+        </div>
+      ) : null}
+
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:overflow-visible">
           {isCategoriesOpen ? (
-            <>
-              <div className="hidden sm:block sm:w-80 sm:flex-shrink-0" />
-              <div
-                className="w-full sm:fixed sm:inset-x-0 sm:top-[72px] sm:z-40"
-              >
-                <div className="mx-auto flex h-full max-w-7xl items-center px-4 sm:h-[calc(100vh-72px)]">
-                  <div className="w-full sm:w-80">
-                    <CategoriesPanel
-                      open={isCategoriesOpen}
-                      categories={categories}
-                      selectedCategoryId={selectedCategoryId}
-                      onSelectCategory={handleSelectCategory}
-                      loadingCategories={categoriesStatus === "loading"}
-                      errorCategories={categoriesError}
-                      onRetryLoadCategories={loadCategories}
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
+            <div className="w-full sm:w-80 sm:shrink-0" />
           ) : null}
           <section className="flex-1">
             {itemsStatus === "loading" ? (
