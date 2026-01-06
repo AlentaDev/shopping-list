@@ -1,4 +1,5 @@
 import { User } from "../domain/user";
+import type { SessionStore } from "../../../shared/auth/sessionStore";
 
 export type UserRepository = {
   findByEmail(email: string): Promise<User | null>;
@@ -11,8 +12,4 @@ export type PasswordHasher = {
   compare(value: string, hashedValue: string): Promise<boolean>;
 };
 
-export type SessionStore = {
-  createSession(userId: string): Promise<string>;
-  getUserId(sessionId: string): Promise<string | null>;
-  deleteSession(sessionId: string): Promise<void>;
-};
+export type { SessionStore };

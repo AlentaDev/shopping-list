@@ -24,5 +24,5 @@ export function createAuthModule() {
     logoutUser,
   });
 
-  return { router };
+  return { router, sessionStore };
 }
