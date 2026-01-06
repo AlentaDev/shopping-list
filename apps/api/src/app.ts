@@ -2,10 +2,13 @@ import express from "express";
 import { ZodError } from "zod";
 import { createAuthModule } from "./modules/auth/authModule";
 import { createCatalogModule } from "./modules/catalog/catalogModule";
+import { createListsModule } from "./modules/lists/listsModule";
 import { AppError } from "./shared/errors/appError";
 
 type AppDependencies = {
+  authModule?: ReturnType<typeof createAuthModule>;
   catalogModule?: ReturnType<typeof createCatalogModule>;
+  listsModule?: ReturnType<typeof createListsModule>;
 };
 
 export function createApp(deps: AppDependencies = {}) {
@@ -13,11 +16,18 @@ export function createApp(deps: AppDependencies = {}) {
 
   app.use(express.json());
 
-  const authModule = createAuthModule();
+  const authModule = deps.authModule ?? createAuthModule();
   app.use("/api/auth", authModule.router);
 
   const catalogModule = deps.catalogModule ?? createCatalogModule();
   app.use("/api/catalog", catalogModule.router);
+
+  const listsModule =
+    deps.listsModule ??
+    createListsModule({
+      sessionStore: authModule.sessionStore,
+    });
+  app.use("/api/lists", listsModule.router);
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ status: "ok" });
