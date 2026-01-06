@@ -1,4 +1,5 @@
 import type { ListRepository } from "./ports";
+import { toListItemDto, type ListItemDto } from "./listItemDto";
 import {
   ItemNotFoundError,
   ListForbiddenError,
@@ -15,19 +16,10 @@ type UpdateItemInput = {
   note?: string;
 };
 
-type ItemResponse = {
-  id: string;
-  name: string;
-  qty: number;
-  checked: boolean;
-  note?: string;
-  updatedAt: string;
-};
-
 export class UpdateItem {
   constructor(private readonly listRepository: ListRepository) {}
 
-  async execute(input: UpdateItemInput): Promise<ItemResponse> {
+  async execute(input: UpdateItemInput): Promise<ListItemDto> {
     const list = await this.listRepository.findById(input.listId);
     if (!list) {
       throw new ListNotFoundError();
@@ -42,7 +34,7 @@ export class UpdateItem {
       throw new ItemNotFoundError();
     }
 
-    if (input.name !== undefined) {
+    if (input.name !== undefined && item.kind === "manual") {
       item.name = input.name;
     }
     if (input.qty !== undefined) {
@@ -61,13 +53,6 @@ export class UpdateItem {
 
     await this.listRepository.save(list);
 
-    return {
-      id: item.id,
-      name: item.name,
-      qty: item.qty,
-      checked: item.checked,
-      note: item.note,
-      updatedAt: item.updatedAt.toISOString(),
-    };
+    return toListItemDto(item);
   }
 }

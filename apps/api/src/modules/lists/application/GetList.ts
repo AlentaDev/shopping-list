@@ -1,17 +1,11 @@
 import type { ListRepository } from "./ports";
 import { ListForbiddenError, ListNotFoundError } from "./errors";
+import { toListItemDto, type ListItemDto } from "./listItemDto";
 
 type ListDetail = {
   id: string;
   title: string;
-  items: Array<{
-    id: string;
-    name: string;
-    qty: number;
-    checked: boolean;
-    note?: string;
-    updatedAt: string;
-  }>;
+  items: ListItemDto[];
   updatedAt: string;
 };
 
@@ -31,14 +25,7 @@ export class GetList {
     return {
       id: list.id,
       title: list.title,
-      items: list.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        qty: item.qty,
-        checked: item.checked,
-        note: item.note,
-        updatedAt: item.updatedAt.toISOString(),
-      })),
+      items: list.items.map((item) => toListItemDto(item)),
       updatedAt: list.updatedAt.toISOString(),
     };
   }

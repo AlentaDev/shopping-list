@@ -26,6 +26,7 @@ export function createApp(deps: AppDependencies = {}) {
     deps.listsModule ??
     createListsModule({
       sessionStore: authModule.sessionStore,
+      catalogProvider: catalogModule.provider,
     });
   app.use("/api/lists", listsModule.router);
 

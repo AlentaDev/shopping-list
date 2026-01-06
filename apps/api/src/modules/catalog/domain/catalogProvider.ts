@@ -44,7 +44,24 @@ export type MercadonaCategoryDetailResponse = {
   }>;
 };
 
+export type MercadonaProductDetail = {
+  id: string | number;
+  display_name: string;
+  thumbnail?: string | null;
+  photos?: Array<{
+    thumbnail?: string | null;
+  }>;
+  price_instructions: {
+    unit_price: number;
+    unit_size?: number | null;
+    bulk_price?: number | null;
+    approx_size?: boolean | null;
+    size_format?: string | null;
+  };
+};
+
 export type CatalogProvider = {
   getRootCategories(): Promise<MercadonaRootCategoriesResponse>;
   getCategoryDetail(id: string): Promise<MercadonaCategoryDetailResponse>;
+  getProduct(id: string): Promise<MercadonaProductDetail>;
 };
