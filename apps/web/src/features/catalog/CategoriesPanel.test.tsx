@@ -1,78 +1,79 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CategoriesPanel from "./CategoriesPanel";
-
-type FetchResponse = {
-  ok: boolean;
-  json: () => Promise<unknown>;
-};
+import type { CatalogCategoryNode } from "./types";
 
 describe("CategoriesPanel", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
+  const categories: CatalogCategoryNode[] = [
+    { id: "root-1", name: "Frutas", order: 1, level: 0 },
+    { id: "root-2", name: "Verduras", order: 2, level: 0 },
+    {
+      id: "child-1",
+      name: "Cítricos",
+      order: 1,
+      level: 1,
+      parentId: "root-1",
+    },
+    {
+      id: "child-2",
+      name: "Hojas",
+      order: 1,
+      level: 1,
+      parentId: "root-2",
+    },
+  ];
+
+  afterEach(() => {
+    cleanup();
   });
 
-  it("does not render or fetch when closed", () => {
-    const fetchMock = vi.fn<() => Promise<unknown>>();
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<CategoriesPanel isOpen={false} />);
+  it("does not render when closed", () => {
+    render(
+      <CategoriesPanel
+        open={false}
+        categories={categories}
+        selectedCategoryId={null}
+        onSelectCategory={vi.fn()}
+      />
+    );
 
     expect(screen.queryByText("Categorías")).toBeNull();
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("fetches categories on first open and renders only levels 0 and 1", async () => {
-    const fetchMock = vi.fn<() => Promise<FetchResponse>>().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        categories: [
-          { id: "1", name: "Frutas", order: 1, level: 0 },
-          { id: "2", name: "Verduras", order: 2, level: 1 },
-          { id: "3", name: "Congelados", order: 3, level: 2 },
-        ],
-      }),
-    });
-    vi.stubGlobal("fetch", fetchMock);
+  it("renders level 0 headers and level 1 cards with selection", () => {
+    render(
+      <CategoriesPanel
+        open
+        categories={categories}
+        selectedCategoryId="child-1"
+        onSelectCategory={vi.fn()}
+      />
+    );
 
-    render(<CategoriesPanel isOpen />);
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-
-    expect(await screen.findByText("Frutas")).toBeInTheDocument();
+    expect(screen.getByText("Frutas")).toBeInTheDocument();
     expect(screen.getByText("Verduras")).toBeInTheDocument();
-    expect(screen.queryByText("Congelados")).toBeNull();
+
+    const selected = screen.getByRole("button", { name: "Cítricos" });
+    expect(selected).toHaveClass("bg-emerald-50");
   });
 
-  it("shows retry on error and refetches", async () => {
-    const fetchMock = vi
-      .fn<() => Promise<FetchResponse>>()
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ message: "Error" }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          categories: [{ id: "1", name: "Panadería", order: 1, level: 0 }],
-        }),
-      });
-    vi.stubGlobal("fetch", fetchMock);
+  it("notifies when a category is selected", async () => {
+    const onSelectCategory = vi.fn();
 
-    render(<CategoriesPanel isOpen />);
+    render(
+      <CategoriesPanel
+        open
+        categories={categories}
+        selectedCategoryId={"child-1"}
+        onSelectCategory={onSelectCategory}
+      />
+    );
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await userEvent.click(screen.getByRole("button", { name: "Hojas" }));
 
-    const retryButton = await screen.findByRole("button", {
-      name: "Reintentar",
-    });
-
-    await userEvent.click(retryButton);
-
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText("Panadería")).toBeInTheDocument();
+    expect(onSelectCategory).toHaveBeenCalledWith("child-2");
   });
 });
