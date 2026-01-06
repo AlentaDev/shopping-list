@@ -19,6 +19,8 @@ type CategoriesResponse = {
   categories: CatalogCategoryNode[];
 };
 
+const LOAD_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
+
 const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
   const [status, setStatus] = useState<FetchStatus>("idle");
   const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
@@ -62,7 +64,7 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
       const response = await fetch("/api/catalog/categories");
 
       if (!response.ok) {
-        throw new Error("No se pudieron cargar las categorías.");
+        throw new Error(LOAD_ERROR_MESSAGE);
       }
 
       const data = (await response.json()) as CategoriesResponse;
@@ -71,9 +73,7 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
       setStatus("success");
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar las categorías.";
+        error instanceof Error ? error.message : LOAD_ERROR_MESSAGE;
       setErrorMessage(message);
       setStatus("error");
     }
@@ -104,7 +104,7 @@ const CategoriesPanel = ({ isOpen }: CategoriesPanelProps) => {
           {status === "error" ? (
             <div className="space-y-3">
               <p className="text-sm text-slate-500">
-                {errorMessage ?? "No se pudieron cargar las categorías."}
+                {errorMessage ?? LOAD_ERROR_MESSAGE}
               </p>
               <button
                 type="button"
