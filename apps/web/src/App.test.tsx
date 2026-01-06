@@ -6,7 +6,7 @@ describe("App", () => {
   it("renders the shopping list header and items", () => {
     const markup = renderToStaticMarkup(<App />);
 
-    expect(markup).toContain("Mi lista");
+    expect(markup).toContain("La lista de la compra");
     expect(markup).toContain("Login");
     expect(markup).toContain("Registro");
     expect(markup).toContain("Queso curado");

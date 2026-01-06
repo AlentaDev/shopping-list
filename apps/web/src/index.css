@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --breakpoint-xs: 25rem;
+}
+
 @layer base {
   :root {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,

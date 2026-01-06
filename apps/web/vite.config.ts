@@ -12,4 +12,7 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  test: {
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "e2e"],
+  },
 });
