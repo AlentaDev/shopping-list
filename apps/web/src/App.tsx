@@ -152,7 +152,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex w-full items-center justify-between gap-3 sm:flex-1 sm:w-auto sm:justify-start">
             <div>
@@ -210,15 +210,17 @@ function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex flex-col gap-6 sm:flex-row">
-          <CategoriesPanel
-            open={isCategoriesOpen}
-            categories={categories}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={handleSelectCategory}
-            loadingCategories={categoriesStatus === "loading"}
-            errorCategories={categoriesError}
-            onRetryLoadCategories={loadCategories}
-          />
+          <div className="w-full sm:w-80 sm:flex-shrink-0">
+            <CategoriesPanel
+              open={isCategoriesOpen}
+              categories={categories}
+              selectedCategoryId={selectedCategoryId}
+              onSelectCategory={handleSelectCategory}
+              loadingCategories={categoriesStatus === "loading"}
+              errorCategories={categoriesError}
+              onRetryLoadCategories={loadCategories}
+            />
+          </div>
           <section className="flex-1">
             {itemsStatus === "loading" ? (
               <p className="text-sm text-slate-500">Cargando productos...</p>

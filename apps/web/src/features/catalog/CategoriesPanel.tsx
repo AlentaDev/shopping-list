@@ -64,8 +64,8 @@ const CategoriesPanel = ({
   }
 
   return (
-    <aside className="w-full sm:w-80">
-      <div className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white">
+    <aside className="w-full">
+      <div className="sticky top-[88px] flex max-h-[calc(100vh-112px)] flex-col rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-900">Categorías</h2>
         </div>
