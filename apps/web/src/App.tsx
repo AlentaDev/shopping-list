@@ -231,20 +231,21 @@ function App() {
             <>
               <div className="hidden sm:block sm:w-80 sm:flex-shrink-0" />
               <div
-                className="w-full sm:fixed sm:top-[72px] sm:z-40 sm:flex sm:h-[calc(100vh-72px)] sm:w-80 sm:flex-shrink-0 sm:items-center"
-                style={{
-                  left: "max(16px, calc(50% - 640px + 16px))",
-                }}
+                className="w-full sm:fixed sm:inset-x-0 sm:top-[72px] sm:z-40"
               >
-                <CategoriesPanel
-                  open={isCategoriesOpen}
-                  categories={categories}
-                  selectedCategoryId={selectedCategoryId}
-                  onSelectCategory={handleSelectCategory}
-                  loadingCategories={categoriesStatus === "loading"}
-                  errorCategories={categoriesError}
-                  onRetryLoadCategories={loadCategories}
-                />
+                <div className="mx-auto flex h-full max-w-7xl items-center px-4 sm:h-[calc(100vh-72px)]">
+                  <div className="w-full sm:w-80">
+                    <CategoriesPanel
+                      open={isCategoriesOpen}
+                      categories={categories}
+                      selectedCategoryId={selectedCategoryId}
+                      onSelectCategory={handleSelectCategory}
+                      loadingCategories={categoriesStatus === "loading"}
+                      errorCategories={categoriesError}
+                      onRetryLoadCategories={loadCategories}
+                    />
+                  </div>
+                </div>
               </div>
             </>
           ) : null}
