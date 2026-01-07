@@ -22,6 +22,7 @@ Este documento actúa como **contrato obligatorio** para cualquier cambio.
 - Priorizar soluciones simples y explícitas
 - Evitar abstracciones prematuras
 - Si una decisión no está documentada, **preguntar antes de implementar**
+- Evitar refactors masivos: no mover/renombrar más de ~10 archivos por iteración sin confirmación
 
 ---
 
@@ -57,73 +58,110 @@ Este documento actúa como **contrato obligatorio** para cualquier cambio.
 
 ---
 
-## Frontend — Arquitectura objetivo (contrato)
-
-La siguiente arquitectura define el **modelo canónico del frontend**.
+## Frontend — Arquitectura (contrato)
 
 ⚠️ El código existente puede no cumplir aún esta estructura.  
-⚠️ Todo código nuevo **DEBE** seguir estas reglas.
+⚠️ Todo código nuevo **DEBE** seguir estas reglas.  
+⚠️ Los principios generales del proyecto aplican también al frontend.
 
-### Estructura base
+### Estructura base (frontend)
 
-features/
-└─ <feature-name>/
-   ├─ components/        # UI específica de la feature
-   ├─ services/
-   │  ├─ adapters/       # Acceso a backend (fetch, endpoints, mapping)
-   │  │  ├─ *Adapter.ts
-   │  │  └─ *Adapter.test.ts
-   │  ├─ *Service.ts     # Lógica de orquestación de la feature
-   │  └─ *Service.test.ts
-   ├─ <Feature>.tsx
-   └─ index.ts
+```txt
+apps/web/src/
+├─ context/
+├─ features/
+├─ infrastructure/
+├─ providers/
+└─ shared/
+```
 
-### Reglas estrictas (frontend)
+### Dentro de cada feature
 
-- **components/**
-  - Solo UI
-  - No `fetch`
-  - No lógica de negocio
-  - Solo consumen `services`
-
-- **services/**
-  - Orquestan casos de uso del frontend
-  - Transforman datos para UI
-  - Usan `adapters` y `shared`
-  - No acceden directamente al DOM
-
-- **adapters/**
-  - Único lugar donde se permite `fetch`
-  - Encapsulan endpoints, errores y mapping
-  - No contienen lógica de UI
-  - No conocen componentes
-
-- **shared/**
-  - Código puro y reutilizable
-  - Sin `fetch`
-  - Sin estado global
-  - Sin conocimiento de features concretas
-
-🚫 Prohibido:
-
-- `components` → `adapters`
-- `shared` → `adapters`
-- una feature importando otra feature
+```text
+features/<feature>/
+├─ components/
+├─ services/
+│ └─ adapters/
+└─ index.ts
+```
 
 ---
 
-## Estado global (frontend)
+## Responsabilidades estrictas (frontend)
 
-- Los contextos globales viven en `apps/web/src/app/context`
-- Solo para estado transversal de UI (cart, toast, modals)
-- No lógica de negocio
-- No llamadas a backend
+### context/
+
+- Estado global transversal de UI (cart, toast, modals…)
+- Sin `fetch`
+- Sin lógica de negocio de features
+
+### `features/<feature>/components/`
+
+- UI pura (presentación)
+- Sin `fetch`
+- Sin orquestación de casos de uso
+- Solo consumen `services/`
+
+### `features/<feature>/services/`
+
+- Orquestación de casos de uso del frontend
+- **Aquí sí se permite `fetch`**
+- Decide endpoints/parámetros/reintentos
+- Usa adapters para transformar datos externos
+- No contiene componentes UI
+
+### `features/<feature>/services/adapters/`
+
+- Transformación de datos externos (DTO) → dominio del frontend
+- Normalización de estructuras/formatos
+- Funciones puras y testeables
+- **Nunca** realiza `fetch`
+- No importa React, no accede a window, no depende de UI
+
+### shared/
+
+- Código reutilizable y puro
+- Sin `fetch`
+- Sin estado global
+- Sin conocimiento de features concretas
+- Si algo es específico de una feature, no va en shared
+
+### providers/ e infrastructure/
+
+- `providers/`: composición de providers (AppProviders)
+- `infrastructure/`: infra transversal (ej. sentry, boundaries)
+- No lógica de negocio de features
+
+---
+
+## Reglas de dependencias (frontend)
+
+🚫 Prohibido:
+
+- `components/` → usar `fetch` o llamar a endpoints
+- `components/` → importar desde `services/adapters/` directamente
+- `shared/` → usar `fetch` o depender de features
+- `features/*` → importar otra feature (solo vía `shared/` o `context/` cuando aplique)
+
+---
+
+## Convenciones de nombres (frontend)
+
+- Carpetas: **kebab-case**
+- Archivos:
+  - Componentes React: **PascalCase.tsx**
+  - Hooks React: **useX.ts**
+  - Clases (services, adapters, strategies): **PascalCase.ts**
+  - Utilidades / funciones puras: **camelCase.ts**
+- Tipos e interfaces: **PascalCase**
+- Constantes: **UPPER_SNAKE_CASE**
 
 ---
 
 ## Backend
 
-- Validación de inputs con Zod en todos los endpoints
+- Validar variables de entorno al arrancar la API (fail fast).
+- Validar inputs de endpoints con Zod.
 - Autorización explícita por lista/recurso
 - Manejo de errores centralizado
 - Integraciones externas siempre detrás de interfaces
@@ -151,28 +189,6 @@ features/
 
 ---
 
-## Convenciones de nombres
-
-- Carpetas: **kebab-case**
-- Archivos:
-  - Componentes React: **PascalCase.tsx**
-  - Hooks React: **camelCase con prefijo `use`** (`useCart.ts`)
-  - Clases (services, adapters, strategies): **PascalCase.ts**
-  - Utilidades / funciones puras: **camelCase.ts**
-- Componentes React: **PascalCase**
-- Clases: **PascalCase**
-- Funciones: **camelCase**
-- Tipos e interfaces: **PascalCase**
-- Constantes: **UPPER_SNAKE_CASE**
-
-🚫 Prohibido:
-
-- `snake_case` en carpetas o archivos
-- `kebab-case` en archivos `.ts/.tsx`
-- `camelCase` en componentes React
-
----
-
 ## Documentación de features
 
 - Para cada feature nueva, crear un `.md` conciso
@@ -188,6 +204,6 @@ features/
 
 ## Cuando haya dudas
 
-- Pedir aclaración antes de decidir
-- Preferir la opción más simple
-- No asumir escalado ni requisitos futuros
+- Detener implementación
+- Pedir aclaración
+- Elegir siempre la opción más simple
