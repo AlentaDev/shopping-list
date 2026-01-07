@@ -7,17 +7,21 @@ El agente debe seguir estas reglas estrictamente.
 
 ## Objetivo del agente
 
-Ayudar a construir la aplicación de forma incremental, clara y testeable, sin introducir complejidad innecesaria ni desviarse de la arquitectura definida.
+Ayudar a construir la aplicación de forma incremental, clara y testeable,
+sin introducir complejidad innecesaria ni desviarse de la arquitectura definida.
+
+Este documento actúa como **contrato obligatorio** para cualquier cambio.
 
 ---
 
 ## Reglas generales
 
 - No inventar requisitos ni funcionalidades
-- No introducir librerías nuevas sin justificarlo
-- No cambiar la arquitectura sin pedir confirmación
+- No introducir librerías nuevas sin justificarlo y pedir confirmación
+- No cambiar la arquitectura sin pedir confirmación explícita
 - Priorizar soluciones simples y explícitas
 - Evitar abstracciones prematuras
+- Si una decisión no está documentada, **preguntar antes de implementar**
 
 ---
 
@@ -26,16 +30,16 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 - **TDD obligatorio**
   - Test primero
   - Implementación mínima
-  - Refactor si es necesario
+  - Refactor solo después de verde
 - Cambios pequeños y aislados
 - Una feature o caso de uso por iteración
 
 ---
 
-## Arquitectura (obligatoria)
+## Arquitectura global (obligatoria)
 
 - Organización por **features**
-- Capas permitidas:
+- Capas permitidas (backend):
   - domain
   - application
   - infrastructure
@@ -45,38 +49,94 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 
 ---
 
-## Compartidos
+## Compartidos (backend)
 
 - `core`: solo value objects compartidos y estables
-- `shared`: utilidades técnicas (logger, errors, config)
-- No lógica de negocio en `shared`
+- `shared`: utilidades técnicas (errors, middleware, config)
+- **Nunca** lógica de negocio en `shared`
 
 ---
 
-## Frontend
+## Frontend — Arquitectura objetivo (contrato)
 
-- Estructura feature-first
-- No lógica de negocio en componentes UI
-- No acoplar features entre sí
-- Tests unitarios por feature
+La siguiente arquitectura define el **modelo canónico del frontend**.
+
+⚠️ El código existente puede no cumplir aún esta estructura.  
+⚠️ Todo código nuevo **DEBE** seguir estas reglas.
+
+### Estructura base
+
+features/
+└─ <feature-name>/
+   ├─ components/        # UI específica de la feature
+   ├─ services/
+   │  ├─ adapters/       # Acceso a backend (fetch, endpoints, mapping)
+   │  │  ├─ *Adapter.ts
+   │  │  └─ *Adapter.test.ts
+   │  ├─ *Service.ts     # Lógica de orquestación de la feature
+   │  └─ *Service.test.ts
+   ├─ <Feature>.tsx
+   └─ index.ts
+
+### Reglas estrictas (frontend)
+
+- **components/**
+  - Solo UI
+  - No `fetch`
+  - No lógica de negocio
+  - Solo consumen `services`
+
+- **services/**
+  - Orquestan casos de uso del frontend
+  - Transforman datos para UI
+  - Usan `adapters` y `shared`
+  - No acceden directamente al DOM
+
+- **adapters/**
+  - Único lugar donde se permite `fetch`
+  - Encapsulan endpoints, errores y mapping
+  - No contienen lógica de UI
+  - No conocen componentes
+
+- **shared/**
+  - Código puro y reutilizable
+  - Sin `fetch`
+  - Sin estado global
+  - Sin conocimiento de features concretas
+
+🚫 Prohibido:
+
+- `components` → `adapters`
+- `shared` → `adapters`
+- una feature importando otra feature
+
+---
+
+## Estado global (frontend)
+
+- Los contextos globales viven en `apps/web/src/app/context`
+- Solo para estado transversal de UI (cart, toast, modals)
+- No lógica de negocio
+- No llamadas a backend
 
 ---
 
 ## Backend
 
 - Validación de inputs con Zod en todos los endpoints
-- Autorización explícita por lista
+- Autorización explícita por lista/recurso
 - Manejo de errores centralizado
 - Integraciones externas siempre detrás de interfaces
+- Persistencia actual **in-memory** (sin DB)
 
 ---
 
 ## Integraciones externas (Mercadona)
 
 - Nunca llamar desde el frontend
-- Acceso solo mediante provider
+- Acceso solo mediante provider en backend
 - Usar cache y fallback
-- El sistema debe funcionar si el provider falla
+- El sistema debe seguir funcionando si el provider falla
 
 ---
 
@@ -85,41 +145,44 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 - No microservicios
 - No GraphQL
 - No CQRS / Event Sourcing
-- No “shared” con lógica de negocio
+- No lógica de negocio en `shared`
 - No código sin tests
+- No mover código existente “por limpieza” sin necesidad
 
 ---
 
-## Convención de nombres de archivos
+## Convenciones de nombres
 
-- No usar snake_case en nombres de archivos
-- Usar camelCase en nombres de archivos
-- Si el archivo exporta una clase, el nombre empieza con mayúscula
-- Si el archivo exporta una función, el nombre empieza con minúscula
+- Carpetas: **kebab-case**
+- Archivos:
+  - Componentes React: **PascalCase.tsx**
+  - Hooks React: **camelCase con prefijo `use`** (`useCart.ts`)
+  - Clases (services, adapters, strategies): **PascalCase.ts**
+  - Utilidades / funciones puras: **camelCase.ts**
+- Componentes React: **PascalCase**
+- Clases: **PascalCase**
+- Funciones: **camelCase**
+- Tipos e interfaces: **PascalCase**
+- Constantes: **UPPER_SNAKE_CASE**
 
-## Arquitectura web (resumen operativo)
+🚫 Prohibido:
 
-- La app web vive en `apps/web`.
-- El código UI se organiza **feature-first** en `apps/web/src/features`.
-  - Cada feature puede tener `components/`, sus tests y un `index.ts`.
-- Los contextos globales viven en `apps/web/src/app/context`:
-  - `CartContext*`, `ToastContext*`, `useCart`, `useToast` e `index.ts`.
-- El módulo `apps/web/src/shared` se reserva para utilidades y componentes reutilizables,
-  con esta estructura establecida:
-  - `components/` (Skeleton, Toast y tests)
-  - `constants/` (businessRules, ui)
-  - `data/` (products)
-  - `hooks/` (index)
-  - `strategies/` (estrategias de descuento y tests)
-  - `types/` (index)
-  - `utils/` (cálculos, formato, validaciones y tests)
+- `snake_case` en carpetas o archivos
+- `kebab-case` en archivos `.ts/.tsx`
+- `camelCase` en componentes React
+
+---
 
 ## Documentación de features
 
-- Para cada feature nueva, crear un archivo `.md` con un resumen conciso.
-- Features **web**: documentar en `/docs/features/web`.
-- Features **api**: documentar en `/docs/features/api`.
-- Incluir endpoints, ejemplos de request/response, y notas de implementación relevantes.
+- Para cada feature nueva, crear un `.md` conciso
+- Features web → `/docs/features/web`
+- Features api → `/docs/features/api`
+- Documentar:
+  - objetivo
+  - endpoints (si aplica)
+  - reglas importantes
+  - notas de implementación
 
 ---
 
@@ -127,4 +190,4 @@ Ayudar a construir la aplicación de forma incremental, clara y testeable, sin i
 
 - Pedir aclaración antes de decidir
 - Preferir la opción más simple
-- No asumir escalado o requisitos futuros
+- No asumir escalado ni requisitos futuros

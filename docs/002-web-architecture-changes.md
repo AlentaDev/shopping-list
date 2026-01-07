@@ -1,5 +1,9 @@
 # ADR-0002: Cambios aprobados en la arquitectura web
 
+⚠️ Este documento define la arquitectura objetivo del frontend.
+⚠️ El estado actual del código puede no cumplirla aún.
+⚠️ La migración es incremental.
+
 ## Estado
 
 Aceptado
