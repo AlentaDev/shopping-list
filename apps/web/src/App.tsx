@@ -21,7 +21,7 @@ const App = () => {
               type="button"
               onClick={() => setIsCartOpen(true)}
               aria-label="Abrir carrito"
-              className="relative"
+              className="relative cursor-pointer"
             >
               <svg
                 aria-hidden="true"
