@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useCatalog } from "./services/useCatalog";
@@ -68,6 +68,15 @@ const Catalog = ({
   );
   const hasItems = totalProducts > 0;
   const skeletonCount = 8;
+
+  useLayoutEffect(() => {
+    if (!selectedCategoryId) {
+      return;
+    }
+
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [selectedCategoryId]);
 
   useEffect(() => {
     onItemsCountChange?.(totalProducts);
