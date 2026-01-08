@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { CatalogCategoryNode } from "./types";
+import type { CatalogCategoryNode } from "../services/types";
 
 type CategoriesPanelProps = {
   open: boolean;

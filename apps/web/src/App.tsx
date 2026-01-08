@@ -1,44 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
-import CategoriesPanel from "./features/catalog/CategoriesPanel";
-import type {
-  CatalogCategoryNode,
-  CatalogProductSummary,
-  GetCategoryDetailResponse,
-  GetRootCategoriesResponse,
-} from "./features/catalog/types";
+import { useState } from "react";
+import CategoriesPanel from "./features/catalog/components/CategoriesPanel";
+import { useCatalog } from "./features/catalog/services/useCatalog";
 import { formatEuro, formatUnitPrice } from "./shared/lib/format";
 
-type FetchStatus = "idle" | "loading" | "error" | "success";
-
-const CATEGORIES_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
 const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
 
 const getGridClasses = (isCategoriesOpen: boolean) =>
   isCategoriesOpen
     ? "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
     : "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48";
-
-const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
-  const parents = categories
-    .filter((category) => category.level === 0)
-    .sort((a, b) => a.order - b.order);
-  const parent = parents[0];
-
-  if (!parent) {
-    return null;
-  }
-
-  const children = categories
-    .filter(
-      (category) =>
-        category.level === 1 &&
-        category.parentId &&
-        category.parentId === parent.id
-    )
-    .sort((a, b) => a.order - b.order);
-
-  return children[0] ?? null;
-};
 
 type ProductSkeletonGridProps = {
   count: number;
@@ -71,101 +41,24 @@ const ProductSkeletonGrid = ({
 
 function App() {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>("idle");
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
-  );
-  const [itemsStatus, setItemsStatus] = useState<FetchStatus>("idle");
-  const [itemsError, setItemsError] = useState<string | null>(null);
-  const [items, setItems] = useState<CatalogProductSummary[]>([]);
+  const {
+    categoriesStatus,
+    categoriesError,
+    categories,
+    itemsStatus,
+    itemsError,
+    items,
+    selectedCategoryId,
+    selectCategory,
+    reloadCategories,
+    reloadItems,
+  } = useCatalog();
 
   const hasItems = items.length > 0;
   const skeletonCount = 8;
 
-  const loadCategories = useCallback(async () => {
-    setCategoriesStatus("loading");
-    setCategoriesError(null);
-
-    try {
-      const response = await fetch("/api/catalog/categories");
-
-      if (!response.ok) {
-        throw new Error(CATEGORIES_ERROR_MESSAGE);
-      }
-
-      const data = (await response.json()) as GetRootCategoriesResponse;
-      const nextCategories = Array.isArray(data.categories)
-        ? data.categories
-        : [];
-
-      setCategories(nextCategories);
-      setCategoriesStatus("success");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : CATEGORIES_ERROR_MESSAGE;
-      setCategoriesError(message);
-      setCategoriesStatus("error");
-    }
-  }, []);
-
-  const loadItems = useCallback(async (categoryId: string) => {
-    setItemsStatus("loading");
-    setItemsError(null);
-    setItems([]);
-
-    try {
-      const response = await fetch(`/api/catalog/categories/${categoryId}`);
-
-      if (!response.ok) {
-        throw new Error(ITEMS_ERROR_MESSAGE);
-      }
-
-      const data = (await response.json()) as GetCategoryDetailResponse;
-      const products = data.subcategories?.[0]?.products ?? [];
-
-      setItems(products);
-      setItemsStatus("success");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : ITEMS_ERROR_MESSAGE;
-      setItemsError(message);
-      setItemsStatus("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadCategories();
-  }, [loadCategories]);
-
-  useEffect(() => {
-    if (categoriesStatus !== "success" || selectedCategoryId) {
-      return;
-    }
-
-    const defaultCategory = getDefaultCategory(categories);
-
-    if (!defaultCategory) {
-      setSelectedCategoryId(null);
-      setItems([]);
-      setItemsStatus("success");
-      return;
-    }
-
-    setSelectedCategoryId(defaultCategory.id);
-  }, [categories, categoriesStatus, selectedCategoryId]);
-
-  useEffect(() => {
-    if (!selectedCategoryId) {
-      return;
-    }
-
-    void loadItems(selectedCategoryId);
-  }, [loadItems, selectedCategoryId]);
-
   const handleSelectCategory = (id: string) => {
-    setSelectedCategoryId(id);
+    selectCategory(id);
   };
 
   const categoriesEmpty =
@@ -243,7 +136,7 @@ function App() {
               onSelectCategory={handleSelectCategory}
               loadingCategories={categoriesStatus === "loading"}
               errorCategories={categoriesError}
-              onRetryLoadCategories={loadCategories}
+              onRetryLoadCategories={reloadCategories}
             />
           </div>
         </div>
@@ -271,9 +164,7 @@ function App() {
                 </p>
                 <button
                   type="button"
-                  onClick={() =>
-                    selectedCategoryId ? loadItems(selectedCategoryId) : null
-                  }
+                  onClick={reloadItems}
                   className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
                 >
                   Reintentar

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CategoriesPanel from "./CategoriesPanel";
-import type { CatalogCategoryNode } from "./types";
+import type { CatalogCategoryNode } from "../services/types";
 
 describe("CategoriesPanel", () => {
   const categories: CatalogCategoryNode[] = [
