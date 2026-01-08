@@ -39,12 +39,16 @@ type ShoppingListProps = {
   onLinesCountChange?: (count: number) => void;
 };
 
+type ViewMode = "list" | "save";
+
 const ShoppingList = ({
   isOpen,
   onClose,
   onLinesCountChange,
 }: ShoppingListProps) => {
   const [items, setItems] = useState<ShoppingListItem[]>(INITIAL_ITEMS);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [listName, setListName] = useState("");
 
   const linesCount = items.length;
   const sortedItems = useMemo(
@@ -97,21 +101,66 @@ const ShoppingList = ({
     setItems((current) => current.filter((item) => item.id !== id));
   };
 
-  const handleSaveList = () => {
-    window.prompt("¿Cómo quieres llamar a esta lista?");
+  const handleStartSave = () => {
+    setViewMode("save");
+  };
+
+  const handleCancelSave = () => {
+    setViewMode("list");
+  };
+
+  const handleConfirmSave = () => {
+    setViewMode("list");
   };
 
   return (
     <ListModal isOpen={isOpen} onClose={onClose} title="Tu lista">
-      <div className="space-y-6">
-        <ItemList
-          items={sortedItems}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-          onRemove={handleRemove}
-        />
-        <Total total={total} onAddMore={onClose} onSave={handleSaveList} />
-      </div>
+      {viewMode === "list" ? (
+        <div className="space-y-6">
+          <ItemList
+            items={sortedItems}
+            onIncrement={handleIncrement}
+            onDecrement={handleDecrement}
+            onRemove={handleRemove}
+          />
+          <Total total={total} onAddMore={onClose} onSave={handleStartSave} />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="shopping-list-name"
+              className="text-sm font-semibold text-slate-700"
+            >
+              Nombre de la lista
+            </label>
+            <input
+              id="shopping-list-name"
+              type="text"
+              value={listName}
+              onChange={(event) => setListName(event.target.value)}
+              placeholder="Ej. Compra semanal"
+              className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={handleCancelSave}
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmSave}
+              className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      )}
     </ListModal>
   );
 };

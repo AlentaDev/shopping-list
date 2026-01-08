@@ -14,7 +14,7 @@ No aplica en esta iteración (mock local).
 - El badge del carrito cuenta líneas únicas, no cantidades.
 - El modal se cierra con ESC, clic fuera o el botón "Cerrar".
 - Los items se ordenan por categoría independientemente del orden de alta.
-- Antes de guardar se solicita un nombre para la lista.
+- Guardar abre un paso adicional con campo de nombre y opción de cancelar.
 - El decremento nunca baja de 1 incluso si se manipula el HTML.
 - No hay integración backend en esta iteración.
 

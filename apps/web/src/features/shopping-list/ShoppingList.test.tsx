@@ -73,21 +73,19 @@ describe("ShoppingList", () => {
     expect(screen.getByTestId(totalTestId)).toHaveTextContent("€5.80");
   });
 
-  it("prompts for a list name before saving", async () => {
-    const promptSpy = vi
-      .spyOn(window, "prompt")
-      .mockReturnValue("Lista semanal");
-
+  it("shows the save step and allows canceling", async () => {
     render(<ShoppingList isOpen onClose={vi.fn()} />);
 
     await userEvent.click(
       screen.getByRole("button", { name: "Guardar lista" })
     );
 
-    expect(promptSpy).toHaveBeenCalledWith(
-      "¿Cómo quieres llamar a esta lista?"
-    );
+    expect(
+      screen.getByRole("textbox", { name: "Nombre de la lista" })
+    ).toBeInTheDocument();
 
-    promptSpy.mockRestore();
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 });
