@@ -1,9 +1,11 @@
 import { useState } from "react";
 import Catalog from "./features/catalog/Catalog";
+import ShoppingList from "./features/shopping-list/ShoppingList";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [itemsCount, setItemsCount] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -15,7 +17,12 @@ const App = () => {
                 La lista de la compra
               </p>
             </div>
-            <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              aria-label="Abrir carrito"
+              className="relative"
+            >
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
@@ -35,7 +42,7 @@ const App = () => {
                   {itemsCount}
                 </span>
               ) : null}
-            </div>
+            </button>
           </div>
           <div className="mt-4 flex w-full items-center gap-2 sm:mt-0 sm:w-auto sm:justify-end">
             <button
@@ -61,11 +68,13 @@ const App = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <Catalog
-          isCategoriesOpen={isCategoriesOpen}
-          onItemsCountChange={setItemsCount}
-        />
+        <Catalog isCategoriesOpen={isCategoriesOpen} />
       </main>
+      <ShoppingList
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onLinesCountChange={setItemsCount}
+      />
     </div>
   );
 };
