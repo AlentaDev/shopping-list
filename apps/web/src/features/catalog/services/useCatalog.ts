@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type {
+  CatalogCategoryDetail,
   CatalogCategoryNode,
-  CatalogProductSummary,
 } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
 
@@ -11,20 +11,20 @@ type CatalogState = {
   categoriesStatus: FetchStatus;
   categoriesError: string | null;
   categories: CatalogCategoryNode[];
-  itemsStatus: FetchStatus;
-  itemsError: string | null;
-  items: CatalogProductSummary[];
+  detailStatus: FetchStatus;
+  detailError: string | null;
+  categoryDetail: CatalogCategoryDetail | null;
   selectedCategoryId: string | null;
 };
 
 type UseCatalogResult = CatalogState & {
   selectCategory: (id: string) => void;
   reloadCategories: () => void;
-  reloadItems: () => void;
+  reloadDetail: () => void;
 };
 
 const CATEGORIES_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
-const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
+const DETAIL_ERROR_MESSAGE = "No se pudieron cargar los productos.";
 
 const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   const parents = categories
@@ -55,9 +55,11 @@ export const useCatalog = (): UseCatalogResult => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
-  const [itemsStatus, setItemsStatus] = useState<FetchStatus>("idle");
-  const [itemsError, setItemsError] = useState<string | null>(null);
-  const [items, setItems] = useState<CatalogProductSummary[]>([]);
+  const [detailStatus, setDetailStatus] = useState<FetchStatus>("idle");
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [categoryDetail, setCategoryDetail] = useState<CatalogCategoryDetail | null>(
+    null
+  );
 
   const loadCategories = useCallback(async () => {
     setCategoriesStatus("loading");
@@ -81,24 +83,23 @@ export const useCatalog = (): UseCatalogResult => {
     }
   }, []);
 
-  const loadItems = useCallback(async (categoryId: string) => {
-    setItemsStatus("loading");
-    setItemsError(null);
-    setItems([]);
+  const loadDetail = useCallback(async (categoryId: string) => {
+    setDetailStatus("loading");
+    setDetailError(null);
+    setCategoryDetail(null);
 
     try {
       const data = await getCategoryDetail(categoryId, {
-        errorMessage: ITEMS_ERROR_MESSAGE,
+        errorMessage: DETAIL_ERROR_MESSAGE,
       });
-      const products = data.subcategories?.[0]?.products ?? [];
 
-      setItems(products);
-      setItemsStatus("success");
+      setCategoryDetail(data);
+      setDetailStatus("success");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : ITEMS_ERROR_MESSAGE;
-      setItemsError(message);
-      setItemsStatus("error");
+        error instanceof Error ? error.message : DETAIL_ERROR_MESSAGE;
+      setDetailError(message);
+      setDetailStatus("error");
     }
   }, []);
 
@@ -117,8 +118,8 @@ export const useCatalog = (): UseCatalogResult => {
     if (!defaultCategory) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedCategoryId(null);
-      setItems([]);
-      setItemsStatus("success");
+      setCategoryDetail({ categoryName: "", sections: [] });
+      setDetailStatus("success");
       return;
     }
 
@@ -131,8 +132,8 @@ export const useCatalog = (): UseCatalogResult => {
     }
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadItems(selectedCategoryId);
-  }, [loadItems, selectedCategoryId]);
+    void loadDetail(selectedCategoryId);
+  }, [loadDetail, selectedCategoryId]);
 
   const selectCategory = (id: string) => {
     setSelectedCategoryId(id);
@@ -142,24 +143,24 @@ export const useCatalog = (): UseCatalogResult => {
     void loadCategories();
   };
 
-  const reloadItems = () => {
+  const reloadDetail = () => {
     if (!selectedCategoryId) {
       return;
     }
 
-    void loadItems(selectedCategoryId);
+    void loadDetail(selectedCategoryId);
   };
 
   return {
     categoriesStatus,
     categoriesError,
     categories,
-    itemsStatus,
-    itemsError,
-    items,
+    detailStatus,
+    detailError,
+    categoryDetail,
     selectedCategoryId,
     selectCategory,
     reloadCategories,
-    reloadItems,
+    reloadDetail,
   };
 };

@@ -1,11 +1,11 @@
 import type {
-  GetCategoryDetailResponse,
+  CatalogCategoryDetail,
   GetRootCategoriesResponse,
 } from "./types";
 import {
   adaptCategoryDetailResponse,
   adaptRootCategoriesResponse,
-} from "./adapters/catalogAdapters";
+} from "./adapters/CatalogAdapter";
 
 type CatalogServiceOptions = {
   errorMessage?: string;
@@ -28,7 +28,7 @@ export const getRootCategories = async (
 export const getCategoryDetail = async (
   categoryId: string,
   options: CatalogServiceOptions = {}
-): Promise<GetCategoryDetailResponse> => {
+): Promise<CatalogCategoryDetail> => {
   const response = await fetch(`/api/catalog/categories/${categoryId}`);
 
   if (!response.ok) {
@@ -38,6 +38,6 @@ export const getCategoryDetail = async (
   const payload = (await response.json()) as unknown;
 
   return adaptCategoryDetailResponse(
-    payload as { id?: string; name?: string; subcategories?: unknown }
+    payload as { name?: string; subcategories?: unknown }
   );
 };

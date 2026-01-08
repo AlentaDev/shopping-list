@@ -39,16 +39,26 @@ const productFixtures = {
 };
 
 const CatalogHarness = () => {
-  const { items, selectCategory } = useCatalog();
+  const { categoryDetail, selectCategory } = useCatalog();
 
   return (
     <div>
       <button type="button" onClick={() => selectCategory("child-2")}>
         Select second
       </button>
-      {items.map((item) => (
-        <span key={item.id}>{item.name}</span>
-      ))}
+      {categoryDetail ? (
+        <div>
+          <h1>{categoryDetail.categoryName}</h1>
+          {categoryDetail.sections.map((section) => (
+            <div key={section.subcategoryName}>
+              <h2>{section.subcategoryName}</h2>
+              {section.products.map((product) => (
+                <span key={product.id}>{product.name}</span>
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -133,10 +143,12 @@ describe("useCatalog", () => {
 
     render(<CatalogHarness />);
 
+    expect(await screen.findByText("Bollería")).toBeInTheDocument();
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Select second" }));
 
+    expect(await screen.findByText("Yogures")).toBeInTheDocument();
     expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
 
     await waitFor(() => {

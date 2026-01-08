@@ -1,0 +1,25 @@
+import type { CatalogProductSummary } from "../services/types";
+import ProductCard from "./ProductCard";
+
+type ProductsCategoryProps = {
+  subcategoryName: string;
+  products: CatalogProductSummary[];
+  gridClassName: string;
+};
+
+const ProductsCategory = ({
+  subcategoryName,
+  products,
+  gridClassName,
+}: ProductsCategoryProps) => (
+  <div className="space-y-4">
+    <h2 className="text-lg font-semibold text-slate-900">{subcategoryName}</h2>
+    <div className={`grid gap-4 ${gridClassName}`}>
+      {products.map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  </div>
+);
+
+export default ProductsCategory;
