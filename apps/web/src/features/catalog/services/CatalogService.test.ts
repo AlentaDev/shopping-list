@@ -32,7 +32,25 @@ describe("CatalogService", () => {
     const responsePayload = {
       id: "child-1",
       name: "Bollería",
-      subcategories: [],
+      subcategories: [
+        {
+          id: "sub-1",
+          name: "Dulces",
+          products: [
+            {
+              id: "prod-1",
+              name: "Ensaimada",
+              thumbnail: null,
+              packaging: null,
+              price: 1.5,
+              unitSize: null,
+              unitFormat: null,
+              unitPrice: null,
+              isApproxSize: false,
+            },
+          ],
+        },
+      ],
     };
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
@@ -43,7 +61,27 @@ describe("CatalogService", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(getCategoryDetail("child-1")).resolves.toEqual(responsePayload);
+    await expect(getCategoryDetail("child-1")).resolves.toEqual({
+      categoryName: "Bollería",
+      sections: [
+        {
+          subcategoryName: "Dulces",
+          products: [
+            {
+              id: "prod-1",
+              name: "Ensaimada",
+              thumbnail: null,
+              packaging: null,
+              price: 1.5,
+              unitSize: null,
+              unitFormat: null,
+              unitPrice: null,
+              isApproxSize: false,
+            },
+          ],
+        },
+      ],
+    });
     expect(fetchMock).toHaveBeenCalledWith("/api/catalog/categories/child-1");
   });
 });

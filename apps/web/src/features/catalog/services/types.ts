@@ -19,16 +19,16 @@ export type CatalogProductSummary = {
   isApproxSize: boolean;
 };
 
-export type GetRootCategoriesResponse = {
-  categories: CatalogCategoryNode[];
+export type CatalogCategorySection = {
+  subcategoryName: string;
+  products: CatalogProductSummary[];
 };
 
-export type GetCategoryDetailResponse = {
-  id: string;
-  name: string;
-  subcategories: Array<{
-    id: string;
-    name: string;
-    products: CatalogProductSummary[];
-  }>;
+export type CatalogCategoryDetail = {
+  categoryName: string;
+  sections: CatalogCategorySection[];
+};
+
+export type GetRootCategoriesResponse = {
+  categories: CatalogCategoryNode[];
 };
