@@ -15,7 +15,9 @@ No aplica en esta iteración (mock local).
 - El modal se cierra con ESC, clic fuera o el botón "Cerrar".
 - Los items se ordenan por categoría independientemente del orden de alta.
 - Guardar abre un paso adicional con campo de nombre y opción de cancelar.
+- Al guardar se muestra el nombre en el título del modal; si está vacío, usa "Tu lista".
 - El decremento nunca baja de 1 incluso si se manipula el HTML.
+- Si no hay items se muestra un estado vacío con mensaje.
 - No hay integración backend en esta iteración.
 
 ## Notas de implementación
