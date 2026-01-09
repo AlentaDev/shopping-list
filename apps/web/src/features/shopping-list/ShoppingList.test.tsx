@@ -56,13 +56,13 @@ describe("ShoppingList", () => {
       </ListProvider>
     );
 
-    expect(screen.getByTestId(totalTestId)).toHaveTextContent("€4.60");
+    expect(screen.getByTestId(totalTestId)).toHaveTextContent(/4,60\s?€/);
 
     await userEvent.click(
       screen.getByRole("button", { name: "Eliminar Leche entera" })
     );
 
-    expect(screen.getByTestId(totalTestId)).toHaveTextContent("€2.70");
+    expect(screen.getByTestId(totalTestId)).toHaveTextContent(/2,70\s?€/);
     expect(screen.queryByText("Leche entera")).toBeNull();
   });
 
@@ -79,7 +79,7 @@ describe("ShoppingList", () => {
       })
     );
 
-    expect(screen.getByTestId(totalTestId)).toHaveTextContent("€5.80");
+    expect(screen.getByTestId(totalTestId)).toHaveTextContent(/5,80\s?€/);
   });
 
   it("shows the save step and allows canceling", async () => {

@@ -1,5 +1,5 @@
 import type { CatalogProductSummary } from "../services/types";
-import { formatEuro, formatUnitPrice } from "../../../shared/lib/format";
+import { formatPrice, formatUnitPrice } from "../../../shared/utils/formatPrice";
 
 type ProductCardProps = {
   product: CatalogProductSummary;
@@ -27,7 +27,7 @@ const ProductCard = ({ product }: ProductCardProps) => (
           {product.name}
         </h3>
         <div className="text-base font-semibold text-slate-900">
-          {formatEuro(product.price)}
+          {formatPrice(product.price)}
         </div>
         {product.unitPrice != null && product.unitFormat ? (
           <div className="text-xs text-slate-500">

@@ -1,4 +1,5 @@
 import type { ShoppingListItem } from "../types";
+import { formatUnitPrice } from "../../../shared/utils/formatPrice";
 
 type ItemListProps = {
   items: ShoppingListItem[];
@@ -35,7 +36,9 @@ const ItemList = ({
               {item.name}
             </p>
             <p className="text-xs text-slate-500">
-              {`€${item.price.toFixed(2)} / unidad`}
+              {item.price !== null && item.price !== undefined
+                ? formatUnitPrice(item.price, "unidad")
+                : "Precio no disponible"}
             </p>
           </div>
           <div className="flex items-center gap-2">

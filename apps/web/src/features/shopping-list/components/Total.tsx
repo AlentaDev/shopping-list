@@ -1,3 +1,5 @@
+import { formatPrice } from "../../../shared/utils/formatPrice";
+
 type TotalProps = {
   total: number;
   onAddMore: () => void;
@@ -12,7 +14,7 @@ const Total = ({ total, onAddMore, onSave }: TotalProps) => (
         data-testid="total-value"
         className="text-lg font-semibold text-slate-900"
       >
-        €{total.toFixed(2)}
+        {formatPrice(total)}
       </span>
     </div>
     <button
