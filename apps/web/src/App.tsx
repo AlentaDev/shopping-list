@@ -1,11 +1,12 @@
 import { useState } from "react";
 import Catalog from "./features/catalog/Catalog";
 import ShoppingList from "./features/shopping-list/ShoppingList";
+import { useList } from "./context/useList";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [itemsCount, setItemsCount] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const { linesCount } = useList();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -37,9 +38,9 @@ const App = () => {
                 <circle cx="10" cy="20" r="1.5" />
                 <circle cx="18" cy="20" r="1.5" />
               </svg>
-              {itemsCount > 0 ? (
+              {linesCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex h-5 w-6 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-semibold tabular-nums text-white">
-                  {itemsCount}
+                  {linesCount}
                 </span>
               ) : null}
             </button>
@@ -73,7 +74,6 @@ const App = () => {
       <ShoppingList
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        onLinesCountChange={setItemsCount}
       />
     </div>
   );

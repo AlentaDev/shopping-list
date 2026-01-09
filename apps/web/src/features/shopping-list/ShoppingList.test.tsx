@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
+import { ListProvider } from "../../context/ListContext";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -13,7 +14,11 @@ describe("ShoppingList", () => {
   });
 
   it("sorts items by category", () => {
-    render(<ShoppingList isOpen onClose={vi.fn()} />);
+    render(
+      <ListProvider>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
 
     const itemNames = screen
       .getAllByTestId("item-name")
@@ -27,7 +32,11 @@ describe("ShoppingList", () => {
   });
 
   it("never decrements below 1", async () => {
-    render(<ShoppingList isOpen onClose={vi.fn()} />);
+    render(
+      <ListProvider>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
 
     const decrementButton = screen.getByRole("button", {
       name: "Disminuir cantidad de Manzanas Fuji",
@@ -40,15 +49,11 @@ describe("ShoppingList", () => {
     expect(screen.getByTestId("quantity-item-1")).toHaveTextContent("1");
   });
 
-  it("removes a line item and updates total and lines count", async () => {
-    const onLinesCountChange = vi.fn();
-
+  it("removes a line item and updates total", async () => {
     render(
-      <ShoppingList
-        isOpen
-        onClose={vi.fn()}
-        onLinesCountChange={onLinesCountChange}
-      />
+      <ListProvider>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent("€4.60");
@@ -58,11 +63,15 @@ describe("ShoppingList", () => {
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent("€2.70");
-    expect(onLinesCountChange).toHaveBeenLastCalledWith(2);
+    expect(screen.queryByText("Leche entera")).toBeNull();
   });
 
   it("updates total when incrementing quantity", async () => {
-    render(<ShoppingList isOpen onClose={vi.fn()} />);
+    render(
+      <ListProvider>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
 
     await userEvent.click(
       screen.getByRole("button", {
@@ -74,7 +83,11 @@ describe("ShoppingList", () => {
   });
 
   it("shows the save step and allows canceling", async () => {
-    render(<ShoppingList isOpen onClose={vi.fn()} />);
+    render(
+      <ListProvider>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: "Guardar lista" })
