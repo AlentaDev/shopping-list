@@ -11,6 +11,8 @@ type ShoppingListProps = {
 
 type ViewMode = "list" | "save";
 
+const DEFAULT_LIST_TITLE = "Tu lista";
+
 const ShoppingList = ({
   isOpen,
   onClose,
@@ -18,6 +20,7 @@ const ShoppingList = ({
   const { items, total, updateQuantity, removeItem } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [listName, setListName] = useState("");
+  const [listTitle, setListTitle] = useState(DEFAULT_LIST_TITLE);
 
   const sortedItems = useMemo(
     () =>
@@ -57,19 +60,33 @@ const ShoppingList = ({
   };
 
   const handleConfirmSave = () => {
+    const trimmedName = listName.trim();
+
+    setListTitle(trimmedName || DEFAULT_LIST_TITLE);
     setViewMode("list");
   };
 
   return (
-    <ListModal isOpen={isOpen} onClose={onClose} title="Tu lista">
+    <ListModal isOpen={isOpen} onClose={onClose} title={listTitle}>
       {viewMode === "list" ? (
         <div className="space-y-6">
-          <ItemList
-            items={sortedItems}
-            onIncrement={handleIncrement}
-            onDecrement={handleDecrement}
-            onRemove={handleRemove}
-          />
+          {sortedItems.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+              <p className="text-sm font-semibold text-slate-700">
+                Tu lista está en modo zen 🧘‍♂️
+              </p>
+              <p className="mt-2 text-sm text-slate-500">
+                Añade algo del catálogo y empezamos a llenar la cesta.
+              </p>
+            </div>
+          ) : (
+            <ItemList
+              items={sortedItems}
+              onIncrement={handleIncrement}
+              onDecrement={handleDecrement}
+              onRemove={handleRemove}
+            />
+          )}
           <Total total={total} onAddMore={onClose} onSave={handleStartSave} />
         </div>
       ) : (

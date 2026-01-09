@@ -133,4 +133,42 @@ describe("ShoppingList", () => {
 
     expect(screen.queryByRole("textbox")).toBeNull();
   });
+
+  it("shows the list name in the modal title after saving", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Guardar lista" })
+    );
+
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Nombre de la lista" }),
+      "Compra semanal"
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Compra semanal" })
+    ).toBeInTheDocument();
+  });
+
+  it("shows an empty state message when there are no items", () => {
+    render(
+      <ListProvider initialItems={[]}>
+        <ShoppingList isOpen onClose={vi.fn()} />
+      </ListProvider>
+    );
+
+    expect(
+      screen.getByText("Tu lista está en modo zen 🧘‍♂️")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Añade algo del catálogo y empezamos a llenar la cesta.")
+    ).toBeInTheDocument();
+  });
 });
