@@ -6,42 +6,27 @@ import {
 } from "./ListContextValue";
 
 type ListAction =
+  | { type: "ADD_ITEM"; item: ListItem }
   | { type: "UPDATE_QUANTITY"; itemId: string; quantity: number }
   | { type: "REMOVE_ITEM"; itemId: string };
 
 const MIN_QUANTITY = 1;
 
-const INITIAL_ITEMS: ListItem[] = [
-  {
-    id: "item-1",
-    name: "Manzanas Fuji",
-    category: "Frutas",
-    thumbnail:
-      "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=120&q=80",
-    price: 1.2,
-    quantity: 1,
-  },
-  {
-    id: "item-2",
-    name: "Leche entera",
-    category: "Bebidas",
-    thumbnail: null,
-    price: 0.95,
-    quantity: 2,
-  },
-  {
-    id: "item-3",
-    name: "Pan integral multicereal extra largo",
-    category: "Panadería",
-    thumbnail:
-      "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=120&q=80",
-    price: 1.5,
-    quantity: 1,
-  },
-];
-
 const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
   switch (action.type) {
+    case "ADD_ITEM": {
+      const existingItem = state.find((item) => item.id === action.item.id);
+
+      if (existingItem) {
+        return state.map((item) =>
+          item.id === action.item.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [...state, { ...action.item, quantity: 1 }];
+    }
     case "UPDATE_QUANTITY":
       return state.map((item) =>
         item.id === action.itemId
@@ -57,10 +42,15 @@ const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
 
 type ListProviderProps = {
   children: ReactNode;
+  initialItems?: ListItem[];
 };
 
-export function ListProvider({ children }: ListProviderProps) {
-  const [items, dispatch] = useReducer(listReducer, INITIAL_ITEMS);
+export function ListProvider({ children, initialItems }: ListProviderProps) {
+  const [items, dispatch] = useReducer(listReducer, initialItems ?? []);
+
+  const addItem = useCallback((item: ListItem) => {
+    dispatch({ type: "ADD_ITEM", item });
+  }, []);
 
   const updateQuantity = useCallback((itemId: string, quantity: number) => {
     dispatch({ type: "UPDATE_QUANTITY", itemId, quantity });
@@ -84,6 +74,7 @@ export function ListProvider({ children }: ListProviderProps) {
     items,
     linesCount,
     total,
+    addItem,
     updateQuantity,
     removeItem,
   };

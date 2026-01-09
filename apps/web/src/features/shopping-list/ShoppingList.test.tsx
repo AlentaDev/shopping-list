@@ -5,9 +5,41 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "../../context/ListContext";
+import type { ListItem } from "../../context/ListContextValue";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
+  const appleName = "Manzanas Fuji";
+  const milkName = "Leche entera";
+  const breadName = "Pan integral multicereal extra largo";
+  const initialItems: ListItem[] = [
+    {
+      id: "item-1",
+      name: appleName,
+      category: "Frutas",
+      thumbnail:
+        "https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?auto=format&fit=crop&w=120&q=80",
+      price: 1.2,
+      quantity: 1,
+    },
+    {
+      id: "item-2",
+      name: milkName,
+      category: "Bebidas",
+      thumbnail: null,
+      price: 0.95,
+      quantity: 2,
+    },
+    {
+      id: "item-3",
+      name: breadName,
+      category: "Panadería",
+      thumbnail:
+        "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=120&q=80",
+      price: 1.5,
+      quantity: 1,
+    },
+  ];
 
   afterEach(() => {
     cleanup();
@@ -15,7 +47,7 @@ describe("ShoppingList", () => {
 
   it("sorts items by category", () => {
     render(
-      <ListProvider>
+      <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
       </ListProvider>
     );
@@ -33,13 +65,13 @@ describe("ShoppingList", () => {
 
   it("never decrements below 1", async () => {
     render(
-      <ListProvider>
+      <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
       </ListProvider>
     );
 
     const decrementButton = screen.getByRole("button", {
-      name: "Disminuir cantidad de Manzanas Fuji",
+      name: `Disminuir cantidad de ${appleName}`,
     });
 
     expect(decrementButton).toBeDisabled();
@@ -51,7 +83,7 @@ describe("ShoppingList", () => {
 
   it("removes a line item and updates total", async () => {
     render(
-      <ListProvider>
+      <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
       </ListProvider>
     );
@@ -59,23 +91,23 @@ describe("ShoppingList", () => {
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/4,60\s?€/);
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Eliminar Leche entera" })
+      screen.getByRole("button", { name: `Eliminar ${milkName}` })
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/2,70\s?€/);
-    expect(screen.queryByText("Leche entera")).toBeNull();
+    expect(screen.queryByText(milkName)).toBeNull();
   });
 
   it("updates total when incrementing quantity", async () => {
     render(
-      <ListProvider>
+      <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
       </ListProvider>
     );
 
     await userEvent.click(
       screen.getByRole("button", {
-        name: "Incrementar cantidad de Manzanas Fuji",
+        name: `Incrementar cantidad de ${appleName}`,
       })
     );
 
@@ -84,7 +116,7 @@ describe("ShoppingList", () => {
 
   it("shows the save step and allows canceling", async () => {
     render(
-      <ListProvider>
+      <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
       </ListProvider>
     );

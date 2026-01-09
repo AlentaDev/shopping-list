@@ -13,6 +13,7 @@ export type ListContextType = {
   items: ListItem[];
   linesCount: number;
   total: number;
+  addItem: (item: ListItem) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   removeItem: (itemId: string) => void;
 };
