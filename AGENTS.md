@@ -37,6 +37,80 @@ Este documento actúa como **contrato obligatorio** para cualquier cambio.
 
 ---
 
+## Estrategia de testing y coverage: 100/80/0
+
+**Principio fundamental**: Coverage ≠ calidad.  
+94% coverage puede ser inútil si el 6% crítico falla.  
+Enfocamos recursos donde realmente importa.
+
+### CORE (100%)
+
+Código que maneja **lógica crítica de negocio** y **estado del sistema**.  
+Requiere **100% de cobertura** en:
+
+- `context/`: Estado global transversal (ListContext, CartContext)
+- `features/*/services/`: Orquestación de casos de uso
+- `features/*/services/adapters/`: Transformación de datos externos
+- `shared/utils/`: Utilidades críticas (cálculos, validaciones)
+
+**Criterio**: Si este código falla, la app queda inutilizable o produce datos incorrectos.
+
+### IMPORTANT (80%)
+
+Features visibles y **lógica de presentación**.  
+Requiere **80% de cobertura** en:
+
+- `features/*/components/`: UI de features
+- `App.tsx`: Composición principal
+- Componentes con lógica condicional o interacciones complejas
+
+**Criterio**: Si falla, afecta UX pero no corrompe datos.
+
+### INFRASTRUCTURE (0%)
+
+Código **auto-validable por TypeScript** o configuración.  
+**Sin tests obligatorios**:
+
+- `providers/`: Composición de providers (AppProviders)
+- `infrastructure/`: Configuración transversal
+- `main.tsx`: Entry point
+- `index.ts`: Barrels de exportación
+- `*.config.ts`: Archivos de configuración
+
+**Criterio**: TypeScript garantiza corrección estructural. Si compila, funciona.
+
+### Aplicación práctica
+
+1. **No añadir tests sin consultar**: La estrategia prioriza lo crítico
+2. **Coverage global target**: 80% (configurado en Vitest)
+3. **Validación manual CORE**: Revisar que servicios/contextos tengan 100%
+4. **Excluir de coverage**: infrastructure/, providers/, main.tsx, index.ts
+
+**Configuración**: Ver `apps/web/vite.config.ts` → `test.coverage`
+
+**Comando de análisis**:
+```bash
+cd apps/web
+pnpm test:coverage
+```
+
+El comando ejecuta automáticamente:
+1. Tests con Vitest + coverage
+2. Análisis categorizado por estrategia 100/80/0
+3. Reporte detallado de archivos CORE que necesitan atención
+
+El análisis muestra:
+- ✅ CORE: Archivos críticos (target: 100%)
+- ✅ IMPORTANT: Features visibles (target: 80%)
+- ℹ️ INFRASTRUCTURE: Excluido (target: 0%)
+
+**Exit code**: 
+- Exit 0 (✅): IMPORTANT ≥ 80% (cumple requisito global)
+- Exit 1 (❌): IMPORTANT < 80% (no cumple requisito global)
+- Warning (⚠️): CORE < 100% pero no falla el build (validación manual)
+
+---
+
 ## Arquitectura global (obligatoria)
 
 - Organización por **features**

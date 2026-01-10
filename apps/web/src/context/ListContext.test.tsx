@@ -37,6 +37,21 @@ const TestConsumer = () => {
       >
         Add again
       </button>
+      <button
+        type="button"
+        onClick={() =>
+          addItem({
+            id: "new-item",
+            name: "Peras",
+            category: "Frutas",
+            thumbnail: null,
+            price: 1.5,
+            quantity: 1,
+          })
+        }
+      >
+        Add new
+      </button>
       <button type="button" onClick={() => updateQuantity("item-1", 3)}>
         Increment
       </button>
@@ -131,5 +146,30 @@ describe("ListContext", () => {
     expect(screen.getByTestId(FIRST_ITEM_QUANTITY_TEST_ID)).toHaveTextContent(
       "2"
     );
-});
+  });
+
+  it("initializes with empty array when no initialItems provided", () => {
+    render(
+      <ListProvider>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("0");
+    expect(screen.getByTestId(TOTAL_AMOUNT_TEST_ID)).toHaveTextContent("0.00");
+  });
+
+  it("adds a new item to the list", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("3");
+
+    await userEvent.click(screen.getByRole("button", { name: "Add new" }));
+
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("4");
+  });
 });

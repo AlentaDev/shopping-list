@@ -84,4 +84,34 @@ describe("CatalogService", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith("/api/catalog/categories/child-1");
   });
+
+  it("throws error when getRootCategories fails", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        json: async () => ({}),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getRootCategories()).rejects.toThrow(
+      "Unable to load categories."
+    );
+  });
+
+  it("throws error when getCategoryDetail fails", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        json: async () => ({}),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCategoryDetail("child-1")).rejects.toThrow(
+      "Unable to load category detail."
+    );
+  });
 });
