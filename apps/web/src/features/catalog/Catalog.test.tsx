@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Catalog from "./Catalog";
+import { ListProvider } from "../../context/ListContext";
 
 vi.mock("./services/useCatalog", () => ({
   useCatalog: () => ({
@@ -57,7 +58,11 @@ vi.mock("./services/useCatalog", () => ({
 
 describe("Catalog", () => {
   it("renders the category title with all subcategories and products", () => {
-    render(<Catalog />);
+    render(
+      <ListProvider>
+        <Catalog />
+      </ListProvider>
+    );
 
     expect(
       screen.getByRole("heading", { name: "Bollería", level: 1 })

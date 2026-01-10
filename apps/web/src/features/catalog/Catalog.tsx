@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
+import { useList } from "../../context/useList";
 import { useCatalog } from "./services/useCatalog";
 
 const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
@@ -48,6 +49,7 @@ const Catalog = ({
   isCategoriesOpen = false,
   onItemsCountChange,
 }: CatalogProps) => {
+  const { addItem } = useList();
   const {
     categoriesStatus,
     categoriesError,
@@ -152,6 +154,16 @@ const Catalog = ({
                     subcategoryName={section.subcategoryName}
                     products={section.products}
                     gridClassName={getGridClasses(isCategoriesOpen)}
+                    onAddProduct={(product) =>
+                      addItem({
+                        id: product.id,
+                        name: product.name,
+                        category: section.subcategoryName,
+                        thumbnail: product.thumbnail,
+                        price: product.price,
+                        quantity: 1,
+                      })
+                    }
                   />
                 ))}
               </div>

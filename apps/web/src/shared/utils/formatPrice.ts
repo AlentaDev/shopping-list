@@ -1,4 +1,4 @@
-export const formatEuro = (value: number): string =>
+export const formatPrice = (value: number): string =>
   new Intl.NumberFormat("es-ES", {
     style: "currency",
     currency: "EUR",
@@ -7,4 +7,4 @@ export const formatEuro = (value: number): string =>
   }).format(value);
 
 export const formatUnitPrice = (value: number, unit: string): string =>
-  `${formatEuro(value)} / ${unit}`;
+  `${formatPrice(value)} / ${unit}`;

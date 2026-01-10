@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
+import { AppProviders } from "./providers/AppProviders";
 
 type FetchResponse = {
   ok: boolean;
@@ -91,7 +92,11 @@ describe("App", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<App />);
+    render(
+      <AppProviders>
+        <App />
+      </AppProviders>
+    );
 
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
@@ -170,7 +175,11 @@ describe("App", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<App />);
+    render(
+      <AppProviders>
+        <App />
+      </AppProviders>
+    );
 
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 

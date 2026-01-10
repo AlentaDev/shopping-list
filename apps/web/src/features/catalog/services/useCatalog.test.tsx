@@ -146,7 +146,9 @@ describe("useCatalog", () => {
     expect(await screen.findByText("Bollería")).toBeInTheDocument();
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Select second" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Select second" })
+    );
 
     expect(await screen.findByText("Yogures")).toBeInTheDocument();
     expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
@@ -156,5 +158,232 @@ describe("useCatalog", () => {
       expect(fetchMock).toHaveBeenCalledWith(categoryDetailUrl("child-1"));
       expect(fetchMock).toHaveBeenCalledWith(categoryDetailUrl("child-2"));
     });
+  });
+
+  it("handles error when loading categories", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        json: async () => ({}),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ErrorHarness = () => {
+      const { categoriesError, categoriesStatus } = useCatalog();
+
+      return (
+        <div>
+          <span data-testid="status">{categoriesStatus}</span>
+          <span data-testid="error">{categoriesError}</span>
+        </div>
+      );
+    };
+
+    render(<ErrorHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("error");
+      expect(screen.getByTestId("error")).toHaveTextContent(
+        "No se pudieron cargar las categorías."
+      );
+    });
+  });
+
+  it("handles error when loading category detail", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                {
+                  id: "child-1",
+                  name: "Bollería",
+                  order: 1,
+                  level: 1,
+                  parentId: "root-1",
+                },
+              ],
+            }),
+          };
+        }
+
+        return {
+          ok: false,
+          json: async () => ({}),
+        };
+      }
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ErrorHarness = () => {
+      const { detailError, detailStatus } = useCatalog();
+
+      return (
+        <div>
+          <span data-testid="detail-status">{detailStatus}</span>
+          <span data-testid="detail-error">{detailError}</span>
+        </div>
+      );
+    };
+
+    render(<ErrorHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("detail-status")).toHaveTextContent("error");
+      expect(screen.getByTestId("detail-error")).toHaveTextContent(
+        "No se pudieron cargar los productos."
+      );
+    });
+  });
+
+  it("handles empty categories gracefully", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          categories: [],
+        }),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const EmptyHarness = () => {
+      const { categoryDetail, categoriesStatus } = useCatalog();
+
+      return (
+        <div>
+          <span data-testid="status">{categoriesStatus}</span>
+          <span data-testid="detail">
+            {categoryDetail?.categoryName ?? "no-detail"}
+          </span>
+        </div>
+      );
+    };
+
+    render(<EmptyHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status")).toHaveTextContent("success");
+      expect(screen.getByTestId("detail")).toHaveTextContent("");
+    });
+  });
+
+  it("allows manual reload of categories and detail", async () => {
+    let callCount = 0;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          callCount++;
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                {
+                  id: "child-1",
+                  name: "Bollería",
+                  order: 1,
+                  level: 1,
+                  parentId: "root-1",
+                },
+              ],
+            }),
+          };
+        }
+
+        callCount++;
+        return {
+          ok: true,
+          json: async () => ({
+            id: "child-1",
+            name: "Bollería",
+            subcategories: [],
+          }),
+        };
+      }
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const ReloadHarness = () => {
+      const { reloadCategories, reloadDetail, categoryDetail } = useCatalog();
+
+      return (
+        <div>
+          <button type="button" onClick={() => reloadCategories()}>
+            Reload categories
+          </button>
+          <button type="button" onClick={() => reloadDetail()}>
+            Reload detail
+          </button>
+          {categoryDetail && <span>{categoryDetail.categoryName}</span>}
+        </div>
+      );
+    };
+
+    render(<ReloadHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Bollería")).toBeInTheDocument();
+    });
+
+    const initialCalls = callCount;
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reload categories" })
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reload detail" })
+    );
+
+    await waitFor(() => {
+      expect(callCount).toBeGreaterThan(initialCalls);
+    });
+  });
+
+  it("does not reload detail when no category is selected", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          categories: [],
+        }),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const NoSelectionHarness = () => {
+      const { reloadDetail } = useCatalog();
+
+      return (
+        <div>
+          <button type="button" onClick={() => reloadDetail()}>
+            Try reload
+          </button>
+        </div>
+      );
+    };
+
+    render(<NoSelectionHarness />);
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(rootCategoriesUrl);
+    });
+
+    const callsBefore = fetchMock.mock.calls.length;
+
+    await userEvent.click(screen.getByRole("button", { name: "Try reload" }));
+
+    // Should not make additional calls since no category is selected
+    expect(fetchMock.mock.calls.length).toBe(callsBefore);
   });
 });

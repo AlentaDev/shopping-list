@@ -18,21 +18,27 @@ type CategoryDetailPayload = {
 };
 
 export const adaptRootCategoriesResponse = (
-  payload: RootCategoriesPayload
-): GetRootCategoriesResponse => ({
-  categories: Array.isArray(payload.categories) ? payload.categories : [],
-});
+  payload: unknown
+): GetRootCategoriesResponse => {
+  const data = payload as RootCategoriesPayload;
+  return {
+    categories: Array.isArray(data.categories) ? data.categories : [],
+  };
+};
 
 export const adaptCategoryDetailResponse = (
-  payload: CategoryDetailPayload
-): CatalogCategoryDetail => ({
-  categoryName: payload.name ?? "",
-  sections: Array.isArray(payload.subcategories)
-    ? payload.subcategories.map((subcategory) => ({
-        subcategoryName: subcategory.name ?? "",
-        products: Array.isArray(subcategory.products)
-          ? subcategory.products
-          : [],
-      }))
-    : [],
-});
+  payload: unknown
+): CatalogCategoryDetail => {
+  const data = payload as CategoryDetailPayload;
+  return {
+    categoryName: data.name ?? "",
+    sections: Array.isArray(data.subcategories)
+      ? data.subcategories.map((subcategory) => ({
+          subcategoryName: subcategory.name ?? "",
+          products: Array.isArray(subcategory.products)
+            ? subcategory.products
+            : [],
+        }))
+      : [],
+  };
+};

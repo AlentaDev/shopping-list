@@ -1,9 +1,12 @@
 import { useState } from "react";
 import Catalog from "./features/catalog/Catalog";
+import ShoppingList from "./features/shopping-list/ShoppingList";
+import { useList } from "./context/useList";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [itemsCount, setItemsCount] = useState(0);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const { linesCount } = useList();
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -15,7 +18,12 @@ const App = () => {
                 La lista de la compra
               </p>
             </div>
-            <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCartOpen(true)}
+              aria-label="Abrir carrito"
+              className="relative cursor-pointer"
+            >
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
@@ -30,12 +38,12 @@ const App = () => {
                 <circle cx="10" cy="20" r="1.5" />
                 <circle cx="18" cy="20" r="1.5" />
               </svg>
-              {itemsCount > 0 ? (
+              {linesCount > 0 ? (
                 <span className="absolute -right-2 -top-2 flex h-5 w-6 items-center justify-center rounded-full bg-emerald-500 text-[11px] font-semibold tabular-nums text-white">
-                  {itemsCount}
+                  {linesCount}
                 </span>
               ) : null}
-            </div>
+            </button>
           </div>
           <div className="mt-4 flex w-full items-center gap-2 sm:mt-0 sm:w-auto sm:justify-end">
             <button
@@ -61,11 +69,12 @@ const App = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <Catalog
-          isCategoriesOpen={isCategoriesOpen}
-          onItemsCountChange={setItemsCount}
-        />
+        <Catalog isCategoriesOpen={isCategoriesOpen} />
       </main>
+      <ShoppingList
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+      />
     </div>
   );
 };
