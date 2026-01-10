@@ -3,6 +3,7 @@ import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
 import { useList } from "../../context/useList";
+import type { ShoppingListItem } from "./types";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -13,10 +14,7 @@ type ViewMode = "list" | "save";
 
 const DEFAULT_LIST_TITLE = "Tu lista";
 
-const ShoppingList = ({
-  isOpen,
-  onClose,
-}: ShoppingListProps) => {
+const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const { items, total, updateQuantity, removeItem } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [listName, setListName] = useState("");
@@ -36,14 +34,12 @@ const ShoppingList = ({
     [items]
   );
   const handleIncrement = (id: string) => {
-    const currentQuantity =
-      items.find((item) => item.id === id)?.quantity ?? 1;
+    const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;
     updateQuantity(id, currentQuantity + 1);
   };
 
   const handleDecrement = (id: string) => {
-    const currentQuantity =
-      items.find((item) => item.id === id)?.quantity ?? 1;
+    const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;
     updateQuantity(id, currentQuantity - 1);
   };
 
@@ -81,7 +77,7 @@ const ShoppingList = ({
             </div>
           ) : (
             <ItemList
-              items={sortedItems}
+              items={sortedItems as ShoppingListItem[]}
               onIncrement={handleIncrement}
               onDecrement={handleDecrement}
               onRemove={handleRemove}

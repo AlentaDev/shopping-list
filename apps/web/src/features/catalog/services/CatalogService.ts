@@ -1,7 +1,4 @@
-import type {
-  CatalogCategoryDetail,
-  GetRootCategoriesResponse,
-} from "./types";
+import type { CatalogCategoryDetail, GetRootCategoriesResponse } from "./types";
 import {
   adaptCategoryDetailResponse,
   adaptRootCategoriesResponse,
@@ -20,9 +17,9 @@ export const getRootCategories = async (
     throw new Error(options.errorMessage ?? "Unable to load categories.");
   }
 
-  const payload = (await response.json()) as unknown;
+  const payload = await response.json();
 
-  return adaptRootCategoriesResponse(payload as { categories?: unknown });
+  return adaptRootCategoriesResponse(payload);
 };
 
 export const getCategoryDetail = async (
@@ -35,9 +32,7 @@ export const getCategoryDetail = async (
     throw new Error(options.errorMessage ?? "Unable to load category detail.");
   }
 
-  const payload = (await response.json()) as unknown;
+  const payload = await response.json();
 
-  return adaptCategoryDetailResponse(
-    payload as { name?: string; subcategories?: unknown }
-  );
+  return adaptCategoryDetailResponse(payload);
 };
