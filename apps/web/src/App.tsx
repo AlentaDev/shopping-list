@@ -2,6 +2,7 @@ import { useState } from "react";
 import Catalog from "./features/catalog/Catalog";
 import ShoppingList from "./features/shopping-list/ShoppingList";
 import { useList } from "./context/useList";
+import Toast from "./shared/components/toast/Toast";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -75,6 +76,7 @@ const App = () => {
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
       />
+      <Toast />
     </div>
   );
 };

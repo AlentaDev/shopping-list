@@ -4,6 +4,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import Catalog from "./Catalog";
 import { ListProvider } from "../../context/ListContext";
+import { ToastProvider } from "../../context/ToastContext";
 
 vi.mock("./services/useCatalog", () => ({
   useCatalog: () => ({
@@ -59,9 +60,11 @@ vi.mock("./services/useCatalog", () => ({
 describe("Catalog", () => {
   it("renders the category title with all subcategories and products", () => {
     render(
-      <ListProvider>
-        <Catalog />
-      </ListProvider>
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+        </ListProvider>
+      </ToastProvider>
     );
 
     expect(

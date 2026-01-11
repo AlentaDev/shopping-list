@@ -81,7 +81,7 @@ Código **auto-validable por TypeScript** o configuración.
 
 ### Aplicación práctica
 
-1. **No añadir tests sin consultar**: La estrategia prioriza lo crítico
+1. La estrategia prioriza lo crítico
 2. **Coverage global target**: 80% (configurado en Vitest)
 3. **Validación manual CORE**: Revisar que servicios/contextos tengan 100%
 4. **Excluir de coverage**: infrastructure/, providers/, main.tsx, index.ts
