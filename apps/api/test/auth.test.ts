@@ -9,20 +9,11 @@ describe("auth endpoints", () => {
     postalCode: "12345",
   };
 
-  function getCookie(cookies: string[] | string | undefined, name: string) {
-    const cookieList = typeof cookies === "string" ? [cookies] : cookies;
-    const cookie = cookieList?.find((item) => item.startsWith(`${name}=`));
-    if (!cookie) {
-      throw new Error(`Missing ${name} cookie`);
-    }
-    return cookie;
-  }
-
-  it("POST /api/auth/register returns 201, user and sets auth cookies", async () => {
+  it("POST /api/auth/signup returns 201 and user", async () => {
     const app = createApp();
 
     const response = await request(app)
-      .post("/api/auth/register")
+      .post("/api/auth/signup")
       .send(validUser);
 
     expect(response.status).toBe(201);
@@ -34,19 +25,6 @@ describe("auth endpoints", () => {
     });
     expect(response.body).not.toHaveProperty("password");
     expect(response.body).not.toHaveProperty("passwordHash");
-    const accessCookie = getCookie(response.headers["set-cookie"], "accessToken");
-    const refreshCookie = getCookie(
-      response.headers["set-cookie"],
-      "refreshToken"
-    );
-    expect(accessCookie).toContain("accessToken=");
-    expect(accessCookie).toContain("HttpOnly");
-    expect(accessCookie).toContain("SameSite=Lax");
-    expect(accessCookie).toContain("Max-Age=900");
-    expect(refreshCookie).toContain("refreshToken=");
-    expect(refreshCookie).toContain("HttpOnly");
-    expect(refreshCookie).toContain("SameSite=Lax");
-    expect(refreshCookie).toContain("Max-Age=604800");
   });
 
   it.each([
@@ -74,11 +52,11 @@ describe("auth endpoints", () => {
       password: "secret123",
       postalCode: "",
     },
-  ])("POST /api/auth/register returns 400 for invalid input", async (payload) => {
+  ])("POST /api/auth/signup returns 400 for invalid input", async (payload) => {
     const app = createApp();
 
     const response = await request(app)
-      .post("/api/auth/register")
+      .post("/api/auth/signup")
       .send(payload);
 
     expect(response.status).toBe(400);
@@ -88,22 +66,22 @@ describe("auth endpoints", () => {
     });
   });
 
-  it("POST /api/auth/register returns 409 for duplicate email", async () => {
+  it("POST /api/auth/signup returns 409 for duplicate email", async () => {
     const app = createApp();
 
-    await request(app).post("/api/auth/register").send(validUser);
+    await request(app).post("/api/auth/signup").send(validUser);
     const response = await request(app)
-      .post("/api/auth/register")
+      .post("/api/auth/signup")
       .send(validUser);
 
     expect(response.status).toBe(409);
     expect(response.body).toEqual({ error: "duplicate_email" });
   });
 
-  it("POST /api/auth/login returns 200, user and sets auth cookies", async () => {
+  it("POST /api/auth/login returns 200, user and sets session cookie", async () => {
     const app = createApp();
 
-    await request(app).post("/api/auth/register").send(validUser);
+    await request(app).post("/api/auth/signup").send(validUser);
     const response = await request(app)
       .post("/api/auth/login")
       .send({ email: validUser.email, password: validUser.password });
@@ -115,78 +93,22 @@ describe("auth endpoints", () => {
       email: validUser.email,
       postalCode: validUser.postalCode,
     });
-    const accessCookie = getCookie(response.headers["set-cookie"], "accessToken");
-    const refreshCookie = getCookie(
-      response.headers["set-cookie"],
-      "refreshToken"
-    );
-    expect(accessCookie).toContain("accessToken=");
-    expect(accessCookie).toContain("HttpOnly");
-    expect(accessCookie).toContain("SameSite=Lax");
-    expect(accessCookie).toContain("Max-Age=900");
-    expect(refreshCookie).toContain("refreshToken=");
-    expect(refreshCookie).toContain("HttpOnly");
-    expect(refreshCookie).toContain("SameSite=Lax");
-    expect(refreshCookie).toContain("Max-Age=604800");
-  });
-
-  it("POST /api/auth/login returns 400 for invalid input", async () => {
-    const app = createApp();
-
-    const response = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "not-an-email", password: "" });
-
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({
-      error: "validation_error",
-      details: expect.any(Array),
-    });
+    const setCookie = response.headers["set-cookie"]?.[0];
+    expect(setCookie).toContain("session=");
+    expect(setCookie).toContain("HttpOnly");
+    expect(setCookie).toContain("SameSite=Lax");
   });
 
   it("POST /api/auth/login returns 401 for invalid credentials", async () => {
     const app = createApp();
 
-    await request(app).post("/api/auth/register").send(validUser);
+    await request(app).post("/api/auth/signup").send(validUser);
     const response = await request(app)
       .post("/api/auth/login")
       .send({ email: validUser.email, password: "wrong" });
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "invalid_credentials" });
-  });
-
-  it("POST /api/auth/refresh returns 401 without refresh token", async () => {
-    const app = createApp();
-
-    const response = await request(app).post("/api/auth/refresh");
-
-    expect(response.status).toBe(401);
-    expect(response.body).toEqual({ error: "not_authenticated" });
-  });
-
-  it("POST /api/auth/refresh sets new access token", async () => {
-    const app = createApp();
-
-    await request(app).post("/api/auth/register").send(validUser);
-    const loginResponse = await request(app)
-      .post("/api/auth/login")
-      .send({ email: validUser.email, password: validUser.password });
-    const refreshCookie = getCookie(
-      loginResponse.headers["set-cookie"],
-      "refreshToken"
-    );
-
-    const response = await request(app)
-      .post("/api/auth/refresh")
-      .set("Cookie", refreshCookie as string);
-
-    expect(response.status).toBe(204);
-    const accessCookie = getCookie(response.headers["set-cookie"], "accessToken");
-    expect(accessCookie).toContain("accessToken=");
-    expect(accessCookie).toContain("HttpOnly");
-    expect(accessCookie).toContain("SameSite=Lax");
-    expect(accessCookie).toContain("Max-Age=900");
   });
 
   it("GET /api/auth/me returns 401 without session", async () => {
@@ -201,11 +123,11 @@ describe("auth endpoints", () => {
   it("GET /api/auth/me returns 200 with session", async () => {
     const app = createApp();
 
-    await request(app).post("/api/auth/register").send(validUser);
+    await request(app).post("/api/auth/signup").send(validUser);
     const loginResponse = await request(app)
       .post("/api/auth/login")
       .send({ email: validUser.email, password: validUser.password });
-    const cookie = getCookie(loginResponse.headers["set-cookie"], "accessToken");
+    const cookie = loginResponse.headers["set-cookie"]?.[0];
 
     const response = await request(app)
       .get("/api/auth/me")
@@ -223,11 +145,11 @@ describe("auth endpoints", () => {
   it("POST /api/auth/logout clears session", async () => {
     const app = createApp();
 
-    await request(app).post("/api/auth/register").send(validUser);
+    await request(app).post("/api/auth/signup").send(validUser);
     const loginResponse = await request(app)
       .post("/api/auth/login")
       .send({ email: validUser.email, password: validUser.password });
-    const cookie = getCookie(loginResponse.headers["set-cookie"], "refreshToken");
+    const cookie = loginResponse.headers["set-cookie"]?.[0];
 
     const response = await request(app)
       .post("/api/auth/logout")
@@ -235,14 +157,8 @@ describe("auth endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ ok: true });
-    const accessCookie = getCookie(response.headers["set-cookie"], "accessToken");
-    const refreshCookie = getCookie(
-      response.headers["set-cookie"],
-      "refreshToken"
-    );
-    expect(accessCookie).toContain("accessToken=");
-    expect(accessCookie).toContain("Max-Age=0");
-    expect(refreshCookie).toContain("refreshToken=");
-    expect(refreshCookie).toContain("Max-Age=0");
+    const setCookie = response.headers["set-cookie"]?.[0];
+    expect(setCookie).toContain("session=");
+    expect(setCookie).toContain("Max-Age=0");
   });
 });
