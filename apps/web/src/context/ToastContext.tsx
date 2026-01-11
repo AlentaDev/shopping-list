@@ -9,6 +9,7 @@ import {
 import {
   ToastContext,
   type ToastContextType,
+  type ToastEntry,
   type ToastValue,
 } from "./ToastContextValue";
 
@@ -19,32 +20,45 @@ type ToastProviderProps = {
 };
 
 export function ToastProvider({ children }: ToastProviderProps) {
-  const [toast, setToast] = useState<ToastValue | null>(null);
-  const timerRef = useRef<number | null>(null);
+  const [toasts, setToasts] = useState<ToastEntry[]>([]);
+  const timersRef = useRef<Map<string, number>>(new Map());
+  const toastIdRef = useRef(0);
 
   const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
+    timersRef.current.forEach((timerId) => {
+      window.clearTimeout(timerId);
+    });
+    timersRef.current.clear();
+  }, []);
+
+  const clearToastTimer = useCallback((toastId: string) => {
+    const timerId = timersRef.current.get(toastId);
+    if (timerId) {
+      window.clearTimeout(timerId);
+      timersRef.current.delete(toastId);
     }
   }, []);
 
-  const showToast = useCallback(
-    (nextToast: ToastValue) => {
-      setToast(nextToast);
-      clearTimer();
-      timerRef.current = window.setTimeout(() => {
-        setToast(null);
-        timerRef.current = null;
-      }, AUTO_HIDE_MS);
+  const hideToast = useCallback(
+    (toastId: string) => {
+      setToasts((current) => current.filter((toast) => toast.id !== toastId));
+      clearToastTimer(toastId);
     },
-    [clearTimer]
+    [clearToastTimer]
   );
 
-  const hideToast = useCallback(() => {
-    setToast(null);
-    clearTimer();
-  }, [clearTimer]);
+  const showToast = useCallback(
+    (nextToast: ToastValue) => {
+      toastIdRef.current += 1;
+      const toastId = `toast-${toastIdRef.current}`;
+      setToasts((current) => [...current, { ...nextToast, id: toastId }]);
+      const timerId = window.setTimeout(() => {
+        hideToast(toastId);
+      }, AUTO_HIDE_MS);
+      timersRef.current.set(toastId, timerId);
+    },
+    [hideToast]
+  );
 
   useEffect(
     () => () => {
@@ -55,11 +69,11 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
   const value: ToastContextType = useMemo(
     () => ({
-      toast,
+      toasts,
       showToast,
       hideToast,
     }),
-    [toast, showToast, hideToast]
+    [toasts, showToast, hideToast]
   );
 
   return (

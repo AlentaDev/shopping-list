@@ -6,10 +6,14 @@ export type ToastValue = {
   thumbnail?: string | null;
 };
 
+export type ToastEntry = ToastValue & {
+  id: string;
+};
+
 export type ToastContextType = {
-  toast: ToastValue | null;
+  toasts: ToastEntry[];
   showToast: (toast: ToastValue) => void;
-  hideToast: () => void;
+  hideToast: (toastId: string) => void;
 };
 
 export const ToastContext = createContext<ToastContextType | undefined>(

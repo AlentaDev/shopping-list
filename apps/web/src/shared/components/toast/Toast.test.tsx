@@ -10,6 +10,7 @@ import Toast from "./Toast";
 const TOAST_MESSAGE = "Producto añadido";
 const PRODUCT_NAME = "Uvas blancas";
 const PRODUCT_IMAGE = "https://example.com/uva.jpg";
+const SECOND_PRODUCT_NAME = "Fresas";
 
 const TriggerToast = () => {
   const { showToast } = useToast();
@@ -19,6 +20,11 @@ const TriggerToast = () => {
       message: TOAST_MESSAGE,
       productName: PRODUCT_NAME,
       thumbnail: PRODUCT_IMAGE,
+    });
+    showToast({
+      message: TOAST_MESSAGE,
+      productName: SECOND_PRODUCT_NAME,
+      thumbnail: null,
     });
   }, [showToast]);
 
@@ -34,11 +40,13 @@ describe("Toast", () => {
       </ToastProvider>
     );
 
-    expect(screen.getByText(TOAST_MESSAGE)).toBeInTheDocument();
+    expect(screen.getAllByText(TOAST_MESSAGE)).toHaveLength(2);
     expect(screen.getByText(PRODUCT_NAME)).toBeInTheDocument();
+    expect(screen.getByText(SECOND_PRODUCT_NAME)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: PRODUCT_NAME })).toHaveAttribute(
       "src",
       PRODUCT_IMAGE
     );
+    expect(screen.getByTestId("toast-stack")).toHaveClass("flex-col-reverse");
   });
 });
