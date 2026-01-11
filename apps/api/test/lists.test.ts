@@ -23,7 +23,7 @@ const defaultUser: TestUser = {
 async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
   await request(app).post("/api/auth/signup").send(user);
   const response = await request(app)
-    .post("/api/auth/login")
+    .post("/api/auth/login-session")
     .send({ email: user.email, password: user.password });
 
   return response.headers["set-cookie"]?.[0] as string;
