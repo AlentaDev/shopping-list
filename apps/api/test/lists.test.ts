@@ -16,14 +16,14 @@ type TestUser = {
 const defaultUser: TestUser = {
   name: "Alice",
   email: "alice@example.com",
-  password: "secret123",
+  password: "Password12!A",
   postalCode: "12345",
 };
 
 async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
   await request(app).post("/api/auth/signup").send(user);
   const response = await request(app)
-    .post("/api/auth/login")
+    .post("/api/auth/login-session")
     .send({ email: user.email, password: user.password });
 
   return response.headers["set-cookie"]?.[0] as string;
@@ -166,7 +166,7 @@ describe("lists endpoints", () => {
     const otherCookie = await loginUser(app, {
       name: "Bob",
       email: "bob@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "54321",
     });
 
@@ -321,7 +321,7 @@ describe("lists endpoints", () => {
     const otherCookie = await loginUser(app, {
       name: "Bob",
       email: "bob@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "54321",
     });
 
