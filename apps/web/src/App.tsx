@@ -4,70 +4,11 @@ import ShoppingList from "./features/shopping-list/ShoppingList";
 import { useList } from "./context/useList";
 import Toast from "./shared/components/toast/Toast";
 import { UI_TEXT } from "./shared/constants/ui";
-import { LoginForm, RegisterForm, login, register } from "./features/auth";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [authErrorMessage, setAuthErrorMessage] = useState<string | null>(null);
-  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const { linesCount } = useList();
-  const pathname = window.location.pathname;
-  const isLoginRoute = pathname === "/auth/login";
-  const isRegisterRoute = pathname === "/auth/register";
-
-  const handleLoginSubmit = async (values: {
-    email: string;
-    password: string;
-  }) => {
-    setIsAuthSubmitting(true);
-    setAuthErrorMessage(null);
-
-    try {
-      await login(values);
-    } catch {
-      setAuthErrorMessage(UI_TEXT.auth.LOGIN_ERROR_MESSAGE);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
-
-  const handleRegisterSubmit = async (values: {
-    name: string;
-    email: string;
-    password: string;
-  }) => {
-    setIsAuthSubmitting(true);
-    setAuthErrorMessage(null);
-
-    try {
-      await register(values);
-    } catch {
-      setAuthErrorMessage(UI_TEXT.auth.REGISTER_ERROR_MESSAGE);
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
-
-  let mainContent = <Catalog isCategoriesOpen={isCategoriesOpen} />;
-
-  if (isLoginRoute) {
-    mainContent = (
-      <LoginForm
-        onSubmit={handleLoginSubmit}
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authErrorMessage}
-      />
-    );
-  } else if (isRegisterRoute) {
-    mainContent = (
-      <RegisterForm
-        onSubmit={handleRegisterSubmit}
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authErrorMessage}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -119,23 +60,19 @@ const App = () => {
             >
               {UI_TEXT.APP.CATEGORIES_LABEL}
             </button>
-            <a
-              href="/auth/login"
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
+            <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
               {UI_TEXT.APP.LOGIN_LABEL}
-            </a>
-            <a
-              href="/auth/register"
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
+            </button>
+            <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
               {UI_TEXT.APP.REGISTER_LABEL}
-            </a>
+            </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">{mainContent}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <Catalog isCategoriesOpen={isCategoriesOpen} />
+      </main>
       <ShoppingList
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
