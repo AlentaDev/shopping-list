@@ -16,7 +16,7 @@ type TestUser = {
 const defaultUser: TestUser = {
   name: "Alice",
   email: "alice@example.com",
-  password: "secret123",
+  password: "Password12!A",
   postalCode: "12345",
 };
 
@@ -166,7 +166,7 @@ describe("lists endpoints", () => {
     const otherCookie = await loginUser(app, {
       name: "Bob",
       email: "bob@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "54321",
     });
 
@@ -321,7 +321,7 @@ describe("lists endpoints", () => {
     const otherCookie = await loginUser(app, {
       name: "Bob",
       email: "bob@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "54321",
     });
 

@@ -5,7 +5,7 @@ describe("auth endpoints", () => {
   const validUser = {
     name: "Alice",
     email: "alice@example.com",
-    password: "secret123",
+    password: "Password12!A",
     postalCode: "12345",
   };
 
@@ -31,13 +31,13 @@ describe("auth endpoints", () => {
     {
       name: "Al",
       email: "alice@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "12345",
     },
     {
       name: "Alice",
       email: "not-an-email",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "12345",
     },
     {
@@ -49,7 +49,7 @@ describe("auth endpoints", () => {
     {
       name: "Alice",
       email: "alice@example.com",
-      password: "secret123",
+      password: "Password12!A",
       postalCode: "",
     },
   ])("POST /api/auth/signup returns 400 for invalid input", async (payload) => {
