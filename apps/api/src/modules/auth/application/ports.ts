@@ -12,4 +12,14 @@ export type PasswordHasher = {
   compare(value: string, hashedValue: string): Promise<boolean>;
 };
 
+export type RefreshTokenRepository = {
+  save(token: string, userId: string): Promise<void>;
+  findUserIdByToken(token: string): Promise<string | null>;
+  delete(token: string): Promise<void>;
+};
+
+export type TokenGenerator = {
+  generate(): string;
+};
+
 export type { SessionStore };
