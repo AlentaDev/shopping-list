@@ -1,4 +1,5 @@
 import { User } from "../domain/user";
+import { RefreshTokenRecord } from "../domain/refreshToken";
 import type { SessionStore } from "../../../shared/auth/sessionStore";
 
 export type UserRepository = {
@@ -12,14 +13,10 @@ export type PasswordHasher = {
   compare(value: string, hashedValue: string): Promise<boolean>;
 };
 
-export type RefreshTokenRepository = {
-  save(token: string, userId: string): Promise<void>;
-  findUserIdByToken(token: string): Promise<string | null>;
-  delete(token: string): Promise<void>;
-};
-
-export type TokenGenerator = {
-  generate(): string;
+export type RefreshTokenStore = {
+  create(userId: string, expiresAt: Date): Promise<RefreshTokenRecord>;
+  find(token: string): Promise<RefreshTokenRecord | null>;
+  revoke(token: string): Promise<void>;
 };
 
 export type { SessionStore };
