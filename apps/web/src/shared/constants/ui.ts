@@ -10,23 +10,6 @@ export const UI_TEXT = {
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
   },
-  auth: {
-    LOGIN_TITLE: "Inicia sesión",
-    LOGIN_SUBTITLE: "Vuelve a tu lista guardada en segundos.",
-    LOGIN_EMAIL_LABEL: "Correo electrónico",
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- UI label
-    LOGIN_PASSWORD_LABEL: "Contraseña",
-    LOGIN_SUBMIT_LABEL: "Entrar",
-    LOGIN_ERROR_MESSAGE: "No se pudo iniciar sesión.",
-    REGISTER_TITLE: "Crea tu cuenta",
-    REGISTER_SUBTITLE: "Guarda tu lista y compra más rápido.",
-    REGISTER_NAME_LABEL: "Nombre",
-    REGISTER_EMAIL_LABEL: "Correo electrónico",
-    // eslint-disable-next-line sonarjs/no-hardcoded-passwords -- UI label
-    REGISTER_PASSWORD_LABEL: "Contraseña",
-    REGISTER_SUBMIT_LABEL: "Crear cuenta",
-    REGISTER_ERROR_MESSAGE: "No se pudo crear la cuenta.",
-  },
   CATALOG: {
     TITLE: "Catálogo",
     LOAD_PRODUCTS_ERROR_MESSAGE: "No se pudieron cargar los productos.",
