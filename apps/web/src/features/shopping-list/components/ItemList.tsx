@@ -1,5 +1,6 @@
 import type { ShoppingListItem } from "../types";
 import { formatUnitPrice } from "../../../shared/utils/formatPrice";
+import { UI_TEXT } from "../../../shared/constants/ui";
 
 type ItemListProps = {
   items: ShoppingListItem[];
@@ -38,7 +39,7 @@ const ItemList = ({
             <p className="text-xs text-slate-500">
               {item.price !== null && item.price !== undefined
                 ? formatUnitPrice(item.price, "unidad")
-                : "Precio no disponible"}
+                : UI_TEXT.ITEM_LIST.PRICE_UNAVAILABLE_MESSAGE}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -51,7 +52,7 @@ const ItemList = ({
                   ? "cursor-not-allowed border-slate-200 text-slate-300"
                   : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
               }`}
-              aria-label={`Disminuir cantidad de ${item.name}`}
+              aria-label={`${UI_TEXT.ITEM_LIST.DECREASE_QUANTITY_LABEL} ${item.name}`}
             >
               -
             </button>
@@ -65,7 +66,7 @@ const ItemList = ({
               type="button"
               onClick={() => onIncrement(item.id)}
               className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-              aria-label={`Incrementar cantidad de ${item.name}`}
+              aria-label={`${UI_TEXT.ITEM_LIST.INCREASE_QUANTITY_LABEL} ${item.name}`}
             >
               +
             </button>
@@ -73,7 +74,7 @@ const ItemList = ({
           <button
             type="button"
             onClick={() => onRemove(item.id)}
-            aria-label={`Eliminar ${item.name}`}
+            aria-label={`${UI_TEXT.ITEM_LIST.REMOVE_ITEM_LABEL} ${item.name}`}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-slate-400 transition hover:border-slate-200 hover:text-slate-600"
           >
             <svg

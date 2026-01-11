@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useId, useRef } from "react";
+import { UI_TEXT } from "../../../shared/constants/ui";
 
 type ListModalProps = {
   isOpen: boolean;
@@ -53,7 +54,7 @@ const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
         data-testid="list-modal-backdrop"
         className="fixed inset-0 bg-black/40"
         onClick={onClose}
-        aria-label="Cerrar modal"
+        aria-label={UI_TEXT.LIST_MODAL.CLOSE_MODAL_LABEL}
       />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
@@ -64,7 +65,7 @@ const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
         >
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 id={titleId} className="text-xl font-semibold text-slate-900">
-              {title ?? "Tu lista"}
+              {title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE}
             </h2>
           </div>
           <div className="px-6 py-4">{children}</div>
@@ -74,7 +75,7 @@ const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
               onClick={onClose}
               className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
             >
-              Cerrar
+              {UI_TEXT.LIST_MODAL.CLOSE_LABEL}
             </button>
           </div>
         </div>

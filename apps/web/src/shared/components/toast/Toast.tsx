@@ -1,4 +1,5 @@
 import { useToast } from "../../../context/useToast";
+import { UI_TEXT } from "../../constants/ui";
 
 const Toast = () => {
   const { toasts, hideToast } = useToast();
@@ -27,7 +28,7 @@ const Toast = () => {
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-400">
-                  Sin imagen
+                  {UI_TEXT.TOAST.NO_IMAGE_LABEL}
                 </div>
               )}
             </div>
@@ -42,7 +43,7 @@ const Toast = () => {
             <button
               type="button"
               onClick={() => hideToast(toast.id)}
-              aria-label="Cerrar notificación"
+              aria-label={UI_TEXT.TOAST.CLOSE_NOTIFICATION_LABEL}
               className="text-slate-400 transition hover:text-slate-600"
             >
               <svg
