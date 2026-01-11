@@ -22,6 +22,7 @@ export function createAuthModule() {
     loginUser,
     getCurrentUser,
     logoutUser,
+    sessionStore,
   });
 
   return { router, sessionStore };

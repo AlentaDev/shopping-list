@@ -2,14 +2,17 @@ import type { Request, RequestHandler } from "express";
 import { AppError } from "../errors/appError";
 import type { SessionStore } from "../auth/sessionStore";
 
-const SESSION_COOKIE_NAME = "session";
+const ACCESS_TOKEN_COOKIE_NAME = "accessToken";
 
 export type AuthenticatedRequest = Request & { userId: string };
 
 export function requireAuth(sessionStore: SessionStore): RequestHandler {
   return async (req, _res, next) => {
     try {
-      const sessionId = getSessionIdFromRequest(req.headers.cookie);
+      const sessionId = getCookieFromRequest(
+        req.headers.cookie,
+        ACCESS_TOKEN_COOKIE_NAME
+      );
       if (!sessionId) {
         throw new AppError(401, "not_authenticated", "Not authenticated");
       }
@@ -27,7 +30,10 @@ export function requireAuth(sessionStore: SessionStore): RequestHandler {
   };
 }
 
-function getSessionIdFromRequest(cookieHeader: string | undefined): string | null {
+function getCookieFromRequest(
+  cookieHeader: string | undefined,
+  cookieName: string
+): string | null {
   if (!cookieHeader) {
     return null;
   }
@@ -35,7 +41,7 @@ function getSessionIdFromRequest(cookieHeader: string | undefined): string | nul
   const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
   for (const cookie of cookies) {
     const [name, ...rest] = cookie.split("=");
-    if (name === SESSION_COOKIE_NAME) {
+    if (name === cookieName) {
       return rest.join("=") || null;
     }
   }
