@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "../../context/useList";
+import { useToast } from "../../context/useToast";
 import { useCatalog } from "./services/useCatalog";
 
 const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
@@ -50,6 +51,7 @@ const Catalog = ({
   onItemsCountChange,
 }: CatalogProps) => {
   const { addItem } = useList();
+  const { showToast } = useToast();
   const {
     categoriesStatus,
     categoriesError,
@@ -154,7 +156,7 @@ const Catalog = ({
                     subcategoryName={section.subcategoryName}
                     products={section.products}
                     gridClassName={getGridClasses(isCategoriesOpen)}
-                    onAddProduct={(product) =>
+                    onAddProduct={(product) => {
                       addItem({
                         id: product.id,
                         name: product.name,
@@ -162,8 +164,13 @@ const Catalog = ({
                         thumbnail: product.thumbnail,
                         price: product.price,
                         quantity: 1,
-                      })
-                    }
+                      });
+                      showToast({
+                        message: "Añadido a la lista",
+                        productName: product.name,
+                        thumbnail: product.thumbnail,
+                      });
+                    }}
                   />
                 ))}
               </div>

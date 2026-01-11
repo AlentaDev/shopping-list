@@ -1,0 +1,44 @@
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { useEffect } from "react";
+import { ToastProvider } from "../../../context/ToastContext";
+import { useToast } from "../../../context/useToast";
+import Toast from "./Toast";
+
+const TOAST_MESSAGE = "Producto añadido";
+const PRODUCT_NAME = "Uvas blancas";
+const PRODUCT_IMAGE = "https://example.com/uva.jpg";
+
+const TriggerToast = () => {
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    showToast({
+      message: TOAST_MESSAGE,
+      productName: PRODUCT_NAME,
+      thumbnail: PRODUCT_IMAGE,
+    });
+  }, [showToast]);
+
+  return null;
+};
+
+describe("Toast", () => {
+  it("renders the product photo and message", () => {
+    render(
+      <ToastProvider>
+        <TriggerToast />
+        <Toast />
+      </ToastProvider>
+    );
+
+    expect(screen.getByText(TOAST_MESSAGE)).toBeInTheDocument();
+    expect(screen.getByText(PRODUCT_NAME)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: PRODUCT_NAME })).toHaveAttribute(
+      "src",
+      PRODUCT_IMAGE
+    );
+  });
+});
