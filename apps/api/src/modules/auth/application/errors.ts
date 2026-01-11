@@ -17,3 +17,9 @@ export class NotAuthenticatedError extends AppError {
     super(401, "not_authenticated", "Not authenticated");
   }
 }
+
+export class InvalidRefreshTokenError extends AppError {
+  constructor() {
+    super(401, "invalid_refresh_token", "Invalid refresh token");
+  }
+}
