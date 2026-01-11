@@ -61,15 +61,20 @@ function mapCategoryDetail(
 }
 
 function mapProduct(product: MercadonaCategoryProduct): CatalogProductSummary {
+  const priceInstructions = product.price_instructions;
+  const unitPrice = Number(priceInstructions.unit_price);
+  const bulkPrice = Number(priceInstructions.bulk_price);
+  const price = product.packaging === "Granel" ? bulkPrice : unitPrice;
+
   return {
     id: String(product.id),
     name: product.display_name,
     thumbnail: product.thumbnail ?? null,
     packaging: product.packaging ?? null,
-    price: Number(product.price_instructions.unit_price),
-    unitSize: product.price_instructions.unit_size ?? null,
-    unitFormat: product.price_instructions.size_format ?? null,
-    unitPrice: Number(product.price_instructions.bulk_price),
-    isApproxSize: Boolean(product.price_instructions.approx_size),
+    price,
+    unitSize: priceInstructions.unit_size ?? null,
+    unitFormat: priceInstructions.size_format ?? null,
+    unitPrice: bulkPrice,
+    isApproxSize: Boolean(priceInstructions.approx_size),
   };
 }
