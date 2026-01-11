@@ -2,6 +2,7 @@
  * UI Text Strings - Centralized UI messages
  * Extracted to avoid duplicated strings throughout the application
  */
+/* eslint-disable sonarjs/no-hardcoded-passwords */
 export const UI_TEXT = {
   APP: {
     TITLE: "La lista de la compra",
@@ -9,6 +10,32 @@ export const UI_TEXT = {
     CATEGORIES_LABEL: "Categorías",
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
+  },
+  AUTH: {
+    BACK_TO_HOME: "Volver al catálogo",
+    ERROR_MESSAGE: "No se pudo completar la autenticación.",
+    LOGIN: {
+      TITLE: "Iniciar sesión",
+      SUBTITLE: "Accede para gestionar tu lista",
+      EMAIL_LABEL: "Email",
+      EMAIL_PLACEHOLDER: "tu@email.com",
+      PASSWORD_LABEL: "Contraseña",
+      PASSWORD_PLACEHOLDER: "Tu contraseña",
+      SUBMIT_LABEL: "Entrar",
+    },
+    REGISTER: {
+      TITLE: "Crear cuenta",
+      SUBTITLE: "Empieza a organizar tu compra",
+      NAME_LABEL: "Nombre",
+      NAME_PLACEHOLDER: "Tu nombre",
+      EMAIL_LABEL: "Email",
+      EMAIL_PLACEHOLDER: "tu@email.com",
+      PASSWORD_LABEL: "Contraseña",
+      PASSWORD_PLACEHOLDER: "Crea una contraseña segura",
+      POSTAL_CODE_LABEL: "Código postal",
+      POSTAL_CODE_PLACEHOLDER: "Ej. 28001",
+      SUBMIT_LABEL: "Registrarme",
+    },
   },
   CATALOG: {
     TITLE: "Catálogo",
