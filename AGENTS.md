@@ -20,6 +20,7 @@ Este documento actúa como **contrato obligatorio** para cualquier cambio.
 - No introducir librerías nuevas sin justificarlo y pedir confirmación
 - No cambiar la arquitectura sin pedir confirmación explícita
 - Priorizar soluciones simples y explícitas
+- En UI, usar `UI_TEXT` con sub-objetos por componente/feature para textos centralizados
 - Evitar abstracciones prematuras
 - Si una decisión no está documentada, **preguntar antes de implementar**
 - Evitar refactors masivos: no mover/renombrar más de ~10 archivos por iteración sin confirmación

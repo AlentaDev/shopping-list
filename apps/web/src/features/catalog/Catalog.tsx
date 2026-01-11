@@ -4,8 +4,10 @@ import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "../../context/useList";
 import { useToast } from "../../context/useToast";
 import { useCatalog } from "./services/useCatalog";
+import { UI_TEXT } from "../../shared/constants/ui";
+import { FETCH_STATUS } from "../../shared/constants/appState";
 
-const ITEMS_ERROR_MESSAGE = "No se pudieron cargar los productos.";
+const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 
 const getGridClasses = (isCategoriesOpen: boolean) =>
   isCategoriesOpen
@@ -91,9 +93,9 @@ const Catalog = ({
   };
 
   const categoriesEmpty =
-    categoriesStatus === "success" && categories.length === 0;
+    categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
   const itemsEmpty =
-    detailStatus === "success" && !hasItems && !categoriesEmpty;
+    detailStatus === FETCH_STATUS.SUCCESS && !hasItems && !categoriesEmpty;
 
   return (
     <>
@@ -110,7 +112,7 @@ const Catalog = ({
               categories={categories}
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={handleSelectCategory}
-              loadingCategories={categoriesStatus === "loading"}
+              loadingCategories={categoriesStatus === FETCH_STATUS.LOADING}
               errorCategories={categoriesError}
               onRetryLoadCategories={reloadCategories}
             />
@@ -122,18 +124,20 @@ const Catalog = ({
         {isCategoriesOpen ? <div className="w-full sm:w-80 sm:shrink-0" /> : null}
         <section className="flex-1 space-y-6">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-            {categoryDetail?.categoryName || "Catálogo"}
+            {categoryDetail?.categoryName || UI_TEXT.CATALOG.TITLE}
           </h1>
-          {detailStatus === "loading" ? (
+          {detailStatus === FETCH_STATUS.LOADING ? (
             <div className="space-y-4">
-              <p className="text-sm text-slate-500">Cargando productos...</p>
+              <p className="text-sm text-slate-500">
+                {UI_TEXT.CATALOG.LOADING_PRODUCTS_MESSAGE}
+              </p>
               <ProductSkeletonGrid
                 count={skeletonCount}
                 isCategoriesOpen={isCategoriesOpen}
               />
             </div>
           ) : null}
-          {detailStatus === "error" ? (
+          {detailStatus === FETCH_STATUS.ERROR ? (
             <div className="space-y-3">
               <p className="text-sm text-slate-500">
                 {detailError ?? ITEMS_ERROR_MESSAGE}
@@ -143,11 +147,11 @@ const Catalog = ({
                 onClick={reloadDetail}
                 className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
               >
-                Reintentar
+                {UI_TEXT.CATALOG.RETRY_BUTTON_LABEL}
               </button>
             </div>
           ) : null}
-          {detailStatus === "success" && hasItems ? (
+          {detailStatus === FETCH_STATUS.SUCCESS && hasItems ? (
             <div className="flex justify-center transition-opacity duration-300">
               <div className="flex w-full flex-col gap-8">
                 {sections.map((section) => (
@@ -166,7 +170,7 @@ const Catalog = ({
                         quantity: 1,
                       });
                       showToast({
-                        message: "Añadido a la lista",
+                        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
                         productName: product.name,
                         thumbnail: product.thumbnail,
                       });
@@ -179,20 +183,20 @@ const Catalog = ({
           {itemsEmpty ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <p className="text-lg font-semibold text-slate-800">
-                No hay productos disponibles
+                {UI_TEXT.CATALOG.EMPTY_PRODUCTS_TITLE}
               </p>
               <p className="mt-2 text-sm text-slate-500">
-                Prueba a seleccionar otra categoría.
+                {UI_TEXT.CATALOG.EMPTY_PRODUCTS_SUBTITLE}
               </p>
             </div>
           ) : null}
           {categoriesEmpty ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <p className="text-lg font-semibold text-slate-800">
-                No hay categorías disponibles
+                {UI_TEXT.CATALOG.EMPTY_CATEGORIES_TITLE}
               </p>
               <p className="mt-2 text-sm text-slate-500">
-                Vuelve a intentarlo más tarde.
+                {UI_TEXT.CATALOG.EMPTY_CATEGORIES_SUBTITLE}
               </p>
             </div>
           ) : null}

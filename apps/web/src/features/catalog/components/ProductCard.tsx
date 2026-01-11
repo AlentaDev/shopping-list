@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { CatalogProductSummary } from "../services/types";
 import { formatPrice, formatUnitPrice } from "../../../shared/utils/formatPrice";
+import { UI_TEXT } from "../../../shared/constants/ui";
 
 type ProductCardProps = {
   product: CatalogProductSummary;
@@ -48,7 +49,7 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
-              Sin imagen
+              {UI_TEXT.PRODUCT_CARD.NO_IMAGE_LABEL}
             </div>
           )}
         </div>
@@ -70,7 +71,9 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
           onClick={handleAdd}
           disabled={isAdding}
           aria-label={
-            isAdding ? `Añadiendo ${product.name}` : `Añadir ${product.name}`
+            isAdding
+              ? `${UI_TEXT.PRODUCT_CARD.ADDING_LABEL} ${product.name}`
+              : `${UI_TEXT.PRODUCT_CARD.ADD_LABEL} ${product.name}`
           }
           className={`mt-4 flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition ${
             isAdding
@@ -84,7 +87,7 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
                 className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent"
                 aria-hidden="true"
               />
-              Añadiendo
+              {UI_TEXT.PRODUCT_CARD.ADDING_LABEL}
             </>
           ) : (
             <>
@@ -101,7 +104,7 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Añadir
+              {UI_TEXT.PRODUCT_CARD.ADD_LABEL}
             </>
           )}
         </button>

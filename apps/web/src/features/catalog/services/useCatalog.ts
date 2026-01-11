@@ -4,8 +4,13 @@ import type {
   CatalogCategoryNode,
 } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
+import { FETCH_STATUS } from "../../../shared/constants/appState";
 
-export type FetchStatus = "idle" | "loading" | "error" | "success";
+export type FetchStatus =
+  | typeof FETCH_STATUS.IDLE
+  | typeof FETCH_STATUS.LOADING
+  | typeof FETCH_STATUS.ERROR
+  | typeof FETCH_STATUS.SUCCESS;
 
 type CatalogState = {
   categoriesStatus: FetchStatus;
@@ -49,20 +54,24 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
 };
 
 export const useCatalog = (): UseCatalogResult => {
-  const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>("idle");
+  const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>(
+    FETCH_STATUS.IDLE
+  );
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
   );
-  const [detailStatus, setDetailStatus] = useState<FetchStatus>("idle");
+  const [detailStatus, setDetailStatus] = useState<FetchStatus>(
+    FETCH_STATUS.IDLE
+  );
   const [detailError, setDetailError] = useState<string | null>(null);
   const [categoryDetail, setCategoryDetail] = useState<CatalogCategoryDetail | null>(
     null
   );
 
   const loadCategories = useCallback(async () => {
-    setCategoriesStatus("loading");
+    setCategoriesStatus(FETCH_STATUS.LOADING);
     setCategoriesError(null);
 
     try {
@@ -74,17 +83,17 @@ export const useCatalog = (): UseCatalogResult => {
         : [];
 
       setCategories(nextCategories);
-      setCategoriesStatus("success");
+      setCategoriesStatus(FETCH_STATUS.SUCCESS);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : CATEGORIES_ERROR_MESSAGE;
       setCategoriesError(message);
-      setCategoriesStatus("error");
+      setCategoriesStatus(FETCH_STATUS.ERROR);
     }
   }, []);
 
   const loadDetail = useCallback(async (categoryId: string) => {
-    setDetailStatus("loading");
+    setDetailStatus(FETCH_STATUS.LOADING);
     setDetailError(null);
     setCategoryDetail(null);
 
@@ -94,12 +103,12 @@ export const useCatalog = (): UseCatalogResult => {
       });
 
       setCategoryDetail(data);
-      setDetailStatus("success");
+      setDetailStatus(FETCH_STATUS.SUCCESS);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : DETAIL_ERROR_MESSAGE;
       setDetailError(message);
-      setDetailStatus("error");
+      setDetailStatus(FETCH_STATUS.ERROR);
     }
   }, []);
 
@@ -109,7 +118,7 @@ export const useCatalog = (): UseCatalogResult => {
   }, [loadCategories]);
 
   useEffect(() => {
-    if (categoriesStatus !== "success" || selectedCategoryId) {
+    if (categoriesStatus !== FETCH_STATUS.SUCCESS || selectedCategoryId) {
       return;
     }
 
@@ -119,7 +128,7 @@ export const useCatalog = (): UseCatalogResult => {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedCategoryId(null);
       setCategoryDetail({ categoryName: "", sections: [] });
-      setDetailStatus("success");
+      setDetailStatus(FETCH_STATUS.SUCCESS);
       return;
     }
 

@@ -3,6 +3,7 @@ import Catalog from "./features/catalog/Catalog";
 import ShoppingList from "./features/shopping-list/ShoppingList";
 import { useList } from "./context/useList";
 import Toast from "./shared/components/toast/Toast";
+import { UI_TEXT } from "./shared/constants/ui";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -16,13 +17,13 @@ const App = () => {
           <div className="flex w-full items-center justify-between gap-3 sm:flex-1 sm:w-auto sm:justify-start">
             <div>
               <p className="text-xl font-semibold sm:text-2xl">
-                La lista de la compra
+                {UI_TEXT.APP.TITLE}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              aria-label="Abrir carrito"
+              aria-label={UI_TEXT.APP.CART_BUTTON_LABEL}
               className="relative cursor-pointer"
             >
               <svg
@@ -57,13 +58,13 @@ const App = () => {
               }`}
               aria-pressed={isCategoriesOpen}
             >
-              Categorías
+              {UI_TEXT.APP.CATEGORIES_LABEL}
             </button>
             <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
-              Login
+              {UI_TEXT.APP.LOGIN_LABEL}
             </button>
             <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
-              Registro
+              {UI_TEXT.APP.REGISTER_LABEL}
             </button>
           </div>
         </div>

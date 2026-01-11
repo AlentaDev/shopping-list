@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { CatalogCategoryNode } from "../services/types";
+import { UI_TEXT } from "../../../shared/constants/ui";
 
 type CategoriesPanelProps = {
   open: boolean;
@@ -11,7 +12,7 @@ type CategoriesPanelProps = {
   onRetryLoadCategories?: () => void;
 };
 
-const LOAD_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
+const LOAD_ERROR_MESSAGE = UI_TEXT.CATEGORIES_PANEL.LOAD_CATEGORIES_ERROR_MESSAGE;
 
 const CategoriesPanel = ({
   open,
@@ -67,11 +68,15 @@ const CategoriesPanel = ({
     <aside className="w-full">
       <div className="flex max-h-[calc(100vh-144px)] flex-col rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-900">Categorías</h2>
+          <h2 className="text-sm font-semibold text-slate-900">
+            {UI_TEXT.CATEGORIES_PANEL.TITLE}
+          </h2>
         </div>
         <div className="flex-1 overflow-y-auto p-4">
           {loadingCategories ? (
-            <p className="text-sm text-slate-500">Cargando categorías...</p>
+            <p className="text-sm text-slate-500">
+              {UI_TEXT.CATEGORIES_PANEL.LOADING_CATEGORIES_MESSAGE}
+            </p>
           ) : null}
           {errorCategories ? (
             <div className="space-y-3">
@@ -84,7 +89,7 @@ const CategoriesPanel = ({
                   onClick={onRetryLoadCategories}
                   className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
                 >
-                  Reintentar
+                  {UI_TEXT.CATEGORIES_PANEL.RETRY_BUTTON_LABEL}
                 </button>
               ) : null}
             </div>
@@ -157,7 +162,7 @@ const CategoriesPanel = ({
           ) : null}
           {!loadingCategories && !errorCategories && parents.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No hay categorías disponibles.
+              {UI_TEXT.CATEGORIES_PANEL.EMPTY_CATEGORIES_MESSAGE}
             </p>
           ) : null}
         </div>
