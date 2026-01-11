@@ -20,13 +20,22 @@ const defaultUser: TestUser = {
   postalCode: "12345",
 };
 
+function getCookie(cookies: string[] | string | undefined, name: string) {
+  const cookieList = typeof cookies === "string" ? [cookies] : cookies;
+  const cookie = cookieList?.find((item) => item.startsWith(`${name}=`));
+  if (!cookie) {
+    throw new Error(`Missing ${name} cookie`);
+  }
+  return cookie;
+}
+
 async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
-  await request(app).post("/api/auth/signup").send(user);
+  await request(app).post("/api/auth/register").send(user);
   const response = await request(app)
     .post("/api/auth/login")
     .send({ email: user.email, password: user.password });
 
-  return response.headers["set-cookie"]?.[0] as string;
+  return getCookie(response.headers["set-cookie"], "accessToken") as string;
 }
 
 const sampleProduct: MercadonaProductDetail = {
