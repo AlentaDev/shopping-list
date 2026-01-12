@@ -138,6 +138,15 @@ describe("auth endpoints", () => {
     expect(response.body).toEqual({ error: "not_authenticated" });
   });
 
+  it("GET /api/auth/me returns 410 as deprecated", async () => {
+    const app = createApp();
+
+    const response = await request(app).get("/api/auth/me");
+
+    expect(response.status).toBe(410);
+    expect(response.body).toEqual({ error: "deprecated_endpoint" });
+  });
+
   it("GET /api/users/me returns 200 with access token", async () => {
     const app = createApp();
 

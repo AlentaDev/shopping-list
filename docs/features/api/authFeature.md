@@ -65,6 +65,14 @@ Authenticates a user and sets an httpOnly cookie session.
 **Cookie**
 - `session` is set with `HttpOnly` and `SameSite=Lax`.
 
+---
+
+### GET /api/auth/me (deprecated)
+Deprecated. Use `GET /api/users/me` instead.
+
+**Responses**
+- `410` deprecated endpoint
+
 ### POST /api/auth/logout
 Clears the session cookie.
 

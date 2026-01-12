@@ -5,6 +5,7 @@ import { LoginWithTokens } from "../application/loginWithTokens";
 import { RefreshAccessToken } from "../application/refreshAccessToken";
 import { InvalidRefreshTokenError } from "../application/errors";
 import { toPublicUser } from "../../users/public";
+import { AppError } from "../../../shared/errors/appError";
 import { loginSchema, signupSchema } from "./schemas";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
@@ -49,6 +50,16 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
     } catch (error) {
       next(error);
     }
+  });
+
+  router.get("/me", (_req, _res, next) => {
+    next(
+      new AppError(
+        410,
+        "deprecated_endpoint",
+        "Use /api/users/me instead"
+      )
+    );
   });
 
   router.post("/refresh", async (req, res, next) => {
