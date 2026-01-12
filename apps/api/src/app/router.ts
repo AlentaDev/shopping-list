@@ -21,7 +21,6 @@ export function buildRouter(deps: RouterDependencies = {}) {
   const listsModule =
     deps.listsModule ??
     createListsModule({
-      sessionStore: authModule.sessionStore,
       catalogProvider: catalogModule.provider,
     });
   router.use("/lists", listsModule.router);

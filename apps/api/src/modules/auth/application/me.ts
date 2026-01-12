@@ -1,19 +1,11 @@
 import { NotAuthenticatedError } from "./errors";
-import { SessionStore, UserRepository } from "./ports";
+import { UserRepository } from "./ports";
 import { User } from "../domain/user";
 
 export class GetCurrentUser {
-  constructor(
-    private readonly sessionStore: SessionStore,
-    private readonly userRepository: UserRepository
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
-  async execute(sessionId: string | null): Promise<User> {
-    if (!sessionId) {
-      throw new NotAuthenticatedError();
-    }
-
-    const userId = await this.sessionStore.getUserId(sessionId);
+  async execute(userId: string | null): Promise<User> {
     if (!userId) {
       throw new NotAuthenticatedError();
     }

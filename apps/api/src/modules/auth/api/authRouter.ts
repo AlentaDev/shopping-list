@@ -1,18 +1,18 @@
 import { Router, type Response } from "express";
-import { SignupUser } from "../application/signup";
-import { LoginUser } from "../application/login";
 import { GetCurrentUser } from "../application/me";
-import { LogoutUser } from "../application/logout";
+import { LogoutTokens } from "../application/logoutTokens";
 import { RegisterWithTokens } from "../application/registerWithTokens";
 import { LoginWithTokens } from "../application/loginWithTokens";
 import { RefreshAccessToken } from "../application/refreshAccessToken";
 import { InvalidRefreshTokenError } from "../application/errors";
 import { toPublicUser } from "../domain/user";
+import { verifyJwt } from "../../../shared/security/jwt";
 import { loginSchema, signupSchema } from "./schemas";
 
-const SESSION_COOKIE_NAME = "session";
 const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+const ACCESS_TOKEN_SECRET =
+  process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -21,10 +21,8 @@ const COOKIE_OPTIONS = {
 };
 
 type AuthRouterDependencies = {
-  signupUser: SignupUser;
-  loginUser: LoginUser;
   getCurrentUser: GetCurrentUser;
-  logoutUser: LogoutUser;
+  logoutTokens: LogoutTokens;
   registerWithTokens: RegisterWithTokens;
   loginWithTokens: LoginWithTokens;
   refreshAccessToken: RefreshAccessToken;
@@ -32,17 +30,6 @@ type AuthRouterDependencies = {
 
 export function createAuthRouter(deps: AuthRouterDependencies): Router {
   const router = Router();
-
-  router.post("/signup", async (req, res, next) => {
-    try {
-      const input = signupSchema.parse(req.body);
-      const user = await deps.signupUser.execute(input);
-
-      res.status(201).json(toPublicUser(user));
-    } catch (error) {
-      next(error);
-    }
-  });
 
   router.post("/register", async (req, res, next) => {
     try {
@@ -63,19 +50,6 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
       const { user, tokens } = await deps.loginWithTokens.execute(input);
 
       setAuthCookies(res, tokens);
-
-      res.status(200).json(toPublicUser(user));
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.post("/login-session", async (req, res, next) => {
-    try {
-      const input = loginSchema.parse(req.body);
-      const { user, sessionId } = await deps.loginUser.execute(input);
-
-      res.cookie(SESSION_COOKIE_NAME, sessionId, COOKIE_OPTIONS);
 
       res.status(200).json(toPublicUser(user));
     } catch (error) {
@@ -107,8 +81,12 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
 
   router.get("/me", async (req, res, next) => {
     try {
-      const sessionId = getSessionIdFromRequest(req.headers.cookie);
-      const user = await deps.getCurrentUser.execute(sessionId);
+      const accessToken = getCookieFromRequest(
+        req.headers.cookie,
+        ACCESS_TOKEN_COOKIE_NAME
+      );
+      const userId = getUserIdFromAccessToken(accessToken);
+      const user = await deps.getCurrentUser.execute(userId);
 
       res.status(200).json(toPublicUser(user));
     } catch (error) {
@@ -118,24 +96,18 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
 
   router.post("/logout", async (req, res, next) => {
     try {
-      const sessionId = getSessionIdFromRequest(req.headers.cookie);
-      await deps.logoutUser.execute(sessionId);
+      const refreshToken = getCookieFromRequest(
+        req.headers.cookie,
+        REFRESH_TOKEN_COOKIE_NAME
+      );
+      await deps.logoutTokens.execute(refreshToken);
 
-      res.cookie(SESSION_COOKIE_NAME, "", {
-        ...COOKIE_OPTIONS,
-        maxAge: 0,
-      });
+      clearAuthCookies(res);
 
       res.status(200).json({ ok: true });
     } catch (error) {
       next(error);
     }
-  });
-
-  router.post("/logout-token", async (_req, res) => {
-    clearAuthCookies(res);
-
-    res.status(200).json({ ok: true });
   });
 
   return router;
@@ -171,10 +143,6 @@ function clearAuthCookies(res: Response) {
   });
 }
 
-function getSessionIdFromRequest(cookieHeader: string | undefined): string | null {
-  return getCookieFromRequest(cookieHeader, SESSION_COOKIE_NAME);
-}
-
 function getCookieFromRequest(
   cookieHeader: string | undefined,
   name: string
@@ -192,4 +160,21 @@ function getCookieFromRequest(
   }
 
   return null;
+}
+
+function getUserIdFromAccessToken(accessToken: string | null): string | null {
+  if (!accessToken) {
+    return null;
+  }
+
+  const payload = verifyJwt(accessToken, ACCESS_TOKEN_SECRET);
+  if (!payload) {
+    return null;
+  }
+
+  if (payload.exp * 1000 <= Date.now()) {
+    return null;
+  }
+
+  return payload.sub;
 }

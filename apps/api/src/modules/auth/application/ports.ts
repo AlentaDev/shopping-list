@@ -1,6 +1,5 @@
 import { User } from "../domain/user";
 import { RefreshTokenRecord } from "../domain/refreshToken";
-import type { SessionStore } from "../../../shared/auth/sessionStore";
 
 export type UserRepository = {
   findByEmail(email: string): Promise<User | null>;
@@ -26,5 +25,3 @@ export type RefreshTokenStore = {
 export type Clock = {
   now(): Date;
 };
-
-export type { SessionStore };
