@@ -17,6 +17,7 @@ const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
 const COOKIE_OPTIONS = {
   httpOnly: true,
   sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
 };
 
 type AuthRouterDependencies = {

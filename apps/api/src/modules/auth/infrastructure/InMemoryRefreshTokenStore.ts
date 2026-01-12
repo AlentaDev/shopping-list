@@ -5,6 +5,8 @@ import { RefreshTokenStore } from "../application/ports";
 export class InMemoryRefreshTokenStore implements RefreshTokenStore {
   private readonly tokens = new Map<string, RefreshTokenRecord>();
 
+  // TODO(PROD): Replace in-memory refresh token store with persistent storage.
+
   async create(userId: string, expiresAt: Date): Promise<RefreshTokenRecord> {
     const token = randomUUID();
     const record: RefreshTokenRecord = {

@@ -9,7 +9,7 @@ import { InMemoryUserRepository } from "./infrastructure/InMemoryUserRepository"
 import { ScryptPasswordHasher } from "./infrastructure/ScryptPasswordHasher";
 import { InMemorySessionStore } from "./infrastructure/InMemorySessionStore";
 import { InMemoryRefreshTokenStore } from "./infrastructure/InMemoryRefreshTokenStore";
-import { InMemoryAccessTokenService } from "./infrastructure/InMemoryAccessTokenService";
+import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService";
 import { SystemClock } from "./infrastructure/SystemClock";
 import { createAuthRouter } from "./web/authRouter";
 
@@ -18,7 +18,9 @@ export function createAuthModule() {
   const passwordHasher = new ScryptPasswordHasher();
   const sessionStore = new InMemorySessionStore();
   const refreshTokenStore = new InMemoryRefreshTokenStore();
-  const accessTokenService = new InMemoryAccessTokenService();
+  const accessTokenService = new JwtAccessTokenService(
+    process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret"
+  );
   const clock = new SystemClock();
 
   const signupUser = new SignupUser(userRepository, passwordHasher);
