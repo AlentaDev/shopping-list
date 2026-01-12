@@ -10,7 +10,7 @@ import type { CatalogProvider } from "../catalog/public";
 import type { IdGenerator, ListRepository } from "./application/ports";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository";
 import { RandomIdGenerator } from "./infrastructure/idGenerator";
-import { createListsRouter } from "./web/router";
+import { createListsRouter } from "./api/router";
 
 type ListsModuleDependencies = {
   catalogProvider: CatalogProvider;
