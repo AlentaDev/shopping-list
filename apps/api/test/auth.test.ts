@@ -129,16 +129,16 @@ describe("auth endpoints", () => {
     expect(response.body).toEqual({ error: "invalid_credentials" });
   });
 
-  it("GET /api/auth/me returns 401 without access token", async () => {
+  it("GET /api/users/me returns 401 without access token", async () => {
     const app = createApp();
 
-    const response = await request(app).get("/api/auth/me");
+    const response = await request(app).get("/api/users/me");
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "not_authenticated" });
   });
 
-  it("GET /api/auth/me returns 200 with access token", async () => {
+  it("GET /api/users/me returns 200 with access token", async () => {
     const app = createApp();
 
     const registerResponse = await request(app)
@@ -153,7 +153,7 @@ describe("auth endpoints", () => {
     }
 
     const response = await request(app)
-      .get("/api/auth/me")
+      .get("/api/users/me")
       .set("Cookie", accessCookie);
 
     expect(response.status).toBe(200);

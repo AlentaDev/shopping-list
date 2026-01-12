@@ -1,18 +1,13 @@
 import { Router, type Response } from "express";
-import { GetCurrentUser } from "../application/me";
 import { LogoutTokens } from "../application/logoutTokens";
 import { RegisterWithTokens } from "../application/registerWithTokens";
 import { LoginWithTokens } from "../application/loginWithTokens";
 import { RefreshAccessToken } from "../application/refreshAccessToken";
 import { InvalidRefreshTokenError } from "../application/errors";
-import { toPublicUser } from "../domain/user";
-import { verifyJwt } from "../../../shared/security/jwt";
+import { toPublicUser } from "../../users/public";
 import { loginSchema, signupSchema } from "./schemas";
 
-const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
-const ACCESS_TOKEN_SECRET =
-  process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret";
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -21,7 +16,6 @@ const COOKIE_OPTIONS = {
 };
 
 type AuthRouterDependencies = {
-  getCurrentUser: GetCurrentUser;
   logoutTokens: LogoutTokens;
   registerWithTokens: RegisterWithTokens;
   loginWithTokens: LoginWithTokens;
@@ -79,21 +73,6 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
     }
   });
 
-  router.get("/me", async (req, res, next) => {
-    try {
-      const accessToken = getCookieFromRequest(
-        req.headers.cookie,
-        ACCESS_TOKEN_COOKIE_NAME
-      );
-      const userId = getUserIdFromAccessToken(accessToken);
-      const user = await deps.getCurrentUser.execute(userId);
-
-      res.status(200).json(toPublicUser(user));
-    } catch (error) {
-      next(error);
-    }
-  });
-
   router.post("/logout", async (req, res, next) => {
     try {
       const refreshToken = getCookieFromRequest(
@@ -122,7 +101,7 @@ function setAuthCookies(
     refreshTokenExpiresAt: Date;
   }
 ) {
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, tokens.accessToken, {
+  res.cookie("access_token", tokens.accessToken, {
     ...COOKIE_OPTIONS,
     expires: tokens.accessTokenExpiresAt,
   });
@@ -133,7 +112,7 @@ function setAuthCookies(
 }
 
 function clearAuthCookies(res: Response) {
-  res.cookie(ACCESS_TOKEN_COOKIE_NAME, "", {
+  res.cookie("access_token", "", {
     ...COOKIE_OPTIONS,
     maxAge: 0,
   });
@@ -160,21 +139,4 @@ function getCookieFromRequest(
   }
 
   return null;
-}
-
-function getUserIdFromAccessToken(accessToken: string | null): string | null {
-  if (!accessToken) {
-    return null;
-  }
-
-  const payload = verifyJwt(accessToken, ACCESS_TOKEN_SECRET);
-  if (!payload) {
-    return null;
-  }
-
-  if (payload.exp * 1000 <= Date.now()) {
-    return null;
-  }
-
-  return payload.sub;
 }

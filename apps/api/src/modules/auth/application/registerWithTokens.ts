@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { User } from "../domain/user";
+import type { User } from "../../users/public";
 import { DuplicateEmailError } from "./errors";
 import {
   AccessTokenService,

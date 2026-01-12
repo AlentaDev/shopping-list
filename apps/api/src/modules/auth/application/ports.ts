@@ -1,11 +1,5 @@
-import { User } from "../domain/user";
 import { RefreshTokenRecord } from "../domain/refreshToken";
-
-export type UserRepository = {
-  findByEmail(email: string): Promise<User | null>;
-  findById(id: string): Promise<User | null>;
-  save(user: User): Promise<void>;
-};
+export type { UserRepository } from "../../users/public";
 
 export type PasswordHasher = {
   hash(value: string): Promise<string>;
