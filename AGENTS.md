@@ -125,6 +125,16 @@ El análisis muestra:
 
 ---
 
+## API REST (patrón a seguir a partir de ahora)
+
+**Decisión:** Adoptamos el patrón REST feature-first del ejemplo compartido (routers por módulo, capas claras y wiring centralizado).
+
+**Estado:** En transición. La API aún no cumple el 100% del patrón, pero todos los cambios nuevos deben moverse en esa dirección y no introducir nuevos desvíos.
+
+**Guía base:** Ver ADR correspondiente en `docs/003-rest-api-feature-first.md`.
+
+---
+
 ## Compartidos (backend)
 
 - `core`: solo value objects compartidos y estables

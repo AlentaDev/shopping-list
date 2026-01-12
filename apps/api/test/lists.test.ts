@@ -21,12 +21,22 @@ const defaultUser: TestUser = {
 };
 
 async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
-  await request(app).post("/api/auth/signup").send(user);
-  const response = await request(app)
-    .post("/api/auth/login-session")
-    .send({ email: user.email, password: user.password });
+  const response = await request(app).post("/api/auth/register").send(user);
+  const setCookieHeader = response.headers["set-cookie"];
+  const cookies = Array.isArray(setCookieHeader)
+    ? setCookieHeader
+    : setCookieHeader
+      ? [setCookieHeader]
+      : [];
+  const accessCookie = cookies.find((cookie: string) =>
+    cookie.startsWith("access_token=")
+  );
 
-  return response.headers["set-cookie"]?.[0] as string;
+  if (!accessCookie) {
+    throw new Error("Missing access_token cookie");
+  }
+
+  return accessCookie;
 }
 
 const sampleProduct: MercadonaProductDetail = {

@@ -5,7 +5,7 @@ import type { CatalogProvider } from "./domain/catalogProvider";
 import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache";
 import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider";
 import { MercadonaHttpClient } from "./infrastructure/MercadonaHttpClient";
-import { createCatalogRouter } from "./web/catalogRouter";
+import { createCatalogRouter } from "./api/catalogRouter";
 
 const MERCADONA_BASE_URL = "https://tienda.mercadona.es/api";
 const MERCADONA_TIMEOUT_MS = 8000;

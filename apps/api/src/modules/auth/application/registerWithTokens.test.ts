@@ -1,5 +1,5 @@
 import { RegisterWithTokens } from "./registerWithTokens";
-import { InMemoryUserRepository } from "../infrastructure/InMemoryUserRepository";
+import { InMemoryUserRepository } from "../../users/public";
 import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore";
 import type {
   AccessTokenService,

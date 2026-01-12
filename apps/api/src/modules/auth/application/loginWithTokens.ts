@@ -6,7 +6,7 @@ import {
   RefreshTokenStore,
   UserRepository,
 } from "./ports";
-import { User } from "../domain/user";
+import type { User } from "../../users/public";
 import { AuthTokens } from "./authTokens";
 import {
   getAccessTokenExpiresAt,

@@ -1,12 +1,5 @@
-import { User } from "../domain/user";
 import { RefreshTokenRecord } from "../domain/refreshToken";
-import type { SessionStore } from "../../../shared/auth/sessionStore";
-
-export type UserRepository = {
-  findByEmail(email: string): Promise<User | null>;
-  findById(id: string): Promise<User | null>;
-  save(user: User): Promise<void>;
-};
+export type { UserRepository } from "../../users/public";
 
 export type PasswordHasher = {
   hash(value: string): Promise<string>;
@@ -26,5 +19,3 @@ export type RefreshTokenStore = {
 export type Clock = {
   now(): Date;
 };
-
-export type { SessionStore };
