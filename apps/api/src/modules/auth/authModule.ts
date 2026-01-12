@@ -11,7 +11,7 @@ import { InMemorySessionStore } from "./infrastructure/InMemorySessionStore";
 import { InMemoryRefreshTokenStore } from "./infrastructure/InMemoryRefreshTokenStore";
 import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService";
 import { SystemClock } from "./infrastructure/SystemClock";
-import { createAuthRouter } from "./web/authRouter";
+import { createAuthRouter } from "./api/authRouter";
 
 export function createAuthModule() {
   const userRepository = new InMemoryUserRepository();
