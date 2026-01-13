@@ -14,6 +14,24 @@ export const UI_TEXT = {
   AUTH: {
     BACK_TO_HOME: "Volver al catálogo",
     ERROR_MESSAGE: "No se pudo completar la autenticación.",
+    HINTS: {
+      EMAIL: "Usa un correo válido, por ejemplo nombre@dominio.com",
+      PASSWORD: "12–20 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo",
+      NAME: "Entre 2 y 25 caracteres",
+      POSTAL_CODE: "5 dígitos numéricos",
+    },
+    VALIDATION: {
+      EMAIL_REQUIRED: "El email es obligatorio.",
+      EMAIL_INVALID: "Introduce un email válido.",
+      PASSWORD_REQUIRED: "La contraseña es obligatoria.",
+      PASSWORD_LENGTH: "La contraseña debe tener entre 12 y 20 caracteres.",
+      PASSWORD_COMPLEXITY:
+        "La contraseña debe incluir mayúscula, minúscula, número y símbolo.",
+      NAME_REQUIRED: "El nombre es obligatorio.",
+      NAME_LENGTH: "El nombre debe tener entre 2 y 25 caracteres.",
+      POSTAL_CODE_REQUIRED: "El código postal es obligatorio.",
+      POSTAL_CODE_INVALID: "El código postal debe tener 5 dígitos.",
+    },
     LOGIN: {
       TITLE: "Iniciar sesión",
       SUBTITLE: "Accede para gestionar tu lista",
