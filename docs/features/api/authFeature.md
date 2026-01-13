@@ -1,7 +1,7 @@
 # Auth Feature (MVP)
 
 ## Overview
-Basic authentication module with in-memory persistence, cookie-based sessions, and input validation. It supports signup, login, logout, and current-user retrieval.
+Basic authentication module with in-memory persistence, cookie-based sessions, and input validation. It supports signup, login, and logout.
 
 ## Endpoints
 
@@ -67,22 +67,11 @@ Authenticates a user and sets an httpOnly cookie session.
 
 ---
 
-### GET /api/auth/me
-Returns the current authenticated user.
+### GET /api/auth/me (deprecated)
+Deprecated. Use `GET /api/users/me` instead.
 
 **Responses**
-- `200` with user:
-```json
-{
-  "id": "uuid",
-  "name": "Alice",
-  "email": "alice@example.com",
-  "postalCode": "12345"
-}
-```
-- `401` not authenticated
-
----
+- `410` deprecated endpoint
 
 ### POST /api/auth/logout
 Clears the session cookie.

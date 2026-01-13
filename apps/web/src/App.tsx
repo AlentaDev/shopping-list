@@ -1,14 +1,68 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Catalog from "./features/catalog/Catalog";
 import ShoppingList from "./features/shopping-list/ShoppingList";
 import { useList } from "./context/useList";
 import Toast from "./shared/components/toast/Toast";
 import { UI_TEXT } from "./shared/constants/ui";
+import {
+  AuthScreen,
+  type AuthMode,
+  loginUser,
+  registerUser,
+} from "./features/auth";
+import type { LoginFormValues, RegisterFormValues } from "./features/auth";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
+    resolveAuthMode(window.location.pathname)
+  );
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const { linesCount } = useList();
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setAuthMode(resolveAuthMode(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, "", path);
+    setAuthMode(resolveAuthMode(path));
+  };
+
+  const handleRegister = async (values: RegisterFormValues) => {
+    setAuthError(null);
+    setIsAuthSubmitting(true);
+    try {
+      await registerUser(values);
+      navigate("/");
+    } catch {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
+  const handleLogin = async (values: LoginFormValues) => {
+    setAuthError(null);
+    setIsAuthSubmitting(true);
+    try {
+      await loginUser(values);
+      navigate("/");
+    } catch {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -60,10 +114,18 @@ const App = () => {
             >
               {UI_TEXT.APP.CATEGORIES_LABEL}
             </button>
-            <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+            <button
+              type="button"
+              onClick={() => navigate("/auth/login")}
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            >
               {UI_TEXT.APP.LOGIN_LABEL}
             </button>
-            <button className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900">
+            <button
+              type="button"
+              onClick={() => navigate("/auth/register")}
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            >
               {UI_TEXT.APP.REGISTER_LABEL}
             </button>
           </div>
@@ -71,7 +133,18 @@ const App = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <Catalog isCategoriesOpen={isCategoriesOpen} />
+        {authMode ? (
+          <AuthScreen
+            mode={authMode}
+            isSubmitting={isAuthSubmitting}
+            errorMessage={authError}
+            onLogin={handleLogin}
+            onRegister={handleRegister}
+            onBack={() => navigate("/")}
+          />
+        ) : (
+          <Catalog isCategoriesOpen={isCategoriesOpen} />
+        )}
       </main>
       <ShoppingList
         isOpen={isCartOpen}
@@ -81,5 +154,17 @@ const App = () => {
     </div>
   );
 };
+
+function resolveAuthMode(pathname: string): AuthMode | null {
+  if (pathname === "/auth/login") {
+    return "login";
+  }
+
+  if (pathname === "/auth/register") {
+    return "register";
+  }
+
+  return null;
+}
 
 export default App;

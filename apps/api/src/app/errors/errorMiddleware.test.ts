@@ -1,0 +1,66 @@
+import type { Request, Response } from "express";
+import { z } from "zod";
+import { describe, expect, it, vi } from "vitest";
+import { AppError } from "../../shared/errors/appError";
+import { errorMiddleware } from "./errorMiddleware";
+
+describe("errorMiddleware", () => {
+  it("returns 400 with validation details for ZodError", () => {
+    const schema = z.object({ name: z.string() });
+    const result = schema.safeParse({});
+
+    if (result.success) {
+      throw new Error("Expected validation to fail");
+    }
+
+    const { res, json, status } = createMockResponse();
+    const next = vi.fn();
+
+    errorMiddleware(result.error, {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith({
+      error: "validation_error",
+      details: result.error.issues,
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("returns AppError status and code", () => {
+    const { res, json, status } = createMockResponse();
+    const next = vi.fn();
+
+    errorMiddleware(
+      new AppError(401, "not_authenticated", "Not authenticated"),
+      {} as Request,
+      res,
+      next
+    );
+
+    expect(status).toHaveBeenCalledWith(401);
+    expect(json).toHaveBeenCalledWith({ error: "not_authenticated" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 for unknown errors", () => {
+    const { res, json, status } = createMockResponse();
+    const next = vi.fn();
+
+    errorMiddleware(new Error("boom"), {} as Request, res, next);
+
+    expect(status).toHaveBeenCalledWith(500);
+    expect(json).toHaveBeenCalledWith({ error: "internal_server_error" });
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
+function createMockResponse() {
+  const status = vi.fn();
+  const json = vi.fn();
+  const res = {
+    status: status.mockReturnThis(),
+    json,
+  } as unknown as Response;
+
+  return { res, status, json };
+}

@@ -1,0 +1,101 @@
+/* eslint-disable sonarjs/no-hardcoded-passwords */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { loginUser, registerUser } from "./AuthService";
+
+type FetchResponse = {
+  ok: boolean;
+  json: () => Promise<unknown>;
+};
+
+const TEST_EMAIL = "ada@example.com";
+const TEST_PASSWORD = "Password12!A";
+const REGISTER_INPUT = {
+  name: "Ada",
+  email: TEST_EMAIL,
+  password: TEST_PASSWORD,
+  postalCode: "28001",
+};
+const LOGIN_INPUT = {
+  email: TEST_EMAIL,
+  password: TEST_PASSWORD,
+};
+const RESPONSE_PAYLOAD = {
+  id: "user-1",
+  name: "Ada",
+  email: TEST_EMAIL,
+  postalCode: "28001",
+};
+
+describe("AuthService", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("registers a new user", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => RESPONSE_PAYLOAD,
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(registerUser(REGISTER_INPUT)).resolves.toEqual(
+      RESPONSE_PAYLOAD
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(REGISTER_INPUT),
+    });
+  });
+
+  it("logs in a user", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => RESPONSE_PAYLOAD,
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loginUser(LOGIN_INPUT)).resolves.toEqual(RESPONSE_PAYLOAD);
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(LOGIN_INPUT),
+    });
+  });
+
+  it("throws when register request fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(registerUser(REGISTER_INPUT)).rejects.toThrow(
+      "Unable to register"
+    );
+  });
+
+  it("throws when login request fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(loginUser(LOGIN_INPUT)).rejects.toThrow("Unable to login");
+  });
+});

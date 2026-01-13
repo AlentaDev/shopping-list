@@ -1,0 +1,46 @@
+export type RegisterInput = {
+  name: string;
+  email: string;
+  password: string;
+  postalCode: string;
+};
+
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
+export type AuthUser = {
+  id: string;
+  name: string;
+  email: string;
+  postalCode: string;
+};
+
+export async function registerUser(input: RegisterInput): Promise<AuthUser> {
+  const response = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to register");
+  }
+
+  return (await response.json()) as AuthUser;
+}
+
+export async function loginUser(input: LoginInput): Promise<AuthUser> {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to login");
+  }
+
+  return (await response.json()) as AuthUser;
+}

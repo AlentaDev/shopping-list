@@ -1,4 +1,3 @@
-import type { SessionStore } from "../../shared/auth/sessionStore";
 import { requireAuth } from "../../shared/web/requireAuth";
 import { AddManualItem } from "./application/AddManualItem";
 import { AddCatalogItem } from "./application/AddCatalogItem";
@@ -11,10 +10,9 @@ import type { CatalogProvider } from "../catalog/public";
 import type { IdGenerator, ListRepository } from "./application/ports";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository";
 import { RandomIdGenerator } from "./infrastructure/idGenerator";
-import { createListsRouter } from "./web/router";
+import { createListsRouter } from "./api/router";
 
 type ListsModuleDependencies = {
-  sessionStore: SessionStore;
   catalogProvider: CatalogProvider;
   listRepository?: ListRepository;
   idGenerator?: IdGenerator;
@@ -44,7 +42,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     addCatalogItem,
     updateItem,
     removeItem,
-    requireAuth: requireAuth(deps.sessionStore),
+    requireAuth: requireAuth(),
   });
 
   return { router };
