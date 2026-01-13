@@ -135,7 +135,6 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
           placeholder={UI_TEXT.AUTH.LOGIN.EMAIL_PLACEHOLDER}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-slate-500">{UI_TEXT.AUTH.HINTS.EMAIL}</p>
         {fields.email.touched && fields.email.error ? (
           <p className="text-xs text-red-600">{fields.email.error}</p>
         ) : null}
@@ -154,7 +153,6 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
           placeholder={UI_TEXT.AUTH.LOGIN.PASSWORD_PLACEHOLDER}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-slate-500">{UI_TEXT.AUTH.HINTS.PASSWORD}</p>
         {fields.password.touched && fields.password.error ? (
           <p className="text-xs text-red-600">{fields.password.error}</p>
         ) : null}

@@ -12,7 +12,7 @@ Permitir a los usuarios registrarse e iniciar sesión desde la interfaz web.
 - Los tokens se almacenan en cookies httpOnly/secure (definido en backend).
 - Los textos UI se centralizan en `UI_TEXT.AUTH`.
 - Los formularios validan con Zod y usan Value Objects para normalizar (email en minúsculas, nombre con trim).
-- Los errores se muestran por campo al hacer blur y al enviar, con hints visibles siempre.
+- Los errores se muestran por campo al hacer blur y al enviar, con hint visible solo en contraseña de registro.
 
 ## Notas de implementación
 - La navegación es simple (basada en `window.history`) y se resuelve en `App.tsx`.

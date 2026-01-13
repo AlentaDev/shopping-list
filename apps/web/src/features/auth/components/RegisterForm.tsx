@@ -182,7 +182,6 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           placeholder={UI_TEXT.AUTH.REGISTER.NAME_PLACEHOLDER}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-slate-500">{UI_TEXT.AUTH.HINTS.NAME}</p>
         {fields.name.touched && fields.name.error ? (
           <p className="text-xs text-red-600">{fields.name.error}</p>
         ) : null}
@@ -201,7 +200,6 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           placeholder={UI_TEXT.AUTH.REGISTER.EMAIL_PLACEHOLDER}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-slate-500">{UI_TEXT.AUTH.HINTS.EMAIL}</p>
         {fields.email.touched && fields.email.error ? (
           <p className="text-xs text-red-600">{fields.email.error}</p>
         ) : null}
@@ -237,11 +235,9 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           onChange={handleChange("postalCode")}
           onBlur={handleBlur("postalCode")}
           placeholder={UI_TEXT.AUTH.REGISTER.POSTAL_CODE_PLACEHOLDER}
+          maxLength={5}
           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
         />
-        <p className="text-xs text-slate-500">
-          {UI_TEXT.AUTH.HINTS.POSTAL_CODE}
-        </p>
         {fields.postalCode.touched && fields.postalCode.error ? (
           <p className="text-xs text-red-600">{fields.postalCode.error}</p>
         ) : null}

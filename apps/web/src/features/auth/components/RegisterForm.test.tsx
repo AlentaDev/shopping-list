@@ -30,16 +30,7 @@ describe("RegisterForm", () => {
       screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.NAME)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.EMAIL)
-    ).toBeInTheDocument();
-    expect(
       screen.getByText(UI_TEXT.AUTH.HINTS.PASSWORD)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.POSTAL_CODE)
     ).toBeInTheDocument();
   });
 
@@ -94,9 +85,6 @@ describe("RegisterForm", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(UI_TEXT.AUTH.VALIDATION.PASSWORD_REQUIRED)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.VALIDATION.POSTAL_CODE_REQUIRED)
     ).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });

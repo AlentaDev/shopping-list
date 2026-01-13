@@ -33,8 +33,8 @@ export const nameSchema = z
 export const postalCodeSchema = z
   .string()
   .trim()
-  .min(1, UI_TEXT.AUTH.VALIDATION.POSTAL_CODE_REQUIRED)
-  .regex(/^\d{5}$/, UI_TEXT.AUTH.VALIDATION.POSTAL_CODE_INVALID);
+  .regex(/^\d{5}$/, UI_TEXT.AUTH.VALIDATION.POSTAL_CODE_INVALID)
+  .or(z.literal(""));
 
 export const loginSchema = z.object({
   email: emailSchema,

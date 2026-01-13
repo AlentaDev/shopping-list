@@ -15,10 +15,7 @@ export const UI_TEXT = {
     BACK_TO_HOME: "Volver al catálogo",
     ERROR_MESSAGE: "No se pudo completar la autenticación.",
     HINTS: {
-      EMAIL: "Usa un correo válido, por ejemplo nombre@dominio.com",
       PASSWORD: "12–20 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo",
-      NAME: "Entre 2 y 25 caracteres",
-      POSTAL_CODE: "5 dígitos numéricos",
     },
     VALIDATION: {
       EMAIL_REQUIRED: "El email es obligatorio.",
@@ -29,7 +26,6 @@ export const UI_TEXT = {
         "La contraseña debe incluir mayúscula, minúscula, número y símbolo.",
       NAME_REQUIRED: "El nombre es obligatorio.",
       NAME_LENGTH: "El nombre debe tener entre 2 y 25 caracteres.",
-      POSTAL_CODE_REQUIRED: "El código postal es obligatorio.",
       POSTAL_CODE_INVALID: "El código postal debe tener 5 dígitos.",
     },
     LOGIN: {
@@ -50,7 +46,7 @@ export const UI_TEXT = {
       EMAIL_PLACEHOLDER: "tu@email.com",
       PASSWORD_LABEL: "Contraseña",
       PASSWORD_PLACEHOLDER: "Crea una contraseña segura",
-      POSTAL_CODE_LABEL: "Código postal",
+      POSTAL_CODE_LABEL: "Código postal (opcional)",
       POSTAL_CODE_PLACEHOLDER: "Ej. 28001",
       SUBMIT_LABEL: "Registrarme",
     },

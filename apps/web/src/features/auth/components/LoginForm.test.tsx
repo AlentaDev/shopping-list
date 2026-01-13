@@ -23,12 +23,6 @@ describe("LoginForm", () => {
     expect(
       screen.getByLabelText(UI_TEXT.AUTH.LOGIN.PASSWORD_LABEL)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.EMAIL)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.PASSWORD)
-    ).toBeInTheDocument();
   });
 
   it("submits the form values", async () => {

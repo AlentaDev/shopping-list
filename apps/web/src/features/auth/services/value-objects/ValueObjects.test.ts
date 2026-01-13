@@ -57,6 +57,7 @@ describe("Auth value objects", () => {
   it("validates postal code format", () => {
     const valid = PostalCode.create("28001");
     const invalid = PostalCode.create("1234a");
+    const empty = PostalCode.create("");
 
     expect(valid.ok).toBe(true);
     if (valid.ok) {
@@ -66,5 +67,9 @@ describe("Auth value objects", () => {
       ok: false,
       error: UI_TEXT.AUTH.VALIDATION.POSTAL_CODE_INVALID,
     });
+    expect(empty.ok).toBe(true);
+    if (empty.ok) {
+      expect(empty.value.value).toBe("");
+    }
   });
 });
