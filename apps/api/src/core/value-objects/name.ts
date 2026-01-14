@@ -1,17 +1,14 @@
 import { z } from "zod";
 
-export const NAME_MESSAGES = {
-  required: "El nombre es obligatorio.",
-  length: "El nombre debe tener entre 2 y 25 caracteres.",
-} as const;
+import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
 
 export const nameSchema = z
   .string()
   .trim()
-  .min(1, NAME_MESSAGES.required)
-  .max(25, NAME_MESSAGES.length)
+  .min(1, USERS_MESSAGES.nameRequired)
+  .max(25, USERS_MESSAGES.nameLength)
   .refine((value) => value.length >= 2, {
-    message: NAME_MESSAGES.length,
+    message: USERS_MESSAGES.nameLength,
   });
 
 export type Name = string & { readonly __brand: "Name" };

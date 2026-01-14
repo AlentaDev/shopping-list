@@ -1,4 +1,5 @@
-import { NAME_MESSAGES, nameSchema } from "./name";
+import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
+import { nameSchema } from "./name";
 
 describe("name value object", () => {
   it("accepts a valid name", () => {
@@ -15,7 +16,7 @@ describe("name value object", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(NAME_MESSAGES.required);
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.nameRequired);
     }
   });
 
@@ -24,7 +25,7 @@ describe("name value object", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(NAME_MESSAGES.length);
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.nameLength);
     }
   });
 });

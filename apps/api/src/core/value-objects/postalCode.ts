@@ -1,13 +1,11 @@
 import { z } from "zod";
 
-export const POSTAL_CODE_MESSAGES = {
-  invalid: "El código postal debe tener 5 dígitos.",
-} as const;
+import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
 
 export const postalCodeSchema = z
   .string()
   .trim()
-  .regex(/^\d{5}$/, POSTAL_CODE_MESSAGES.invalid)
+  .regex(/^\d{5}$/, USERS_MESSAGES.postalCodeInvalid)
   .or(z.literal(""));
 
 export type PostalCode = string & { readonly __brand: "PostalCode" };

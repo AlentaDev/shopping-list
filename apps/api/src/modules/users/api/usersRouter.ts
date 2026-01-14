@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { RequestHandler } from "express";
 import type { AuthenticatedRequest } from "../../../shared/web/requireAuth";
 import { AppError } from "../../../shared/errors/appError";
+import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
 import { GetCurrentUser } from "../application/getCurrentUser";
 import { toPublicUser } from "../domain/user";
 
@@ -31,7 +32,11 @@ export function createUsersRouter(deps: UsersRouterDependencies): Router {
 
 function getUserId(req: AuthenticatedRequest): string {
   if (!req.userId) {
-    throw new AppError(401, "not_authenticated", "Not authenticated");
+    throw new AppError(
+      401,
+      "not_authenticated",
+      API_ERROR_MESSAGES.notAuthenticated
+    );
   }
 
   return req.userId;

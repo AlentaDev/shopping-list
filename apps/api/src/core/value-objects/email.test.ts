@@ -1,4 +1,5 @@
-import { EMAIL_MESSAGES, emailSchema } from "./email";
+import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
+import { emailSchema } from "./email";
 
 describe("email value object", () => {
   it("normalizes and accepts valid emails", () => {
@@ -15,7 +16,7 @@ describe("email value object", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(EMAIL_MESSAGES.required);
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.emailRequired);
     }
   });
 
@@ -24,7 +25,7 @@ describe("email value object", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(EMAIL_MESSAGES.invalid);
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.emailInvalid);
     }
   });
 });

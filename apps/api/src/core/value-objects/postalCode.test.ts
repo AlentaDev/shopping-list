@@ -1,4 +1,5 @@
-import { POSTAL_CODE_MESSAGES, postalCodeSchema } from "./postalCode";
+import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
+import { postalCodeSchema } from "./postalCode";
 
 describe("postal code value object", () => {
   it("accepts valid postal codes", () => {
@@ -22,7 +23,7 @@ describe("postal code value object", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe(
-        POSTAL_CODE_MESSAGES.invalid
+        USERS_MESSAGES.postalCodeInvalid
       );
     }
   });

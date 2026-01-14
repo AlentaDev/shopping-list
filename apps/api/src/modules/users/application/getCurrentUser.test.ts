@@ -1,3 +1,4 @@
+import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
 import { AppError } from "../../../shared/errors/appError";
 import {
   toEmail,
@@ -30,7 +31,11 @@ describe("GetCurrentUser", () => {
     const getCurrentUser = new GetCurrentUser(repository);
 
     await expect(getCurrentUser.execute(null)).rejects.toMatchObject(
-      new AppError(401, "not_authenticated", "Not authenticated")
+      new AppError(
+        401,
+        "not_authenticated",
+        API_ERROR_MESSAGES.notAuthenticated
+      )
     );
   });
 
@@ -39,7 +44,11 @@ describe("GetCurrentUser", () => {
     const getCurrentUser = new GetCurrentUser(repository);
 
     await expect(getCurrentUser.execute("missing-user")).rejects.toMatchObject(
-      new AppError(401, "not_authenticated", "Not authenticated")
+      new AppError(
+        401,
+        "not_authenticated",
+        API_ERROR_MESSAGES.notAuthenticated
+      )
     );
   });
 });

@@ -3,7 +3,8 @@ import {
   nameSchema,
   postalCodeSchema,
 } from "../../../core/value-objects";
-import { PASSWORD_MESSAGES } from "../domain/password";
+import { AUTH_MESSAGES } from "../../../shared/constants/authMessages";
+import { USERS_MESSAGES } from "../../../shared/constants/usersMessages";
 import { loginSchema, signupSchema } from "./schemas";
 
 const validSignup = {
@@ -51,7 +52,7 @@ describe("auth schemas", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe("Introduce un email válido.");
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.emailInvalid);
     }
   });
 
@@ -64,7 +65,7 @@ describe("auth schemas", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       const messages = result.error.issues.map((issue) => issue.message);
-      expect(messages).toContain(PASSWORD_MESSAGES.length);
+      expect(messages).toContain(AUTH_MESSAGES.passwordLength);
     }
   });
 
@@ -73,7 +74,7 @@ describe("auth schemas", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe("El nombre es obligatorio.");
+      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.nameRequired);
     }
   });
 
@@ -83,7 +84,7 @@ describe("auth schemas", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.issues[0]?.message).toBe(
-        "El código postal debe tener 5 dígitos."
+        USERS_MESSAGES.postalCodeInvalid
       );
     }
   });

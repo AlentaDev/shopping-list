@@ -1,5 +1,6 @@
 import type { Request, RequestHandler } from "express";
 import { AppError } from "../errors/appError";
+import { API_ERROR_MESSAGES } from "../constants/apiErrorMessages";
 import { verifyJwt } from "../security/jwt";
 
 const ACCESS_TOKEN_COOKIE_NAME = "access_token";
@@ -16,16 +17,28 @@ export function requireAuth(): RequestHandler {
         ACCESS_TOKEN_COOKIE_NAME
       );
       if (!accessToken) {
-        throw new AppError(401, "not_authenticated", "Not authenticated");
+        throw new AppError(
+          401,
+          "not_authenticated",
+          API_ERROR_MESSAGES.notAuthenticated
+        );
       }
 
       const payload = verifyJwt(accessToken, ACCESS_TOKEN_SECRET);
       if (!payload) {
-        throw new AppError(401, "not_authenticated", "Not authenticated");
+        throw new AppError(
+          401,
+          "not_authenticated",
+          API_ERROR_MESSAGES.notAuthenticated
+        );
       }
 
       if (payload.exp * 1000 <= Date.now()) {
-        throw new AppError(401, "not_authenticated", "Not authenticated");
+        throw new AppError(
+          401,
+          "not_authenticated",
+          API_ERROR_MESSAGES.notAuthenticated
+        );
       }
 
       (req as AuthenticatedRequest).userId = payload.sub;

@@ -136,6 +136,17 @@ Estas consecuencias se consideran aceptables dado el objetivo del proyecto.
 
 ---
 
+## Mensajes de la API
+
+Para mantener consistencia y evitar strings mágicos en la API:
+
+- Todos los mensajes (validación, errores de dominio y respuestas de API) deben vivir en `apps/api/src/shared/constants/`.
+- Crear un archivo por feature (`authMessages.ts`, `usersMessages.ts`, etc.).
+- Los mensajes genéricos de la API (por ejemplo, errores comunes) deben ir en un archivo separado (`apiErrorMessages.ts`).
+- No introducir mensajes inline en servicios, routers o value objects.
+
+---
+
 ## Notas
 
 Si en el futuro el proyecto creciera significativamente (más usuarios, monetización, equipos), esta arquitectura permitiría:
