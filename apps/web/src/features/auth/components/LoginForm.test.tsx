@@ -25,6 +25,20 @@ describe("LoginForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("disables browser autocomplete to avoid unexpected submissions", () => {
+    const { container } = render(<LoginForm onSubmit={vi.fn()} />);
+
+    const form = container.querySelector("form");
+    expect(form).toHaveAttribute("autocomplete", "off");
+
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.LOGIN.EMAIL_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.LOGIN.PASSWORD_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+  });
+
   it("submits the form values", async () => {
     const onSubmit = vi.fn();
 

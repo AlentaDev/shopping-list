@@ -5,12 +5,19 @@ import { useList } from "./context/useList";
 import Toast from "./shared/components/toast/Toast";
 import { UI_TEXT } from "./shared/constants/ui";
 import {
+  AuthLoggedInNotice,
   AuthScreen,
   type AuthMode,
+  getCurrentUser,
   loginUser,
+  logoutUser,
   registerUser,
 } from "./features/auth";
-import type { LoginFormValues, RegisterFormValues } from "./features/auth";
+import type {
+  AuthUser,
+  LoginFormValues,
+  RegisterFormValues,
+} from "./features/auth";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -20,6 +27,8 @@ const App = () => {
   );
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { linesCount } = useList();
 
   useEffect(() => {
@@ -33,6 +42,27 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (isActive) {
+          setAuthUser(user);
+        }
+      } catch {
+        // No-op: user not authenticated.
+      }
+    };
+
+    void loadCurrentUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const navigate = (path: string) => {
     window.history.pushState({}, "", path);
     setAuthMode(resolveAuthMode(path));
@@ -42,7 +72,8 @@ const App = () => {
     setAuthError(null);
     setIsAuthSubmitting(true);
     try {
-      await registerUser(values);
+      const user = await registerUser(values);
+      setAuthUser(user);
       navigate("/");
     } catch {
       setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
@@ -55,7 +86,8 @@ const App = () => {
     setAuthError(null);
     setIsAuthSubmitting(true);
     try {
-      await loginUser(values);
+      const user = await loginUser(values);
+      setAuthUser(user);
       navigate("/");
     } catch {
       setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
@@ -63,6 +95,34 @@ const App = () => {
       setIsAuthSubmitting(false);
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setAuthUser(null);
+      setIsUserMenuOpen(false);
+      navigate("/");
+    } catch {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+    }
+  };
+
+  let mainContent = <Catalog isCategoriesOpen={isCategoriesOpen} />;
+
+  if (authMode) {
+    mainContent = authUser ? (
+      <AuthLoggedInNotice mode={authMode} onBack={() => navigate("/")} />
+    ) : (
+      <AuthScreen
+        mode={authMode}
+        isSubmitting={isAuthSubmitting}
+        errorMessage={authError}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onBack={() => navigate("/")}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -114,38 +174,73 @@ const App = () => {
             >
               {UI_TEXT.APP.CATEGORIES_LABEL}
             </button>
-            <button
-              type="button"
-              onClick={() => navigate("/auth/login")}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
-              {UI_TEXT.APP.LOGIN_LABEL}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/auth/register")}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
-              {UI_TEXT.APP.REGISTER_LABEL}
-            </button>
+            {authUser ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isUserMenuOpen}
+                  aria-label={UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL}
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  {UI_TEXT.AUTH.USER_MENU.GREETING_PREFIX} {authUser.name}
+                </button>
+                {isUserMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-lg"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
+                    >
+                      {UI_TEXT.AUTH.USER_MENU.PROFILE}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => setIsUserMenuOpen(false)}
+                      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
+                    >
+                      {UI_TEXT.AUTH.USER_MENU.LISTS}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="flex w-full items-center rounded-lg px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                    >
+                      {UI_TEXT.AUTH.USER_MENU.LOGOUT}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate("/auth/login")}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  {UI_TEXT.APP.LOGIN_LABEL}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/auth/register")}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  {UI_TEXT.APP.REGISTER_LABEL}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        {authMode ? (
-          <AuthScreen
-            mode={authMode}
-            isSubmitting={isAuthSubmitting}
-            errorMessage={authError}
-            onLogin={handleLogin}
-            onRegister={handleRegister}
-            onBack={() => navigate("/")}
-          />
-        ) : (
-          <Catalog isCategoriesOpen={isCategoriesOpen} />
-        )}
-      </main>
+      <main className="mx-auto max-w-7xl px-4 py-8">{mainContent}</main>
       <ShoppingList
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

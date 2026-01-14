@@ -1,6 +1,11 @@
 /* eslint-disable sonarjs/no-hardcoded-passwords */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loginUser, registerUser } from "./AuthService";
+import {
+  getCurrentUser,
+  loginUser,
+  registerUser,
+  logoutUser,
+} from "./AuthService";
 
 type FetchResponse = {
   ok: boolean;
@@ -97,5 +102,65 @@ describe("AuthService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(loginUser(LOGIN_INPUT)).rejects.toThrow("Unable to login");
+  });
+
+  it("logs out a user", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({ ok: true }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(logoutUser()).resolves.toEqual({ ok: true });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", {
+      method: "POST",
+    });
+  });
+
+  it("loads the current user", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => RESPONSE_PAYLOAD,
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCurrentUser()).resolves.toEqual(RESPONSE_PAYLOAD);
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/users/me");
+  });
+
+  it("throws when loading the current user fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCurrentUser()).rejects.toThrow(
+      "Unable to load current user"
+    );
+  });
+
+  it("throws when logout request fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({ ok: false }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(logoutUser()).rejects.toThrow("Unable to logout");
   });
 });
