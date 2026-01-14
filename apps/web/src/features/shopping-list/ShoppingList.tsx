@@ -12,17 +12,13 @@ type ShoppingListProps = {
   onClose: () => void;
 };
 
-type ViewMode =
-  | typeof SHOPPING_LIST_VIEW.LIST
-  | typeof SHOPPING_LIST_VIEW.SAVE;
+type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
 const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const { items, total, updateQuantity, removeItem } = useList();
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    SHOPPING_LIST_VIEW.LIST
-  );
+  const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState("");
-  const [listTitle, setListTitle] = useState(
+  const [listTitle, setListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE
   );
 

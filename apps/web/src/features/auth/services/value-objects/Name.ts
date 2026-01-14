@@ -2,7 +2,10 @@ import { nameSchema } from "../authValidation";
 import type { Result } from "./result";
 
 export class Name {
-  private constructor(public readonly value: string) {}
+  readonly value: string;
+  private constructor(value: string) {
+    this.value = value;
+  }
 
   static create(raw: string): Result<Name> {
     const parsed = nameSchema.safeParse(raw);

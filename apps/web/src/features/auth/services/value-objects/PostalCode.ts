@@ -2,7 +2,10 @@ import { postalCodeSchema } from "../authValidation";
 import type { Result } from "./result";
 
 export class PostalCode {
-  private constructor(public readonly value: string) {}
+  readonly value: string;
+  private constructor(value: string) {
+    this.value = value;
+  }
 
   static create(raw: string): Result<PostalCode> {
     const parsed = postalCodeSchema.safeParse(raw);
