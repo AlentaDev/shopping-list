@@ -44,3 +44,15 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
 
   return (await response.json()) as AuthUser;
 }
+
+export async function logoutUser(): Promise<{ ok: boolean }> {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to logout");
+  }
+
+  return (await response.json()) as { ok: boolean };
+}

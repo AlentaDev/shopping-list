@@ -14,6 +14,19 @@ export const UI_TEXT = {
   AUTH: {
     BACK_TO_HOME: "Volver al catálogo",
     ERROR_MESSAGE: "No se pudo completar la autenticación.",
+    ALREADY_LOGGED_IN: {
+      TITLE: "Ya estás logueado",
+      LOGIN_MESSAGE: "Ya estás logueado. No necesitas iniciar sesión de nuevo.",
+      REGISTER_MESSAGE: "Ya estás logueado. No necesitas registrarte de nuevo.",
+      BACK_HOME_LABEL: "Ir al inicio",
+    },
+    USER_MENU: {
+      GREETING_PREFIX: "Hola",
+      MENU_BUTTON_LABEL: "Abrir menú de usuario",
+      PROFILE: "Perfil",
+      LISTS: "Listas",
+      LOGOUT: "Logout",
+    },
     HINTS: {
       PASSWORD: "12–20 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo",
     },
