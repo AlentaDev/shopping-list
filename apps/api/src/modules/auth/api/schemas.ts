@@ -1,27 +1,32 @@
 import { z } from "zod";
-import { PASSWORD_RULES, isPasswordValid } from "../domain/password";
+import {
+  emailSchema,
+  nameSchema,
+  postalCodeSchema,
+} from "../../../core/value-objects";
+import {
+  PASSWORD_MESSAGES,
+  PASSWORD_RULES,
+  isPasswordValid,
+} from "../domain/password";
 
 const passwordSchema = z
   .string()
-  .min(PASSWORD_RULES.min)
-  .max(PASSWORD_RULES.max)
+  .min(1, PASSWORD_MESSAGES.required)
+  .min(PASSWORD_RULES.min, PASSWORD_MESSAGES.length)
+  .max(PASSWORD_RULES.max, PASSWORD_MESSAGES.length)
   .refine(isPasswordValid, {
-    message:
-      "Password must include uppercase, lowercase, number, and special characters.",
+    message: PASSWORD_MESSAGES.complexity,
   });
 
 export const signupSchema = z.object({
-  name: z.string().min(3).max(20),
-  email: z.string().email(),
+  name: nameSchema,
+  email: emailSchema,
   password: passwordSchema,
-  postalCode: z
-    .string()
-    .regex(/^\d{5}$/)
-    .optional()
-    .or(z.literal("")),
+  postalCode: postalCodeSchema.optional(),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: emailSchema,
+  password: passwordSchema,
 });

@@ -10,6 +10,11 @@ import {
   ACCESS_TOKEN_TTL_MS,
   REFRESH_TOKEN_TTL_MS,
 } from "./tokenPolicy";
+import {
+  toEmail,
+  toName,
+  toPostalCode,
+} from "../../../core/value-objects";
 
 const fixedNow = new Date("2024-01-01T00:00:00.000Z");
 
@@ -51,14 +56,16 @@ describe("RegisterWithTokens", () => {
       postalCode: "12345",
     });
 
-    const storedUser = await userRepository.findByEmail("alice@example.com");
+    const storedUser = await userRepository.findByEmail(
+      toEmail("alice@example.com")
+    );
 
     expect(storedUser).toEqual({
       id: result.user.id,
-      name: "Alice",
-      email: "alice@example.com",
+      name: toName("Alice"),
+      email: toEmail("alice@example.com"),
       passwordHash: "hashed:Password12!A",
-      postalCode: "12345",
+      postalCode: toPostalCode("12345"),
     });
     expect(result.tokens.accessToken).toContain(result.user.id);
     expect(result.tokens.accessTokenExpiresAt).toEqual(

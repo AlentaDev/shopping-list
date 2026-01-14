@@ -12,6 +12,7 @@ import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
 } from "./tokenPolicy";
+import { toEmail } from "../../../core/value-objects";
 
 export type LoginInput = {
   email: string;
@@ -33,7 +34,8 @@ export class LoginWithTokens {
   ) {}
 
   async execute(input: LoginInput): Promise<LoginResult> {
-    const user = await this.userRepository.findByEmail(input.email);
+    const email = toEmail(input.email);
+    const user = await this.userRepository.findByEmail(email);
     if (!user) {
       throw new InvalidCredentialsError();
     }

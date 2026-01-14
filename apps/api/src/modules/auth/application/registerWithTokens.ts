@@ -13,6 +13,11 @@ import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
 } from "./tokenPolicy";
+import {
+  toEmail,
+  toName,
+  toPostalCode,
+} from "../../../core/value-objects";
 
 export type RegisterInput = {
   name: string;
@@ -36,7 +41,11 @@ export class RegisterWithTokens {
   ) {}
 
   async execute(input: RegisterInput): Promise<RegisterResult> {
-    const existing = await this.userRepository.findByEmail(input.email);
+    const email = toEmail(input.email);
+    const name = toName(input.name);
+    const postalCode = toPostalCode(input.postalCode ?? "");
+
+    const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new DuplicateEmailError();
     }
@@ -44,10 +53,10 @@ export class RegisterWithTokens {
     const passwordHash = await this.passwordHasher.hash(input.password);
     const user: User = {
       id: randomUUID(),
-      name: input.name,
-      email: input.email,
+      name,
+      email,
       passwordHash,
-      postalCode: input.postalCode ?? "",
+      postalCode,
     };
 
     await this.userRepository.save(user);

@@ -3,6 +3,13 @@ export const PASSWORD_RULES = {
   max: 20,
 };
 
+export const PASSWORD_MESSAGES = {
+  required: "La contraseña es obligatoria.",
+  length: "La contraseña debe tener entre 12 y 20 caracteres.",
+  complexity:
+    "La contraseña debe incluir mayúscula, minúscula, número y símbolo.",
+} as const;
+
 const LOWERCASE_REGEX = /[a-z]/;
 const UPPERCASE_REGEX = /[A-Z]/;
 const NUMBER_REGEX = /\d/;
