@@ -44,6 +44,22 @@ describe("auth endpoints", () => {
     expect(response.body).not.toHaveProperty("passwordHash");
   });
 
+  it("POST /api/auth/register accepts empty postal code", async () => {
+    const app = createApp();
+
+    const response = await request(app)
+      .post("/api/auth/register")
+      .send({ ...validUser, postalCode: "" });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      id: expect.any(String),
+      name: validUser.name,
+      email: validUser.email,
+      postalCode: "",
+    });
+  });
+
   it.each([
     {
       name: "Al",
@@ -67,7 +83,7 @@ describe("auth endpoints", () => {
       name: "Alice",
       email: "alice@example.com",
       password: "Password12!A",
-      postalCode: "",
+      postalCode: "1234",
     },
   ])("POST /api/auth/register returns 400 for invalid input", async (payload) => {
     const app = createApp();

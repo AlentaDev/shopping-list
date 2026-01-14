@@ -48,4 +48,27 @@ describe("LoginForm", () => {
       password: TEST_PASSWORD,
     });
   });
+
+  it("shows validation errors on blur and submit", async () => {
+    const onSubmit = vi.fn();
+
+    render(<LoginForm onSubmit={onSubmit} />);
+
+    const emailInput = screen.getByLabelText(UI_TEXT.AUTH.LOGIN.EMAIL_LABEL);
+    await userEvent.type(emailInput, "invalid-email");
+    await userEvent.tab();
+
+    expect(
+      screen.getByText(UI_TEXT.AUTH.VALIDATION.EMAIL_INVALID)
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.AUTH.LOGIN.SUBMIT_LABEL })
+    );
+
+    expect(
+      screen.getByText(UI_TEXT.AUTH.VALIDATION.PASSWORD_REQUIRED)
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
 });

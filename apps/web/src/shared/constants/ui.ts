@@ -14,6 +14,20 @@ export const UI_TEXT = {
   AUTH: {
     BACK_TO_HOME: "Volver al catálogo",
     ERROR_MESSAGE: "No se pudo completar la autenticación.",
+    HINTS: {
+      PASSWORD: "12–20 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 símbolo",
+    },
+    VALIDATION: {
+      EMAIL_REQUIRED: "El email es obligatorio.",
+      EMAIL_INVALID: "Introduce un email válido.",
+      PASSWORD_REQUIRED: "La contraseña es obligatoria.",
+      PASSWORD_LENGTH: "La contraseña debe tener entre 12 y 20 caracteres.",
+      PASSWORD_COMPLEXITY:
+        "La contraseña debe incluir mayúscula, minúscula, número y símbolo.",
+      NAME_REQUIRED: "El nombre es obligatorio.",
+      NAME_LENGTH: "El nombre debe tener entre 2 y 25 caracteres.",
+      POSTAL_CODE_INVALID: "El código postal debe tener 5 dígitos.",
+    },
     LOGIN: {
       TITLE: "Iniciar sesión",
       SUBTITLE: "Accede para gestionar tu lista",
@@ -32,7 +46,7 @@ export const UI_TEXT = {
       EMAIL_PLACEHOLDER: "tu@email.com",
       PASSWORD_LABEL: "Contraseña",
       PASSWORD_PLACEHOLDER: "Crea una contraseña segura",
-      POSTAL_CODE_LABEL: "Código postal",
+      POSTAL_CODE_LABEL: "Código postal (opcional)",
       POSTAL_CODE_PLACEHOLDER: "Ej. 28001",
       SUBMIT_LABEL: "Registrarme",
     },
