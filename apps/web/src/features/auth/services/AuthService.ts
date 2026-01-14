@@ -45,6 +45,16 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
   return (await response.json()) as AuthUser;
 }
 
+export async function getCurrentUser(): Promise<AuthUser> {
+  const response = await fetch("/api/users/me");
+
+  if (!response.ok) {
+    throw new Error("Unable to load current user");
+  }
+
+  return (await response.json()) as AuthUser;
+}
+
 export async function logoutUser(): Promise<{ ok: boolean }> {
   const response = await fetch("/api/auth/logout", {
     method: "POST",

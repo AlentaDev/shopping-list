@@ -1,6 +1,11 @@
 /* eslint-disable sonarjs/no-hardcoded-passwords */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loginUser, registerUser, logoutUser } from "./AuthService";
+import {
+  getCurrentUser,
+  loginUser,
+  registerUser,
+  logoutUser,
+} from "./AuthService";
 
 type FetchResponse = {
   ok: boolean;
@@ -114,6 +119,36 @@ describe("AuthService", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", {
       method: "POST",
     });
+  });
+
+  it("loads the current user", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => RESPONSE_PAYLOAD,
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCurrentUser()).resolves.toEqual(RESPONSE_PAYLOAD);
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/users/me");
+  });
+
+  it("throws when loading the current user fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getCurrentUser()).rejects.toThrow(
+      "Unable to load current user"
+    );
   });
 
   it("throws when logout request fails", async () => {

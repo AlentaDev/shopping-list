@@ -8,6 +8,7 @@ import {
   AuthLoggedInNotice,
   AuthScreen,
   type AuthMode,
+  getCurrentUser,
   loginUser,
   logoutUser,
   registerUser,
@@ -38,6 +39,27 @@ const App = () => {
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (isActive) {
+          setAuthUser(user);
+        }
+      } catch {
+        // No-op: user not authenticated.
+      }
+    };
+
+    void loadCurrentUser();
+
+    return () => {
+      isActive = false;
     };
   }, []);
 

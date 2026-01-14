@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { UI_TEXT } from "../../../shared/constants/ui";
 import type { AuthMode } from "./AuthScreen";
 
@@ -11,6 +12,16 @@ const AuthLoggedInNotice = ({ mode, onBack }: AuthLoggedInNoticeProps) => {
     mode === "login"
       ? UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE
       : UI_TEXT.AUTH.ALREADY_LOGGED_IN.REGISTER_MESSAGE;
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      onBack();
+    }, 15000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [onBack]);
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -27,6 +38,9 @@ const AuthLoggedInNotice = ({ mode, onBack }: AuthLoggedInNoticeProps) => {
             {UI_TEXT.AUTH.ALREADY_LOGGED_IN.TITLE}
           </h1>
           <p className="text-sm text-slate-600">{message}</p>
+          <p className="text-sm text-slate-500">
+            {UI_TEXT.AUTH.ALREADY_LOGGED_IN.AUTO_REDIRECT_MESSAGE}
+          </p>
         </div>
         <div className="mt-6">
           <button

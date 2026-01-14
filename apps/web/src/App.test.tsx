@@ -13,6 +13,7 @@ type FetchResponse = {
 };
 
 const rootCategoriesUrl = "/api/catalog/categories";
+const CURRENT_USER_URL = "/api/users/me";
 const CHILD_CATEGORY_ID = "child-1";
 const CHILD_CATEGORY_NAME = "Bollería";
 const UNEXPECTED_REQUEST_ERROR = "Unexpected request";
@@ -62,14 +63,21 @@ describe("App", () => {
               categories: [
                 { id: "root-1", name: "Panadería", order: 1, level: 0 },
                 {
-                  id: "child-1",
-                  name: "Bollería",
+                  id: CHILD_CATEGORY_ID,
+                  name: CHILD_CATEGORY_NAME,
                   order: 1,
                   level: 1,
                   parentId: "root-1",
                 },
               ],
             }),
+          };
+        }
+
+        if (input === CURRENT_USER_URL) {
+          return {
+            ok: false,
+            json: async () => ({}),
           };
         }
 
@@ -141,6 +149,13 @@ describe("App", () => {
           };
         }
 
+        if (input === CURRENT_USER_URL) {
+          return {
+            ok: false,
+            json: async () => ({}),
+          };
+        }
+
         if (input === categoryDetailUrl(CHILD_CATEGORY_ID)) {
           return {
             ok: true,
@@ -209,14 +224,21 @@ describe("App", () => {
             categories: [
               { id: "root-1", name: "Panadería", order: 1, level: 0 },
               {
-                id: "child-1",
-                name: "Bollería",
+                id: CHILD_CATEGORY_ID,
+                name: CHILD_CATEGORY_NAME,
                 order: 1,
                 level: 1,
                 parentId: "root-1",
               },
             ],
           }),
+        };
+      }
+
+      if (input === CURRENT_USER_URL) {
+        return {
+          ok: false,
+          json: async () => ({}),
         };
       }
 

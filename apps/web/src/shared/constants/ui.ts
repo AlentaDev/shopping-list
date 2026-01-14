@@ -18,6 +18,7 @@ export const UI_TEXT = {
       TITLE: "Ya estás logueado",
       LOGIN_MESSAGE: "Ya estás logueado. No necesitas iniciar sesión de nuevo.",
       REGISTER_MESSAGE: "Ya estás logueado. No necesitas registrarte de nuevo.",
+      AUTO_REDIRECT_MESSAGE: "Te llevaremos al inicio en 15 segundos.",
       BACK_HOME_LABEL: "Ir al inicio",
     },
     USER_MENU: {
