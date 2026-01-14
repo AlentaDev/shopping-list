@@ -1,16 +1,18 @@
+import type { Email, Name, PostalCode } from "../../../core/value-objects";
+
 export type User = {
   id: string;
-  name: string;
-  email: string;
+  name: Name;
+  email: Email;
   passwordHash: string;
-  postalCode: string;
+  postalCode: PostalCode;
 };
 
 export type PublicUser = {
   id: string;
-  name: string;
-  email: string;
-  postalCode: string;
+  name: Name;
+  email: Email;
+  postalCode: PostalCode;
 };
 
 export function toPublicUser(user: User): PublicUser {

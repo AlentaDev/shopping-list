@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, RequestHandler } from "express";
 import { AppError } from "../../../shared/errors/appError";
+import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
 import type { AuthenticatedRequest } from "../../../shared/web/requireAuth";
 import { AddCatalogItem } from "../application/AddCatalogItem";
 import { AddManualItem } from "../application/AddManualItem";
@@ -153,7 +154,11 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
 function getUserId(req: Request): string {
   const authRequest = req as AuthenticatedRequest;
   if (!authRequest.userId) {
-    throw new AppError(401, "not_authenticated", "Not authenticated");
+    throw new AppError(
+      401,
+      "not_authenticated",
+      API_ERROR_MESSAGES.notAuthenticated
+    );
   }
 
   return authRequest.userId;

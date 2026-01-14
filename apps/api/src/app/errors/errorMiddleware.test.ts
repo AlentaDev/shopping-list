@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { describe, expect, it, vi } from "vitest";
+import { API_ERROR_MESSAGES } from "../../shared/constants/apiErrorMessages";
 import { AppError } from "../../shared/errors/appError";
 import { errorMiddleware } from "./errorMiddleware";
 
@@ -31,7 +32,11 @@ describe("errorMiddleware", () => {
     const next = vi.fn();
 
     errorMiddleware(
-      new AppError(401, "not_authenticated", "Not authenticated"),
+      new AppError(
+        401,
+        "not_authenticated",
+        API_ERROR_MESSAGES.notAuthenticated
+      ),
       {} as Request,
       res,
       next

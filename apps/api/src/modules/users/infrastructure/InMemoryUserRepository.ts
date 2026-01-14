@@ -1,11 +1,12 @@
-import { User } from "../domain/user";
-import { UserRepository } from "../application/ports";
+import type { Email } from "../../../core/value-objects";
+import type { User } from "../domain/user";
+import type { UserRepository } from "../application/ports";
 
 export class InMemoryUserRepository implements UserRepository {
   private readonly usersById = new Map<string, User>();
-  private readonly usersByEmail = new Map<string, User>();
+  private readonly usersByEmail = new Map<Email, User>();
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: Email): Promise<User | null> {
     return this.usersByEmail.get(email) ?? null;
   }
 

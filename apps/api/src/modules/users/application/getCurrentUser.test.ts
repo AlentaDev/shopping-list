@@ -1,13 +1,19 @@
+import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
 import { AppError } from "../../../shared/errors/appError";
+import {
+  toEmail,
+  toName,
+  toPostalCode,
+} from "../../../core/value-objects";
 import { InMemoryUserRepository } from "../infrastructure/InMemoryUserRepository";
 import { GetCurrentUser } from "./getCurrentUser";
 
 const user = {
   id: "user-123",
-  name: "Test User",
-  email: "test@example.com",
+  name: toName("Test User"),
+  email: toEmail("test@example.com"),
   passwordHash: "hashed-password",
-  postalCode: "12345",
+  postalCode: toPostalCode("12345"),
 };
 
 describe("GetCurrentUser", () => {
@@ -25,7 +31,11 @@ describe("GetCurrentUser", () => {
     const getCurrentUser = new GetCurrentUser(repository);
 
     await expect(getCurrentUser.execute(null)).rejects.toMatchObject(
-      new AppError(401, "not_authenticated", "Not authenticated")
+      new AppError(
+        401,
+        "not_authenticated",
+        API_ERROR_MESSAGES.notAuthenticated
+      )
     );
   });
 
@@ -34,7 +44,11 @@ describe("GetCurrentUser", () => {
     const getCurrentUser = new GetCurrentUser(repository);
 
     await expect(getCurrentUser.execute("missing-user")).rejects.toMatchObject(
-      new AppError(401, "not_authenticated", "Not authenticated")
+      new AppError(
+        401,
+        "not_authenticated",
+        API_ERROR_MESSAGES.notAuthenticated
+      )
     );
   });
 });

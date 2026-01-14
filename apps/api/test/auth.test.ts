@@ -62,7 +62,7 @@ describe("auth endpoints", () => {
 
   it.each([
     {
-      name: "Al",
+      name: "A",
       email: "alice@example.com",
       password: "Password12!A",
       postalCode: "12345",
@@ -139,7 +139,7 @@ describe("auth endpoints", () => {
     await request(app).post("/api/auth/register").send(validUser);
     const response = await request(app)
       .post("/api/auth/login")
-      .send({ email: validUser.email, password: "wrong" });
+      .send({ email: validUser.email, password: "Password12!B" });
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "invalid_credentials" });

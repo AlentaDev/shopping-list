@@ -1,11 +1,16 @@
+import {
+  toEmail,
+  toName,
+  toPostalCode,
+} from "../../../core/value-objects";
 import { InMemoryUserRepository } from "./InMemoryUserRepository";
 
 const user = {
   id: "user-123",
-  name: "Test User",
-  email: "test@example.com",
+  name: toName("Test User"),
+  email: toEmail("test@example.com"),
   passwordHash: "hashed-password",
-  postalCode: "12345",
+  postalCode: toPostalCode("12345"),
 };
 
 describe("InMemoryUserRepository", () => {
@@ -22,6 +27,8 @@ describe("InMemoryUserRepository", () => {
     const repository = new InMemoryUserRepository();
 
     await expect(repository.findById("missing-id")).resolves.toBeNull();
-    await expect(repository.findByEmail("missing@example.com")).resolves.toBeNull();
+    await expect(
+      repository.findByEmail(toEmail("missing@example.com"))
+    ).resolves.toBeNull();
   });
 });
