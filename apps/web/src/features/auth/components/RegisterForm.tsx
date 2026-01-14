@@ -167,7 +167,12 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
   };
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="space-y-4">
+    <form
+      noValidate
+      autoComplete="off"
+      onSubmit={handleSubmit}
+      className="space-y-4"
+    >
       <div className="space-y-1">
         <label className="text-sm font-medium" htmlFor="register-name">
           {UI_TEXT.AUTH.REGISTER.NAME_LABEL}
@@ -176,6 +181,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           id="register-name"
           name="name"
           type="text"
+          autoComplete="off"
           value={fields.name.value}
           onChange={handleChange("name")}
           onBlur={handleBlur("name")}
@@ -194,6 +200,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           id="register-email"
           name="email"
           type="email"
+          autoComplete="off"
           value={fields.email.value}
           onChange={handleChange("email")}
           onBlur={handleBlur("email")}
@@ -212,6 +219,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           id="register-password"
           name="password"
           type="password"
+          autoComplete="off"
           value={fields.password.value}
           onChange={handleChange("password")}
           onBlur={handleBlur("password")}
@@ -231,6 +239,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           id="register-postal-code"
           name="postalCode"
           type="text"
+          autoComplete="off"
           value={fields.postalCode.value}
           onChange={handleChange("postalCode")}
           onBlur={handleBlur("postalCode")}

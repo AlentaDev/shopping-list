@@ -34,6 +34,26 @@ describe("RegisterForm", () => {
     ).toBeInTheDocument();
   });
 
+  it("disables browser autocomplete to avoid unintended autofill", () => {
+    const { container } = render(<RegisterForm onSubmit={vi.fn()} />);
+
+    const form = container.querySelector("form");
+    expect(form).toHaveAttribute("autocomplete", "off");
+
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+    expect(
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL)
+    ).toHaveAttribute("autocomplete", "off");
+  });
+
   it("submits the form values", async () => {
     const onSubmit = vi.fn();
 

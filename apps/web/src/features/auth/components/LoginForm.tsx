@@ -120,7 +120,12 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
   };
 
   return (
-    <form noValidate onSubmit={handleSubmit} className="space-y-4">
+    <form
+      noValidate
+      autoComplete="off"
+      onSubmit={handleSubmit}
+      className="space-y-4"
+    >
       <div className="space-y-1">
         <label className="text-sm font-medium" htmlFor="login-email">
           {UI_TEXT.AUTH.LOGIN.EMAIL_LABEL}
@@ -129,6 +134,7 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
           id="login-email"
           name="email"
           type="email"
+          autoComplete="off"
           value={fields.email.value}
           onChange={handleChange("email")}
           onBlur={handleBlur("email")}
@@ -147,6 +153,7 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
           id="login-password"
           name="password"
           type="password"
+          autoComplete="off"
           value={fields.password.value}
           onChange={handleChange("password")}
           onBlur={handleBlur("password")}
