@@ -24,7 +24,7 @@ const AuthScreen = ({
   const isLogin = mode === "login";
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-lg space-y-6" data-testid="auth-screen">
       <button
         type="button"
         onClick={onBack}

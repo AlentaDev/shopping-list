@@ -124,6 +124,7 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
       noValidate
       autoComplete="off"
       onSubmit={handleSubmit}
+      data-testid="login-form"
       className="space-y-4"
     >
       <div className="space-y-1">

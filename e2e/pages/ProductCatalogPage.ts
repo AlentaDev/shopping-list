@@ -4,11 +4,13 @@ export class ProductCatalogPage {
   readonly page: Page;
   readonly productsHeading: Locator;
   readonly productCards: Locator;
+  readonly addToCartButtons: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.productsHeading = page.getByRole("heading", { level: 1 });
-    this.productCards = page.getByRole("article");
+    this.productCards = page.getByTestId("catalog-product-card");
+    this.addToCartButtons = page.getByTestId("catalog-add-button");
   }
 
   async goto(): Promise<void> {
@@ -16,14 +18,12 @@ export class ProductCatalogPage {
   }
 
   getProduct(name: string): Locator {
-    return this.page
-      .getByRole("article")
-      .filter({ has: this.page.getByRole("heading", { name }) });
+    return this.productCards.filter({
+      has: this.page.getByRole("heading", { name }),
+    });
   }
 
   async addToCart(name: string): Promise<void> {
-    await this.page
-      .getByRole("button", { name: new RegExp(`${name}$`, "i") })
-      .click();
+    await this.getProduct(name).getByTestId("catalog-add-button").click();
   }
 }

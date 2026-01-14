@@ -37,7 +37,10 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
   };
 
   return (
-    <article className="flex h-full flex-col rounded-2xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
+    <article
+      data-testid="catalog-product-card"
+      className="flex h-full flex-col rounded-2xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+    >
       <div className="flex flex-col p-3">
         <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
           {product.thumbnail ? (
@@ -70,6 +73,7 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
           type="button"
           onClick={handleAdd}
           disabled={isAdding}
+          data-testid="catalog-add-button"
           aria-label={
             isAdding
               ? `${UI_TEXT.PRODUCT_CARD.ADDING_LABEL} ${product.name}`
