@@ -18,7 +18,7 @@ export type RegisterInput = {
   name: string;
   email: string;
   password: string;
-  postalCode: string;
+  postalCode?: string;
 };
 
 export type RegisterResult = {
@@ -47,7 +47,7 @@ export class RegisterWithTokens {
       name: input.name,
       email: input.email,
       passwordHash,
-      postalCode: input.postalCode,
+      postalCode: input.postalCode ?? "",
     };
 
     await this.userRepository.save(user);

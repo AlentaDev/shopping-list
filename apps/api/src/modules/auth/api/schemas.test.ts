@@ -12,6 +12,16 @@ describe("auth schemas", () => {
     expect(signupSchema.safeParse(validSignup).success).toBe(true);
   });
 
+  it("accepts a signup payload without postal code", () => {
+    const result = signupSchema.safeParse({
+      name: "Test User",
+      email: "test@example.com",
+      password: "Password12!A",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects signup passwords that do not meet the policy", () => {
     const result = signupSchema.safeParse({
       ...validSignup,

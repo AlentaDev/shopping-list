@@ -14,7 +14,11 @@ export const signupSchema = z.object({
   name: z.string().min(3).max(20),
   email: z.string().email(),
   password: passwordSchema,
-  postalCode: z.string().min(1),
+  postalCode: z
+    .string()
+    .regex(/^\d{5}$/)
+    .optional()
+    .or(z.literal("")),
 });
 
 export const loginSchema = z.object({
