@@ -12,6 +12,7 @@
     "test": "pnpm -r test",
     "test:api": "pnpm --filter @app/api test",
     "test:web": "pnpm --filter @app/web test",
+    "test:e2e": "pnpm -C apps/web test:e2e",
     "typecheck": "pnpm -r typecheck",
     "quality": "pnpm -r quality",
     "verify": "pnpm -r verify",
