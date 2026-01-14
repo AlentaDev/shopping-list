@@ -20,6 +20,7 @@ const ItemList = ({
       {items.map((item) => (
         <li
           key={item.id}
+          data-testid="shopping-list-item"
           className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
         >
           {item.thumbnail ? (

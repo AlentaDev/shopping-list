@@ -171,6 +171,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
       noValidate
       autoComplete="off"
       onSubmit={handleSubmit}
+      data-testid="register-form"
       className="space-y-4"
     >
       <div className="space-y-1">

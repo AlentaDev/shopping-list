@@ -21,7 +21,7 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "e2e"],
+    exclude: ["node_modules", "dist", ".idea", ".git", ".cache", "e2e/**"],
     globals: true,
     environment: "jsdom",
     coverage: {
