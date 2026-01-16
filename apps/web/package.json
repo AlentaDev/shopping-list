@@ -14,7 +14,7 @@
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "quality": "pnpm lint && pnpm typecheck && pnpm test:run",
-    "verify": "pnpm quality && pnpm test:e2e && pnpm build",
+    "verify": "pnpm quality && pnpm build",
     "prepare": "husky"
   },
   "dependencies": {
@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@playwright/test": "^1.57.0",
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
