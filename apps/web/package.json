@@ -11,7 +11,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage && tsx scripts/analyze-coverage.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test -c ../../playwright.config.ts",
     "typecheck": "tsc --noEmit",
     "quality": "pnpm lint && pnpm typecheck && pnpm test:run",
     "verify": "pnpm quality && pnpm test:e2e && pnpm build",
