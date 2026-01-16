@@ -9,7 +9,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "pnpm -C apps/api tsx watch src/server.ts",
+      command: "pnpm tsx watch src/server.ts",
+      cwd: "apps/api",
       url: "http://127.0.0.1:3000",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
@@ -20,7 +21,8 @@ export default defineConfig({
       },
     },
     {
-      command: "pnpm -C apps/web dev -- --host 0.0.0.0 --port 5173",
+      command: "pnpm dev -- --host 0.0.0.0 --port 5173",
+      cwd: "apps/web",
       url: "http://127.0.0.1:5173",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
