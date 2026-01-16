@@ -9,7 +9,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "pnpm -C apps/api dev",
+      command: "pnpm -C apps/api tsx watch src/server.ts",
       url: "http://127.0.0.1:3000",
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
