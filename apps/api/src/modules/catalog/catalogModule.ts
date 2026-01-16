@@ -5,6 +5,7 @@ import type { CatalogProvider } from "./domain/catalogProvider";
 import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache";
 import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider";
 import { MercadonaHttpClient } from "./infrastructure/MercadonaHttpClient";
+import { TestCatalogProvider } from "./infrastructure/TestCatalogProvider";
 import { createCatalogRouter } from "./api/catalogRouter";
 
 const MERCADONA_BASE_URL = "https://tienda.mercadona.es/api";
@@ -17,11 +18,7 @@ type CatalogModuleDependencies = {
 
 export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   const cache = deps.cache ?? new InMemoryCatalogCache();
-  const provider =
-    deps.provider ??
-    new MercadonaCatalogProvider(
-      new MercadonaHttpClient(MERCADONA_BASE_URL, MERCADONA_TIMEOUT_MS),
-    );
+  const provider = deps.provider ?? selectCatalogProvider();
 
   const getRootCategories = new GetRootCategories(provider, cache);
   const getCategoryDetail = new GetCategoryDetail(provider, cache);
@@ -32,4 +29,14 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   });
 
   return { router, provider };
+}
+
+function selectCatalogProvider(): CatalogProvider {
+  if (process.env.CATALOG_PROVIDER === "test") {
+    return new TestCatalogProvider();
+  }
+
+  return new MercadonaCatalogProvider(
+    new MercadonaHttpClient(MERCADONA_BASE_URL, MERCADONA_TIMEOUT_MS),
+  );
 }

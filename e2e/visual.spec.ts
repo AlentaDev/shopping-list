@@ -13,64 +13,11 @@ const PRODUCT = {
   isApproxSize: false,
 };
 
-const CATEGORIES = [
-  {
-    id: "cat-1",
-    name: "Frescos",
-    order: 1,
-    level: 0,
-  },
-  {
-    id: "cat-1-1",
-    name: "Frutas",
-    order: 1,
-    level: 1,
-    parentId: "cat-1",
-  },
-];
-
-const CATEGORY_DETAIL = {
-  name: "Frutas",
-  subcategories: [
-    {
-      name: "Frutas frescas",
-      products: [PRODUCT],
-    },
-  ],
-};
-
 const clearLocalStorage = async (page: Page) => {
   await page.evaluate(() => localStorage.clear());
 };
 
-const mockAuthRoutes = async (page: Page) => {
-  await page.route("**/api/users/me", async (route) => {
-    await route.fulfill({ status: 401, body: "" });
-  });
-};
-
-const mockCatalogRoutes = async (page: Page) => {
-  await page.route("**/api/catalog/categories", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ categories: CATEGORIES }),
-    });
-  });
-
-  await page.route("**/api/catalog/categories/*", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(CATEGORY_DETAIL),
-    });
-  });
-};
-
 test("visual: homepage con catálogo", async ({ page }) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page);
-
   const catalogPage = new ProductCatalogPage(page);
 
   await catalogPage.goto();
@@ -84,9 +31,6 @@ test("visual: homepage con catálogo", async ({ page }) => {
 });
 
 test("visual: lista con items", async ({ page }) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page);
-
   const catalogPage = new ProductCatalogPage(page);
 
   await catalogPage.goto();
@@ -105,8 +49,6 @@ test("visual: lista con items", async ({ page }) => {
 });
 
 test("visual: homepage con login", async ({ page }) => {
-  await mockAuthRoutes(page);
-
   await page.goto("/auth/login");
   await clearLocalStorage(page);
   await page.reload();
@@ -118,8 +60,6 @@ test("visual: homepage con login", async ({ page }) => {
 });
 
 test("visual: homepage con registro", async ({ page }) => {
-  await mockAuthRoutes(page);
-
   await page.goto("/auth/register");
   await clearLocalStorage(page);
   await page.reload();

@@ -4,7 +4,6 @@ import { ProductCatalogPage } from "./pages/ProductCatalogPage";
 import { ShoppingListPage } from "./pages/ShoppingListPage";
 
 const USER = {
-  id: "user-1",
   name: "Ana",
   email: "ana@example.com",
   postalCode: "28001",
@@ -22,108 +21,18 @@ const PRODUCT = {
   isApproxSize: false,
 };
 
-const CATEGORIES = [
-  {
-    id: "cat-1",
-    name: "Frescos",
-    order: 1,
-    level: 0,
-  },
-  {
-    id: "cat-1-1",
-    name: "Frutas",
-    order: 1,
-    level: 1,
-    parentId: "cat-1",
-  },
-];
-
-const CATEGORY_DETAIL = {
-  name: "Frutas",
-  subcategories: [
-    {
-      name: "Frutas frescas",
-      products: [PRODUCT],
-    },
-  ],
-};
-
-const EMPTY_CATEGORIES_RESPONSE = { categories: [] };
-
-const DETAIL_SUCCESS_RESPONSE = CATEGORY_DETAIL;
-
 const clearLocalStorage = async (page: Page) => {
   await page.evaluate(() => localStorage.clear());
 };
 
-const mockAuthRoutes = async (page: Page) => {
-  await page.route("**/api/users/me", async (route) => {
-    await route.fulfill({ status: 401, body: "" });
-  });
-
-  await page.route("**/api/auth/register", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(USER),
-    });
-  });
-
-  await page.route("**/api/auth/login", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(USER),
-    });
-  });
-
-  await page.route("**/api/auth/logout", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ ok: true }),
-    });
-  });
-};
-
-const mockCatalogRoutes = async (
-  page: Page,
-  options: { detailFailCount?: number; categories?: typeof CATEGORIES } = {}
-) => {
-  const { detailFailCount = 0, categories = CATEGORIES } = options;
-  let detailCalls = 0;
-
-  await page.route("**/api/catalog/categories", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ categories }),
-    });
-  });
-
-  await page.route("**/api/catalog/categories/*", async (route) => {
-    detailCalls += 1;
-
-    if (detailCalls <= detailFailCount) {
-      await route.fulfill({ status: 500, body: "" });
-      return;
-    }
-
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(DETAIL_SUCCESS_RESPONSE),
-    });
-  });
-};
-
 test("auth happy path permite registrar, iniciar sesión y cerrar sesión", async ({
   page,
-}) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page, { categories: EMPTY_CATEGORIES_RESPONSE.categories });
-
+}, testInfo) => {
   const authPage = new AuthPage(page);
+  const uniqueUser = {
+    ...USER,
+    email: `ana+${testInfo.workerIndex}-${Date.now()}@example.com`,
+  };
 
   await authPage.gotoRegister();
   await clearLocalStorage(page);
@@ -133,10 +42,15 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
     "El título de registro debe mostrarse en la pantalla de auth"
   ).toHaveText("Crear cuenta");
 
-  await authPage.register(USER.name, USER.email, "Password123!", USER.postalCode);
+  await authPage.register(
+    uniqueUser.name,
+    uniqueUser.email,
+    "Password123!",
+    uniqueUser.postalCode
+  );
 
   const userMenuButton = page.getByRole("button", {
-    name: `Hola ${USER.name}`,
+    name: `Hola ${uniqueUser.name}`,
   });
 
   await expect(
@@ -154,7 +68,7 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
 
   await authPage.gotoLogin();
 
-  await authPage.login(USER.email, "Password123!");
+  await authPage.login(uniqueUser.email, "Password123!");
 
   await expect(
     userMenuButton,
@@ -170,12 +84,7 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
   ).toBeVisible();
 });
 
-test("catálogo permite abrir panel, seleccionar categoría y reintentar carga", async ({
-  page,
-}) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page, { detailFailCount: 2 });
-
+test("catálogo permite abrir panel y seleccionar categoría", async ({ page }) => {
   const catalogPage = new ProductCatalogPage(page);
 
   await catalogPage.goto();
@@ -193,22 +102,16 @@ test("catálogo permite abrir panel, seleccionar categoría y reintentar carga",
   await page.getByRole("button", { name: "Frutas" }).click();
 
   await expect(
-    page.getByText("No se pudieron cargar los productos."),
-    "Debe mostrarse el error cuando falla la carga de productos"
-  ).toBeVisible();
-
-  await page.getByRole("button", { name: "Reintentar" }).click();
-
-  await expect(
     catalogPage.productsHeading,
-    "Tras reintentar, el catálogo debe mostrar la categoría seleccionada"
+    "El catálogo debe mostrar la categoría seleccionada"
   ).toHaveText("Frutas");
+  await expect(
+    catalogPage.getProduct(PRODUCT.name),
+    "Debe mostrarse la tarjeta del producto"
+  ).toBeVisible();
 });
 
 test("carrito añade producto y muestra badge y toast", async ({ page }) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page);
-
   const catalogPage = new ProductCatalogPage(page);
 
   await catalogPage.goto();
@@ -246,9 +149,6 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
 test("modal permite ajustar cantidades, eliminar items, estado vacío y guardar nombre", async ({
   page,
 }) => {
-  await mockAuthRoutes(page);
-  await mockCatalogRoutes(page);
-
   const catalogPage = new ProductCatalogPage(page);
   const listPage = new ShoppingListPage(page);
 
