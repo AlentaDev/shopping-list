@@ -23,6 +23,7 @@
   "license": "ISC",
   "packageManager": "pnpm@10.28.0",
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "husky": "^9.1.7"
   }
 }
