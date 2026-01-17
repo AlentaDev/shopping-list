@@ -1,5 +1,5 @@
-import type { List } from "../domain/list";
-import type { IdGenerator, ListRepository } from "./ports";
+import type { List } from "../domain/list.js";
+import type { IdGenerator, ListRepository } from "./ports.js";
 
 type CreateListInput = {
   userId: string;

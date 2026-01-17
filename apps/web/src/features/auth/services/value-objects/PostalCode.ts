@@ -1,4 +1,4 @@
-import { postalCodeSchema } from "../authValidation";
+import { postalCodeSchema } from "@src/features/auth/services/authValidation";
 import type { Result } from "./result";
 
 export class PostalCode {

@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
-import { useList } from "../../context/useList";
-import { useToast } from "../../context/useToast";
+import { useList } from "@src/context/useList";
+import { useToast } from "@src/context/useToast";
 import { useCatalog } from "./services/useCatalog";
-import { UI_TEXT } from "../../shared/constants/ui";
-import { FETCH_STATUS } from "../../shared/constants/appState";
+import { UI_TEXT } from "@src/shared/constants/ui";
+import { FETCH_STATUS } from "@src/shared/constants/appState";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 
@@ -70,7 +70,7 @@ const Catalog = ({
   const sections = categoryDetail?.sections ?? [];
   const totalProducts = sections.reduce(
     (total, section) => total + section.products.length,
-    0
+    0,
   );
   const hasItems = totalProducts > 0;
   const skeletonCount = 8;
@@ -121,7 +121,9 @@ const Catalog = ({
       ) : null}
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:overflow-visible">
-        {isCategoriesOpen ? <div className="w-full sm:w-80 sm:shrink-0" /> : null}
+        {isCategoriesOpen ? (
+          <div className="w-full sm:w-80 sm:shrink-0" />
+        ) : null}
         <section className="flex-1 space-y-6">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
             {categoryDetail?.categoryName || UI_TEXT.CATALOG.TITLE}

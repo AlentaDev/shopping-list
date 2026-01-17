@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AuthLoggedInNotice from "./AuthLoggedInNotice";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 describe("AuthLoggedInNotice", () => {
   afterEach(() => {
@@ -18,13 +18,13 @@ describe("AuthLoggedInNotice", () => {
     render(<AuthLoggedInNotice mode="login" onBack={onBack} />);
 
     expect(
-      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE)
+      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE),
     ).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", {
         name: UI_TEXT.AUTH.ALREADY_LOGGED_IN.BACK_HOME_LABEL,
-      })
+      }),
     );
 
     expect(onBack).toHaveBeenCalledTimes(1);
@@ -38,10 +38,10 @@ describe("AuthLoggedInNotice", () => {
     render(<AuthLoggedInNotice mode="register" onBack={onBack} />);
 
     expect(
-      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.REGISTER_MESSAGE)
+      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.REGISTER_MESSAGE),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.AUTO_REDIRECT_MESSAGE)
+      screen.getByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.AUTO_REDIRECT_MESSAGE),
     ).toBeInTheDocument();
 
     act(() => {

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { JwtAccessTokenService } from "./JwtAccessTokenService";
+import { JwtAccessTokenService } from "./JwtAccessTokenService.js";
 
 const TEST_SECRET = "test-secret";
 

@@ -1,12 +1,12 @@
-import type { CatalogProvider, MercadonaProductDetail } from "../../catalog/public";
-import type { ListItem } from "../domain/list";
-import { toListItemDto, type ListItemDto } from "./listItemDto";
-import type { IdGenerator, ListRepository } from "./ports";
+import type { CatalogProvider, MercadonaProductDetail } from "@src/modules/catalog/public.js";
+import type { ListItem } from "../domain/list.js";
+import { toListItemDto, type ListItemDto } from "./listItemDto.js";
+import type { IdGenerator, ListRepository } from "./ports.js";
 import {
   CatalogProviderError,
   ListForbiddenError,
   ListNotFoundError,
-} from "./errors";
+} from "./errors.js";
 
 type AddCatalogItemInput = {
   userId: string;

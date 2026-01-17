@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
-import { useList } from "../../context/useList";
+import { useList } from "@src/context/useList";
 import type { ShoppingListItem } from "./types";
-import { UI_TEXT } from "../../shared/constants/ui";
-import { SHOPPING_LIST_VIEW } from "../../shared/constants/appState";
+import { UI_TEXT } from "@src/shared/constants/ui";
+import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -19,7 +19,7 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState("");
   const [listTitle, setListTitle] = useState<string>(
-    UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE
+    UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
 
   const sortedItems = useMemo(
@@ -33,7 +33,7 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
 
         return left.name.localeCompare(right.name);
       }),
-    [items]
+    [items],
   );
   const handleIncrement = (id: string) => {
     const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;

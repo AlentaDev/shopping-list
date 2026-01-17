@@ -1,7 +1,7 @@
-import type { ListItem } from "../domain/list";
-import { toListItemDto, type ListItemDto } from "./listItemDto";
-import type { IdGenerator, ListRepository } from "./ports";
-import { ListForbiddenError, ListNotFoundError } from "./errors";
+import type { ListItem } from "../domain/list.js";
+import { toListItemDto, type ListItemDto } from "./listItemDto.js";
+import type { IdGenerator, ListRepository } from "./ports.js";
+import { ListForbiddenError, ListNotFoundError } from "./errors.js";
 
 type AddManualItemInput = {
   userId: string;

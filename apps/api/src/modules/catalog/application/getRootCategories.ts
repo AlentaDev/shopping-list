@@ -1,15 +1,15 @@
-import { AppError } from "../../../shared/errors/appError";
-import { ROOT_CATEGORIES_CACHE_KEY } from "./cacheKeys";
-import { ROOT_CATEGORIES_TTL_MS } from "./cacheTtl";
-import type { CatalogCache } from "../domain/catalogCache";
+import { AppError } from "@src/shared/errors/appError.js";
+import { ROOT_CATEGORIES_CACHE_KEY } from "./cacheKeys.js";
+import { ROOT_CATEGORIES_TTL_MS } from "./cacheTtl.js";
+import type { CatalogCache } from "../domain/catalogCache.js";
 import type {
   CatalogProvider,
   MercadonaRootCategory,
-} from "../domain/catalogProvider";
+} from "../domain/catalogProvider.js";
 import type {
   CatalogCategoryNode,
   GetRootCategoriesResponse,
-} from "../domain/catalogTypes";
+} from "../domain/catalogTypes.js";
 
 export class GetRootCategories {
   constructor(

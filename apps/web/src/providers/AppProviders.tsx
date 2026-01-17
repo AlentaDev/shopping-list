@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { ListProvider } from "../context/ListContext";
-import { ToastProvider } from "../context/ToastContext";
+import { AuthProvider } from "@src/context/AuthContext";
+import { ListProvider } from "@src/context/ListContext";
+import { ToastProvider } from "@src/context/ToastContext";
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -9,7 +10,9 @@ type AppProvidersProps = {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ToastProvider>
-      <ListProvider>{children}</ListProvider>
+      <AuthProvider>
+        <ListProvider>{children}</ListProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }

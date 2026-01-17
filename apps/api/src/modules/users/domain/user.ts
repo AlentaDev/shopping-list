@@ -1,4 +1,4 @@
-import type { Email, Name, PostalCode } from "../../../core/value-objects";
+import type { Email, Name, PostalCode } from "@src/core/value-objects/index.js";
 
 export type User = {
   id: string;

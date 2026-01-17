@@ -1,16 +1,16 @@
-import { AppError } from "../../../shared/errors/appError";
-import { categoryDetailCacheKey } from "./cacheKeys";
-import { CATEGORY_DETAIL_TTL_MS } from "./cacheTtl";
-import type { CatalogCache } from "../domain/catalogCache";
+import { AppError } from "@src/shared/errors/appError.js";
+import { categoryDetailCacheKey } from "./cacheKeys.js";
+import { CATEGORY_DETAIL_TTL_MS } from "./cacheTtl.js";
+import type { CatalogCache } from "../domain/catalogCache.js";
 import type {
   CatalogProvider,
   MercadonaCategoryDetailResponse,
   MercadonaCategoryProduct,
-} from "../domain/catalogProvider";
+} from "../domain/catalogProvider.js";
 import type {
   CatalogProductSummary,
   GetCategoryDetailResponse,
-} from "../domain/catalogTypes";
+} from "../domain/catalogTypes.js";
 
 export class GetCategoryDetail {
   constructor(

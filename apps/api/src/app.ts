@@ -1,6 +1,6 @@
 import express from "express";
-import { buildRouter, type RouterDependencies } from "./app/router";
-import { errorMiddleware } from "./app/errors/errorMiddleware";
+import { buildRouter, type RouterDependencies } from "@src/app/router.js";
+import { errorMiddleware } from "@src/app/errors/errorMiddleware.js";
 
 export function createApp(deps: RouterDependencies = {}) {
   const app = express();

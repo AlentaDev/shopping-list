@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
-import { ListProvider } from "../../context/ListContext";
-import type { ListItem } from "../../context/ListContextValue";
+import { ListProvider } from "@src/context/ListContext";
+import type { ListItem } from "@src/context/ListContextValue";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -49,7 +49,7 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     const itemNames = screen
@@ -67,7 +67,7 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     const decrementButton = screen.getByRole("button", {
@@ -85,13 +85,13 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/4,60\s?€/);
 
     await userEvent.click(
-      screen.getByRole("button", { name: `Eliminar ${milkName}` })
+      screen.getByRole("button", { name: `Eliminar ${milkName}` }),
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/2,70\s?€/);
@@ -102,13 +102,13 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     await userEvent.click(
       screen.getByRole("button", {
         name: `Incrementar cantidad de ${appleName}`,
-      })
+      }),
     );
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/5,80\s?€/);
@@ -118,15 +118,15 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Guardar lista" })
+      screen.getByRole("button", { name: "Guardar lista" }),
     );
 
     expect(
-      screen.getByRole("textbox", { name: "Nombre de la lista" })
+      screen.getByRole("textbox", { name: "Nombre de la lista" }),
     ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
@@ -138,22 +138,22 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={initialItems}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Guardar lista" })
+      screen.getByRole("button", { name: "Guardar lista" }),
     );
 
     await userEvent.type(
       screen.getByRole("textbox", { name: "Nombre de la lista" }),
-      "Compra semanal"
+      "Compra semanal",
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Guardar" }));
 
     expect(
-      screen.getByRole("heading", { level: 2, name: "Compra semanal" })
+      screen.getByRole("heading", { level: 2, name: "Compra semanal" }),
     ).toBeInTheDocument();
   });
 
@@ -161,14 +161,16 @@ describe("ShoppingList", () => {
     render(
       <ListProvider initialItems={[]}>
         <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>
+      </ListProvider>,
     );
 
     expect(
-      screen.getByText("Tu lista está en modo zen 🧘‍♂️")
+      screen.getByText("Tu lista está en modo zen 🧘‍♂️"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Añade algo del catálogo y empezamos a llenar la cesta.")
+      screen.getByText(
+        "Añade algo del catálogo y empezamos a llenar la cesta.",
+      ),
     ).toBeInTheDocument();
   });
 });

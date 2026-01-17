@@ -1,12 +1,12 @@
 import { Router, type Response } from "express";
-import { LogoutTokens } from "../application/logoutTokens";
-import { RegisterWithTokens } from "../application/registerWithTokens";
-import { LoginWithTokens } from "../application/loginWithTokens";
-import { RefreshAccessToken } from "../application/refreshAccessToken";
-import { InvalidRefreshTokenError } from "../application/errors";
-import { toPublicUser } from "../../users/public";
-import { AppError } from "../../../shared/errors/appError";
-import { loginSchema, signupSchema } from "./schemas";
+import { LogoutTokens } from "../application/logoutTokens.js";
+import { RegisterWithTokens } from "../application/registerWithTokens.js";
+import { LoginWithTokens } from "../application/loginWithTokens.js";
+import { RefreshAccessToken } from "../application/refreshAccessToken.js";
+import { InvalidRefreshTokenError } from "../application/errors.js";
+import { toPublicUser } from "@src/modules/users/public.js";
+import { AppError } from "@src/shared/errors/appError.js";
+import { loginSchema, signupSchema } from "./schemas.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
 

@@ -2,10 +2,10 @@ import {
   emailSchema,
   nameSchema,
   postalCodeSchema,
-} from "../../../core/value-objects";
-import { AUTH_MESSAGES } from "../../../shared/constants/authMessages";
-import { USERS_MESSAGES } from "../../../shared/constants/usersMessages";
-import { loginSchema, signupSchema } from "./schemas";
+} from "@src/core/value-objects/index.js";
+import { AUTH_MESSAGES } from "@src/shared/constants/authMessages.js";
+import { USERS_MESSAGES } from "@src/shared/constants/usersMessages.js";
+import { loginSchema, signupSchema } from "./schemas.js";
 
 const validSignup = {
   name: "Test User",

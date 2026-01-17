@@ -1,4 +1,4 @@
-import { PASSWORD_RULES, isPasswordValid } from "./password";
+import { PASSWORD_RULES, isPasswordValid } from "./password.js";
 
 describe("password policy", () => {
   it("accepts a password that satisfies all rules", () => {

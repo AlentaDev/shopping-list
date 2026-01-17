@@ -1,5 +1,5 @@
 import { createHmac } from "node:crypto";
-import type { AccessTokenService } from "../application/ports";
+import type { AccessTokenService } from "../application/ports.js";
 
 type JwtPayload = {
   sub: string;

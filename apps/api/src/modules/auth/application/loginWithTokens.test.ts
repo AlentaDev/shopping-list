@@ -1,20 +1,20 @@
-import { LoginWithTokens } from "./loginWithTokens";
-import { InMemoryUserRepository } from "../../users/public";
-import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore";
+import { LoginWithTokens } from "./loginWithTokens.js";
+import { InMemoryUserRepository } from "@src/modules/users/public.js";
+import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore.js";
 import type {
   AccessTokenService,
   Clock,
   PasswordHasher,
-} from "./ports";
+} from "./ports.js";
 import {
   ACCESS_TOKEN_TTL_MS,
   REFRESH_TOKEN_TTL_MS,
-} from "./tokenPolicy";
+} from "./tokenPolicy.js";
 import {
   toEmail,
   toName,
   toPostalCode,
-} from "../../../core/value-objects";
+} from "@src/core/value-objects/index.js";
 
 const fixedNow = new Date("2024-01-01T00:00:00.000Z");
 

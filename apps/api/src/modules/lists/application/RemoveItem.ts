@@ -1,9 +1,9 @@
-import type { ListRepository } from "./ports";
+import type { ListRepository } from "./ports.js";
 import {
   ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
-} from "./errors";
+} from "./errors.js";
 
 type RemoveItemInput = {
   userId: string;

@@ -1,35 +1,40 @@
-import { useEffect, useState } from "react";
-import Catalog from "./features/catalog/Catalog";
-import ShoppingList from "./features/shopping-list/ShoppingList";
-import { useList } from "./context/useList";
-import Toast from "./shared/components/toast/Toast";
-import { UI_TEXT } from "./shared/constants/ui";
+import { useEffect, useState, useRef } from "react";
+import Catalog from "@src/features/catalog/Catalog";
+import ShoppingList from "@src/features/shopping-list/ShoppingList";
+import { useList } from "@src/context/useList";
+import { useAuth } from "@src/context/useAuth";
+import { useToast } from "@src/context/useToast";
+import Toast from "@src/shared/components/toast/Toast";
+import { UI_TEXT } from "@src/shared/constants/ui";
 import {
   AuthLoggedInNotice,
   AuthScreen,
   type AuthMode,
-  getCurrentUser,
-  loginUser,
-  logoutUser,
-  registerUser,
-} from "./features/auth";
-import type {
-  AuthUser,
-  LoginFormValues,
-  RegisterFormValues,
-} from "./features/auth";
+} from "@src/features/auth";
+import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
+
+const DEFAULT_PRODUCT_NAME = "";
+const LOGIN_PATH = "/auth/login";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
-    resolveAuthMode(window.location.pathname)
+    resolveAuthMode(window.location.pathname),
   );
-  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { linesCount } = useList();
+  const {
+    authUser,
+    isAuthSubmitting,
+    authError,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+    login,
+    register,
+    logout,
+  } = useAuth();
+  const { showToast } = useToast();
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -42,26 +47,24 @@ const App = () => {
     };
   }, []);
 
+  // Cerrar menú al hacer clic fuera
   useEffect(() => {
-    let isActive = true;
+    if (!isUserMenuOpen) return;
 
-    const loadCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (isActive) {
-          setAuthUser(user);
-        }
-      } catch {
-        // No-op: user not authenticated.
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
       }
     };
 
-    void loadCurrentUser();
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      isActive = false;
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isUserMenuOpen, setIsUserMenuOpen]);
 
   const navigate = (path: string) => {
     window.history.pushState({}, "", path);
@@ -69,41 +72,35 @@ const App = () => {
   };
 
   const handleRegister = async (values: RegisterFormValues) => {
-    setAuthError(null);
-    setIsAuthSubmitting(true);
     try {
-      const user = await registerUser(values);
-      setAuthUser(user);
-      navigate("/");
+      const user = await register(values);
+      // Mostrar toast de bienvenida
+      showToast({
+        message: `¡Gracias ${user.name} por registrarte en Lista de Compra! Por favor, inicia sesión para continuar`,
+        productName: DEFAULT_PRODUCT_NAME,
+      });
+      // Redirigir a la pantalla de login
+      navigate(LOGIN_PATH);
     } catch {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
-    } finally {
-      setIsAuthSubmitting(false);
+      // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
   const handleLogin = async (values: LoginFormValues) => {
-    setAuthError(null);
-    setIsAuthSubmitting(true);
     try {
-      const user = await loginUser(values);
-      setAuthUser(user);
+      await login(values);
       navigate("/");
     } catch {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
-    } finally {
-      setIsAuthSubmitting(false);
+      // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
   const handleLogout = async () => {
     try {
-      await logoutUser();
-      setAuthUser(null);
-      setIsUserMenuOpen(false);
+      await logout();
       navigate("/");
     } catch {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
@@ -175,7 +172,7 @@ const App = () => {
               {UI_TEXT.APP.CATEGORIES_LABEL}
             </button>
             {authUser ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   type="button"
                   aria-haspopup="menu"
@@ -222,7 +219,7 @@ const App = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => navigate("/auth/login")}
+                  onClick={() => navigate(LOGIN_PATH)}
                   className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                 >
                   {UI_TEXT.APP.LOGIN_LABEL}
@@ -241,17 +238,14 @@ const App = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">{mainContent}</main>
-      <ShoppingList
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-      />
+      <ShoppingList isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       <Toast />
     </div>
   );
 };
 
 function resolveAuthMode(pathname: string): AuthMode | null {
-  if (pathname === "/auth/login") {
+  if (pathname === LOGIN_PATH) {
     return "login";
   }
 

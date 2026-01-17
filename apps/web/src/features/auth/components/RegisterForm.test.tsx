@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
-/* eslint-disable sonarjs/no-hardcoded-passwords */
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import RegisterForm from "./RegisterForm";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 const TEST_PASSWORD = "Password12!A";
 
@@ -18,20 +17,18 @@ describe("RegisterForm", () => {
     render(<RegisterForm onSubmit={vi.fn()} />);
 
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(UI_TEXT.AUTH.HINTS.PASSWORD)
-    ).toBeInTheDocument();
+    expect(screen.getByText(UI_TEXT.AUTH.HINTS.PASSWORD)).toBeInTheDocument();
   });
 
   it("disables browser autocomplete to avoid unintended autofill", () => {
@@ -41,16 +38,16 @@ describe("RegisterForm", () => {
     expect(form).toHaveAttribute("autocomplete", "off");
 
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL),
     ).toHaveAttribute("autocomplete", "off");
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL),
     ).toHaveAttribute("autocomplete", "off");
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL),
     ).toHaveAttribute("autocomplete", "off");
     expect(
-      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL)
+      screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL),
     ).toHaveAttribute("autocomplete", "off");
   });
 
@@ -61,23 +58,23 @@ describe("RegisterForm", () => {
 
     await userEvent.type(
       screen.getByLabelText(UI_TEXT.AUTH.REGISTER.NAME_LABEL),
-      "Ada Lovelace"
+      "Ada Lovelace",
     );
     await userEvent.type(
       screen.getByLabelText(UI_TEXT.AUTH.REGISTER.EMAIL_LABEL),
-      "ada@example.com"
+      "ada@example.com",
     );
     await userEvent.type(
       screen.getByLabelText(UI_TEXT.AUTH.REGISTER.PASSWORD_LABEL),
-      TEST_PASSWORD
+      TEST_PASSWORD,
     );
     await userEvent.type(
       screen.getByLabelText(UI_TEXT.AUTH.REGISTER.POSTAL_CODE_LABEL),
-      "28001"
+      "28001",
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL })
+      screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL }),
     );
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -94,17 +91,17 @@ describe("RegisterForm", () => {
     render(<RegisterForm onSubmit={onSubmit} />);
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL })
+      screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL }),
     );
 
     expect(
-      screen.getByText(UI_TEXT.AUTH.VALIDATION.NAME_REQUIRED)
+      screen.getByText(UI_TEXT.AUTH.VALIDATION.NAME_REQUIRED),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(UI_TEXT.AUTH.VALIDATION.EMAIL_REQUIRED)
+      screen.getByText(UI_TEXT.AUTH.VALIDATION.EMAIL_REQUIRED),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(UI_TEXT.AUTH.VALIDATION.PASSWORD_REQUIRED)
+      screen.getByText(UI_TEXT.AUTH.VALIDATION.PASSWORD_REQUIRED),
     ).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });

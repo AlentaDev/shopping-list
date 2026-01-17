@@ -5,6 +5,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ListModal from "./ListModal";
 
+const MODAL_BACKDROP_TEST_ID = "list-modal-backdrop";
+
 describe("ListModal", () => {
   afterEach(() => {
     cleanup();
@@ -14,7 +16,7 @@ describe("ListModal", () => {
     const { rerender } = render(
       <ListModal isOpen onClose={vi.fn()} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -23,7 +25,7 @@ describe("ListModal", () => {
     rerender(
       <ListModal isOpen={false} onClose={vi.fn()} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -35,7 +37,7 @@ describe("ListModal", () => {
     render(
       <ListModal isOpen onClose={onClose} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
     await userEvent.keyboard("{Escape}");
@@ -49,10 +51,10 @@ describe("ListModal", () => {
     render(
       <ListModal isOpen onClose={onClose} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
-    await userEvent.click(screen.getByTestId("list-modal-backdrop"));
+    await userEvent.click(screen.getByTestId(MODAL_BACKDROP_TEST_ID));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -63,7 +65,7 @@ describe("ListModal", () => {
     const { rerender } = render(
       <ListModal isOpen onClose={vi.fn()} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
     expect(document.body.style.overflow).toBe("hidden");
@@ -71,9 +73,51 @@ describe("ListModal", () => {
     rerender(
       <ListModal isOpen={false} onClose={vi.fn()} title="Mi lista">
         <p>Contenido</p>
-      </ListModal>
+      </ListModal>,
     );
 
     expect(document.body.style.overflow).toBe("auto");
+  });
+
+  it("backdrop disappears immediately when isOpen becomes false", async () => {
+    const { rerender } = render(
+      <ListModal isOpen onClose={vi.fn()} title="Mi lista">
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    expect(screen.getByTestId(MODAL_BACKDROP_TEST_ID)).toBeInTheDocument();
+
+    rerender(
+      <ListModal isOpen={false} onClose={vi.fn()} title="Mi lista">
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    // El backdrop debe desaparecer inmediatamente (sin necesidad de waitFor)
+    expect(
+      screen.queryByTestId(MODAL_BACKDROP_TEST_ID),
+    ).not.toBeInTheDocument();
+  });
+
+  it("backdrop click is not blocked by modal content", async () => {
+    const onClose = vi.fn();
+
+    render(
+      <ListModal isOpen onClose={onClose} title="Mi lista">
+        <div>
+          <p>Contenido muy largo que ocupa bastante espacio</p>
+          <p>Más contenido</p>
+          <button>Botón dentro del modal</button>
+        </div>
+      </ListModal>,
+    );
+
+    const backdrop = screen.getByTestId(MODAL_BACKDROP_TEST_ID);
+
+    // El backdrop debe ser clickeable incluso con contenido dentro
+    await userEvent.click(backdrop);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

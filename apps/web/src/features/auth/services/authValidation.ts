@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 export const EMAIL_REGEX =
   /^(?=.{1,254}$)(?=.{1,64}@)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -19,7 +19,10 @@ export const passwordSchema = z
   .min(1, UI_TEXT.AUTH.VALIDATION.PASSWORD_REQUIRED)
   .min(12, UI_TEXT.AUTH.VALIDATION.PASSWORD_LENGTH)
   .max(20, UI_TEXT.AUTH.VALIDATION.PASSWORD_LENGTH)
-  .regex(PASSWORD_COMPLEXITY_REGEX, UI_TEXT.AUTH.VALIDATION.PASSWORD_COMPLEXITY);
+  .regex(
+    PASSWORD_COMPLEXITY_REGEX,
+    UI_TEXT.AUTH.VALIDATION.PASSWORD_COMPLEXITY,
+  );
 
 export const nameSchema = z
   .string()

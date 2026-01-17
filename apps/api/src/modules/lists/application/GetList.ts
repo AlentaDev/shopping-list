@@ -1,6 +1,6 @@
-import type { ListRepository } from "./ports";
-import { ListForbiddenError, ListNotFoundError } from "./errors";
-import { toListItemDto, type ListItemDto } from "./listItemDto";
+import type { ListRepository } from "./ports.js";
+import { ListForbiddenError, ListNotFoundError } from "./errors.js";
+import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 
 type ListDetail = {
   id: string;

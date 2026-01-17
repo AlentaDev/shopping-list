@@ -1,4 +1,4 @@
-export { InMemoryUserRepository } from "./infrastructure/InMemoryUserRepository";
-export type { UserRepository } from "./application/ports";
-export type { User, PublicUser } from "./domain/user";
-export { toPublicUser } from "./domain/user";
+export { InMemoryUserRepository } from "./infrastructure/InMemoryUserRepository.js";
+export type { UserRepository } from "./application/ports.js";
+export type { User, PublicUser } from "./domain/user.js";
+export { toPublicUser } from "./domain/user.js";

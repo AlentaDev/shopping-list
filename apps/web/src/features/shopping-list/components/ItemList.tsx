@@ -1,6 +1,6 @@
-import type { ShoppingListItem } from "../types";
-import { formatUnitPrice } from "../../../shared/utils/formatPrice";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import type { ShoppingListItem } from "@src/features/shopping-list/types";
+import { formatUnitPrice } from "@src/shared/utils/formatPrice";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ItemListProps = {
   items: ShoppingListItem[];

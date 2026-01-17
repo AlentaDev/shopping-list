@@ -1,18 +1,18 @@
-import { InvalidCredentialsError } from "./errors";
+import { InvalidCredentialsError } from "./errors.js";
 import {
   AccessTokenService,
   Clock,
   PasswordHasher,
   RefreshTokenStore,
   UserRepository,
-} from "./ports";
-import type { User } from "../../users/public";
-import { AuthTokens } from "./authTokens";
+} from "./ports.js";
+import type { User } from "@src/modules/users/public.js";
+import { AuthTokens } from "./authTokens.js";
 import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
-} from "./tokenPolicy";
-import { toEmail } from "../../../core/value-objects";
+} from "./tokenPolicy.js";
+import { toEmail } from "@src/core/value-objects/index.js";
 
 export type LoginInput = {
   email: string;

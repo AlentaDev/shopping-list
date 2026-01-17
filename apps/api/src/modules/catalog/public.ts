@@ -3,4 +3,4 @@ export type {
   MercadonaProductDetail,
   MercadonaCategoryDetailResponse,
   MercadonaRootCategoriesResponse,
-} from "./domain/catalogProvider";
+} from "./domain/catalogProvider.js";

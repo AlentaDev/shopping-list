@@ -30,4 +30,11 @@ export default defineConfig([
       "sonarjs/no-nested-conditional": "warn",
     },
   },
+  {
+    files: ["**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+    rules: {
+      "sonarjs/no-duplicate-string": "off",
+      "sonarjs/no-hardcoded-passwords": "off",
+    },
+  },
 ]);

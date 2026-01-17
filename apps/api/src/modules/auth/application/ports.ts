@@ -1,5 +1,5 @@
-import { RefreshTokenRecord } from "../domain/refreshToken";
-export type { UserRepository } from "../../users/public";
+import { RefreshTokenRecord } from "../domain/refreshToken.js";
+export type { UserRepository } from "@src/modules/users/public.js";
 
 export type PasswordHasher = {
   hash(value: string): Promise<string>;

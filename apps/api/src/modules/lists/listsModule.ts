@@ -1,16 +1,16 @@
-import { requireAuth } from "../../shared/web/requireAuth";
-import { AddManualItem } from "./application/AddManualItem";
-import { AddCatalogItem } from "./application/AddCatalogItem";
-import { CreateList } from "./application/CreateList";
-import { GetList } from "./application/GetList";
-import { ListLists } from "./application/ListLists";
-import { RemoveItem } from "./application/RemoveItem";
-import { UpdateItem } from "./application/UpdateItem";
-import type { CatalogProvider } from "../catalog/public";
-import type { IdGenerator, ListRepository } from "./application/ports";
-import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository";
-import { RandomIdGenerator } from "./infrastructure/idGenerator";
-import { createListsRouter } from "./api/router";
+import { requireAuth } from "@src/shared/web/requireAuth.js";
+import { AddManualItem } from "./application/AddManualItem.js";
+import { AddCatalogItem } from "./application/AddCatalogItem.js";
+import { CreateList } from "./application/CreateList.js";
+import { GetList } from "./application/GetList.js";
+import { ListLists } from "./application/ListLists.js";
+import { RemoveItem } from "./application/RemoveItem.js";
+import { UpdateItem } from "./application/UpdateItem.js";
+import type { CatalogProvider } from "@src/modules/catalog/public.js";
+import type { IdGenerator, ListRepository } from "./application/ports.js";
+import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository.js";
+import { RandomIdGenerator } from "./infrastructure/idGenerator.js";
+import { createListsRouter } from "./api/router.js";
 
 type ListsModuleDependencies = {
   catalogProvider: CatalogProvider;

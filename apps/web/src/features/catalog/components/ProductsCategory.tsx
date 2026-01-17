@@ -1,4 +1,4 @@
-import type { CatalogProductSummary } from "../services/types";
+import type { CatalogProductSummary } from "@src/features/catalog/services/types";
 import ProductCard from "./ProductCard";
 
 type ProductsCategoryProps = {

@@ -1,12 +1,12 @@
-import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
-import { AppError } from "../../../shared/errors/appError";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import { AppError } from "@src/shared/errors/appError.js";
 import {
   toEmail,
   toName,
   toPostalCode,
-} from "../../../core/value-objects";
-import { InMemoryUserRepository } from "../infrastructure/InMemoryUserRepository";
-import { GetCurrentUser } from "./getCurrentUser";
+} from "@src/core/value-objects/index.js";
+import { InMemoryUserRepository } from "../infrastructure/InMemoryUserRepository.js";
+import { GetCurrentUser } from "./getCurrentUser.js";
 
 const user = {
   id: "user-123",

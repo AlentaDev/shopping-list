@@ -90,25 +90,68 @@ Código **auto-validable por TypeScript** o configuración.
 **Configuración**: Ver `apps/web/vite.config.ts` → `test.coverage`
 
 **Comando de análisis**:
+
 ```bash
 cd apps/web
 pnpm test:coverage
 ```
 
 El comando ejecuta automáticamente:
+
 1. Tests con Vitest + coverage
 2. Análisis categorizado por estrategia 100/80/0
 3. Reporte detallado de archivos CORE que necesitan atención
 
 El análisis muestra:
+
 - ✅ CORE: Archivos críticos (target: 100%)
 - ✅ IMPORTANT: Features visibles (target: 80%)
 - ℹ️ INFRASTRUCTURE: Excluido (target: 0%)
 
-**Exit code**: 
+**Exit code**:
+
 - Exit 0 (✅): IMPORTANT ≥ 80% (cumple requisito global)
 - Exit 1 (❌): IMPORTANT < 80% (no cumple requisito global)
 - Warning (⚠️): CORE < 100% pero no falla el build (validación manual)
+
+---
+
+## Tests E2E (End-to-End)
+
+**Principio fundamental**: Los tests E2E son costosos (lentos, frágiles, complejos de mantener).  
+Solo se usan para **validar flujos críticos de la aplicación** que integran múltiples componentes.
+
+### Cuándo escribir tests E2E
+
+✅ **SÍ escribir** para:
+
+- Happy paths de flujos críticos de negocio (registro, login, compra)
+- Integraciones entre frontend y backend donde el contrato es vital
+- Funcionalidades que, si fallan, rompen la app completamente
+
+❌ **NO escribir** para:
+
+- Validaciones de UI individuales (usar tests unitarios de componentes)
+- Lógica de negocio aislada (usar tests unitarios de servicios)
+- Edge cases o variaciones (usar tests de integración)
+- Features secundarias o experimentales
+
+### Reglas de tests E2E
+
+1. **Mínimos y enfocados**: Mantener < 15 tests E2E totales
+2. **Críticos solamente**: Solo flujos que, si fallan, la app es inusable
+3. **Sin duplicación**: Si un test unitario lo cubre, NO hacer E2E
+4. **Timing explícito**: Usar `timeout` y `waitFor` cuando sea necesario
+5. **Mocks controlados**: Todos los endpoints externos deben estar mockeados
+
+### Configuración actual
+
+- **Herramienta**: Playwright
+- **Comando**: `pnpm test:e2e`
+- **Ubicación**: `/e2e/`
+- **Auto-start**: Los servidores (API + Web) se levantan automáticamente con `concurrently`
+
+**Ver configuración**: `playwright.config.ts`
 
 ---
 

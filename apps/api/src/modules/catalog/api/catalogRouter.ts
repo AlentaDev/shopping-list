@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { GetCategoryDetail } from "../application/getCategoryDetail";
-import { GetRootCategories } from "../application/getRootCategories";
-import { categoryDetailParamsSchema } from "./schemas";
+import { GetCategoryDetail } from "../application/getCategoryDetail.js";
+import { GetRootCategories } from "../application/getRootCategories.js";
+import { categoryDetailParamsSchema } from "./schemas.js";
 
 type CatalogRouterDependencies = {
   getRootCategories: GetRootCategories;

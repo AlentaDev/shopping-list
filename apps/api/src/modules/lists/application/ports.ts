@@ -1,4 +1,4 @@
-import type { List } from "../domain/list";
+import type { List } from "../domain/list.js";
 
 export type ListRepository = {
   findById(id: string): Promise<List | null>;

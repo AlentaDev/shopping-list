@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useId, useRef } from "react";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ListModalProps = {
   isOpen: boolean;
@@ -56,12 +56,12 @@ const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
         onClick={onClose}
         aria-label={UI_TEXT.LIST_MODAL.CLOSE_MODAL_LABEL}
       />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <div className="pointer-events-none fixed inset-0 flex items-center justify-center p-4">
         <div
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="w-full max-w-lg rounded-2xl bg-white shadow-xl"
+          className="pointer-events-auto w-full max-w-lg rounded-2xl bg-white shadow-xl"
         >
           <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 id={titleId} className="text-xl font-semibold text-slate-900">

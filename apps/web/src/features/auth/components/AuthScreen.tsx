@@ -1,4 +1,4 @@
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 import LoginForm, { type LoginFormValues } from "./LoginForm";
 import RegisterForm, { type RegisterFormValues } from "./RegisterForm";
 

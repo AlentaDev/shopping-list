@@ -1,13 +1,18 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 import {
   emailSchema,
   nameSchema,
   passwordSchema,
   postalCodeSchema,
   registerSchema,
-} from "../services/authValidation";
-import { Email, Name, Password, PostalCode } from "../services/value-objects";
+} from "@src/features/auth/services/authValidation";
+import {
+  Email,
+  Name,
+  Password,
+  PostalCode,
+} from "@src/features/auth/services/value-objects";
 
 export type RegisterFormValues = {
   name: string;
@@ -21,7 +26,10 @@ type RegisterFormProps = {
   isSubmitting?: boolean;
 };
 
-const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => {
+const RegisterForm = ({
+  onSubmit,
+  isSubmitting = false,
+}: RegisterFormProps) => {
   const [fields, setFields] = useState<{
     name: { value: string; touched: boolean; error: string | null };
     email: { value: string; touched: boolean; error: string | null };
@@ -43,7 +51,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
 
   const setFieldState = (
     field: keyof RegisterFormValues,
-    nextValue: string
+    nextValue: string,
   ) => {
     setFields((prev) => ({
       ...prev,
@@ -53,15 +61,17 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
 
   const validateField = (field: keyof RegisterFormValues, value: string) => {
     const result = fieldSchemas[field].safeParse(value);
-    return result.success ? null : result.error.issues[0]?.message ?? null;
+    return result.success ? null : (result.error.issues[0]?.message ?? null);
   };
 
-  const handleChange = (field: keyof RegisterFormValues) =>
+  const handleChange =
+    (field: keyof RegisterFormValues) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       setFieldState(field, event.target.value);
     };
 
-  const handleBlur = (field: keyof RegisterFormValues) =>
+  const handleBlur =
+    (field: keyof RegisterFormValues) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       const error = validateField(field, event.target.value);
 
@@ -92,7 +102,7 @@ const RegisterForm = ({ onSubmit, isSubmitting = false }: RegisterFormProps) => 
           }
           return acc;
         },
-        {}
+        {},
       );
 
       setFields((prev) => ({

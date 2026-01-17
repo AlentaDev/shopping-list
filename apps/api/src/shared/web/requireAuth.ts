@@ -1,7 +1,7 @@
 import type { Request, RequestHandler } from "express";
-import { AppError } from "../errors/appError";
-import { API_ERROR_MESSAGES } from "../constants/apiErrorMessages";
-import { verifyJwt } from "../security/jwt";
+import { AppError } from "@src/shared/errors/appError.js";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import { verifyJwt } from "@src/shared/security/jwt.js";
 
 const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 const ACCESS_TOKEN_SECRET =

@@ -1,8 +1,8 @@
-import { GetCurrentUser } from "./application/getCurrentUser";
-import type { UserRepository } from "./application/ports";
-import { InMemoryUserRepository } from "./infrastructure/InMemoryUserRepository";
-import { createUsersRouter } from "./api/usersRouter";
-import { requireAuth } from "../../shared/web/requireAuth";
+import { GetCurrentUser } from "./application/getCurrentUser.js";
+import type { UserRepository } from "./application/ports.js";
+import { InMemoryUserRepository } from "./infrastructure/InMemoryUserRepository.js";
+import { createUsersRouter } from "./api/usersRouter.js";
+import { requireAuth } from "@src/shared/web/requireAuth.js";
 
 type UsersModuleDependencies = {
   userRepository?: UserRepository;

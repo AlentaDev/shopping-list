@@ -1,0 +1,128 @@
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { UI_TEXT } from "@src/shared/constants/ui";
+import {
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+  type LoginInput,
+  type RegisterInput,
+  type AuthUser,
+} from "@src/features/auth/services/AuthService";
+
+export type AuthContextType = {
+  authUser: AuthUser | null;
+  isAuthSubmitting: boolean;
+  authError: string | null;
+  isUserMenuOpen: boolean;
+  setIsUserMenuOpen: (isOpen: boolean) => void;
+  register: (values: RegisterInput) => Promise<AuthUser>;
+  login: (values: LoginInput) => Promise<AuthUser>;
+  logout: () => Promise<void>;
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
+
+type AuthProviderProps = {
+  children: ReactNode;
+};
+
+export function AuthProvider({ children }: AuthProviderProps) {
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  // Cargar usuario autenticado al montar
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (isActive) {
+          setAuthUser(user);
+        }
+      } catch {
+        // No-op: usuario no autenticado
+      }
+    };
+
+    void loadCurrentUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const register = useCallback(async (values: RegisterInput) => {
+    setAuthError(null);
+    setIsAuthSubmitting(true);
+    try {
+      const user = await registerUser(values);
+      // NO autenticamos automáticamente después del registro
+      return user;
+    } catch (error) {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      throw error;
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  }, []);
+
+  const login = useCallback(async (values: LoginInput) => {
+    setAuthError(null);
+    setIsAuthSubmitting(true);
+    try {
+      const user = await loginUser(values);
+      setAuthUser(user);
+      return user;
+    } catch (error) {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      throw error;
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await logoutUser();
+      setAuthUser(null);
+      setIsUserMenuOpen(false);
+    } catch (error) {
+      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      throw error;
+    }
+  }, []);
+
+  const value: AuthContextType & {
+    register: typeof register;
+    login: typeof login;
+    logout: typeof logout;
+  } = {
+    authUser,
+    isAuthSubmitting,
+    authError,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+    register,
+    login,
+    logout,
+  };
+
+  return (
+    <AuthContext.Provider value={value as AuthContextType}>
+      {children}
+    </AuthContext.Provider>
+  );
+}

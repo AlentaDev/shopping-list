@@ -4,7 +4,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CategoriesPanel from "./CategoriesPanel";
-import type { CatalogCategoryNode } from "../services/types";
+import type { CatalogCategoryNode } from "@src/features/catalog/services/types";
 
 describe("CategoriesPanel", () => {
   const categories: CatalogCategoryNode[] = [
@@ -37,7 +37,7 @@ describe("CategoriesPanel", () => {
         categories={categories}
         selectedCategoryId={null}
         onSelectCategory={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.queryByText("Categorías")).toBeNull();
@@ -50,11 +50,13 @@ describe("CategoriesPanel", () => {
         categories={categories}
         selectedCategoryId="child-1"
         onSelectCategory={vi.fn()}
-      />
+      />,
     );
 
     expect(screen.getByText("Frutas")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cítricos" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cítricos" }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Hojas" })).toBeNull();
   });
 
@@ -67,7 +69,7 @@ describe("CategoriesPanel", () => {
         categories={categories}
         selectedCategoryId={"child-1"}
         onSelectCategory={onSelectCategory}
-      />
+      />,
     );
 
     await userEvent.click(screen.getByRole("button", { name: "Verduras" }));

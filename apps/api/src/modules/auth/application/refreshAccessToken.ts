@@ -1,14 +1,14 @@
-import { InvalidRefreshTokenError } from "./errors";
-import { AuthTokens } from "./authTokens";
+import { InvalidRefreshTokenError } from "./errors.js";
+import { AuthTokens } from "./authTokens.js";
 import {
   AccessTokenService,
   Clock,
   RefreshTokenStore,
-} from "./ports";
+} from "./ports.js";
 import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
-} from "./tokenPolicy";
+} from "./tokenPolicy.js";
 
 export type RefreshInput = {
   refreshToken: string;

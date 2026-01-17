@@ -1,10 +1,10 @@
 import { Router } from "express";
 import type { RequestHandler } from "express";
-import type { AuthenticatedRequest } from "../../../shared/web/requireAuth";
-import { AppError } from "../../../shared/errors/appError";
-import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
-import { GetCurrentUser } from "../application/getCurrentUser";
-import { toPublicUser } from "../domain/user";
+import type { AuthenticatedRequest } from "@src/shared/web/requireAuth.js";
+import { AppError } from "@src/shared/errors/appError.js";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import { GetCurrentUser } from "../application/getCurrentUser.js";
+import { toPublicUser } from "../domain/user.js";
 
 type UsersRouterDependencies = {
   requireAuth: RequestHandler;

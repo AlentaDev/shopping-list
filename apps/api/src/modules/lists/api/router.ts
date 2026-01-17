@@ -1,15 +1,15 @@
 import { Router } from "express";
 import type { Request, RequestHandler } from "express";
-import { AppError } from "../../../shared/errors/appError";
-import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
-import type { AuthenticatedRequest } from "../../../shared/web/requireAuth";
-import { AddCatalogItem } from "../application/AddCatalogItem";
-import { AddManualItem } from "../application/AddManualItem";
-import { CreateList } from "../application/CreateList";
-import { GetList } from "../application/GetList";
-import { ListLists } from "../application/ListLists";
-import { RemoveItem } from "../application/RemoveItem";
-import { UpdateItem } from "../application/UpdateItem";
+import { AppError } from "@src/shared/errors/appError.js";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import type { AuthenticatedRequest } from "@src/shared/web/requireAuth.js";
+import { AddCatalogItem } from "../application/AddCatalogItem.js";
+import { AddManualItem } from "../application/AddManualItem.js";
+import { CreateList } from "../application/CreateList.js";
+import { GetList } from "../application/GetList.js";
+import { ListLists } from "../application/ListLists.js";
+import { RemoveItem } from "../application/RemoveItem.js";
+import { UpdateItem } from "../application/UpdateItem.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -17,7 +17,7 @@ import {
   itemParamsSchema,
   listParamsSchema,
   patchItemSchema,
-} from "./validation";
+} from "./validation.js";
 
 type ListsRouterDependencies = {
   createList: CreateList;

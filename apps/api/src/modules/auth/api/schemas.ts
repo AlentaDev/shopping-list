@@ -3,9 +3,9 @@ import {
   emailSchema,
   nameSchema,
   postalCodeSchema,
-} from "../../../core/value-objects";
-import { AUTH_MESSAGES } from "../../../shared/constants/authMessages";
-import { PASSWORD_RULES, isPasswordValid } from "../domain/password";
+} from "@src/core/value-objects/index.js";
+import { AUTH_MESSAGES } from "@src/shared/constants/authMessages.js";
+import { PASSWORD_RULES, isPasswordValid } from "../domain/password.js";
 
 const passwordSchema = z
   .string()

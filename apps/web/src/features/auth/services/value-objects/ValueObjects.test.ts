@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  Email,
-  Name,
-  Password,
-  PostalCode,
-} from "./index";
-import { UI_TEXT } from "../../../../shared/constants/ui";
+import { Email, Name, Password, PostalCode } from "./index";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 describe("Auth value objects", () => {
   it("creates a normalized email", () => {

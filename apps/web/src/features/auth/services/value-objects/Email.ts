@@ -1,4 +1,4 @@
-import { emailSchema } from "../authValidation";
+import { emailSchema } from "@src/features/auth/services/authValidation";
 import type { Result } from "./result";
 
 export class Email {

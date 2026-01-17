@@ -2,8 +2,8 @@ import {
   toEmail,
   toName,
   toPostalCode,
-} from "../../../core/value-objects";
-import { InMemoryUserRepository } from "./InMemoryUserRepository";
+} from "@src/core/value-objects/index.js";
+import { InMemoryUserRepository } from "./InMemoryUserRepository.js";
 
 const user = {
   id: "user-123",

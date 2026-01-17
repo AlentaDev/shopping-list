@@ -1,4 +1,4 @@
-import type { CatalogCache } from "../domain/catalogCache";
+import type { CatalogCache } from "../domain/catalogCache.js";
 
 type CacheEntry = {
   value: unknown;

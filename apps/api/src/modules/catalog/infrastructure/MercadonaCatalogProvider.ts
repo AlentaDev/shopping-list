@@ -3,8 +3,8 @@ import type {
   MercadonaCategoryDetailResponse,
   MercadonaProductDetail,
   MercadonaRootCategoriesResponse,
-} from "../domain/catalogProvider";
-import { MercadonaHttpClient } from "./MercadonaHttpClient";
+} from "../domain/catalogProvider.js";
+import { MercadonaHttpClient } from "./MercadonaHttpClient.js";
 
 export class MercadonaCatalogProvider implements CatalogProvider {
   constructor(private readonly httpClient: MercadonaHttpClient) {}

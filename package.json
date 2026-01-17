@@ -15,7 +15,7 @@
     "test:e2e": "pnpm playwright test",
     "typecheck": "pnpm -r typecheck",
     "quality": "pnpm -r quality",
-    "verify": "pnpm -r verify",
+    "verify": "pnpm quality && pnpm test:e2e && pnpm -r build",
     "prepare": "husky"
   },
   "keywords": [],
@@ -23,6 +23,10 @@
   "license": "ISC",
   "packageManager": "pnpm@10.28.0",
   "devDependencies": {
-    "husky": "^9.1.7"
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.9",
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
+    "wait-on": "^9.0.3"
   }
 }

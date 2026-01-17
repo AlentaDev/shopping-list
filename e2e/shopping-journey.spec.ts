@@ -57,19 +57,31 @@ const clearLocalStorage = async (page: Page) => {
 };
 
 const mockAuthRoutes = async (page: Page) => {
+  let loggedInUser: typeof USER | null = null;
+
   await page.route("**/api/users/me", async (route) => {
-    await route.fulfill({ status: 401, body: "" });
+    if (loggedInUser) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(loggedInUser),
+      });
+    } else {
+      await route.fulfill({ status: 401, body: "" });
+    }
   });
 
   await page.route("**/api/auth/register", async (route) => {
+    loggedInUser = USER;
     await route.fulfill({
-      status: 200,
+      status: 201,
       contentType: "application/json",
       body: JSON.stringify(USER),
     });
   });
 
   await page.route("**/api/auth/login", async (route) => {
+    loggedInUser = USER;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -78,6 +90,7 @@ const mockAuthRoutes = async (page: Page) => {
   });
 
   await page.route("**/api/auth/logout", async (route) => {
+    loggedInUser = null;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -88,7 +101,7 @@ const mockAuthRoutes = async (page: Page) => {
 
 const mockCatalogRoutes = async (
   page: Page,
-  options: { detailFailCount?: number; categories?: typeof CATEGORIES } = {}
+  options: { detailFailCount?: number; categories?: typeof CATEGORIES } = {},
 ) => {
   const { detailFailCount = 0, categories = CATEGORIES } = options;
   let detailCalls = 0;
@@ -121,7 +134,9 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
   page,
 }) => {
   await mockAuthRoutes(page);
-  await mockCatalogRoutes(page, { categories: EMPTY_CATEGORIES_RESPONSE.categories });
+  await mockCatalogRoutes(page, {
+    categories: EMPTY_CATEGORIES_RESPONSE.categories,
+  });
 
   const authPage = new AuthPage(page);
 
@@ -130,43 +145,54 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
 
   await expect(
     authPage.title,
-    "El título de registro debe mostrarse en la pantalla de auth"
+    "El título de registro debe mostrarse en la pantalla de auth",
   ).toHaveText("Crear cuenta");
 
-  await authPage.register(USER.name, USER.email, "Password123!", USER.postalCode);
+  await authPage.register(
+    USER.name,
+    USER.email,
+    "Password123!",
+    USER.postalCode,
+  );
+
+  // Después del registro, debería redirigir a la pantalla de login
+  await page.waitForURL("/auth/login");
+
+  await expect(
+    authPage.title,
+    "El título de login debe mostrarse después del registro",
+  ).toHaveText("Iniciar sesión");
+
+  // Verificar que aparece el toast de bienvenida
+  await expect(
+    page.getByText(/gracias.*ana.*por registrarte/i),
+    "El toast de bienvenida debe aparecer después del registro",
+  ).toBeVisible({ timeout: 5000 });
+
+  // Ahora iniciar sesión
+  await authPage.login(USER.email, "Password123!");
+
+  // Esperar a que navegue a la home después del login
+  await page.waitForURL("/");
 
   const userMenuButton = page.getByRole("button", {
-    name: `Hola ${USER.name}`,
+    name: "Abrir menú de usuario",
   });
 
   await expect(
     userMenuButton,
-    "El menú de usuario debe mostrarse tras el registro"
-  ).toBeVisible();
+    "El menú de usuario debe mostrarse tras iniciar sesión",
+  ).toBeVisible({ timeout: 10000 });
+
+  // Verificar que el texto del botón contiene el nombre del usuario
+  await expect(userMenuButton).toContainText(USER.name);
 
   await userMenuButton.click();
   await page.getByRole("menuitem", { name: "Logout" }).click();
 
   await expect(
     page.getByRole("button", { name: "Login" }),
-    "El botón de login debe aparecer tras cerrar sesión"
-  ).toBeVisible();
-
-  await authPage.gotoLogin();
-
-  await authPage.login(USER.email, "Password123!");
-
-  await expect(
-    userMenuButton,
-    "El menú de usuario debe mostrarse tras iniciar sesión"
-  ).toBeVisible();
-
-  await userMenuButton.click();
-  await page.getByRole("menuitem", { name: "Logout" }).click();
-
-  await expect(
-    page.getByRole("button", { name: "Login" }),
-    "El usuario debe volver al estado anónimo tras logout"
+    "El botón de login debe aparecer tras cerrar sesión",
   ).toBeVisible();
 });
 
@@ -186,7 +212,7 @@ test("catálogo permite abrir panel, seleccionar categoría y reintentar carga",
 
   await expect(
     page.getByRole("heading", { name: "Categorías" }),
-    "El panel de categorías debe mostrarse al abrirlo"
+    "El panel de categorías debe mostrarse al abrirlo",
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Frescos" }).click();
@@ -194,15 +220,15 @@ test("catálogo permite abrir panel, seleccionar categoría y reintentar carga",
 
   await expect(
     page.getByText("No se pudieron cargar los productos."),
-    "Debe mostrarse el error cuando falla la carga de productos"
+    "Debe mostrarse el error cuando falla la carga de productos",
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Reintentar" }).click();
 
   await expect(
     catalogPage.productsHeading,
-    "Tras reintentar, el catálogo debe mostrar la categoría seleccionada"
-  ).toHaveText("Frutas");
+    "Tras reintentar, el catálogo debe mostrar la categoría seleccionada",
+  ).toHaveText("Frutas", { timeout: 10000 });
 });
 
 test("carrito añade producto y muestra badge y toast", async ({ page }) => {
@@ -216,7 +242,7 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
 
   await expect(
     catalogPage.getProduct(PRODUCT.name),
-    "Debe mostrarse la tarjeta del producto"
+    "Debe mostrarse la tarjeta del producto",
   ).toBeVisible();
 
   await catalogPage.addToCart(PRODUCT.name);
@@ -225,21 +251,21 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
 
   await expect(
     toastStack,
-    "Debe mostrarse el toast al añadir un producto"
+    "Debe mostrarse el toast al añadir un producto",
   ).toBeVisible();
   await expect(
     toastStack.getByText("Añadido a la lista"),
-    "El toast debe confirmar el añadido"
+    "El toast debe confirmar el añadido",
   ).toBeVisible();
   await expect(
     toastStack.getByText(PRODUCT.name),
-    "El toast debe incluir el nombre del producto"
+    "El toast debe incluir el nombre del producto",
   ).toBeVisible();
 
   const cartButton = page.getByRole("button", { name: "Abrir carrito" });
   await expect(
     cartButton.locator("span"),
-    "El badge del carrito debe reflejar las líneas únicas"
+    "El badge del carrito debe reflejar las líneas únicas",
   ).toHaveText("1");
 });
 
@@ -261,34 +287,49 @@ test("modal permite ajustar cantidades, eliminar items, estado vacío y guardar 
 
   await expect(
     listPage.heading,
-    "El modal debe abrirse mostrando el título por defecto"
+    "El modal debe abrirse mostrando el título por defecto",
   ).toHaveText("Tu lista");
 
   await expect(
     listPage.getItem(PRODUCT.name),
-    "El producto añadido debe aparecer en la lista"
+    "El producto añadido debe aparecer en la lista",
   ).toBeVisible();
 
-  await listPage.decrementItem(PRODUCT.name);
+  const decrementButton = listPage.getItem(PRODUCT.name).getByRole("button", {
+    name: `Disminuir cantidad de ${PRODUCT.name}`,
+    exact: true,
+  });
+
+  await expect(
+    decrementButton,
+    "El botón de decrementar debe estar deshabilitado cuando la cantidad es 1",
+  ).toBeDisabled();
+
   await expect(
     listPage.getItemQuantity(PRODUCT.name),
-    "La cantidad no debe bajar de 1 al decrementar"
+    "La cantidad inicial debe ser 1",
   ).resolves.toBe(1);
 
   await listPage.incrementItem(PRODUCT.name);
   await expect(
     listPage.getItemQuantity(PRODUCT.name),
-    "La cantidad debe incrementarse"
+    "La cantidad debe incrementarse",
   ).resolves.toBe(2);
 
   await listPage.removeItem(PRODUCT.name);
 
   await expect(
     page.getByText("Tu lista está en modo zen 🧘‍♂️"),
-    "El estado vacío debe mostrarse al eliminar todos los items"
+    "El estado vacío debe mostrarse al eliminar todos los items",
   ).toBeVisible();
 
   await listPage.close();
+
+  // Esperar a que el modal se cierre (dialog desaparece)
+  await page.getByRole("dialog").waitFor({
+    state: "hidden",
+    timeout: 5000,
+  });
 
   await catalogPage.addToCart(PRODUCT.name);
   await page.getByRole("button", { name: "Abrir carrito" }).click();
@@ -299,11 +340,11 @@ test("modal permite ajustar cantidades, eliminar items, estado vacío y guardar 
 
   await expect(
     listPage.heading,
-    "El título del modal debe actualizarse con el nombre guardado"
+    "El título del modal debe actualizarse con el nombre guardado",
   ).toHaveText("Compra semanal");
 
   await expect(
     listPage.totalValue,
-    "El total debe mostrarse con formato de moneda"
+    "El total debe mostrarse con formato de moneda",
   ).toContainText("€");
 });

@@ -1,5 +1,5 @@
-import { useToast } from "../../../context/useToast";
-import { UI_TEXT } from "../../constants/ui";
+import { useToast } from "@src/context/useToast";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 const Toast = () => {
   const { toasts, hideToast } = useToast();

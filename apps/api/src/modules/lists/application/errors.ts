@@ -1,4 +1,4 @@
-import { AppError } from "../../../shared/errors/appError";
+import { AppError } from "@src/shared/errors/appError.js";
 
 export class ListNotFoundError extends AppError {
   constructor() {

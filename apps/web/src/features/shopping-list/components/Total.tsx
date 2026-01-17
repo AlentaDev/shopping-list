@@ -1,5 +1,5 @@
-import { formatPrice } from "../../../shared/utils/formatPrice";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { formatPrice } from "@src/shared/utils/formatPrice";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type TotalProps = {
   total: number;

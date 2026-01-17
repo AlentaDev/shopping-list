@@ -1,5 +1,5 @@
-import { PasswordHasher } from "../application/ports";
-import { hashPassword, verifyPassword } from "../../../shared/security/hash";
+import { PasswordHasher } from "../application/ports.js";
+import { hashPassword, verifyPassword } from "@src/shared/security/hash.js";
 
 export class ScryptPasswordHasher implements PasswordHasher {
   async hash(value: string): Promise<string> {

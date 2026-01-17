@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { CatalogCategoryNode } from "../services/types";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import type { CatalogCategoryNode } from "@src/features/catalog/services/types";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type CategoriesPanelProps = {
   open: boolean;
@@ -12,7 +12,8 @@ type CategoriesPanelProps = {
   onRetryLoadCategories?: () => void;
 };
 
-const LOAD_ERROR_MESSAGE = UI_TEXT.CATEGORIES_PANEL.LOAD_CATEGORIES_ERROR_MESSAGE;
+const LOAD_ERROR_MESSAGE =
+  UI_TEXT.CATEGORIES_PANEL.LOAD_CATEGORIES_ERROR_MESSAGE;
 
 const CategoriesPanel = ({
   open,
@@ -25,7 +26,7 @@ const CategoriesPanel = ({
 }: CategoriesPanelProps) => {
   const parents = useMemo(
     () => categories.filter((category) => category.level === 0),
-    [categories]
+    [categories],
   );
 
   const childrenByParent = useMemo(() => {
@@ -41,7 +42,7 @@ const CategoriesPanel = ({
     map.forEach((list, key) => {
       map.set(
         key,
-        [...list].sort((a, b) => a.order - b.order)
+        [...list].sort((a, b) => a.order - b.order),
       );
     });
 
@@ -54,7 +55,7 @@ const CategoriesPanel = ({
     }
 
     const selectedCategory = categories.find(
-      (category) => category.id === selectedCategoryId
+      (category) => category.id === selectedCategoryId,
     );
 
     return selectedCategory?.parentId ?? null;

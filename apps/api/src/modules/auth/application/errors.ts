@@ -1,5 +1,5 @@
-import { AppError } from "../../../shared/errors/appError";
-import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
+import { AppError } from "@src/shared/errors/appError.js";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 
 export class DuplicateEmailError extends AppError {
   constructor() {

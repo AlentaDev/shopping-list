@@ -1,5 +1,5 @@
-import type { ListRepository } from "../application/ports";
-import type { List } from "../domain/list";
+import type { ListRepository } from "../application/ports.js";
+import type { List } from "../domain/list.js";
 
 export class InMemoryListRepository implements ListRepository {
   private readonly lists = new Map<string, List>();

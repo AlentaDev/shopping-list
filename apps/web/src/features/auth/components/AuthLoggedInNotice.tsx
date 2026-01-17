@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import { UI_TEXT } from "@src/shared/constants/ui";
 import type { AuthMode } from "./AuthScreen";
 
 type AuthLoggedInNoticeProps = {

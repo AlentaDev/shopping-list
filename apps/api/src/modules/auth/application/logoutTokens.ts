@@ -1,4 +1,4 @@
-import { RefreshTokenStore } from "./ports";
+import { RefreshTokenStore } from "./ports.js";
 
 export class LogoutTokens {
   constructor(private readonly refreshTokenStore: RefreshTokenStore) {}

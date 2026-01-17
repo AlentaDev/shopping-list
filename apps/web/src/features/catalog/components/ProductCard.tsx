@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { CatalogProductSummary } from "../services/types";
-import { formatPrice, formatUnitPrice } from "../../../shared/utils/formatPrice";
-import { UI_TEXT } from "../../../shared/constants/ui";
+import type { CatalogProductSummary } from "@src/features/catalog/services/types";
+import { formatPrice, formatUnitPrice } from "@src/shared/utils/formatPrice";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ProductCardProps = {
   product: CatalogProductSummary;
@@ -20,7 +20,7 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
         window.clearTimeout(timerRef.current);
       }
     },
-    []
+    [],
   );
 
   const handleAdd = () => {

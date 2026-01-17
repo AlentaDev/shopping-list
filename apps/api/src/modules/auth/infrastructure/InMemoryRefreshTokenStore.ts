@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { RefreshTokenRecord } from "../domain/refreshToken";
-import { RefreshTokenStore } from "../application/ports";
+import { RefreshTokenRecord } from "../domain/refreshToken.js";
+import { RefreshTokenStore } from "../application/ports.js";
 
 export class InMemoryRefreshTokenStore implements RefreshTokenStore {
   private readonly tokens = new Map<string, RefreshTokenRecord>();

@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { createAuthModule } from "../modules/auth/authModule";
-import { createCatalogModule } from "../modules/catalog/catalogModule";
-import { createListsModule } from "../modules/lists/listsModule";
-import { createUsersModule } from "../modules/users/usersModule";
-import { InMemoryUserRepository } from "../modules/users/public";
+import { createAuthModule } from "@src/modules/auth/authModule.js";
+import { createCatalogModule } from "@src/modules/catalog/catalogModule.js";
+import { createListsModule } from "@src/modules/lists/listsModule.js";
+import { createUsersModule } from "@src/modules/users/usersModule.js";
+import { InMemoryUserRepository } from "@src/modules/users/public.js";
 
 export type RouterDependencies = {
   authModule?: ReturnType<typeof createAuthModule>;

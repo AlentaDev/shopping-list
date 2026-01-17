@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ProductCard from "./ProductCard";
-import type { CatalogProductSummary } from "../services/types";
+import type { CatalogProductSummary } from "@src/features/catalog/services/types";
 
 const productFixture: CatalogProductSummary = {
   id: "prod-1",
@@ -58,7 +58,7 @@ describe("ProductCard", () => {
           product={{ ...productFixture, id: "prod-2", name: "Leche entera" }}
           onAdd={onAddSecond}
         />
-      </>
+      </>,
     );
 
     const firstButton = screen.getByRole("button", {

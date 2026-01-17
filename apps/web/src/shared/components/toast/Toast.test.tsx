@@ -3,8 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { useEffect } from "react";
-import { ToastProvider } from "../../../context/ToastContext";
-import { useToast } from "../../../context/useToast";
+import { ToastProvider } from "@src/context/ToastContext";
+import { useToast } from "@src/context/useToast";
 import Toast from "./Toast";
 
 const TOAST_MESSAGE = "Producto añadido";
@@ -37,7 +37,7 @@ describe("Toast", () => {
       <ToastProvider>
         <TriggerToast />
         <Toast />
-      </ToastProvider>
+      </ToastProvider>,
     );
 
     expect(screen.getAllByText(TOAST_MESSAGE)).toHaveLength(2);
@@ -45,7 +45,7 @@ describe("Toast", () => {
     expect(screen.getByText(SECOND_PRODUCT_NAME)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: PRODUCT_NAME })).toHaveAttribute(
       "src",
-      PRODUCT_IMAGE
+      PRODUCT_IMAGE,
     );
     expect(screen.getByTestId("toast-stack")).toHaveClass("flex-col-reverse");
   });

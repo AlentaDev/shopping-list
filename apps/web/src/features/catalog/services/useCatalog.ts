@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import type {
-  CatalogCategoryDetail,
-  CatalogCategoryNode,
-} from "./types";
+import type { CatalogCategoryDetail, CatalogCategoryNode } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
-import { FETCH_STATUS } from "../../../shared/constants/appState";
+import { FETCH_STATUS } from "@src/shared/constants/appState";
 
 export type FetchStatus =
   | typeof FETCH_STATUS.IDLE
@@ -46,7 +43,7 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
       (category) =>
         category.level === 1 &&
         category.parentId &&
-        category.parentId === parent.id
+        category.parentId === parent.id,
     )
     .sort((a, b) => a.order - b.order);
 
@@ -55,20 +52,19 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
 
 export const useCatalog = (): UseCatalogResult => {
   const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>(
-    FETCH_STATUS.IDLE
+    FETCH_STATUS.IDLE,
   );
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null
+    null,
   );
   const [detailStatus, setDetailStatus] = useState<FetchStatus>(
-    FETCH_STATUS.IDLE
+    FETCH_STATUS.IDLE,
   );
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [categoryDetail, setCategoryDetail] = useState<CatalogCategoryDetail | null>(
-    null
-  );
+  const [categoryDetail, setCategoryDetail] =
+    useState<CatalogCategoryDetail | null>(null);
 
   const loadCategories = useCallback(async () => {
     setCategoriesStatus(FETCH_STATUS.LOADING);
@@ -92,25 +88,32 @@ export const useCatalog = (): UseCatalogResult => {
     }
   }, []);
 
-  const loadDetail = useCallback(async (categoryId: string) => {
-    setDetailStatus(FETCH_STATUS.LOADING);
-    setDetailError(null);
-    setCategoryDetail(null);
-
-    try {
-      const data = await getCategoryDetail(categoryId, {
-        errorMessage: DETAIL_ERROR_MESSAGE,
+  const loadDetail = useCallback(
+    async (categoryId: string, categoryName?: string) => {
+      setDetailStatus(FETCH_STATUS.LOADING);
+      setDetailError(null);
+      // Preservar el categoryName durante la recarga, usando el prevDetail o el nombre pasado
+      setCategoryDetail((prevDetail) => {
+        const name = prevDetail?.categoryName || categoryName || "";
+        return { categoryName: name, sections: [] };
       });
 
-      setCategoryDetail(data);
-      setDetailStatus(FETCH_STATUS.SUCCESS);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : DETAIL_ERROR_MESSAGE;
-      setDetailError(message);
-      setDetailStatus(FETCH_STATUS.ERROR);
-    }
-  }, []);
+      try {
+        const data = await getCategoryDetail(categoryId, {
+          errorMessage: DETAIL_ERROR_MESSAGE,
+        });
+
+        setCategoryDetail(data);
+        setDetailStatus(FETCH_STATUS.SUCCESS);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : DETAIL_ERROR_MESSAGE;
+        setDetailError(message);
+        setDetailStatus(FETCH_STATUS.ERROR);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -140,9 +143,10 @@ export const useCatalog = (): UseCatalogResult => {
       return;
     }
 
+    const category = categories.find((cat) => cat.id === selectedCategoryId);
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadDetail(selectedCategoryId);
-  }, [loadDetail, selectedCategoryId]);
+    void loadDetail(selectedCategoryId, category?.name);
+  }, [loadDetail, selectedCategoryId, categories]);
 
   const selectCategory = (id: string) => {
     setSelectedCategoryId(id);

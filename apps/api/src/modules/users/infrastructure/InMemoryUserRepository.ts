@@ -1,6 +1,6 @@
-import type { Email } from "../../../core/value-objects";
-import type { User } from "../domain/user";
-import type { UserRepository } from "../application/ports";
+import type { Email } from "@src/core/value-objects/index.js";
+import type { User } from "../domain/user.js";
+import type { UserRepository } from "../application/ports.js";
 
 export class InMemoryUserRepository implements UserRepository {
   private readonly usersById = new Map<string, User>();

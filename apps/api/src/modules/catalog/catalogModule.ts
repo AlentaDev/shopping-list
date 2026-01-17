@@ -1,11 +1,11 @@
-import { GetCategoryDetail } from "./application/getCategoryDetail";
-import { GetRootCategories } from "./application/getRootCategories";
-import type { CatalogCache } from "./domain/catalogCache";
-import type { CatalogProvider } from "./domain/catalogProvider";
-import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache";
-import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider";
-import { MercadonaHttpClient } from "./infrastructure/MercadonaHttpClient";
-import { createCatalogRouter } from "./api/catalogRouter";
+import { GetCategoryDetail } from "./application/getCategoryDetail.js";
+import { GetRootCategories } from "./application/getRootCategories.js";
+import type { CatalogCache } from "./domain/catalogCache.js";
+import type { CatalogProvider } from "./domain/catalogProvider.js";
+import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache.js";
+import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider.js";
+import { MercadonaHttpClient } from "./infrastructure/MercadonaHttpClient.js";
+import { createCatalogRouter } from "./api/catalogRouter.js";
 
 const MERCADONA_BASE_URL = "https://tienda.mercadona.es/api";
 const MERCADONA_TIMEOUT_MS = 8000;

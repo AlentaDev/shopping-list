@@ -1,4 +1,4 @@
-import { InMemoryRefreshTokenStore } from "./InMemoryRefreshTokenStore";
+import { InMemoryRefreshTokenStore } from "./InMemoryRefreshTokenStore.js";
 
 describe("InMemoryRefreshTokenStore", () => {
   it("creates and retrieves a refresh token record", async () => {

@@ -1,14 +1,14 @@
-import { LogoutTokens } from "./application/logoutTokens";
-import { RegisterWithTokens } from "./application/registerWithTokens";
-import { LoginWithTokens } from "./application/loginWithTokens";
-import { RefreshAccessToken } from "./application/refreshAccessToken";
-import type { UserRepository } from "../users/public";
-import { InMemoryUserRepository } from "../users/public";
-import { ScryptPasswordHasher } from "./infrastructure/ScryptPasswordHasher";
-import { InMemoryRefreshTokenStore } from "./infrastructure/InMemoryRefreshTokenStore";
-import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService";
-import { SystemClock } from "./infrastructure/SystemClock";
-import { createAuthRouter } from "./api/authRouter";
+import { LogoutTokens } from "./application/logoutTokens.js";
+import { RegisterWithTokens } from "./application/registerWithTokens.js";
+import { LoginWithTokens } from "./application/loginWithTokens.js";
+import { RefreshAccessToken } from "./application/refreshAccessToken.js";
+import type { UserRepository } from "@src/modules/users/public.js";
+import { InMemoryUserRepository } from "@src/modules/users/public.js";
+import { ScryptPasswordHasher } from "./infrastructure/ScryptPasswordHasher.js";
+import { InMemoryRefreshTokenStore } from "./infrastructure/InMemoryRefreshTokenStore.js";
+import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService.js";
+import { SystemClock } from "./infrastructure/SystemClock.js";
+import { createAuthRouter } from "./api/authRouter.js";
 
 type AuthModuleDependencies = {
   userRepository?: UserRepository;

@@ -1,0 +1,238 @@
+// @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { AuthProvider } from "./AuthContext";
+import { useAuth } from "./useAuth";
+
+// Mock auth service
+vi.mock("@src/features/auth/services/AuthService", () => ({
+  getCurrentUser: vi.fn(),
+  registerUser: vi.fn(),
+  loginUser: vi.fn(),
+  logoutUser: vi.fn(),
+}));
+
+import {
+  getCurrentUser,
+  registerUser,
+  loginUser,
+  logoutUser,
+} from "@src/features/auth/services/AuthService";
+const TEST_EMAIL = "test@example.com";
+const TEST_PASSWORD = "password"; // nosem
+const TEST_POSTAL_CODE = "28001";
+const TEST_NAME = "Test";
+// Component para testear AuthProvider
+function TestComponent() {
+  const {
+    authUser,
+    isAuthSubmitting,
+    authError,
+    isUserMenuOpen,
+    setIsUserMenuOpen,
+    register,
+    login,
+    logout,
+  } = useAuth();
+
+  return (
+    <div>
+      <div data-testid="authUser">{authUser ? authUser.email : "No user"}</div>
+      <div data-testid="isAuthSubmitting">
+        {isAuthSubmitting ? "true" : "false"}
+      </div>
+      <div data-testid="authError">{authError || "No error"}</div>
+      <div data-testid="isUserMenuOpen">
+        {isUserMenuOpen ? "true" : "false"}
+      </div>
+      <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}>
+        Toggle Menu
+      </button>
+      <button
+        onClick={() =>
+          register({
+            name: TEST_NAME,
+            email: TEST_EMAIL,
+            password: TEST_PASSWORD,
+            postalCode: TEST_POSTAL_CODE,
+          })
+        }
+      >
+        Register
+      </button>
+      <button
+        onClick={() => login({ email: TEST_EMAIL, password: TEST_PASSWORD })}
+      >
+        Login
+      </button>
+      <button onClick={() => logout()}>Logout</button>
+    </div>
+  );
+}
+
+describe("AuthProvider", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("throws error when useAuth is used without AuthProvider", () => {
+    // Create component that uses useAuth without provider
+    function InvalidComponent() {
+      useAuth();
+      return null;
+    }
+
+    // Mock console.error to avoid polluting test output
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    expect(() => {
+      render(<InvalidComponent />);
+    }).toThrow("useAuth must be used within an AuthProvider");
+
+    consoleError.mockRestore();
+  });
+
+  it("loads current user on mount", async () => {
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(getCurrentUser).mockResolvedValueOnce(mockUser);
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "test@example.com",
+      );
+    });
+    expect(getCurrentUser).toHaveBeenCalled();
+  });
+
+  it("handles register without authenticating user", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(registerUser).mockResolvedValueOnce(mockUser);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const registerButton = screen.getByRole("button", { name: "Register" });
+    await user.click(registerButton);
+
+    await waitFor(() => {
+      expect(registerUser).toHaveBeenCalled();
+      // Después del registro, el usuario NO debe estar autenticado
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+    });
+  });
+
+  it("handles login", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(loginUser).mockResolvedValueOnce(mockUser);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const loginButton = screen.getByRole("button", { name: "Login" });
+    await user.click(loginButton);
+
+    await waitFor(() => {
+      expect(loginUser).toHaveBeenCalled();
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "test@example.com",
+      );
+    });
+  });
+
+  it("handles logout", async () => {
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(getCurrentUser).mockResolvedValueOnce(mockUser);
+    vi.mocked(logoutUser).mockResolvedValueOnce(undefined);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "test@example.com",
+      );
+    });
+
+    const logoutButton = screen.getByRole("button", { name: "Logout" });
+    await user.click(logoutButton);
+
+    await waitFor(() => {
+      expect(logoutUser).toHaveBeenCalled();
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+      expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+    });
+  });
+
+  it("toggles user menu", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const toggleButton = screen.getByRole("button", { name: "Toggle Menu" });
+
+    expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+
+    await user.click(toggleButton);
+    expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("true");
+
+    await user.click(toggleButton);
+    expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+  });
+});

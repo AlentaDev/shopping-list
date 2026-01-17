@@ -1,10 +1,10 @@
-import { RefreshAccessToken } from "./refreshAccessToken";
-import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore";
-import type { AccessTokenService, Clock } from "./ports";
+import { RefreshAccessToken } from "./refreshAccessToken.js";
+import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore.js";
+import type { AccessTokenService, Clock } from "./ports.js";
 import {
   ACCESS_TOKEN_TTL_MS,
   REFRESH_TOKEN_TTL_MS,
-} from "./tokenPolicy";
+} from "./tokenPolicy.js";
 
 const fixedNow = new Date("2024-01-01T00:00:00.000Z");
 

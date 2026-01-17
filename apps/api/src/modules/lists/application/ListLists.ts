@@ -1,4 +1,4 @@
-import type { ListRepository } from "./ports";
+import type { ListRepository } from "./ports.js";
 
 type ListSummary = {
   id: string;

@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { describe, expect, it, vi } from "vitest";
-import { API_ERROR_MESSAGES } from "../../shared/constants/apiErrorMessages";
-import { AppError } from "../../shared/errors/appError";
-import { errorMiddleware } from "./errorMiddleware";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import { AppError } from "@src/shared/errors/appError.js";
+import { errorMiddleware } from "./errorMiddleware.js";
 
 describe("errorMiddleware", () => {
   it("returns 400 with validation details for ZodError", () => {

@@ -1,7 +1,7 @@
-import { AppError } from "../../../shared/errors/appError";
-import { API_ERROR_MESSAGES } from "../../../shared/constants/apiErrorMessages";
-import type { User } from "../domain/user";
-import type { UserRepository } from "./ports";
+import { AppError } from "@src/shared/errors/appError.js";
+import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
+import type { User } from "../domain/user.js";
+import type { UserRepository } from "./ports.js";
 
 export class GetCurrentUser {
   constructor(private readonly userRepository: UserRepository) {}

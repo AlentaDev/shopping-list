@@ -1,4 +1,4 @@
-import type { ListItem } from "../domain/list";
+import type { ListItem } from "../domain/list.js";
 
 export type ListItemDto = {
   id: string;

@@ -1,23 +1,23 @@
 import { randomUUID } from "node:crypto";
-import type { User } from "../../users/public";
-import { DuplicateEmailError } from "./errors";
+import type { User } from "@src/modules/users/public.js";
+import { DuplicateEmailError } from "./errors.js";
 import {
   AccessTokenService,
   Clock,
   PasswordHasher,
   RefreshTokenStore,
   UserRepository,
-} from "./ports";
-import { AuthTokens } from "./authTokens";
+} from "./ports.js";
+import { AuthTokens } from "./authTokens.js";
 import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
-} from "./tokenPolicy";
+} from "./tokenPolicy.js";
 import {
   toEmail,
   toName,
   toPostalCode,
-} from "../../../core/value-objects";
+} from "@src/core/value-objects/index.js";
 
 export type RegisterInput = {
   name: string;

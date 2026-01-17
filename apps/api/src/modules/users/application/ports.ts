@@ -1,5 +1,5 @@
-import type { Email } from "../../../core/value-objects";
-import type { User } from "../domain/user";
+import type { Email } from "@src/core/value-objects/index.js";
+import type { User } from "../domain/user.js";
 
 export type UserRepository = {
   findByEmail(email: Email): Promise<User | null>;

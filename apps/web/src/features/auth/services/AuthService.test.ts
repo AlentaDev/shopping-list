@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-hardcoded-passwords */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getCurrentUser,
@@ -47,7 +46,7 @@ describe("AuthService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(registerUser(REGISTER_INPUT)).resolves.toEqual(
-      RESPONSE_PAYLOAD
+      RESPONSE_PAYLOAD,
     );
 
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", {
@@ -87,7 +86,7 @@ describe("AuthService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(registerUser(REGISTER_INPUT)).rejects.toThrow(
-      "Unable to register"
+      "Unable to register",
     );
   });
 
@@ -147,7 +146,7 @@ describe("AuthService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getCurrentUser()).rejects.toThrow(
-      "Unable to load current user"
+      "Unable to load current user",
     );
   });
 

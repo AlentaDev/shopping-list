@@ -1,7 +1,11 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { UI_TEXT } from "../../../shared/constants/ui";
-import { loginSchema, emailSchema, passwordSchema } from "../services/authValidation";
-import { Email, Password } from "../services/value-objects";
+import { UI_TEXT } from "@src/shared/constants/ui";
+import {
+  loginSchema,
+  emailSchema,
+  passwordSchema,
+} from "@src/features/auth/services/authValidation";
+import { Email, Password } from "@src/features/auth/services/value-objects";
 
 export type LoginFormValues = {
   email: string;
@@ -27,10 +31,7 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
     password: passwordSchema,
   };
 
-  const setFieldState = (
-    field: keyof LoginFormValues,
-    nextValue: string
-  ) => {
+  const setFieldState = (field: keyof LoginFormValues, nextValue: string) => {
     setFields((prev) => ({
       ...prev,
       [field]: { ...prev[field], value: nextValue },
@@ -39,15 +40,17 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
 
   const validateField = (field: keyof LoginFormValues, value: string) => {
     const result = fieldSchemas[field].safeParse(value);
-    return result.success ? null : result.error.issues[0]?.message ?? null;
+    return result.success ? null : (result.error.issues[0]?.message ?? null);
   };
 
-  const handleChange = (field: keyof LoginFormValues) =>
+  const handleChange =
+    (field: keyof LoginFormValues) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       setFieldState(field, event.target.value);
     };
 
-  const handleBlur = (field: keyof LoginFormValues) =>
+  const handleBlur =
+    (field: keyof LoginFormValues) =>
     (event: ChangeEvent<HTMLInputElement>) => {
       const error = validateField(field, event.target.value);
 
@@ -76,7 +79,7 @@ const LoginForm = ({ onSubmit, isSubmitting = false }: LoginFormProps) => {
           }
           return acc;
         },
-        {}
+        {},
       );
 
       setFields((prev) => ({
