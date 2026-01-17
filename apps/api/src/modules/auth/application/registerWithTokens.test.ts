@@ -1,15 +1,8 @@
 import { RegisterWithTokens } from "./registerWithTokens.js";
 import { InMemoryUserRepository } from "@src/modules/users/public.js";
 import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore.js";
-import type {
-  AccessTokenService,
-  Clock,
-  PasswordHasher,
-} from "./ports.js";
-import {
-  ACCESS_TOKEN_TTL_MS,
-  REFRESH_TOKEN_TTL_MS,
-} from "./tokenPolicy.js";
+import type { AccessTokenService, Clock, PasswordHasher } from "./ports.js";
+import { ACCESS_TOKEN_TTL_MS, REFRESH_TOKEN_TTL_MS } from "./tokenPolicy.js";
 import {
   toEmail,
   toName,
@@ -46,7 +39,7 @@ describe("RegisterWithTokens", () => {
       passwordHasher,
       accessTokenService,
       refreshTokenStore,
-      clock
+      clock,
     );
 
     const result = await register.execute({
@@ -57,7 +50,7 @@ describe("RegisterWithTokens", () => {
     });
 
     const storedUser = await userRepository.findByEmail(
-      toEmail("alice@example.com")
+      toEmail("alice@example.com"),
     );
 
     expect(storedUser).toEqual({
@@ -69,14 +62,14 @@ describe("RegisterWithTokens", () => {
     });
     expect(result.tokens.accessToken).toContain(result.user.id);
     expect(result.tokens.accessTokenExpiresAt).toEqual(
-      new Date(fixedNow.getTime() + ACCESS_TOKEN_TTL_MS)
+      new Date(fixedNow.getTime() + ACCESS_TOKEN_TTL_MS),
     );
     expect(result.tokens.refreshTokenExpiresAt).toEqual(
-      new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS)
+      new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS),
     );
 
     const refreshRecord = await refreshTokenStore.find(
-      result.tokens.refreshToken
+      result.tokens.refreshToken,
     );
     expect(refreshRecord).toMatchObject({
       userId: result.user.id,
@@ -94,7 +87,7 @@ describe("RegisterWithTokens", () => {
       passwordHasher,
       accessTokenService,
       refreshTokenStore,
-      clock
+      clock,
     );
 
     await register.execute({
@@ -110,7 +103,7 @@ describe("RegisterWithTokens", () => {
         email: "alice@example.com",
         password: "Password12!A",
         postalCode: "12345",
-      })
+      }),
     ).rejects.toMatchObject({ code: "duplicate_email" });
   });
 });

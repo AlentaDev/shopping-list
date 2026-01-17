@@ -1,15 +1,8 @@
 import { LoginWithTokens } from "./loginWithTokens.js";
 import { InMemoryUserRepository } from "@src/modules/users/public.js";
 import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore.js";
-import type {
-  AccessTokenService,
-  Clock,
-  PasswordHasher,
-} from "./ports.js";
-import {
-  ACCESS_TOKEN_TTL_MS,
-  REFRESH_TOKEN_TTL_MS,
-} from "./tokenPolicy.js";
+import type { AccessTokenService, Clock, PasswordHasher } from "./ports.js";
+import { ACCESS_TOKEN_TTL_MS, REFRESH_TOKEN_TTL_MS } from "./tokenPolicy.js";
 import {
   toEmail,
   toName,
@@ -54,7 +47,7 @@ describe("LoginWithTokens", () => {
       passwordHasher,
       accessTokenService,
       refreshTokenStore,
-      clock
+      clock,
     );
 
     const result = await login.execute({
@@ -65,14 +58,14 @@ describe("LoginWithTokens", () => {
     expect(result.user.id).toBe("user-1");
     expect(result.tokens.accessToken).toContain("user-1");
     expect(result.tokens.accessTokenExpiresAt).toEqual(
-      new Date(fixedNow.getTime() + ACCESS_TOKEN_TTL_MS)
+      new Date(fixedNow.getTime() + ACCESS_TOKEN_TTL_MS),
     );
     expect(result.tokens.refreshTokenExpiresAt).toEqual(
-      new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS)
+      new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS),
     );
 
     const refreshRecord = await refreshTokenStore.find(
-      result.tokens.refreshToken
+      result.tokens.refreshToken,
     );
     expect(refreshRecord).toMatchObject({
       userId: "user-1",
@@ -98,11 +91,11 @@ describe("LoginWithTokens", () => {
       passwordHasher,
       accessTokenService,
       refreshTokenStore,
-      clock
+      clock,
     );
 
     await expect(
-      login.execute({ email: "alice@example.com", password: "wrong" })
+      login.execute({ email: "alice@example.com", password: "wrong" }),
     ).rejects.toMatchObject({ code: "invalid_credentials" });
   });
 });

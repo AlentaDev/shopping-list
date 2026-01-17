@@ -14,13 +14,13 @@ export function requireAuth(): RequestHandler {
     try {
       const accessToken = getCookieFromRequest(
         req.headers.cookie,
-        ACCESS_TOKEN_COOKIE_NAME
+        ACCESS_TOKEN_COOKIE_NAME,
       );
       if (!accessToken) {
         throw new AppError(
           401,
           "not_authenticated",
-          API_ERROR_MESSAGES.notAuthenticated
+          API_ERROR_MESSAGES.notAuthenticated,
         );
       }
 
@@ -29,7 +29,7 @@ export function requireAuth(): RequestHandler {
         throw new AppError(
           401,
           "not_authenticated",
-          API_ERROR_MESSAGES.notAuthenticated
+          API_ERROR_MESSAGES.notAuthenticated,
         );
       }
 
@@ -37,7 +37,7 @@ export function requireAuth(): RequestHandler {
         throw new AppError(
           401,
           "not_authenticated",
-          API_ERROR_MESSAGES.notAuthenticated
+          API_ERROR_MESSAGES.notAuthenticated,
         );
       }
 
@@ -51,7 +51,7 @@ export function requireAuth(): RequestHandler {
 
 function getCookieFromRequest(
   cookieHeader: string | undefined,
-  name: string
+  name: string,
 ): string | null {
   if (!cookieHeader) {
     return null;

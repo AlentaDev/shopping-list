@@ -1,14 +1,14 @@
 import request from "supertest";
 import { vi } from "vitest";
-import { createApp } from "../src/app";
-import { createCatalogModule } from "../src/modules/catalog/catalogModule";
-import { ROOT_CATEGORIES_CACHE_KEY } from "../src/modules/catalog/application/cacheKeys";
-import type { CatalogProvider } from "../src/modules/catalog/domain/catalogProvider";
+import { createApp } from "../src/app.js";
+import { createCatalogModule } from "../src/modules/catalog/catalogModule.js";
+import { ROOT_CATEGORIES_CACHE_KEY } from "../src/modules/catalog/application/cacheKeys.js";
+import type { CatalogProvider } from "../src/modules/catalog/domain/catalogProvider.js";
 import type {
   GetCategoryDetailResponse,
   GetRootCategoriesResponse,
-} from "../src/modules/catalog/domain/catalogTypes";
-import { InMemoryCatalogCache } from "../src/modules/catalog/infrastructure/InMemoryCatalogCache";
+} from "../src/modules/catalog/domain/catalogTypes.js";
+import { InMemoryCatalogCache } from "../src/modules/catalog/infrastructure/InMemoryCatalogCache.js";
 
 describe("catalog endpoints", () => {
   const rootCategoriesResponse = {
@@ -129,7 +129,7 @@ describe("catalog endpoints", () => {
   };
 
   function createProvider(
-    overrides?: Partial<CatalogProvider>
+    overrides?: Partial<CatalogProvider>,
   ): CatalogProvider {
     return {
       getRootCategories: vi.fn().mockResolvedValue(rootCategoriesResponse),

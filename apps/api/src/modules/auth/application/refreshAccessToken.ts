@@ -1,10 +1,6 @@
 import { InvalidRefreshTokenError } from "./errors.js";
 import { AuthTokens } from "./authTokens.js";
-import {
-  AccessTokenService,
-  Clock,
-  RefreshTokenStore,
-} from "./ports.js";
+import { AccessTokenService, Clock, RefreshTokenStore } from "./ports.js";
 import {
   getAccessTokenExpiresAt,
   getRefreshTokenExpiresAt,
@@ -22,7 +18,7 @@ export class RefreshAccessToken {
   constructor(
     private readonly accessTokenService: AccessTokenService,
     private readonly refreshTokenStore: RefreshTokenStore,
-    private readonly clock: Clock
+    private readonly clock: Clock,
   ) {}
 
   async execute(input: RefreshInput): Promise<RefreshResult> {
@@ -44,11 +40,11 @@ export class RefreshAccessToken {
 
     const accessToken = await this.accessTokenService.create(
       record.userId,
-      accessTokenExpiresAt
+      accessTokenExpiresAt,
     );
     const newRefresh = await this.refreshTokenStore.create(
       record.userId,
-      refreshTokenExpiresAt
+      refreshTokenExpiresAt,
     );
 
     return {

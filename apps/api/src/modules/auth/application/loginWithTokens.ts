@@ -30,7 +30,7 @@ export class LoginWithTokens {
     private readonly passwordHasher: PasswordHasher,
     private readonly accessTokenService: AccessTokenService,
     private readonly refreshTokenStore: RefreshTokenStore,
-    private readonly clock: Clock
+    private readonly clock: Clock,
   ) {}
 
   async execute(input: LoginInput): Promise<LoginResult> {
@@ -42,7 +42,7 @@ export class LoginWithTokens {
 
     const isValid = await this.passwordHasher.compare(
       input.password,
-      user.passwordHash
+      user.passwordHash,
     );
     if (!isValid) {
       throw new InvalidCredentialsError();
@@ -54,11 +54,11 @@ export class LoginWithTokens {
 
     const accessToken = await this.accessTokenService.create(
       user.id,
-      accessTokenExpiresAt
+      accessTokenExpiresAt,
     );
     const refreshRecord = await this.refreshTokenStore.create(
       user.id,
-      refreshTokenExpiresAt
+      refreshTokenExpiresAt,
     );
 
     return {

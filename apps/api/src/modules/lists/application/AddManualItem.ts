@@ -14,7 +14,7 @@ type AddManualItemInput = {
 export class AddManualItem {
   constructor(
     private readonly listRepository: ListRepository,
-    private readonly idGenerator: IdGenerator
+    private readonly idGenerator: IdGenerator,
   ) {}
 
   async execute(input: AddManualItemInput): Promise<ListItemDto> {

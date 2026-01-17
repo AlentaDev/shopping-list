@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
+import { USERS_MESSAGES } from "@src/shared/constants/usersMessages.js";
 
 export const postalCodeSchema = z
   .string()

@@ -1,10 +1,10 @@
-import type { ListRepository } from "./ports";
-import { toListItemDto, type ListItemDto } from "./listItemDto";
+import type { ListRepository } from "./ports.js";
+import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import {
   ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
-} from "./errors";
+} from "./errors.js";
 
 type UpdateItemInput = {
   userId: string;
@@ -29,7 +29,9 @@ export class UpdateItem {
       throw new ListForbiddenError();
     }
 
-    const item = list.items.find((entry) => entry.id === input.itemId);
+    const item = list.items.find(
+      (entry: { id: string }) => entry.id === input.itemId,
+    );
     if (!item) {
       throw new ItemNotFoundError();
     }

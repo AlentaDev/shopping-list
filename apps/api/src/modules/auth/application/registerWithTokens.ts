@@ -37,7 +37,7 @@ export class RegisterWithTokens {
     private readonly passwordHasher: PasswordHasher,
     private readonly accessTokenService: AccessTokenService,
     private readonly refreshTokenStore: RefreshTokenStore,
-    private readonly clock: Clock
+    private readonly clock: Clock,
   ) {}
 
   async execute(input: RegisterInput): Promise<RegisterResult> {
@@ -67,11 +67,11 @@ export class RegisterWithTokens {
 
     const accessToken = await this.accessTokenService.create(
       user.id,
-      accessTokenExpiresAt
+      accessTokenExpiresAt,
     );
     const refreshRecord = await this.refreshTokenStore.create(
       user.id,
-      refreshTokenExpiresAt
+      refreshTokenExpiresAt,
     );
 
     return {

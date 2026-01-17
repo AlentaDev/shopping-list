@@ -15,7 +15,7 @@ type ListSummary = {
 export class CreateList {
   constructor(
     private readonly listRepository: ListRepository,
-    private readonly idGenerator: IdGenerator
+    private readonly idGenerator: IdGenerator,
   ) {}
 
   async execute(input: CreateListInput): Promise<ListSummary> {

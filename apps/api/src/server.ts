@@ -1,4 +1,4 @@
-import { createApp } from '@src/app.js';
+import { createApp } from "@src/app.js";
 
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 

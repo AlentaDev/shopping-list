@@ -25,7 +25,7 @@ describe("JwtAccessTokenService", () => {
 
     const expectedSignature = signToken(
       `${encodedHeader}.${encodedPayload}`,
-      TEST_SECRET
+      TEST_SECRET,
     );
     expect(signature).toBe(expectedSignature);
   });
@@ -35,7 +35,7 @@ function decodeBase64Url(value: string) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(
     normalized.length + ((4 - (normalized.length % 4)) % 4),
-    "="
+    "=",
   );
   return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
 }

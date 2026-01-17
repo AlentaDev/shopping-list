@@ -1,5 +1,5 @@
-import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
-import { nameSchema } from "./name";
+import { USERS_MESSAGES } from "@src/shared/constants/usersMessages.js";
+import { nameSchema } from "./name.js";
 
 describe("name value object", () => {
   it("accepts a valid name", () => {

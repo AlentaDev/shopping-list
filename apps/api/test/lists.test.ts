@@ -1,10 +1,10 @@
 import request from "supertest";
-import { createApp } from "../src/app";
-import { createCatalogModule } from "../src/modules/catalog/catalogModule";
+import { createApp } from "../src/app.js";
+import { createCatalogModule } from "../src/modules/catalog/catalogModule.js";
 import type {
   CatalogProvider,
   MercadonaProductDetail,
-} from "../src/modules/catalog/public";
+} from "../src/modules/catalog/public.js";
 
 type TestUser = {
   name: string;
@@ -29,7 +29,7 @@ async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
       ? [setCookieHeader]
       : [];
   const accessCookie = cookies.find((cookie: string) =>
-    cookie.startsWith("access_token=")
+    cookie.startsWith("access_token="),
   );
 
   if (!accessCookie) {
@@ -131,9 +131,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({ title: "Groceries" });
 
-    const response = await request(app)
-      .get("/api/lists")
-      .set("Cookie", cookie);
+    const response = await request(app).get("/api/lists").set("Cookie", cookie);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -233,9 +231,7 @@ describe("lists endpoints", () => {
       .send({ name: "Eggs" });
 
     const response = await request(app)
-      .patch(
-        `/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`
-      )
+      .patch(`/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`)
       .set("Cookie", cookie)
       .send({ checked: true, qty: 2 });
 
@@ -266,7 +262,7 @@ describe("lists endpoints", () => {
 
     const deleteResponse = await request(app)
       .delete(
-        `/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`
+        `/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`,
       )
       .set("Cookie", cookie);
 
@@ -399,7 +395,7 @@ describe("lists endpoints", () => {
 
     expect(defaultQtyResponse.status).toBe(201);
     expect(defaultQtyResponse.body).toEqual(
-      expect.objectContaining({ qty: 1 })
+      expect.objectContaining({ qty: 1 }),
     );
 
     const invalidMinResponse = await request(app)

@@ -29,7 +29,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const addCatalogItem = new AddCatalogItem(
     listRepository,
     idGenerator,
-    deps.catalogProvider
+    deps.catalogProvider,
   );
   const updateItem = new UpdateItem(listRepository);
   const removeItem = new RemoveItem(listRepository);

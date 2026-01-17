@@ -10,7 +10,7 @@ export class InMemoryListRepository implements ListRepository {
 
   async listByOwner(ownerUserId: string): Promise<List[]> {
     return Array.from(this.lists.values()).filter(
-      (list) => list.ownerUserId === ownerUserId
+      (list) => list.ownerUserId === ownerUserId,
     );
   }
 

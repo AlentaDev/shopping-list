@@ -19,7 +19,7 @@ export function createAuthModule(deps: AuthModuleDependencies = {}) {
   const passwordHasher = new ScryptPasswordHasher();
   const refreshTokenStore = new InMemoryRefreshTokenStore();
   const accessTokenService = new JwtAccessTokenService(
-    process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret"
+    process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret",
   );
   const clock = new SystemClock();
 
@@ -30,19 +30,19 @@ export function createAuthModule(deps: AuthModuleDependencies = {}) {
     passwordHasher,
     accessTokenService,
     refreshTokenStore,
-    clock
+    clock,
   );
   const loginWithTokens = new LoginWithTokens(
     userRepository,
     passwordHasher,
     accessTokenService,
     refreshTokenStore,
-    clock
+    clock,
   );
   const refreshAccessToken = new RefreshAccessToken(
     accessTokenService,
     refreshTokenStore,
-    clock
+    clock,
   );
 
   const router = createAuthRouter({

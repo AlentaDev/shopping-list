@@ -53,20 +53,14 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
   });
 
   router.get("/me", (_req, _res, next) => {
-    next(
-      new AppError(
-        410,
-        "deprecated_endpoint",
-        "Use /api/users/me instead"
-      )
-    );
+    next(new AppError(410, "deprecated_endpoint", "Use /api/users/me instead"));
   });
 
   router.post("/refresh", async (req, res, next) => {
     try {
       const refreshToken = getCookieFromRequest(
         req.headers.cookie,
-        REFRESH_TOKEN_COOKIE_NAME
+        REFRESH_TOKEN_COOKIE_NAME,
       );
       if (!refreshToken) {
         throw new InvalidRefreshTokenError();
@@ -88,7 +82,7 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
     try {
       const refreshToken = getCookieFromRequest(
         req.headers.cookie,
-        REFRESH_TOKEN_COOKIE_NAME
+        REFRESH_TOKEN_COOKIE_NAME,
       );
       await deps.logoutTokens.execute(refreshToken);
 
@@ -110,7 +104,7 @@ function setAuthCookies(
     refreshToken: string;
     accessTokenExpiresAt: Date;
     refreshTokenExpiresAt: Date;
-  }
+  },
 ) {
   res.cookie("access_token", tokens.accessToken, {
     ...COOKIE_OPTIONS,
@@ -135,7 +129,7 @@ function clearAuthCookies(res: Response) {
 
 function getCookieFromRequest(
   cookieHeader: string | undefined,
-  name: string
+  name: string,
 ): string | null {
   if (!cookieHeader) {
     return null;

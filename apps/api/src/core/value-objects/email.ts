@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
+import { USERS_MESSAGES } from "@src/shared/constants/usersMessages.js";
 
 export const EMAIL_REGEX =
   /^(?=.{1,254}$)(?=.{1,64}@)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;

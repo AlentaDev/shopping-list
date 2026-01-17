@@ -34,8 +34,8 @@ describe("GetCurrentUser", () => {
       new AppError(
         401,
         "not_authenticated",
-        API_ERROR_MESSAGES.notAuthenticated
-      )
+        API_ERROR_MESSAGES.notAuthenticated,
+      ),
     );
   });
 
@@ -47,8 +47,8 @@ describe("GetCurrentUser", () => {
       new AppError(
         401,
         "not_authenticated",
-        API_ERROR_MESSAGES.notAuthenticated
-      )
+        API_ERROR_MESSAGES.notAuthenticated,
+      ),
     );
   });
 });

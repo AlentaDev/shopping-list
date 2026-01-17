@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore";
-import { SystemClock } from "../infrastructure/SystemClock";
-import { LogoutTokens } from "./logoutTokens";
-import { getRefreshTokenExpiresAt } from "./tokenPolicy";
+import { InMemoryRefreshTokenStore } from "../infrastructure/InMemoryRefreshTokenStore.js";
+import { SystemClock } from "../infrastructure/SystemClock.js";
+import { LogoutTokens } from "./logoutTokens.js";
+import { getRefreshTokenExpiresAt } from "./tokenPolicy.js";
 
 describe("LogoutTokens", () => {
   it("revokes the refresh token when present", async () => {

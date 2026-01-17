@@ -19,8 +19,7 @@ export function buildRouter(deps: RouterDependencies = {}) {
     deps.authModule?.userRepository ??
     deps.usersModule?.userRepository ??
     new InMemoryUserRepository();
-  const authModule =
-    deps.authModule ?? createAuthModule({ userRepository });
+  const authModule = deps.authModule ?? createAuthModule({ userRepository });
   router.use("/auth", authModule.router);
 
   const catalogModule = deps.catalogModule ?? createCatalogModule();
@@ -33,8 +32,7 @@ export function buildRouter(deps: RouterDependencies = {}) {
     });
   router.use("/lists", listsModule.router);
 
-  const usersModule =
-    deps.usersModule ?? createUsersModule({ userRepository });
+  const usersModule = deps.usersModule ?? createUsersModule({ userRepository });
   router.use("/users", usersModule.router);
 
   return router;

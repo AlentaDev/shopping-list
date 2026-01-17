@@ -28,7 +28,9 @@ export class RemoveItem {
       throw new ListForbiddenError();
     }
 
-    const itemIndex = list.items.findIndex((entry) => entry.id === input.itemId);
+    const itemIndex = list.items.findIndex(
+      (entry) => entry.id === input.itemId,
+    );
     if (itemIndex === -1) {
       throw new ItemNotFoundError();
     }

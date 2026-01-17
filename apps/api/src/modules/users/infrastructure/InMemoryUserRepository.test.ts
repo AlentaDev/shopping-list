@@ -28,7 +28,7 @@ describe("InMemoryUserRepository", () => {
 
     await expect(repository.findById("missing-id")).resolves.toBeNull();
     await expect(
-      repository.findByEmail(toEmail("missing@example.com"))
+      repository.findByEmail(toEmail("missing@example.com")),
     ).resolves.toBeNull();
   });
 });

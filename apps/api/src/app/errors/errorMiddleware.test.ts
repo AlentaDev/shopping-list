@@ -35,11 +35,11 @@ describe("errorMiddleware", () => {
       new AppError(
         401,
         "not_authenticated",
-        API_ERROR_MESSAGES.notAuthenticated
+        API_ERROR_MESSAGES.notAuthenticated,
       ),
       {} as Request,
       res,
-      next
+      next,
     );
 
     expect(status).toHaveBeenCalledWith(401);

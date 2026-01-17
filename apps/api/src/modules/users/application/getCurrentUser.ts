@@ -11,7 +11,7 @@ export class GetCurrentUser {
       throw new AppError(
         401,
         "not_authenticated",
-        API_ERROR_MESSAGES.notAuthenticated
+        API_ERROR_MESSAGES.notAuthenticated,
       );
     }
 
@@ -20,7 +20,7 @@ export class GetCurrentUser {
       throw new AppError(
         401,
         "not_authenticated",
-        API_ERROR_MESSAGES.notAuthenticated
+        API_ERROR_MESSAGES.notAuthenticated,
       );
     }
 

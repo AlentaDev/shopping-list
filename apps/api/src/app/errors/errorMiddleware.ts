@@ -6,7 +6,7 @@ export function errorMiddleware(
   error: unknown,
   _req: Request,
   res: Response,
-  _next: NextFunction
+  _next: NextFunction,
 ) {
   if (error instanceof ZodError) {
     res.status(400).json({ error: "validation_error", details: error.issues });

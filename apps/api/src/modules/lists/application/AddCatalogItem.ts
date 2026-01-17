@@ -1,4 +1,7 @@
-import type { CatalogProvider, MercadonaProductDetail } from "@src/modules/catalog/public.js";
+import type {
+  CatalogProvider,
+  MercadonaProductDetail,
+} from "@src/modules/catalog/public.js";
 import type { ListItem } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
@@ -20,7 +23,7 @@ export class AddCatalogItem {
   constructor(
     private readonly listRepository: ListRepository,
     private readonly idGenerator: IdGenerator,
-    private readonly catalogProvider: CatalogProvider
+    private readonly catalogProvider: CatalogProvider,
   ) {}
 
   async execute(input: AddCatalogItemInput): Promise<ListItemDto> {
@@ -48,7 +51,8 @@ export class AddCatalogItem {
       source: "mercadona",
       sourceProductId: String(product.id),
       nameSnapshot: product.display_name,
-      thumbnailSnapshot: product.thumbnail ?? product.photos?.[0]?.thumbnail ?? null,
+      thumbnailSnapshot:
+        product.thumbnail ?? product.photos?.[0]?.thumbnail ?? null,
       priceSnapshot: Number(product.price_instructions.unit_price),
       unitSizeSnapshot: product.price_instructions.unit_size ?? null,
       unitFormatSnapshot: product.price_instructions.size_format ?? null,

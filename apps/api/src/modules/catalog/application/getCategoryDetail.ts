@@ -15,7 +15,7 @@ import type {
 export class GetCategoryDetail {
   constructor(
     private readonly provider: CatalogProvider,
-    private readonly cache: CatalogCache
+    private readonly cache: CatalogCache,
   ) {}
 
   async execute(id: string): Promise<GetCategoryDetailResponse> {
@@ -40,14 +40,14 @@ export class GetCategoryDetail {
       throw new AppError(
         502,
         "catalog_provider_unavailable",
-        "Catalog provider unavailable"
+        "Catalog provider unavailable",
       );
     }
   }
 }
 
 function mapCategoryDetail(
-  response: MercadonaCategoryDetailResponse
+  response: MercadonaCategoryDetailResponse,
 ): GetCategoryDetailResponse {
   return {
     id: String(response.id),

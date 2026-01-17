@@ -1,5 +1,5 @@
 import request from "supertest";
-import { createApp } from "../src/app";
+import { createApp } from "../src/app.js";
 
 const validUser = {
   name: "Alice",
@@ -85,19 +85,22 @@ describe("auth endpoints", () => {
       password: "Password12!A",
       postalCode: "1234",
     },
-  ])("POST /api/auth/register returns 400 for invalid input", async (payload) => {
-    const app = createApp();
+  ])(
+    "POST /api/auth/register returns 400 for invalid input",
+    async (payload) => {
+      const app = createApp();
 
-    const response = await request(app)
-      .post("/api/auth/register")
-      .send(payload);
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send(payload);
 
-    expect(response.status).toBe(400);
-    expect(response.body).toEqual({
-      error: "validation_error",
-      details: expect.any(Array),
-    });
-  });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        error: "validation_error",
+        details: expect.any(Array),
+      });
+    },
+  );
 
   it("POST /api/auth/register returns 409 for duplicate email", async () => {
     const app = createApp();
@@ -127,10 +130,12 @@ describe("auth endpoints", () => {
       postalCode: validUser.postalCode,
     });
     const cookies = getSetCookies(response);
-    expect(cookies.find((cookie) => cookie.startsWith("access_token=")))
-      .toBeTruthy();
-    expect(cookies.find((cookie) => cookie.startsWith("refresh_token=")))
-      .toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("access_token=")),
+    ).toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("refresh_token=")),
+    ).toBeTruthy();
   });
 
   it("POST /api/auth/login returns 401 for invalid credentials", async () => {
@@ -170,7 +175,7 @@ describe("auth endpoints", () => {
       .post("/api/auth/register")
       .send(validUser);
     const accessCookie = getSetCookies(registerResponse).find((cookie) =>
-      cookie.startsWith("access_token=")
+      cookie.startsWith("access_token="),
     );
 
     if (!accessCookie) {
@@ -206,10 +211,10 @@ describe("auth endpoints", () => {
     expect(response.body).toEqual({ ok: true });
     const clearedCookies = getSetCookies(response);
     expect(
-      clearedCookies.find((cookie) => cookie.startsWith("access_token="))
+      clearedCookies.find((cookie) => cookie.startsWith("access_token=")),
     ).toContain("Max-Age=0");
     expect(
-      clearedCookies.find((cookie) => cookie.startsWith("refresh_token="))
+      clearedCookies.find((cookie) => cookie.startsWith("refresh_token=")),
     ).toContain("Max-Age=0");
   });
 });
@@ -231,10 +236,12 @@ describe("auth token endpoints", () => {
     });
 
     const cookies = getSetCookies(response);
-    expect(cookies.find((cookie) => cookie.startsWith("access_token=")))
-      .toBeTruthy();
-    expect(cookies.find((cookie) => cookie.startsWith("refresh_token=")))
-      .toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("access_token=")),
+    ).toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("refresh_token=")),
+    ).toBeTruthy();
   });
 
   it("POST /api/auth/login sets access and refresh cookies", async () => {
@@ -255,10 +262,12 @@ describe("auth token endpoints", () => {
     });
 
     const cookies = getSetCookies(response);
-    expect(cookies.find((cookie) => cookie.startsWith("access_token=")))
-      .toBeTruthy();
-    expect(cookies.find((cookie) => cookie.startsWith("refresh_token=")))
-      .toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("access_token=")),
+    ).toBeTruthy();
+    expect(
+      cookies.find((cookie) => cookie.startsWith("refresh_token=")),
+    ).toBeTruthy();
   });
 
   it("POST /api/auth/refresh rotates refresh token cookies", async () => {
@@ -270,7 +279,7 @@ describe("auth token endpoints", () => {
 
     const registerCookies = getSetCookies(registerResponse);
     const refreshCookie = registerCookies.find((cookie) =>
-      cookie.startsWith("refresh_token=")
+      cookie.startsWith("refresh_token="),
     );
     if (!refreshCookie) {
       throw new Error("Missing auth cookies");
@@ -285,7 +294,7 @@ describe("auth token endpoints", () => {
 
     const refreshedCookies = getSetCookies(response);
     const newRefreshCookie = refreshedCookies.find((cookie) =>
-      cookie.startsWith("refresh_token=")
+      cookie.startsWith("refresh_token="),
     );
 
     expect(newRefreshCookie).toBeTruthy();
@@ -293,11 +302,11 @@ describe("auth token endpoints", () => {
 
     const previousValue = extractCookieValue(
       refreshCookie as string,
-      "refresh_token"
+      "refresh_token",
     );
     const nextValue = extractCookieValue(
       newRefreshCookie as string,
-      "refresh_token"
+      "refresh_token",
     );
     expect(previousValue).not.toBe(nextValue);
   });

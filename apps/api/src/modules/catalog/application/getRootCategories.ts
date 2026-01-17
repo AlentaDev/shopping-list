@@ -14,12 +14,12 @@ import type {
 export class GetRootCategories {
   constructor(
     private readonly provider: CatalogProvider,
-    private readonly cache: CatalogCache
+    private readonly cache: CatalogCache,
   ) {}
 
   async execute(): Promise<GetRootCategoriesResponse> {
     const cached = this.cache.get<GetRootCategoriesResponse>(
-      ROOT_CATEGORIES_CACHE_KEY
+      ROOT_CATEGORIES_CACHE_KEY,
     );
     if (cached) {
       return cached;
@@ -34,7 +34,7 @@ export class GetRootCategories {
       return result;
     } catch (_error) {
       const stale = this.cache.getStale<GetRootCategoriesResponse>(
-        ROOT_CATEGORIES_CACHE_KEY
+        ROOT_CATEGORIES_CACHE_KEY,
       );
       if (stale) {
         return stale;
@@ -43,14 +43,14 @@ export class GetRootCategories {
       throw new AppError(
         502,
         "catalog_provider_unavailable",
-        "Catalog provider unavailable"
+        "Catalog provider unavailable",
       );
     }
   }
 }
 
 function mapRootCategories(
-  results: MercadonaRootCategory[]
+  results: MercadonaRootCategory[],
 ): CatalogCategoryNode[] {
   const nodes: CatalogCategoryNode[] = [];
 

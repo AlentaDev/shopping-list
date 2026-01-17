@@ -1,5 +1,5 @@
-import { USERS_MESSAGES } from "../../shared/constants/usersMessages";
-import { emailSchema } from "./email";
+import { USERS_MESSAGES } from "@src/shared/constants/usersMessages.js";
+import { emailSchema } from "./email.js";
 
 describe("email value object", () => {
   it("normalizes and accepts valid emails", () => {
@@ -16,7 +16,9 @@ describe("email value object", () => {
 
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues[0]?.message).toBe(USERS_MESSAGES.emailRequired);
+      expect(result.error.issues[0]?.message).toBe(
+        USERS_MESSAGES.emailRequired,
+      );
     }
   });
 
