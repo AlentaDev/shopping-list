@@ -1,0 +1,850 @@
+openapi: 3.0.3
+info:
+  title: Shopping List API
+  version: 0.0.0
+  description: >-
+    Especificación OpenAPI del estado actual de la API (snapshot) para su
+    documentación en Swagger.
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Healthcheck
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /api/auth/register:
+    post:
+      tags:
+        - auth
+      summary: Registro de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuario creado
+          headers:
+            Set-Cookie:
+              description: Cookies de sesión (`access_token`, `refresh_token`).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUser"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/DuplicateEmail"
+  /api/auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Usuario autenticado
+          headers:
+            Set-Cookie:
+              description: Cookies de sesión (`access_token`, `refresh_token`).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUser"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/InvalidCredentials"
+  /api/auth/me:
+    get:
+      tags:
+        - auth
+      summary: Endpoint deprecated
+      deprecated: true
+      responses:
+        "410":
+          description: Endpoint deprecated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+  /api/auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Refrescar access token
+      responses:
+        "200":
+          description: Tokens refrescados
+          headers:
+            Set-Cookie:
+              description: Cookies de sesión (`access_token`, `refresh_token`).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          $ref: "#/components/responses/InvalidRefreshToken"
+  /api/auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logout de usuario
+      responses:
+        "200":
+          description: Sesión finalizada
+          headers:
+            Set-Cookie:
+              description: Limpieza de cookies de sesión.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+  /api/users/me:
+    get:
+      tags:
+        - users
+      summary: Usuario actual
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicUser"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+  /api/catalog/categories:
+    get:
+      tags:
+        - catalog
+      summary: Categorías raíz del catálogo
+      responses:
+        "200":
+          description: Categorías raíz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MercadonaRootCategoriesResponse"
+  /api/catalog/categories/{id}:
+    get:
+      tags:
+        - catalog
+      summary: Detalle de categoría
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detalle de categoría
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MercadonaCategoryDetailResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+  /api/lists:
+    post:
+      tags:
+        - lists
+      summary: Crear lista
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateListRequest"
+      responses:
+        "201":
+          description: Lista creada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSummary"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+    get:
+      tags:
+        - lists
+      summary: Listar listas del usuario
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Listas del usuario
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListListsResponse"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+  /api/lists/{id}:
+    get:
+      tags:
+        - lists
+      summary: Obtener detalle de lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detalle de lista
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDetail"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/items:
+    post:
+      tags:
+        - lists
+      summary: Añadir item manual a la lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddManualItemRequest"
+      responses:
+        "201":
+          description: Item creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListItemDto"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/items/from-catalog:
+    post:
+      tags:
+        - lists
+      summary: Añadir item desde catálogo
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCatalogItemRequest"
+      responses:
+        "201":
+          description: Item creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListItemDto"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+        "502":
+          $ref: "#/components/responses/CatalogProviderFailed"
+  /api/lists/{id}/items/{itemId}:
+    patch:
+      tags:
+        - lists
+      summary: Actualizar item de lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateItemRequest"
+      responses:
+        "200":
+          description: Item actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListItemDto"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ItemNotFound"
+    delete:
+      tags:
+        - lists
+      summary: Eliminar item de lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Item eliminado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ItemNotFound"
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+      required:
+        - status
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+      required:
+        - ok
+    AppError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: validation_error
+        details:
+          type: array
+          items:
+            type: object
+      required:
+        - error
+        - details
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        postalCode:
+          type: string
+      required:
+        - name
+        - email
+        - password
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+    PublicUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        postalCode:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - postalCode
+    CreateListRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 60
+      required:
+        - title
+    ListSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - updatedAt
+    ListListsResponse:
+      type: object
+      properties:
+        lists:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListSummary"
+      required:
+        - lists
+    ListDetail:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListItemDto"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - items
+        - updatedAt
+    AddManualItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        qty:
+          type: integer
+          minimum: 1
+          maximum: 999
+        note:
+          type: string
+          maxLength: 240
+      required:
+        - name
+    AddCatalogItemRequest:
+      type: object
+      properties:
+        source:
+          type: string
+          enum: [mercadona]
+        productId:
+          type: string
+        qty:
+          type: integer
+          minimum: 1
+          maximum: 999
+        note:
+          type: string
+          maxLength: 240
+      required:
+        - source
+        - productId
+    UpdateItemRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 120
+        qty:
+          type: integer
+          minimum: 1
+          maximum: 999
+        checked:
+          type: boolean
+        note:
+          type: string
+          maxLength: 240
+    ListItemDto:
+      oneOf:
+        - $ref: "#/components/schemas/ManualListItem"
+        - $ref: "#/components/schemas/CatalogListItem"
+      discriminator:
+        propertyName: kind
+    ManualListItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [manual]
+        name:
+          type: string
+        qty:
+          type: number
+        checked:
+          type: boolean
+        note:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - kind
+        - name
+        - qty
+        - checked
+        - updatedAt
+    CatalogListItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [catalog]
+        name:
+          type: string
+        qty:
+          type: number
+        checked:
+          type: boolean
+        note:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+        thumbnail:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        unitSize:
+          type: number
+          nullable: true
+        unitFormat:
+          type: string
+          nullable: true
+        unitPrice:
+          type: number
+          nullable: true
+        isApproxSize:
+          type: boolean
+        source:
+          type: string
+          enum: [mercadona]
+        sourceProductId:
+          type: string
+      required:
+        - id
+        - kind
+        - name
+        - qty
+        - checked
+        - updatedAt
+    MercadonaRootCategory:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        order:
+          type: number
+        is_extended:
+          type: boolean
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/MercadonaNestedCategory"
+      required:
+        - id
+        - name
+        - order
+        - is_extended
+        - categories
+    MercadonaNestedCategory:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        order:
+          type: number
+        layout:
+          type: string
+        published:
+          type: boolean
+        is_extended:
+          type: boolean
+      required:
+        - id
+        - name
+        - order
+        - layout
+        - published
+        - is_extended
+    MercadonaRootCategoriesResponse:
+      type: object
+      properties:
+        count:
+          type: number
+        next:
+          type: string
+          nullable: true
+        previous:
+          type: string
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/MercadonaRootCategory"
+      required:
+        - count
+        - next
+        - previous
+        - results
+    MercadonaCategoryProduct:
+      type: object
+      properties:
+        id:
+          oneOf:
+            - type: string
+            - type: number
+        packaging:
+          type: string
+          nullable: true
+        thumbnail:
+          type: string
+          nullable: true
+        display_name:
+          type: string
+        price_instructions:
+          $ref: "#/components/schemas/MercadonaPriceInstructions"
+      required:
+        - id
+        - packaging
+        - thumbnail
+        - display_name
+        - price_instructions
+    MercadonaCategoryDetailResponse:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/MercadonaCategorySection"
+      required:
+        - id
+        - name
+        - categories
+    MercadonaCategorySection:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/MercadonaCategoryProduct"
+      required:
+        - id
+        - name
+        - products
+    MercadonaPriceInstructions:
+      type: object
+      properties:
+        unit_price:
+          type: number
+        unit_size:
+          type: number
+          nullable: true
+        bulk_price:
+          type: number
+        approx_size:
+          type: boolean
+          nullable: true
+        size_format:
+          type: string
+          nullable: true
+      required:
+        - unit_price
+        - bulk_price
+  responses:
+    ValidationError:
+      description: Error de validación
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+    NotAuthenticated:
+      description: No autenticado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: not_authenticated
+    InvalidCredentials:
+      description: Credenciales inválidas
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: invalid_credentials
+    InvalidRefreshToken:
+      description: Refresh token inválido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: invalid_refresh_token
+    DuplicateEmail:
+      description: Email duplicado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: duplicate_email
+    Forbidden:
+      description: Acceso prohibido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: forbidden
+    ListNotFound:
+      description: Lista no encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: list_not_found
+    ItemNotFound:
+      description: Item no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: item_not_found
+    CatalogProviderFailed:
+      description: Error del proveedor de catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: catalog_provider_failed
