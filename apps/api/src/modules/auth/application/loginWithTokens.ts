@@ -3,6 +3,7 @@ import {
   AccessTokenService,
   Clock,
   PasswordHasher,
+  RefreshTokenDeviceInfo,
   RefreshTokenStore,
   UserRepository,
 } from "./ports.js";
@@ -17,6 +18,7 @@ import { toEmail } from "@src/core/value-objects/index.js";
 export type LoginInput = {
   email: string;
   password: string;
+  device: RefreshTokenDeviceInfo;
 };
 
 export type LoginResult = {
@@ -59,6 +61,7 @@ export class LoginWithTokens {
     const refreshRecord = await this.refreshTokenStore.create(
       user.id,
       refreshTokenExpiresAt,
+      input.device,
     );
 
     return {

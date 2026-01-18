@@ -6,6 +6,7 @@ const validUser = {
   email: "alice@example.com",
   password: "Password12!A",
   postalCode: "12345",
+  fingerprint: "device-1",
 };
 
 function extractCookieValue(setCookie: string, name: string) {
@@ -66,24 +67,28 @@ describe("auth endpoints", () => {
       email: "alice@example.com",
       password: "Password12!A",
       postalCode: "12345",
+      fingerprint: "device-1",
     },
     {
       name: "Alice",
       email: "not-an-email",
       password: "Password12!A",
       postalCode: "12345",
+      fingerprint: "device-1",
     },
     {
       name: "Alice",
       email: "alice@example.com",
       password: "",
       postalCode: "12345",
+      fingerprint: "device-1",
     },
     {
       name: "Alice",
       email: "alice@example.com",
       password: "Password12!A",
       postalCode: "1234",
+      fingerprint: "device-1",
     },
   ])(
     "POST /api/auth/register returns 400 for invalid input",
@@ -120,7 +125,11 @@ describe("auth endpoints", () => {
     await request(app).post("/api/auth/register").send(validUser);
     const response = await request(app)
       .post("/api/auth/login")
-      .send({ email: validUser.email, password: validUser.password });
+      .send({
+        email: validUser.email,
+        password: validUser.password,
+        fingerprint: "device-1",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -144,7 +153,11 @@ describe("auth endpoints", () => {
     await request(app).post("/api/auth/register").send(validUser);
     const response = await request(app)
       .post("/api/auth/login")
-      .send({ email: validUser.email, password: "Password12!B" });
+      .send({
+        email: validUser.email,
+        password: "Password12!B",
+        fingerprint: "device-1",
+      });
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({ error: "invalid_credentials" });
@@ -251,7 +264,11 @@ describe("auth token endpoints", () => {
 
     const response = await request(app)
       .post("/api/auth/login")
-      .send({ email: validUser.email, password: validUser.password });
+      .send({
+        email: validUser.email,
+        password: validUser.password,
+        fingerprint: "device-1",
+      });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({

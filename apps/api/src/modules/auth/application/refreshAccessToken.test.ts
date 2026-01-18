@@ -25,6 +25,7 @@ describe("RefreshAccessToken", () => {
     const existing = await refreshTokenStore.create(
       "user-1",
       new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS),
+      { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
     );
 
     const refresh = new RefreshAccessToken(
@@ -69,6 +70,7 @@ describe("RefreshAccessToken", () => {
     const existing = await refreshTokenStore.create(
       "user-1",
       new Date(fixedNow.getTime() - 1000),
+      { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
     );
 
     const refresh = new RefreshAccessToken(

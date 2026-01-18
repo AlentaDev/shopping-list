@@ -16,14 +16,20 @@ const passwordSchema = z
     message: AUTH_MESSAGES.passwordComplexity,
   });
 
+const fingerprintSchema = z
+  .string()
+  .min(1, AUTH_MESSAGES.fingerprintRequired);
+
 export const signupSchema = z.object({
   name: nameSchema,
   email: emailSchema,
   password: passwordSchema,
   postalCode: postalCodeSchema.optional(),
+  fingerprint: fingerprintSchema,
 });
 
 export const loginSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
+  fingerprint: fingerprintSchema,
 });
