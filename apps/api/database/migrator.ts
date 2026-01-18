@@ -43,10 +43,10 @@ export async function runMigrations() {
       )`,
     );
 
-    const applied = await pool.query<MigrationRecord>(
+    const applied = await pool.query(
       `SELECT id FROM ${MIGRATIONS_TABLE} ORDER BY id ASC`,
     );
-    const appliedIds = new Set(applied.rows.map((row) => row.id));
+    const appliedIds = new Set(applied.rows.map((row: MigrationRecord) => row.id));
 
     const migrationsDir = join(
       fileURLToPath(new URL(".", import.meta.url)),
