@@ -1,7 +1,7 @@
 # Auth Feature (MVP)
 
 ## Overview
-Basic authentication module with in-memory persistence, cookie-based sessions, and input validation. It supports signup, login, and logout.
+Basic authentication module with in-memory persistence by default, cookie-based sessions, and input validation (Postgres persistence is also available). It supports signup, login, and logout.
 
 ## Endpoints
 
@@ -86,8 +86,8 @@ Clears the session cookie.
 - **Module path**: `apps/api/src/modules/auth`
 - **Layers**:
   - `application`: use cases and ports
-  - `infrastructure`: in-memory repositories, session store, password hasher
+  - `infrastructure`: in-memory repositories (default), session store, password hasher
   - `web`: Express router with Zod validation
 - **Password hashing**: Node.js `scrypt` with per-user salt
-- **Sessions**: in-memory map keyed by session id
+- **Sessions**: in-memory map keyed by session id (default)
 - **Error handling**: centralized in `apps/api/src/app.ts`

@@ -6,7 +6,7 @@ Este documento describe el estado **actual** de la API (lo que está implementad
 ## Alcance
 - API HTTP en `apps/api` construida con Express.
 - Endpoints actuales, formato de errores, autenticación por cookies y dependencias clave.
-- Persistencia in-memory y proveedor externo de catálogo (Mercadona).
+- Persistencia in-memory por defecto con opción de Postgres y proveedor externo de catálogo (Mercadona).
 
 ## Base URL y healthcheck
 - **Base URL**: todas las rutas de API se sirven bajo `/api`.
@@ -175,7 +175,8 @@ Todas las rutas requieren autenticación.
 - `MercadonaRootCategoriesResponse` y `MercadonaCategoryDetailResponse` se retornan tal como los define el provider (estructura JSON con `count`, `results`, categorías y productos).
 
 ## Persistencia actual
-- Usuarios y listas se guardan **in-memory** (repositorios en memoria). Reiniciar el servidor elimina los datos.
+- El wiring por defecto usa repositorios **in-memory** (reiniciar el servidor elimina los datos).
+- Existen implementaciones **Postgres** listas para cablearse cuando se requiera persistencia.
 
 ## Integraciones externas
 - El catálogo usa el proveedor de Mercadona (`https://tienda.mercadona.es/api`) con cache in-memory.
@@ -184,4 +185,3 @@ Todas las rutas requieren autenticación.
 ## Notas de estado
 - El endpoint `/api/auth/me` está marcado como **deprecated** y responde `410`.
 - El módulo de auth comparte el repositorio de usuarios con el módulo `users` para coherencia.
-

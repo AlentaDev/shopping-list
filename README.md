@@ -35,6 +35,7 @@ Este proyecto **no es un producto comercial** ni está pensado para escalar masi
 - Express
 - TypeScript (modo `strict`)
 - Validación de inputs con Zod
+- Persistencia **in-memory** por defecto con opción de **PostgreSQL**
 
 ### Tooling y calidad
 
@@ -78,6 +79,7 @@ apps/
 - `shared` contiene solo código técnico, nunca lógica de negocio
 - El frontend **no accede directamente** a servicios externos
 - Mercadona se integra exclusivamente a través de un **CatalogProvider** en backend
+- La API puede operar con repositorios **in-memory** o **PostgreSQL** (según wiring)
 
 ---
 
