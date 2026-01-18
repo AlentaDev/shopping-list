@@ -293,7 +293,8 @@ features/<feature>/
 - Autorización explícita por lista/recurso
 - Manejo de errores centralizado
 - Integraciones externas siempre detrás de interfaces
-- Persistencia actual **in-memory** (sin DB)
+- Persistencia por defecto **in-memory** (sin DB).
+- Se permiten implementaciones **in-memory** o **Postgres**; documentar el modo usado y su wiring.
 
 ---
 

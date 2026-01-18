@@ -28,5 +28,5 @@ Proveer registro, login y refresh de tokens usando access + refresh tokens en co
 - Access token expira a los 15 min; refresh a 7 días.
 
 ## Notas de implementación
-- Persistencia in-memory para usuarios y refresh tokens.
+- Persistencia in-memory por defecto para usuarios y refresh tokens (con alternativa Postgres disponible).
 - Validación de inputs con Zod.

@@ -127,6 +127,6 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 ## Notas de implementación
 
 - Todas las rutas requieren sesión autenticada.
-- La persistencia es en memoria mediante `InMemoryListRepository`.
+- La persistencia por defecto es en memoria mediante `InMemoryListRepository` (hay alternativa Postgres).
 - La autorización restringe el acceso a las listas del propietario.
 - Validación de payloads con Zod y errores uniformes de validación.

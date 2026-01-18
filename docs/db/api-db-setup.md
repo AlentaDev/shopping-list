@@ -1,6 +1,6 @@
 # Levantar y conectar la API con la base de datos
 
-Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos.
+Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos. La API usa persistencia **in-memory** por defecto; sigue estos pasos cuando quieras usar Postgres.
 
 ## Requisitos
 

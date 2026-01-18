@@ -24,6 +24,6 @@ Returns the current authenticated user.
 - **Module path**: `apps/api/src/modules/users`
 - **Layers**:
   - `application`: user lookup use case
-  - `infrastructure`: in-memory repository
+  - `infrastructure`: in-memory repository (default), Postgres repository disponible
   - `api`: Express router protected by `requireAuth`
 - **Auth**: relies on the access-token cookie set by the auth module
