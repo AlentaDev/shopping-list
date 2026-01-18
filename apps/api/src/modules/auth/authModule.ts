@@ -9,15 +9,18 @@ import { InMemoryRefreshTokenStore } from "./infrastructure/InMemoryRefreshToken
 import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService.js";
 import { SystemClock } from "./infrastructure/SystemClock.js";
 import { createAuthRouter } from "./api/authRouter.js";
+import type { RefreshTokenStore } from "./application/ports.js";
 
 type AuthModuleDependencies = {
   userRepository?: UserRepository;
+  refreshTokenStore?: RefreshTokenStore;
 };
 
 export function createAuthModule(deps: AuthModuleDependencies = {}) {
   const userRepository = deps.userRepository ?? new InMemoryUserRepository();
   const passwordHasher = new ScryptPasswordHasher();
-  const refreshTokenStore = new InMemoryRefreshTokenStore();
+  const refreshTokenStore =
+    deps.refreshTokenStore ?? new InMemoryRefreshTokenStore();
   const accessTokenService = new JwtAccessTokenService(
     process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret",
   );

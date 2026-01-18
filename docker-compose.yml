@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: shopping-list-db
+    environment:
+      POSTGRES_DB: shopping_list
+      POSTGRES_USER: shopping_list
+      POSTGRES_PASSWORD: shopping_list
+    ports:
+      - "5432:5432"
+    volumes:
+      - shopping_list_db_data:/var/lib/postgresql/data
+  api:
+    image: node:20
+    working_dir: /workspace
+    command: bash -lc "corepack enable && pnpm install && pnpm -C apps/api dev"
+    volumes:
+      - .:/workspace
+    environment:
+      PORT: "3000"
+      CORS_ORIGIN: "http://localhost:5173"
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_NAME: "shopping_list"
+      DB_USER: "shopping_list"
+      DB_PASSWORD: "shopping_list"
+      DB_SSL: "false"
+    depends_on:
+      - db
+
+volumes:
+  shopping_list_db_data:

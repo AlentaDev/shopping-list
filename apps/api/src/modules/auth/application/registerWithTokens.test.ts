@@ -47,6 +47,7 @@ describe("RegisterWithTokens", () => {
       email: "alice@example.com",
       password: "Password12!A",
       postalCode: "12345",
+      device: { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
     });
 
     const storedUser = await userRepository.findByEmail(
@@ -73,6 +74,8 @@ describe("RegisterWithTokens", () => {
     );
     expect(refreshRecord).toMatchObject({
       userId: result.user.id,
+      fingerprint: "device-1",
+      userAgent: "TestAgent/1.0",
       expiresAt: new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS),
     });
   });
@@ -95,6 +98,7 @@ describe("RegisterWithTokens", () => {
       email: "alice@example.com",
       password: "Password12!A",
       postalCode: "12345",
+      device: { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
     });
 
     await expect(
@@ -103,6 +107,7 @@ describe("RegisterWithTokens", () => {
         email: "alice@example.com",
         password: "Password12!A",
         postalCode: "12345",
+        device: { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
       }),
     ).rejects.toMatchObject({ code: "duplicate_email" });
   });

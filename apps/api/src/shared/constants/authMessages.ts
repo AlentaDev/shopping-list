@@ -3,4 +3,5 @@ export const AUTH_MESSAGES = {
   passwordLength: "La contraseña debe tener entre 12 y 20 caracteres.",
   passwordComplexity:
     "La contraseña debe incluir mayúscula, minúscula, número y símbolo.",
+  fingerprintRequired: "El fingerprint es obligatorio.",
 } as const;

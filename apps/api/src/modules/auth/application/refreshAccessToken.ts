@@ -45,6 +45,10 @@ export class RefreshAccessToken {
     const newRefresh = await this.refreshTokenStore.create(
       record.userId,
       refreshTokenExpiresAt,
+      {
+        fingerprint: record.fingerprint,
+        userAgent: record.userAgent,
+      },
     );
 
     return {
