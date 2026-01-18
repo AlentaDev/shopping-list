@@ -9,6 +9,9 @@ type MigrationRecord = {
 };
 
 const MIGRATIONS_TABLE = "schema_migrations";
+const log = (message: string) => {
+  console.info(`[migrator] ${message}`);
+};
 
 const RESET_TABLES = [
   "list_items",
@@ -57,6 +60,7 @@ export async function runMigrations() {
       .filter((file) => file.endsWith(".sql"))
       .sort();
 
+    let appliedCount = 0;
     for (const file of files) {
       const id = basename(file);
       if (appliedIds.has(id)) {
@@ -67,15 +71,21 @@ export async function runMigrations() {
 
       await pool.query("BEGIN");
       try {
+        log(`Applying migration ${id}`);
         await pool.query(sql);
         await pool.query(`INSERT INTO ${MIGRATIONS_TABLE} (id) VALUES ($1)`, [
           id,
         ]);
         await pool.query("COMMIT");
+        log(`Applied migration ${id}`);
+        appliedCount += 1;
       } catch (error) {
         await pool.query("ROLLBACK");
         throw error;
       }
+    }
+    if (appliedCount === 0) {
+      log("No pending migrations.");
     }
   } finally {
     await pool.end();
