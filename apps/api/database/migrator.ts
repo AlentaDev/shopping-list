@@ -9,6 +9,30 @@ type MigrationRecord = {
 
 const MIGRATIONS_TABLE = "schema_migrations";
 
+const RESET_TABLES = [
+  "list_items",
+  "lists",
+  "refresh_tokens",
+  "users",
+  MIGRATIONS_TABLE,
+] as const;
+
+async function resetDatabase() {
+  const pool = createPgPool();
+  try {
+    await pool.query("BEGIN");
+    for (const table of RESET_TABLES) {
+      await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+    }
+    await pool.query("COMMIT");
+  } catch (error) {
+    await pool.query("ROLLBACK");
+    throw error;
+  } finally {
+    await pool.end();
+  }
+}
+
 export async function runMigrations() {
   const pool = createPgPool();
   try {
@@ -59,9 +83,17 @@ export async function runMigrations() {
 
 const isDirectRun =
   import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
+const shouldReset = process.argv.includes("--reset");
 
 if (isDirectRun) {
-  runMigrations().catch((error) => {
+  const run = async () => {
+    if (shouldReset) {
+      await resetDatabase();
+    }
+    await runMigrations();
+  };
+
+  run().catch((error) => {
     console.error("Failed to run migrations", error);
     process.exitCode = 1;
   });

@@ -8,6 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "vitest run",
+    "database:migrate": "tsx database/migrator.ts",
+    "database:reset": "tsx database/migrator.ts --reset",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "quality": "pnpm lint && pnpm typecheck && pnpm test",
