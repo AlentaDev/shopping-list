@@ -28,8 +28,14 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
 
   router.post("/register", async (req, res, next) => {
     try {
-      const input = signupSchema.parse(req.body);
-      const { user, tokens } = await deps.registerWithTokens.execute(input);
+      const { fingerprint, ...input } = signupSchema.parse(req.body);
+      const { user, tokens } = await deps.registerWithTokens.execute({
+        ...input,
+        device: {
+          fingerprint,
+          userAgent: req.get("user-agent") ?? null,
+        },
+      });
 
       setAuthCookies(res, tokens);
 
@@ -41,8 +47,14 @@ export function createAuthRouter(deps: AuthRouterDependencies): Router {
 
   router.post("/login", async (req, res, next) => {
     try {
-      const input = loginSchema.parse(req.body);
-      const { user, tokens } = await deps.loginWithTokens.execute(input);
+      const { fingerprint, ...input } = loginSchema.parse(req.body);
+      const { user, tokens } = await deps.loginWithTokens.execute({
+        ...input,
+        device: {
+          fingerprint,
+          userAgent: req.get("user-agent") ?? null,
+        },
+      });
 
       setAuthCookies(res, tokens);
 

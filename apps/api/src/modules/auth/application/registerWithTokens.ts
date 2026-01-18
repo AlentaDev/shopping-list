@@ -5,6 +5,7 @@ import {
   AccessTokenService,
   Clock,
   PasswordHasher,
+  RefreshTokenDeviceInfo,
   RefreshTokenStore,
   UserRepository,
 } from "./ports.js";
@@ -24,6 +25,7 @@ export type RegisterInput = {
   email: string;
   password: string;
   postalCode?: string;
+  device: RefreshTokenDeviceInfo;
 };
 
 export type RegisterResult = {
@@ -72,6 +74,7 @@ export class RegisterWithTokens {
     const refreshRecord = await this.refreshTokenStore.create(
       user.id,
       refreshTokenExpiresAt,
+      input.device,
     );
 
     return {

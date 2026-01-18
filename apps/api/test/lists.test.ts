@@ -11,6 +11,7 @@ type TestUser = {
   email: string;
   password: string;
   postalCode: string;
+  fingerprint: string;
 };
 
 const defaultUser: TestUser = {
@@ -18,6 +19,7 @@ const defaultUser: TestUser = {
   email: "alice@example.com",
   password: "Password12!A",
   postalCode: "12345",
+  fingerprint: "device-1",
 };
 
 async function loginUser(app: ReturnType<typeof createApp>, user: TestUser) {
@@ -176,6 +178,7 @@ describe("lists endpoints", () => {
       email: "bob@example.com",
       password: "Password12!A",
       postalCode: "54321",
+      fingerprint: "device-2",
     });
 
     const listResponse = await request(app)
@@ -329,6 +332,7 @@ describe("lists endpoints", () => {
       email: "bob@example.com",
       password: "Password12!A",
       postalCode: "54321",
+      fingerprint: "device-2",
     });
 
     const listResponse = await request(app)

@@ -12,6 +12,7 @@ const validSignup = {
   email: "test@example.com",
   password: "Password12!A",
   postalCode: "12345",
+  fingerprint: "device-1",
 };
 
 describe("auth schemas", () => {
@@ -24,6 +25,7 @@ describe("auth schemas", () => {
       name: "Test User",
       email: "test@example.com",
       password: "Password12!A",
+      fingerprint: "device-1",
     });
 
     expect(result.success).toBe(true);
@@ -42,6 +44,7 @@ describe("auth schemas", () => {
     const result = loginSchema.safeParse({
       email: "test@example.com",
       password: "Password12!A",
+      fingerprint: "device-1",
     });
 
     expect(result.success).toBe(true);
@@ -60,6 +63,7 @@ describe("auth schemas", () => {
     const result = loginSchema.safeParse({
       email: "test@example.com",
       password: "short",
+      fingerprint: "device-1",
     });
 
     expect(result.success).toBe(false);

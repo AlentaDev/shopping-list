@@ -53,6 +53,7 @@ describe("LoginWithTokens", () => {
     const result = await login.execute({
       email: "alice@example.com",
       password: "Password12!A",
+      device: { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
     });
 
     expect(result.user.id).toBe("user-1");
@@ -69,6 +70,8 @@ describe("LoginWithTokens", () => {
     );
     expect(refreshRecord).toMatchObject({
       userId: "user-1",
+      fingerprint: "device-1",
+      userAgent: "TestAgent/1.0",
       expiresAt: new Date(fixedNow.getTime() + REFRESH_TOKEN_TTL_MS),
     });
   });
@@ -95,7 +98,11 @@ describe("LoginWithTokens", () => {
     );
 
     await expect(
-      login.execute({ email: "alice@example.com", password: "wrong" }),
+      login.execute({
+        email: "alice@example.com",
+        password: "wrong",
+        device: { fingerprint: "device-1", userAgent: "TestAgent/1.0" },
+      }),
     ).rejects.toMatchObject({ code: "invalid_credentials" });
   });
 });

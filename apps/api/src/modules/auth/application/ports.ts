@@ -10,8 +10,17 @@ export type AccessTokenService = {
   create(userId: string, expiresAt: Date): Promise<string>;
 };
 
+export type RefreshTokenDeviceInfo = {
+  fingerprint: string;
+  userAgent: string | null;
+};
+
 export type RefreshTokenStore = {
-  create(userId: string, expiresAt: Date): Promise<RefreshTokenRecord>;
+  create(
+    userId: string,
+    expiresAt: Date,
+    device: RefreshTokenDeviceInfo,
+  ): Promise<RefreshTokenRecord>;
   find(token: string): Promise<RefreshTokenRecord | null>;
   revoke(token: string): Promise<void>;
 };

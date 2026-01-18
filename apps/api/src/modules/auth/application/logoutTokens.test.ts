@@ -11,7 +11,10 @@ describe("LogoutTokens", () => {
     const useCase = new LogoutTokens(refreshTokenStore);
     const expiresAt = getRefreshTokenExpiresAt(clock.now());
 
-    const record = await refreshTokenStore.create("user-1", expiresAt);
+    const record = await refreshTokenStore.create("user-1", expiresAt, {
+      fingerprint: "device-1",
+      userAgent: "TestAgent/1.0",
+    });
 
     await useCase.execute(record.token);
 
