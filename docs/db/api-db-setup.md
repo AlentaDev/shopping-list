@@ -78,6 +78,11 @@ La API incluye un migrador SQL simple.
   pnpm -C apps/api database:reset
   ```
 
+> ⚠️ **Seguridad del reset:** El reset debe estar protegido para evitar borrar la base de datos principal por accidente.  
+> La regla acordada es:
+> - **Solo permitir `reset` si `DB_NAME` termina en `_test`**, o  
+> - Permitir un **override explícito** (p. ej. `ALLOW_DB_RESET=true`) cuando quieras resetear la DB de desarrollo.
+
 ## Conexión directa a PostgreSQL
 
 Con los valores por defecto de Docker Compose:
@@ -98,6 +103,24 @@ psql -h localhost -p 5432 -U shopping_list -d shopping_list
 
 Los tests unitarios usan **in-memory** por defecto. Para habilitar Postgres en tests se debe configurar explícitamente `DB_PROVIDER=postgres` y las variables de conexión.
 
-## E2E (Playwright)
+## E2E e integración (Playwright / tests con Postgres)
 
-Los tests E2E usan Postgres con una base de datos separada en la misma instancia. Define un `DB_NAME` distinto para E2E (por ejemplo `shopping_list_e2e`) y asegúrate de migrarla antes de ejecutar Playwright.
+Los tests E2E (y potenciales tests de integración con Postgres) usan una base separada en la misma instancia. Define un `DB_NAME` distinto con sufijo `_test` (por ejemplo `shopping_list_test`) y asegúrate de migrarla antes de ejecutar Playwright.
+
+### Base de datos de tests (Docker Compose)
+
+Se recomienda definir una segunda base de datos de tests en Docker Compose:
+
+- `DB_NAME=shopping_list_test`
+- **Usuario/Password propios** (ej. `testdb` / `testdb`)
+
+Esto añade una capa extra de seguridad para evitar que las operaciones de reset/migración afecten la DB principal.
+
+### Limpieza antes de E2E / integración
+
+Antes de ejecutar E2E o tests de integración con Postgres, hay que:
+
+1) Resetear la DB de tests (`DB_NAME=*_test`).  
+2) Ejecutar migraciones.  
+
+> Los scripts exactos para automatizar esta limpieza se documentarán junto con la implementación.
