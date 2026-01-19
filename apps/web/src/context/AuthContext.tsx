@@ -11,6 +11,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  AuthServiceError,
   type LoginInput,
   type RegisterInput,
   type AuthUser,
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // NO autenticamos automáticamente después del registro
       return user;
     } catch (error) {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      setAuthError(resolveAuthErrorMessage(error));
       throw error;
     } finally {
       setIsAuthSubmitting(false);
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthUser(user);
       return user;
     } catch (error) {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      setAuthError(resolveAuthErrorMessage(error));
       throw error;
     } finally {
       setIsAuthSubmitting(false);
@@ -100,7 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthUser(null);
       setIsUserMenuOpen(false);
     } catch (error) {
-      setAuthError(UI_TEXT.AUTH.ERROR_MESSAGE);
+      setAuthError(resolveAuthErrorMessage(error));
       throw error;
     }
   }, []);
@@ -125,4 +126,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+function resolveAuthErrorMessage(error: unknown): string {
+  if (error instanceof AuthServiceError) {
+    const errorMessages: Record<string, string> = {
+      duplicate_email: UI_TEXT.AUTH.ERRORS.DUPLICATE_EMAIL,
+      invalid_credentials: UI_TEXT.AUTH.ERRORS.INVALID_CREDENTIALS,
+      validation_error: UI_TEXT.AUTH.ERRORS.VALIDATION_ERROR,
+      not_authenticated: UI_TEXT.AUTH.ERRORS.NOT_AUTHENTICATED,
+      internal_server_error: UI_TEXT.AUTH.ERRORS.SERVER_ERROR,
+    };
+
+    return errorMessages[error.code] ?? UI_TEXT.AUTH.ERROR_MESSAGE;
+  }
+
+  return UI_TEXT.AUTH.ERROR_MESSAGE;
 }

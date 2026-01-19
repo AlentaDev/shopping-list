@@ -17,6 +17,15 @@ export type AuthUser = {
   postalCode: string;
 };
 
+export class AuthServiceError extends Error {
+  code: string;
+
+  constructor(code: string) {
+    super(code);
+    this.code = code;
+  }
+}
+
 export async function registerUser(input: RegisterInput): Promise<AuthUser> {
   const response = await fetch("/api/auth/register", {
     method: "POST",
@@ -25,7 +34,7 @@ export async function registerUser(input: RegisterInput): Promise<AuthUser> {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to register");
+    await throwAuthErrorFromResponse(response, "Unable to register");
   }
 
   return (await response.json()) as AuthUser;
@@ -39,7 +48,7 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to login");
+    await throwAuthErrorFromResponse(response, "Unable to login");
   }
 
   return (await response.json()) as AuthUser;
@@ -65,4 +74,29 @@ export async function logoutUser(): Promise<{ ok: boolean }> {
   }
 
   return (await response.json()) as { ok: boolean };
+}
+
+async function throwAuthErrorFromResponse(
+  response: Response,
+  fallbackMessage: string,
+): Promise<never> {
+  const errorCode = await readErrorCode(response);
+  if (errorCode) {
+    throw new AuthServiceError(errorCode);
+  }
+
+  throw new Error(fallbackMessage);
+}
+
+async function readErrorCode(response: Response): Promise<string | null> {
+  try {
+    const data = (await response.json()) as { error?: unknown };
+    if (data && typeof data === "object" && typeof data.error === "string") {
+      return data.error;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }

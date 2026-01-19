@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  AuthServiceError,
   getCurrentUser,
   loginUser,
   registerUser,
@@ -88,6 +89,24 @@ describe("AuthService", () => {
     await expect(registerUser(REGISTER_INPUT)).rejects.toThrow(
       "Unable to register",
     );
+  });
+
+  it("throws a typed error when register response includes an error code", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({ error: "duplicate_email" }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(registerUser(REGISTER_INPUT)).rejects.toBeInstanceOf(
+      AuthServiceError,
+    );
+    await expect(registerUser(REGISTER_INPUT)).rejects.toMatchObject({
+      code: "duplicate_email",
+    });
   });
 
   it("throws when login request fails", async () => {
