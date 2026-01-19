@@ -1,3 +1,5 @@
+import { getDeviceFingerprint } from "@src/shared/utils/deviceFingerprint";
+
 export type RegisterInput = {
   name: string;
   email: string;
@@ -21,7 +23,10 @@ export async function registerUser(input: RegisterInput): Promise<AuthUser> {
   const response = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      ...input,
+      fingerprint: getDeviceFingerprint(),
+    }),
   });
 
   if (!response.ok) {
@@ -35,7 +40,10 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
   const response = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({
+      ...input,
+      fingerprint: getDeviceFingerprint(),
+    }),
   });
 
   if (!response.ok) {
