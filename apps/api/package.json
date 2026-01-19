@@ -10,6 +10,7 @@
     "test": "vitest run",
     "database:migrate": "tsx database/migrator.ts",
     "database:reset": "tsx database/migrator.ts --reset",
+    "database:test:prepare": "DB_PROVIDER=postgres DB_HOST=localhost DB_PORT=5432 DB_NAME=shopping_list_test DB_USER=testdb DB_PASSWORD=testdb DB_SSL=false tsx database/migrator.ts --reset",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "quality": "pnpm lint && pnpm typecheck && pnpm test",

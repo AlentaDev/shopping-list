@@ -20,7 +20,11 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers:
+    (process.env.DB_NAME ?? "shopping_list_test").endsWith("_test") ||
+    process.env.CI
+      ? 1
+      : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -84,7 +88,12 @@ export default defineConfig({
       ...process.env,
       WAIT_ON_TIMEOUT: "30000",
       DB_PROVIDER: process.env.DB_PROVIDER ?? "postgres",
-      DB_NAME: process.env.DB_NAME ?? "shopping_list_e2e",
+      DB_HOST: process.env.DB_HOST ?? "localhost",
+      DB_PORT: process.env.DB_PORT ?? "5432",
+      DB_NAME: process.env.DB_NAME ?? "shopping_list_test",
+      DB_USER: process.env.DB_USER ?? "testdb",
+      DB_PASSWORD: process.env.DB_PASSWORD ?? "testdb",
+      DB_SSL: process.env.DB_SSL ?? "false",
     },
   },
 });

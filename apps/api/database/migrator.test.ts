@@ -1,7 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { createPgPool } from "../src/infrastructure/database/pgPool.js";
-import { runMigrations } from "./migrator.js";
+import { canResetDatabase, runMigrations } from "./migrator.js";
 
 vi.mock("node:fs/promises", () => ({
   readFile: vi.fn(),
@@ -66,5 +66,28 @@ describe("runMigrations", () => {
 
     expect(infoSpy).toHaveBeenCalledWith("[migrator] No pending migrations.");
     expect(mockedReadFile).not.toHaveBeenCalled();
+  });
+});
+
+describe("canResetDatabase", () => {
+  it("allows resets for test databases", () => {
+    expect(
+      canResetDatabase({ DB_NAME: "shopping_list_test" } as NodeJS.ProcessEnv),
+    ).toBe(true);
+  });
+
+  it("allows resets when explicitly overridden", () => {
+    expect(
+      canResetDatabase({
+        DB_NAME: "shopping_list",
+        ALLOW_DB_RESET: "true",
+      } as NodeJS.ProcessEnv),
+    ).toBe(true);
+  });
+
+  it("blocks resets for non-test databases without override", () => {
+    expect(
+      canResetDatabase({ DB_NAME: "shopping_list" } as NodeJS.ProcessEnv),
+    ).toBe(false);
   });
 });

@@ -116,6 +116,10 @@ Se recomienda definir una segunda base de datos de tests en Docker Compose:
 
 Esto añade una capa extra de seguridad para evitar que las operaciones de reset/migración afecten la DB principal.
 
+El repo incluye un script de inicialización para Postgres en:
+
+- `docker/db/init-test-db.sql`
+
 ### Limpieza antes de E2E / integración (enfoque híbrido)
 
 Antes de ejecutar E2E o tests de integración con Postgres, hay que:
@@ -124,4 +128,18 @@ Antes de ejecutar E2E o tests de integración con Postgres, hay que:
 2) Ejecutar migraciones.  
 3) Para cada test, limpiar **solo las tablas afectadas** por ese escenario (no reset global).
 
-> Los scripts exactos para automatizar esta limpieza se documentarán junto con la implementación.
+Scripts disponibles:
+
+- Preparar DB de tests (reset + migrate):
+
+  ```bash
+  pnpm -C apps/api database:test:prepare
+  ```
+
+- E2E (prepara DB antes de Playwright):
+
+  ```bash
+  pnpm test:e2e
+  ```
+
+> El paso 3 (limpieza por tabla) se implementará junto con los tests E2E/integración.
