@@ -19,7 +19,7 @@ La API ya cuenta con repositorios **in-memory** por defecto y existen implementa
 - La documentación debe indicar qué modo está activo, cómo cambiarlo y qué variables requiere.
 - El wiring de la app debe centralizar la elección de repositorios y stores según `DB_PROVIDER`.
 - Los pipelines de tests deben forzar in-memory salvo que se habilite Postgres explícitamente.
-- E2E requiere crear/migrar la base de datos específica antes de ejecutar Playwright.
+- E2E requiere crear/migrar la base de datos específica **una sola vez al inicio** antes de ejecutar Playwright.
 - Los resets deben evitar afectar la DB principal; se documenta un mecanismo de escape explícito para desarrollo.
 
 ## Referencias
