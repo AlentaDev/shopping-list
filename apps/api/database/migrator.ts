@@ -21,7 +21,25 @@ const RESET_TABLES = [
   MIGRATIONS_TABLE,
 ] as const;
 
+export function canResetDatabase(env: NodeJS.ProcessEnv = process.env) {
+  const dbName = env.DB_NAME ?? "";
+  if (dbName.endsWith("_test")) {
+    return true;
+  }
+  return env.ALLOW_DB_RESET === "true";
+}
+
+function assertResetAllowed() {
+  if (canResetDatabase()) {
+    return;
+  }
+  throw new Error(
+    "Database reset blocked. Use a *_test DB_NAME or set ALLOW_DB_RESET=true to override.",
+  );
+}
+
 async function resetDatabase() {
+  assertResetAllowed();
   const pool = createPgPool();
   try {
     await pool.query("BEGIN");

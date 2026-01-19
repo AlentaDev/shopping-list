@@ -1,6 +1,8 @@
 # Levantar y conectar la API con la base de datos
 
-Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos. La API usa persistencia **in-memory** por defecto; sigue estos pasos cuando quieras usar Postgres.
+Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos. La API usa **Postgres por defecto** cuando no se define `DB_PROVIDER`.
+
+> ⚠️ **Aviso importante:** El `docker-compose.yml` incluye credenciales de ejemplo. **No las uses en producción.** Antes de desplegar, reemplázalas por variables de entorno seguras (por ejemplo, un `.env` no versionado o secrets del proveedor).
 
 ## Requisitos
 
@@ -24,6 +26,7 @@ El `docker-compose.yml` del repo levanta **PostgreSQL** y la **API** con la conf
 
 Estas variables se inyectan en el servicio `api` del `docker-compose.yml`:
 
+- `DB_PROVIDER=postgres` (opcional; si no se define, Postgres es el default)
 - `DB_HOST=db`
 - `DB_PORT=5432`
 - `DB_NAME=shopping_list`
@@ -44,6 +47,7 @@ Estas variables se inyectan en el servicio `api` del `docker-compose.yml`:
 2. Exporta variables de entorno (o crea un `.env` en `apps/api` si prefieres):
 
    ```bash
+   export DB_PROVIDER=postgres
    export DB_HOST=localhost
    export DB_PORT=5432
    export DB_NAME=shopping_list
@@ -74,6 +78,11 @@ La API incluye un migrador SQL simple.
   pnpm -C apps/api database:reset
   ```
 
+> ⚠️ **Seguridad del reset:** El reset debe estar protegido para evitar borrar la base de datos principal por accidente.  
+> La regla acordada es:
+> - **Solo permitir `reset` si `DB_NAME` termina en `_test`**, o  
+> - Permitir un **override explícito** (p. ej. `ALLOW_DB_RESET=true`) cuando quieras resetear la DB de desarrollo.
+
 ## Conexión directa a PostgreSQL
 
 Con los valores por defecto de Docker Compose:
@@ -89,3 +98,48 @@ Ejemplo con `psql`:
 ```bash
 psql -h localhost -p 5432 -U shopping_list -d shopping_list
 ```
+
+## Tests unitarios (Vitest)
+
+Los tests unitarios usan **in-memory** por defecto. Para habilitar Postgres en tests se debe configurar explícitamente `DB_PROVIDER=postgres` y las variables de conexión.
+
+## E2E e integración (Playwright / tests con Postgres)
+
+Los tests E2E (y potenciales tests de integración con Postgres) usan una base separada en la misma instancia. Define un `DB_NAME` distinto con sufijo `_test` (por ejemplo `shopping_list_test`) y asegúrate de migrarla antes de ejecutar Playwright.
+
+### Base de datos de tests (Docker Compose)
+
+Se recomienda definir una segunda base de datos de tests en Docker Compose:
+
+- `DB_NAME=shopping_list_test`
+- **Usuario/Password propios** (ej. `testdb` / `testdb`)
+
+Esto añade una capa extra de seguridad para evitar que las operaciones de reset/migración afecten la DB principal.
+
+El repo incluye un script de inicialización para Postgres en:
+
+- `docker/db/init-test-db.sql`
+
+### Limpieza antes de E2E / integración (enfoque híbrido)
+
+Antes de ejecutar E2E o tests de integración con Postgres, hay que:
+
+1) Resetear la DB de tests (`DB_NAME=*_test`) **una sola vez al inicio**.  
+2) Ejecutar migraciones.  
+3) Para cada test, limpiar **solo las tablas afectadas** por ese escenario (no reset global).
+
+Scripts disponibles:
+
+- Preparar DB de tests (reset + migrate):
+
+  ```bash
+  pnpm -C apps/api database:test:prepare
+  ```
+
+- E2E (prepara DB antes de Playwright):
+
+  ```bash
+  pnpm test:e2e
+  ```
+
+> El paso 3 (limpieza por tabla) se implementará junto con los tests E2E/integración.

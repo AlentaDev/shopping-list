@@ -3,7 +3,7 @@ import { createAuthModule } from "@src/modules/auth/authModule.js";
 import { createCatalogModule } from "@src/modules/catalog/catalogModule.js";
 import { createListsModule } from "@src/modules/lists/listsModule.js";
 import { createUsersModule } from "@src/modules/users/usersModule.js";
-import { InMemoryUserRepository } from "@src/modules/users/public.js";
+import { createPersistenceLayer } from "@src/app/persistence.js";
 
 export type RouterDependencies = {
   authModule?: ReturnType<typeof createAuthModule>;
@@ -14,12 +14,23 @@ export type RouterDependencies = {
 
 export function buildRouter(deps: RouterDependencies = {}) {
   const router = Router();
+  const needsPersistence =
+    !deps.authModule || !deps.usersModule || !deps.listsModule;
+  const persistence = needsPersistence ? createPersistenceLayer() : null;
 
   const userRepository =
     deps.authModule?.userRepository ??
     deps.usersModule?.userRepository ??
-    new InMemoryUserRepository();
-  const authModule = deps.authModule ?? createAuthModule({ userRepository });
+    persistence?.userRepository;
+  if (!userRepository) {
+    throw new Error("User repository not configured.");
+  }
+  const authModule =
+    deps.authModule ??
+    createAuthModule({
+      userRepository,
+      refreshTokenStore: persistence?.refreshTokenStore,
+    });
   router.use("/auth", authModule.router);
 
   const catalogModule = deps.catalogModule ?? createCatalogModule();
@@ -29,6 +40,7 @@ export function buildRouter(deps: RouterDependencies = {}) {
     deps.listsModule ??
     createListsModule({
       catalogProvider: catalogModule.provider,
+      listRepository: persistence?.listRepository,
     });
   router.use("/lists", listsModule.router);
 
