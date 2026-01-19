@@ -1,6 +1,6 @@
 # Levantar y conectar la API con la base de datos
 
-Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos. La API usa persistencia **in-memory** por defecto; sigue estos pasos cuando quieras usar Postgres.
+Este documento describe cómo iniciar la API junto con PostgreSQL y cómo conectar clientes a la base de datos. La API usa **Postgres por defecto** cuando no se define `DB_PROVIDER`.
 
 > ⚠️ **Aviso importante:** El `docker-compose.yml` incluye credenciales de ejemplo. **No las uses en producción.** Antes de desplegar, reemplázalas por variables de entorno seguras (por ejemplo, un `.env` no versionado o secrets del proveedor).
 

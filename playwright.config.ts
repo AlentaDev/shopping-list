@@ -83,6 +83,8 @@ export default defineConfig({
     env: {
       ...process.env,
       WAIT_ON_TIMEOUT: "30000",
+      DB_PROVIDER: process.env.DB_PROVIDER ?? "postgres",
+      DB_NAME: process.env.DB_NAME ?? "shopping_list_e2e",
     },
   },
 });
