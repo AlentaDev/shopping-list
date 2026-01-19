@@ -54,14 +54,14 @@ Al registrarse o iniciar sesión, el borrador local se guarda automáticamente e
 
 1. El usuario pulsa “Registrarse / Iniciar sesión”.
 2. El sistema detecta un `LOCAL_DRAFT`.
-3. Se crea una lista en la BBDD con estado `DRAFT`.
-4. El borrador local deja de ser solo local.
+3. Se crea una lista en la BBDD con estado `DRAFT` usando el contenido local.
+4. El borrador local permanece como autosave temporal hasta que el usuario decida descartarlo.
 
 **Estado resultante:** `DRAFT`
 
 ---
 
-### CU-03: Crear y editar lista en borrador
+### CU-03: Crear y editar lista en borrador (web)
 
 **Actor:** Usuario registrado (web)
 
@@ -72,10 +72,13 @@ El usuario crea y edita listas en modo borrador desde el PC.
 
 1. El usuario crea una nueva lista.
 2. Añade, edita o elimina productos.
-3. La lista se autoguarda en navegador y BBDD.
+3. La lista se autoguarda cada 1–3s en la BBDD si hay cambios.
 4. El usuario puede cerrar sesión o refrescar sin perder cambios.
+5. El usuario puede elegir entre:
+   * “Guardar como borrador” → la lista queda como `DRAFT` en su cuenta.
+   * “Lista lista para comprar” → la lista pasa a `ACTIVE`.
 
-**Estado resultante:** `DRAFT`
+**Estado resultante:** `DRAFT` o `ACTIVE`
 
 ---
 
@@ -100,15 +103,16 @@ El usuario indica que la lista está lista para usarse en el móvil.
 **Actor:** Usuario registrado (móvil)
 
 **Descripción:**
-El usuario ve únicamente las listas activas y las usa durante la compra.
+El usuario ve únicamente las listas activas y las usa durante la compra. En móvil solo se marcan/desmarcan productos.
 
 **Flujo principal:**
 
 1. El usuario abre la app móvil.
 2. El sistema muestra las listas con estado `ACTIVE`.
 3. El usuario entra en una lista.
-4. Marca productos como comprados.
-5. Los cambios se sincronizan con la BBDD.
+4. Marca o desmarca productos como comprados.
+5. La sincronización con la BBDD se realiza al finalizar la compra.
+6. Si la lista ya no existe al sincronizar, se muestra un mensaje de error.
 
 **Estado resultante:** `ACTIVE`
 
@@ -119,14 +123,14 @@ El usuario ve únicamente las listas activas y las usa durante la compra.
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-Mientras una lista está activa, el usuario puede seguir editándola desde el PC.
+Mientras una lista está activa, el usuario puede seguir editándola desde el PC sin cambiar su estado.
 
 **Flujo principal:**
 
 1. El usuario abre una lista `ACTIVE` en la web.
 2. Puede añadir productos o modificar cantidades/notas.
 3. Si intenta borrar un producto, el sistema muestra un aviso.
-4. Los cambios se reflejan en el móvil.
+4. Los cambios se reflejan en el móvil cuando se sincronice la lista.
 
 **Estado resultante:** `ACTIVE`
 
@@ -142,7 +146,7 @@ El usuario indica que ha terminado la compra.
 **Flujo principal:**
 
 1. En una lista `ACTIVE`, el usuario pulsa “Compra finalizada”.
-2. El sistema marca la lista como completada.
+2. El sistema sincroniza los productos marcados y completa la lista.
 
 **Estado resultante:** `COMPLETED`
 
@@ -193,7 +197,7 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 
 1. El usuario pulsa “Borrar lista”.
 2. El sistema elimina la lista.
-3. Si la lista estaba activa, desaparece inmediatamente del móvil.
+3. Si la lista estaba activa, desaparece inmediatamente del móvil y la sincronización fallará.
 
 **Estados posibles:** `DRAFT`, `ACTIVE`, `COMPLETED`
 
@@ -202,10 +206,14 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 ## Reglas clave
 
 * El móvil **solo muestra listas `ACTIVE`**.
+* En móvil solo se permite **marcar/desmarcar** productos.
 * Una lista `COMPLETED` **no se reutiliza directamente**: siempre se duplica.
 * Se pueden tener **varias listas activas a la vez**.
 * Todas las listas pueden borrarse.
-* El autoguardado es continuo en web.
+* El autoguardado es continuo en web y se sincroniza cada 1–3s si hay cambios.
+* Si el usuario guarda explícitamente como borrador o lista activa, el autosave temporal deja de usarse.
+* Las listas `ACTIVE` **no vuelven a `DRAFT`**: se editan en web sin cambiar estado.
+* Si una lista `ACTIVE` se borra antes de sincronizar en móvil, la sincronización devuelve error.
 
 ---
 
