@@ -5,20 +5,28 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 // Mock auth service
-vi.mock("@src/features/auth/services/AuthService", () => ({
-  getCurrentUser: vi.fn(),
-  registerUser: vi.fn(),
-  loginUser: vi.fn(),
-  logoutUser: vi.fn(),
-}));
+vi.mock("@src/features/auth/services/AuthService", async () => {
+  const actual = await vi.importActual<
+    typeof import("@src/features/auth/services/AuthService")
+  >("@src/features/auth/services/AuthService");
+  return {
+    ...actual,
+    getCurrentUser: vi.fn(),
+    registerUser: vi.fn(),
+    loginUser: vi.fn(),
+    logoutUser: vi.fn(),
+  };
+});
 
 import {
   getCurrentUser,
   registerUser,
   loginUser,
   logoutUser,
+  AuthServiceError,
 } from "@src/features/auth/services/AuthService";
 const TEST_EMAIL = "test@example.com";
 const TEST_PASSWORD = "password"; // nosem
@@ -57,28 +65,30 @@ function TestComponent() {
             email: TEST_EMAIL,
             password: TEST_PASSWORD,
             postalCode: TEST_POSTAL_CODE,
-          })
+          }).catch(() => {})
         }
       >
         Register
       </button>
       <button
-        onClick={() => login({ email: TEST_EMAIL, password: TEST_PASSWORD })}
+        onClick={() =>
+          login({ email: TEST_EMAIL, password: TEST_PASSWORD }).catch(() => {})
+        }
       >
         Login
       </button>
-      <button onClick={() => logout()}>Logout</button>
+      <button onClick={() => logout().catch(() => {})}>Logout</button>
     </div>
   );
 }
 
 describe("AuthProvider", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("throws error when useAuth is used without AuthProvider", () => {
@@ -148,6 +158,30 @@ describe("AuthProvider", () => {
       expect(registerUser).toHaveBeenCalled();
       // Después del registro, el usuario NO debe estar autenticado
       expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+    });
+  });
+
+  it("shows a descriptive error when register fails with duplicate email", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    vi.mocked(registerUser).mockRejectedValueOnce(
+      new AuthServiceError("duplicate_email"),
+    );
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    const registerButton = screen.getByRole("button", { name: "Register" });
+    await user.click(registerButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authError")).toHaveTextContent(
+        UI_TEXT.AUTH.ERRORS.DUPLICATE_EMAIL,
+      );
     });
   });
 

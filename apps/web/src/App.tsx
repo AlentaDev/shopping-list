@@ -127,9 +127,13 @@ const App = () => {
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex w-full items-center justify-between gap-3 sm:flex-1 sm:w-auto sm:justify-start">
             <div>
-              <p className="text-xl font-semibold sm:text-2xl">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="text-left text-xl font-semibold transition hover:text-slate-900 sm:text-2xl"
+              >
                 {UI_TEXT.APP.TITLE}
-              </p>
+              </button>
             </div>
             <button
               type="button"

@@ -14,6 +14,13 @@ export const UI_TEXT = {
   AUTH: {
     BACK_TO_HOME: "Volver al catálogo",
     ERROR_MESSAGE: "No se pudo completar la autenticación.",
+    ERRORS: {
+      DUPLICATE_EMAIL: "Este email ya está registrado.",
+      INVALID_CREDENTIALS: "Email o contraseña incorrectos.",
+      VALIDATION_ERROR: "Revisa los datos e inténtalo de nuevo.",
+      NOT_AUTHENTICATED: "Necesitas iniciar sesión para continuar.",
+      SERVER_ERROR: "Ha ocurrido un error en el servidor. Inténtalo más tarde.",
+    },
     ALREADY_LOGGED_IN: {
       TITLE: "Ya estás logueado",
       LOGIN_MESSAGE: "Ya estás logueado. No necesitas iniciar sesión de nuevo.",
