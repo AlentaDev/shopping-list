@@ -41,17 +41,25 @@ export function getDeviceFingerprint(): string {
  * Usa crypto.randomUUID() si está disponible, sino genera uno manual.
  */
 function generateFingerprint(): string {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  
-  // Fallback para navegadores antiguos
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+    const cryptoApi = typeof crypto !== "undefined" ? crypto : undefined;
+
+    if (cryptoApi?.randomUUID) {
+        return cryptoApi.randomUUID();
+    }
+
+    if (cryptoApi?.getRandomValues) {
+        const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+        // Ajustar bits de versión (4) y variante (RFC 4122)
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+        const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+
+    throw new Error("Crypto API no disponible para generar fingerprint");
 }
+
 
 /**
  * Regenera el fingerprint del dispositivo.

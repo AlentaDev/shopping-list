@@ -6,6 +6,12 @@ import {
   logoutUser,
 } from "./AuthService";
 
+const FINGERPRINT = "test-device-fingerprint";
+
+vi.mock("@src/shared/utils/deviceFingerprint", () => ({
+  getDeviceFingerprint: vi.fn(() => FINGERPRINT),
+}));
+
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
@@ -32,7 +38,7 @@ const RESPONSE_PAYLOAD = {
 
 describe("AuthService", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it("registers a new user", async () => {
@@ -52,7 +58,7 @@ describe("AuthService", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(REGISTER_INPUT),
+      body: JSON.stringify({ ...REGISTER_INPUT, fingerprint: FINGERPRINT }),
     });
   });
 
@@ -71,7 +77,7 @@ describe("AuthService", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(LOGIN_INPUT),
+      body: JSON.stringify({ ...LOGIN_INPUT, fingerprint: FINGERPRINT }),
     });
   });
 

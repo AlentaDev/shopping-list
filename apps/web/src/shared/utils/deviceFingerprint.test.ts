@@ -44,12 +44,16 @@ describe("deviceFingerprint", () => {
         throw new Error("localStorage not available");
       });
 
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
       const fingerprint = getDeviceFingerprint();
 
       expect(fingerprint).toBeTruthy();
       expect(typeof fingerprint).toBe("string");
+      expect(warnSpy).toHaveBeenCalled();
 
       mockGetItem.mockRestore();
+      warnSpy.mockRestore();
     });
   });
 
