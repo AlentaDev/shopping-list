@@ -10,6 +10,7 @@ import { GetList } from "../application/GetList.js";
 import { ListLists } from "../application/ListLists.js";
 import { RemoveItem } from "../application/RemoveItem.js";
 import { UpdateItem } from "../application/UpdateItem.js";
+import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -17,6 +18,7 @@ import {
   itemParamsSchema,
   listParamsSchema,
   patchItemSchema,
+  updateListStatusSchema,
 } from "./validation.js";
 
 type ListsRouterDependencies = {
@@ -27,6 +29,7 @@ type ListsRouterDependencies = {
   addCatalogItem: AddCatalogItem;
   updateItem: UpdateItem;
   removeItem: RemoveItem;
+  updateListStatus: UpdateListStatus;
   requireAuth: RequestHandler;
 };
 
@@ -66,6 +69,23 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       const params = listParamsSchema.parse(req.params);
       const userId = getUserId(req);
       const response = await deps.getList.execute(userId, params.id);
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/:id/status", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const input = updateListStatusSchema.parse(req.body);
+      const userId = getUserId(req);
+      const response = await deps.updateListStatus.execute({
+        userId,
+        listId: params.id,
+        status: input.status,
+      });
 
       res.status(200).json(response);
     } catch (error) {

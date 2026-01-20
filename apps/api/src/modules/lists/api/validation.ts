@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LIST_STATUSES } from "../domain/list.js";
 
 export const createListSchema = z.object({
   title: z.string().min(1).max(60),
@@ -22,6 +23,10 @@ export const patchItemSchema = z.object({
   qty: z.number().int().min(1).max(999).optional(),
   checked: z.boolean().optional(),
   note: z.string().max(240).optional(),
+});
+
+export const updateListStatusSchema = z.object({
+  status: z.enum(LIST_STATUSES),
 });
 
 export const listParamsSchema = z.object({

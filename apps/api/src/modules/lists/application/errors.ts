@@ -23,3 +23,9 @@ export class CatalogProviderError extends AppError {
     super(502, "catalog_provider_failed", "Catalog provider failed");
   }
 }
+
+export class ListStatusTransitionError extends AppError {
+  constructor() {
+    super(400, "invalid_list_status_transition", "Invalid list status");
+  }
+}
