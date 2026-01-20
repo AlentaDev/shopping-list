@@ -16,6 +16,7 @@ import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
 import { DuplicateList } from "../application/DuplicateList.js";
+import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -25,6 +26,7 @@ import {
   listParamsSchema,
   listQuerySchema,
   patchItemSchema,
+  upsertAutosaveSchema,
   updateListStatusSchema,
 } from "./validation.js";
 
@@ -42,6 +44,7 @@ type ListsRouterDependencies = {
   duplicateList: DuplicateList;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
+  upsertAutosaveDraft: UpsertAutosaveDraft;
   requireAuth: RequestHandler;
 };
 
@@ -83,6 +86,22 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     try {
       const userId = getUserId(req);
       const response = await deps.getAutosaveDraft.execute(userId);
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.put("/autosave", async (req, res, next) => {
+    try {
+      const input = upsertAutosaveSchema.parse(req.body);
+      const userId = getUserId(req);
+      const response = await deps.upsertAutosaveDraft.execute({
+        userId,
+        title: input.title,
+        items: input.items,
+      });
 
       res.status(200).json(response);
     } catch (error) {
