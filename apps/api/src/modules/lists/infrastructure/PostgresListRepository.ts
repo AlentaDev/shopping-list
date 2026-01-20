@@ -10,7 +10,7 @@ type PgPool = {
 };
 
 const LIST_COLUMNS =
-  "id, owner_user_id, title, status, created_at, updated_at" as const;
+  "id, owner_user_id, title, status, is_autosave_draft, created_at, updated_at" as const;
 const ITEM_COLUMNS =
   "id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, note, created_at, updated_at" as const;
 
@@ -62,12 +62,13 @@ export class PostgresListRepository implements ListRepository {
     await this.pool.query("BEGIN");
     try {
       await this.pool.query(
-        "INSERT INTO lists (id, owner_user_id, title, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+        "INSERT INTO lists (id, owner_user_id, title, status, is_autosave_draft, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
         [
           list.id,
           list.ownerUserId,
           list.title,
           list.status,
+          list.isAutosaveDraft,
           list.createdAt,
           list.updatedAt,
         ],
@@ -117,6 +118,7 @@ function mapListWithItems(
     id: String(listRow.id),
     ownerUserId: String(listRow.owner_user_id),
     title: String(listRow.title),
+    isAutosaveDraft: Boolean(listRow.is_autosave_draft),
     status,
     createdAt: new Date(String(listRow.created_at)),
     updatedAt: new Date(String(listRow.updated_at)),

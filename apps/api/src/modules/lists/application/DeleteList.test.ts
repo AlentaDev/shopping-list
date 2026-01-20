@@ -12,6 +12,7 @@ describe("DeleteList", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
+      isAutosaveDraft: false,
       status: "ACTIVE",
       items: [
         {
@@ -54,6 +55,7 @@ describe("DeleteList", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
+      isAutosaveDraft: false,
       status: "ACTIVE",
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
