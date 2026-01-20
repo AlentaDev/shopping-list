@@ -39,6 +39,7 @@ export type List = {
   id: string;
   ownerUserId: string;
   title: string;
+  isAutosaveDraft: boolean;
   status: ListStatus;
   items: ListItem[];
   createdAt: Date;
