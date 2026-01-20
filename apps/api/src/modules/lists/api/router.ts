@@ -96,9 +96,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       await deps.discardAutosaveDraft.execute(userId);
 
       res.status(204).end();
-      const response = await deps.discardAutosaveDraft.execute(userId);
-
-      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
