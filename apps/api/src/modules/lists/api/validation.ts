@@ -37,6 +37,10 @@ export const listParamsSchema = z.object({
   id: z.string().min(1),
 });
 
+export const listQuerySchema = z.object({
+  status: z.enum(LIST_STATUSES).optional(),
+});
+
 export const itemParamsSchema = z.object({
   id: z.string().min(1),
   itemId: z.string().min(1),
