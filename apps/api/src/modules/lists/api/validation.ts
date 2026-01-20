@@ -29,6 +29,10 @@ export const updateListStatusSchema = z.object({
   status: z.enum(LIST_STATUSES),
 });
 
+export const completeListSchema = z.object({
+  checkedItemIds: z.array(z.string().min(1)),
+});
+
 export const listParamsSchema = z.object({
   id: z.string().min(1),
 });
