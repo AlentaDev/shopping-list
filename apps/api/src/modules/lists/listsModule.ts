@@ -9,6 +9,7 @@ import { RemoveItem } from "./application/RemoveItem.js";
 import { UpdateItem } from "./application/UpdateItem.js";
 import { UpdateListStatus } from "./application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "./application/GetAutosaveDraft.js";
+import { DiscardAutosaveDraft } from "./application/DiscardAutosaveDraft.js";
 import type { CatalogProvider } from "@src/modules/catalog/public.js";
 import type { IdGenerator, ListRepository } from "./application/ports.js";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository.js";
@@ -39,6 +40,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const removeItem = new RemoveItem(listRepository);
   const updateListStatus = new UpdateListStatus(listRepository);
   const getAutosaveDraft = new GetAutosaveDraft(listRepository);
+  const discardAutosaveDraft = new DiscardAutosaveDraft(listRepository);
 
   const router = createListsRouter({
     createList,
@@ -51,6 +53,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     removeItem,
     updateListStatus,
     getAutosaveDraft,
+    discardAutosaveDraft,
     requireAuth: requireAuth(),
   });
 
