@@ -14,9 +14,11 @@ import { UpdateItem } from "../application/UpdateItem.js";
 import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
+import { CompleteList } from "../application/CompleteList.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
+  completeListSchema,
   createListSchema,
   itemParamsSchema,
   listParamsSchema,
@@ -34,6 +36,7 @@ type ListsRouterDependencies = {
   updateItem: UpdateItem;
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
+  completeList: CompleteList;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   requireAuth: RequestHandler;
@@ -113,6 +116,23 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         userId,
         listId: params.id,
         status: input.status,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/complete", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const input = completeListSchema.parse(req.body);
+      const userId = getUserId(req);
+      const response = await deps.completeList.execute({
+        userId,
+        listId: params.id,
+        checkedItemIds: input.checkedItemIds,
       });
 
       res.status(200).json(response);
