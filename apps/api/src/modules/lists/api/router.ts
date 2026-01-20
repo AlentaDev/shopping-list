@@ -15,6 +15,7 @@ import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
+import { DuplicateList } from "../application/DuplicateList.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -38,6 +39,7 @@ type ListsRouterDependencies = {
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
   completeList: CompleteList;
+  duplicateList: DuplicateList;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   requireAuth: RequestHandler;
@@ -140,6 +142,21 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       });
 
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/duplicate", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.duplicateList.execute({
+        userId,
+        listId: params.id,
+      });
+
+      res.status(201).json(response);
     } catch (error) {
       next(error);
     }

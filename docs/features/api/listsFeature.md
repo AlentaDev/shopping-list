@@ -134,9 +134,35 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 }
 ```
 
+### POST /api/lists/:id/duplicate
+
+Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
+
+**Response 201**
+
+```json
+{
+  "id": "uuid",
+  "title": "Groceries",
+  "status": "DRAFT",
+  "items": [
+    {
+      "id": "uuid",
+      "name": "Milk",
+      "qty": 1,
+      "checked": false,
+      "note": "Optional note",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
 ## Notas de implementación
 
 - Todas las rutas requieren sesión autenticada.
 - La persistencia por defecto es en memoria mediante `InMemoryListRepository` (hay alternativa Postgres).
 - La autorización restringe el acceso a las listas del propietario.
 - Validación de payloads con Zod y errores uniformes de validación.
+- La duplicación solo aplica a listas en estado `COMPLETED`.
