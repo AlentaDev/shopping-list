@@ -17,4 +17,8 @@ export class InMemoryListRepository implements ListRepository {
   async save(list: List): Promise<void> {
     this.lists.set(list.id, list);
   }
+
+  async deleteById(id: string): Promise<void> {
+    this.lists.delete(id);
+  }
 }

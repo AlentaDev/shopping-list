@@ -8,6 +8,7 @@ import { AddManualItem } from "../application/AddManualItem.js";
 import { CreateList } from "../application/CreateList.js";
 import { GetList } from "../application/GetList.js";
 import { ListLists } from "../application/ListLists.js";
+import { DeleteList } from "../application/DeleteList.js";
 import { RemoveItem } from "../application/RemoveItem.js";
 import { UpdateItem } from "../application/UpdateItem.js";
 import { UpdateListStatus } from "../application/UpdateListStatus.js";
@@ -25,6 +26,7 @@ type ListsRouterDependencies = {
   createList: CreateList;
   listLists: ListLists;
   getList: GetList;
+  deleteList: DeleteList;
   addManualItem: AddManualItem;
   addCatalogItem: AddCatalogItem;
   updateItem: UpdateItem;
@@ -85,6 +87,21 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         userId,
         listId: params.id,
         status: input.status,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete("/:id", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.deleteList.execute({
+        userId,
+        listId: params.id,
       });
 
       res.status(200).json(response);
