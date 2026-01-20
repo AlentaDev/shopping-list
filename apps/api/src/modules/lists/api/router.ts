@@ -14,12 +14,16 @@ import { UpdateItem } from "../application/UpdateItem.js";
 import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
+import { CompleteList } from "../application/CompleteList.js";
+import { DuplicateList } from "../application/DuplicateList.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
+  completeListSchema,
   createListSchema,
   itemParamsSchema,
   listParamsSchema,
+  listQuerySchema,
   patchItemSchema,
   updateListStatusSchema,
 } from "./validation.js";
@@ -34,6 +38,8 @@ type ListsRouterDependencies = {
   updateItem: UpdateItem;
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
+  completeList: CompleteList;
+  duplicateList: DuplicateList;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   requireAuth: RequestHandler;
@@ -62,7 +68,10 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.get("/", async (req, res, next) => {
     try {
       const userId = getUserId(req);
-      const response = await deps.listLists.execute(userId);
+      const query = listQuerySchema.parse(req.query);
+      const response = await deps.listLists.execute(userId, {
+        status: query.status,
+      });
 
       res.status(200).json(response);
     } catch (error) {
@@ -87,6 +96,9 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       await deps.discardAutosaveDraft.execute(userId);
 
       res.status(204).end();
+      const response = await deps.discardAutosaveDraft.execute(userId);
+
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }
@@ -116,6 +128,38 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       });
 
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/complete", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const input = completeListSchema.parse(req.body);
+      const userId = getUserId(req);
+      const response = await deps.completeList.execute({
+        userId,
+        listId: params.id,
+        checkedItemIds: input.checkedItemIds,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/duplicate", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.duplicateList.execute({
+        userId,
+        listId: params.id,
+      });
+
+      res.status(201).json(response);
     } catch (error) {
       next(error);
     }

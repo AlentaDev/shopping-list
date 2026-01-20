@@ -2,6 +2,7 @@ import type { ListRepository } from "./ports.js";
 
 type DiscardAutosaveDraftResult = {
   ok: true;
+  removedCount: number;
 };
 
 export class DiscardAutosaveDraft {
@@ -22,5 +23,10 @@ export class DiscardAutosaveDraft {
     await this.listRepository.deleteById(latestAutosave.id);
 
     return { ok: true };
+    await Promise.all(
+      autosaveDrafts.map((draft) => this.listRepository.deleteById(draft.id)),
+    );
+
+    return { ok: true, removedCount: autosaveDrafts.length };
   }
 }
