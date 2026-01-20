@@ -74,6 +74,12 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 }
 ```
 
+### DELETE /api/lists/autosave
+
+**Response 204**
+
+Sin contenido (autosave descartado).
+
 ### POST /api/lists/:id/items
 
 **Request**

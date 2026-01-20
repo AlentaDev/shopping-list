@@ -13,6 +13,7 @@ import { RemoveItem } from "../application/RemoveItem.js";
 import { UpdateItem } from "../application/UpdateItem.js";
 import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
+import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -34,6 +35,7 @@ type ListsRouterDependencies = {
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
   getAutosaveDraft: GetAutosaveDraft;
+  discardAutosaveDraft: DiscardAutosaveDraft;
   requireAuth: RequestHandler;
 };
 
@@ -74,6 +76,17 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       const response = await deps.getAutosaveDraft.execute(userId);
 
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete("/autosave", async (req, res, next) => {
+    try {
+      const userId = getUserId(req);
+      await deps.discardAutosaveDraft.execute(userId);
+
+      res.status(204).end();
     } catch (error) {
       next(error);
     }
