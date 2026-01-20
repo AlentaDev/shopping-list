@@ -42,6 +42,61 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 }
 ```
 
+### GET /api/lists/autosave
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "title": "Autosave",
+  "items": [
+    {
+      "id": "uuid",
+      "kind": "manual",
+      "name": "Milk",
+      "qty": 1,
+      "checked": false,
+      "note": "Optional note",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+Si no hay borrador autosave, responde con `null`.
+
+### PUT /api/lists/autosave
+
+**Request**
+
+```json
+{
+  "title": "Autosave",
+  "items": [
+    {
+      "id": "uuid",
+      "kind": "manual",
+      "name": "Milk",
+      "qty": 1,
+      "checked": false,
+      "note": "Optional note"
+    }
+  ]
+}
+```
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "title": "Autosave",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
 ### GET /api/lists/:id
 
 **Response 200**
