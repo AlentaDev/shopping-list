@@ -82,6 +82,40 @@ El usuario crea y edita listas en modo borrador desde el PC.
 
 ---
 
+### CU-03B: Recuperar autosave temporal al reabrir
+
+**Actor:** Usuario registrado (web)
+
+**Descripción:**
+Si el usuario no guardó explícitamente, el autosave temporal se recupera al volver a abrir la app.
+
+**Flujo principal:**
+
+1. El usuario cierra o pierde la sesión mientras edita.
+2. Al volver a abrir la app, el sistema detecta autosave temporal.
+3. El usuario ve el contenido recuperado para continuar.
+
+**Estado resultante:** `DRAFT` (autosave temporal)
+
+---
+
+### CU-03C: Descartar autosave temporal
+
+**Actor:** Usuario registrado (web)
+
+**Descripción:**
+El usuario decide no continuar con el autosave temporal.
+
+**Flujo principal:**
+
+1. El usuario detecta un autosave temporal recuperado.
+2. El usuario elige descartarlo.
+3. El sistema elimina el autosave temporal.
+
+**Estado resultante:** sin borrador temporal activo
+
+---
+
 ### CU-04: Marcar lista como lista para comprar
 
 **Actor:** Usuario registrado (web)

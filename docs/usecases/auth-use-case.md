@@ -40,6 +40,24 @@ El usuario crea una cuenta nueva proporcionando sus credenciales.
 
 ---
 
+### CU-AUTH-02: Registro con email existente o datos inválidos
+
+**Actor:** Usuario no registrado
+
+**Descripción:**
+El usuario intenta registrarse con datos inválidos o un email ya registrado.
+
+**Flujo principal:**
+
+1. El usuario envía el formulario de registro.
+2. El sistema valida el formato y la completitud de los datos.
+3. Si el email ya existe o hay errores, se informa al usuario.
+4. El usuario permanece en estado anónimo.
+
+**Estado resultante:** `ANÓNIMO`
+
+---
+
 ### CU-AUTH-02: Inicio de sesión
 
 **Actor:** Usuario no registrado
@@ -58,7 +76,59 @@ El usuario inicia sesión con sus credenciales existentes.
 
 ---
 
-### CU-AUTH-03: Cierre de sesión
+### CU-AUTH-03: Inicio de sesión con credenciales inválidas
+
+**Actor:** Usuario no registrado
+
+**Descripción:**
+El usuario intenta iniciar sesión con credenciales incorrectas.
+
+**Flujo principal:**
+
+1. El usuario envía el formulario de login.
+2. El sistema valida las credenciales.
+3. Si son incorrectas, se informa al usuario.
+4. El usuario permanece en estado anónimo.
+
+**Estado resultante:** `ANÓNIMO`
+
+---
+
+### CU-AUTH-04: Recuperación de sesión (refresh automático)
+
+**Actor:** Usuario registrado
+
+**Descripción:**
+El usuario mantiene la sesión activa mediante renovación automática.
+
+**Flujo principal:**
+
+1. La sesión se aproxima a su expiración.
+2. El sistema solicita un refresh de la sesión.
+3. Si el refresh es válido, se renueva la sesión sin intervención del usuario.
+
+**Estado resultante:** `AUTENTICADO`
+
+---
+
+### CU-AUTH-05: Fallo de refresh de sesión
+
+**Actor:** Usuario registrado
+
+**Descripción:**
+El sistema no puede renovar la sesión del usuario.
+
+**Flujo principal:**
+
+1. El sistema intenta refrescar la sesión.
+2. El refresh falla o está expirado.
+3. El sistema cierra la sesión y redirige a login.
+
+**Estado resultante:** `ANÓNIMO`
+
+---
+
+### CU-AUTH-06: Cierre de sesión
 
 **Actor:** Usuario registrado
 
@@ -80,3 +150,4 @@ El usuario cierra su sesión.
 * Un usuario autenticado mantiene su sesión hasta que cierre sesión o expire.
 * El registro deja al usuario autenticado automáticamente.
 * El login no crea cuentas nuevas: solo valida credenciales existentes.
+* Si el refresh falla, el usuario vuelve al estado anónimo.
