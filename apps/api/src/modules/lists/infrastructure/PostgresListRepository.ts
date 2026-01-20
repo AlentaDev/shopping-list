@@ -1,4 +1,5 @@
-import type { List, ListItem } from "../domain/list.js";
+import type { List, ListItem, ListStatus } from "../domain/list.js";
+import { LIST_STATUSES } from "../domain/list.js";
 import type { ListRepository } from "../application/ports.js";
 
 type PgPool = {
@@ -9,7 +10,7 @@ type PgPool = {
 };
 
 const LIST_COLUMNS =
-  "id, owner_user_id, title, created_at, updated_at" as const;
+  "id, owner_user_id, title, status, created_at, updated_at" as const;
 const ITEM_COLUMNS =
   "id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, note, created_at, updated_at" as const;
 
@@ -61,11 +62,12 @@ export class PostgresListRepository implements ListRepository {
     await this.pool.query("BEGIN");
     try {
       await this.pool.query(
-        "INSERT INTO lists (id, owner_user_id, title, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+        "INSERT INTO lists (id, owner_user_id, title, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
         [
           list.id,
           list.ownerUserId,
           list.title,
+          list.status,
           list.createdAt,
           list.updatedAt,
         ],
@@ -94,10 +96,16 @@ function mapListWithItems(
   listRow: Record<string, unknown>,
   itemRows: Array<Record<string, unknown>>,
 ): List {
+  const statusValue = String(listRow.status ?? "DRAFT");
+  const status = LIST_STATUSES.includes(statusValue as ListStatus)
+    ? (statusValue as ListStatus)
+    : "DRAFT";
+
   return {
     id: String(listRow.id),
     ownerUserId: String(listRow.owner_user_id),
     title: String(listRow.title),
+    status,
     createdAt: new Date(String(listRow.created_at)),
     updatedAt: new Date(String(listRow.updated_at)),
     items: itemRows.map(mapItemRow),

@@ -6,6 +6,7 @@ import { GetList } from "./application/GetList.js";
 import { ListLists } from "./application/ListLists.js";
 import { RemoveItem } from "./application/RemoveItem.js";
 import { UpdateItem } from "./application/UpdateItem.js";
+import { UpdateListStatus } from "./application/UpdateListStatus.js";
 import type { CatalogProvider } from "@src/modules/catalog/public.js";
 import type { IdGenerator, ListRepository } from "./application/ports.js";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository.js";
@@ -33,6 +34,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   );
   const updateItem = new UpdateItem(listRepository);
   const removeItem = new RemoveItem(listRepository);
+  const updateListStatus = new UpdateListStatus(listRepository);
 
   const router = createListsRouter({
     createList,
@@ -42,6 +44,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     addCatalogItem,
     updateItem,
     removeItem,
+    updateListStatus,
     requireAuth: requireAuth(),
   });
 

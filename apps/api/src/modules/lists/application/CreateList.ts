@@ -24,6 +24,7 @@ export class CreateList {
       id: this.idGenerator.generate(),
       ownerUserId: input.userId,
       title: input.title,
+      status: "DRAFT",
       items: [],
       createdAt: now,
       updatedAt: now,

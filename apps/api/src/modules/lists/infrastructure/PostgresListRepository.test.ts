@@ -6,6 +6,7 @@ const baseList = {
   id: "list-1",
   ownerUserId: "user-1",
   title: "Weekly groceries",
+  status: "DRAFT",
   createdAt: new Date("2024-01-01T10:00:00.000Z"),
   updatedAt: new Date("2024-01-02T10:00:00.000Z"),
 } as const;
@@ -58,6 +59,7 @@ describe("PostgresListRepository", () => {
               id: baseList.id,
               owner_user_id: baseList.ownerUserId,
               title: baseList.title,
+              status: baseList.status,
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -125,6 +127,7 @@ describe("PostgresListRepository", () => {
               id: "list-1",
               owner_user_id: "user-1",
               title: "Weekly groceries",
+              status: "DRAFT",
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -132,6 +135,7 @@ describe("PostgresListRepository", () => {
               id: "list-2",
               owner_user_id: "user-1",
               title: "Party",
+              status: "ACTIVE",
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -193,6 +197,7 @@ describe("PostgresListRepository", () => {
         id: "list-2",
         ownerUserId: "user-1",
         title: "Party",
+        status: "ACTIVE",
         createdAt: baseList.createdAt,
         updatedAt: baseList.updatedAt,
             items: [
@@ -224,11 +229,12 @@ describe("PostgresListRepository", () => {
     expect(pool.query).toHaveBeenNthCalledWith(1, "BEGIN");
     expect(pool.query).toHaveBeenNthCalledWith(
       2,
-      "INSERT INTO lists (id, owner_user_id, title, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+      "INSERT INTO lists (id, owner_user_id, title, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
       [
         list.id,
         list.ownerUserId,
         list.title,
+        list.status,
         list.createdAt,
         list.updatedAt,
       ],

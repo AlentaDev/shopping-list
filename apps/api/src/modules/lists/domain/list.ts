@@ -32,10 +32,14 @@ export type CatalogListItem = {
 
 export type ListItem = ManualListItem | CatalogListItem;
 
+export const LIST_STATUSES = ["DRAFT", "ACTIVE", "COMPLETED"] as const;
+export type ListStatus = (typeof LIST_STATUSES)[number];
+
 export type List = {
   id: string;
   ownerUserId: string;
   title: string;
+  status: ListStatus;
   items: ListItem[];
   createdAt: Date;
   updatedAt: Date;
