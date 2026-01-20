@@ -90,6 +90,18 @@ export class PostgresListRepository implements ListRepository {
       throw error;
     }
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.pool.query("BEGIN");
+    try {
+      await this.pool.query("DELETE FROM list_items WHERE list_id = $1", [id]);
+      await this.pool.query("DELETE FROM lists WHERE id = $1", [id]);
+      await this.pool.query("COMMIT");
+    } catch (error) {
+      await this.pool.query("ROLLBACK");
+      throw error;
+    }
+  }
 }
 
 function mapListWithItems(

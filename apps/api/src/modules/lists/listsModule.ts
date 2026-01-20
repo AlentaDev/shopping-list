@@ -4,6 +4,7 @@ import { AddCatalogItem } from "./application/AddCatalogItem.js";
 import { CreateList } from "./application/CreateList.js";
 import { GetList } from "./application/GetList.js";
 import { ListLists } from "./application/ListLists.js";
+import { DeleteList } from "./application/DeleteList.js";
 import { RemoveItem } from "./application/RemoveItem.js";
 import { UpdateItem } from "./application/UpdateItem.js";
 import { UpdateListStatus } from "./application/UpdateListStatus.js";
@@ -26,6 +27,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const createList = new CreateList(listRepository, idGenerator);
   const listLists = new ListLists(listRepository);
   const getList = new GetList(listRepository);
+  const deleteList = new DeleteList(listRepository);
   const addManualItem = new AddManualItem(listRepository, idGenerator);
   const addCatalogItem = new AddCatalogItem(
     listRepository,
@@ -40,6 +42,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     createList,
     listLists,
     getList,
+    deleteList,
     addManualItem,
     addCatalogItem,
     updateItem,

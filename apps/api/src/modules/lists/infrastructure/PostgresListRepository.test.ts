@@ -292,4 +292,27 @@ describe("PostgresListRepository", () => {
     );
     expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
   });
+
+  it("deletes list items and list in a transaction", async () => {
+    const pool = {
+      query: vi.fn().mockResolvedValue({ rows: [] }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    await repository.deleteById("list-1");
+
+    expect(pool.query).toHaveBeenNthCalledWith(1, "BEGIN");
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      "DELETE FROM list_items WHERE list_id = $1",
+      ["list-1"],
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      3,
+      "DELETE FROM lists WHERE id = $1",
+      ["list-1"],
+    );
+    expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
+  });
 });
