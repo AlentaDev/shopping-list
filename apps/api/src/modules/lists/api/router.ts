@@ -93,6 +93,9 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.delete("/autosave", async (req, res, next) => {
     try {
       const userId = getUserId(req);
+      await deps.discardAutosaveDraft.execute(userId);
+
+      res.status(204).end();
       const response = await deps.discardAutosaveDraft.execute(userId);
 
       res.status(200).json(response);

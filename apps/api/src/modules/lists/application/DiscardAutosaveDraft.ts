@@ -12,6 +12,17 @@ export class DiscardAutosaveDraft {
     const lists = await this.listRepository.listByOwner(userId);
     const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft);
 
+    if (autosaveDrafts.length === 0) {
+      return { ok: true };
+    }
+
+    const latestAutosave = autosaveDrafts.reduce((latest, current) =>
+      current.updatedAt > latest.updatedAt ? current : latest,
+    );
+
+    await this.listRepository.deleteById(latestAutosave.id);
+
+    return { ok: true };
     await Promise.all(
       autosaveDrafts.map((draft) => this.listRepository.deleteById(draft.id)),
     );
