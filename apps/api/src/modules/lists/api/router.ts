@@ -22,6 +22,7 @@ import {
   createListSchema,
   itemParamsSchema,
   listParamsSchema,
+  listQuerySchema,
   patchItemSchema,
   updateListStatusSchema,
 } from "./validation.js";
@@ -65,7 +66,10 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.get("/", async (req, res, next) => {
     try {
       const userId = getUserId(req);
-      const response = await deps.listLists.execute(userId);
+      const query = listQuerySchema.parse(req.query);
+      const response = await deps.listLists.execute(userId, {
+        status: query.status,
+      });
 
       res.status(200).json(response);
     } catch (error) {
