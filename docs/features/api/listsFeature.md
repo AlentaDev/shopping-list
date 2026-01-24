@@ -119,6 +119,27 @@ Si no hay borrador autosave, responde con `null`.
 }
 ```
 
+### PATCH /api/lists/:id/status
+
+**Request**
+
+```json
+{
+  "status": "ACTIVE"
+}
+```
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "title": "Groceries",
+  "status": "ACTIVE",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
 ### DELETE /api/lists/:id
 
 **Response 200**
