@@ -108,6 +108,37 @@ export const UI_TEXT = {
     DEFAULT_LIST_TITLE: "Tu lista",
     CLOSE_LABEL: "Cerrar",
     CLOSE_MODAL_LABEL: "Cerrar modal",
+    SAVE_DRAFT_LABEL: "Guardar borrador",
+    READY_TO_SHOP_LABEL: "Lista lista para comprar",
+  },
+  LISTS: {
+    TITLE: "Mis listas",
+    NEW_LIST_LABEL: "Nueva lista",
+    TABS: {
+      DRAFT: "Borradores",
+      ACTIVE: "Activas",
+      COMPLETED: "Historial",
+    },
+    ACTIONS: {
+      EDIT: "Editar",
+      ACTIVATE: "Lista lista para comprar",
+      COMPLETE: "Completar compra",
+      DUPLICATE: "Duplicar",
+      DELETE: "Borrar",
+      VIEW: "Ver",
+    },
+    EMPTY_STATE: {
+      DRAFT_TITLE: "No hay borradores",
+      DRAFT_CTA: "Crear lista",
+      ACTIVE_TITLE: "No hay listas activas",
+      COMPLETED_TITLE: "Aún no hay compras completadas",
+    },
+    AUTOSAVE_RECOVERY: {
+      TITLE: "Hemos recuperado un borrador sin guardar",
+      MESSAGE: "Puedes continuar o descartarlo si ya no lo necesitas.",
+      CONTINUE_LABEL: "Continuar",
+      DISCARD_LABEL: "Descartar",
+    },
   },
   ITEM_LIST: {
     PRICE_UNAVAILABLE_MESSAGE: "Precio no disponible",
