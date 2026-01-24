@@ -32,41 +32,26 @@ const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
 
-const mapActionLabel = (action: ListActionKey): string => {
-  switch (action) {
-    case "edit":
-      return UI_TEXT.LISTS.ACTIONS.EDIT;
-    case "activate":
-      return UI_TEXT.LISTS.ACTIONS.ACTIVATE;
-    case "complete":
-      return UI_TEXT.LISTS.ACTIONS.COMPLETE;
-    case "duplicate":
-      return UI_TEXT.LISTS.ACTIONS.DUPLICATE;
-    case "delete":
-      return UI_TEXT.LISTS.ACTIONS.DELETE;
-    case "view":
-      return UI_TEXT.LISTS.ACTIONS.VIEW;
-    default:
-      return action;
-  }
+const ACTION_LABELS: Record<ListActionKey, string> = {
+  edit: UI_TEXT.LISTS.ACTIONS.EDIT,
+  activate: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
+  complete: UI_TEXT.LISTS.ACTIONS.COMPLETE,
+  duplicate: UI_TEXT.LISTS.ACTIONS.DUPLICATE,
+  delete: UI_TEXT.LISTS.ACTIONS.DELETE,
+  view: UI_TEXT.LISTS.ACTIONS.VIEW,
 };
 
-const mapStatusToTab = (status: ListStatus): TabKey => {
-  switch (status) {
-    case LIST_STATUS.ACTIVE:
-      return "ACTIVE";
-    case LIST_STATUS.COMPLETED:
-      return "COMPLETED";
-    default:
-      return "DRAFT";
-  }
+const STATUS_TO_TAB: Record<ListStatus, TabKey> = {
+  [LIST_STATUS.DRAFT]: "DRAFT",
+  [LIST_STATUS.ACTIVE]: "ACTIVE",
+  [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
 
 const ListsScreen = ({ lists }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("DRAFT");
 
   const filteredLists = useMemo(
-    () => lists.filter((list) => mapStatusToTab(list.status) === activeTab),
+    () => lists.filter((list) => STATUS_TO_TAB[list.status] === activeTab),
     [lists, activeTab]
   );
 
@@ -145,7 +130,7 @@ const ListsScreen = ({ lists }: ListsScreenProps) => {
                         : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
                     }`}
                   >
-                    {mapActionLabel(action)}
+                    {ACTION_LABELS[action]}
                   </button>
                 ))}
               </div>
