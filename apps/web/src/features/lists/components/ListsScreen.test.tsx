@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -30,7 +30,9 @@ const sampleLists: ListSummary[] = [
 
 describe("ListsScreen", () => {
   it("muestra las tabs y el estado vacío por defecto", () => {
-    render(<ListsScreen lists={[]} />);
+    render(
+      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
+    );
 
     expect(
       screen.getByRole("heading", { name: UI_TEXT.LISTS.TITLE })
@@ -47,7 +49,9 @@ describe("ListsScreen", () => {
   });
 
   it("cambia entre tabs y muestra el texto vacío correspondiente", async () => {
-    render(<ListsScreen lists={[]} />);
+    render(
+      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
+    );
 
     await userEvent.click(
       screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.ACTIVE })
@@ -67,7 +71,9 @@ describe("ListsScreen", () => {
   });
 
   it("muestra acciones según el estado", async () => {
-    render(<ListsScreen lists={sampleLists} />);
+    render(
+      <ListsScreen lists={sampleLists} onAction={vi.fn()} onCreate={vi.fn()} />
+    );
 
     expect(screen.getByText("Compra semanal")).toBeInTheDocument();
     expect(
@@ -94,5 +100,50 @@ describe("ListsScreen", () => {
     expect(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DUPLICATE })
     ).toBeInTheDocument();
+  });
+
+  it("dispara callbacks de acción y creación", async () => {
+    const onAction = vi.fn();
+    const onCreate = vi.fn();
+
+    render(
+      <ListsScreen lists={sampleLists} onAction={onAction} onCreate={onCreate} />
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE })
+    );
+
+    expect(onAction).toHaveBeenCalledWith("draft-1", "activate");
+
+    await userEvent.click(
+      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DUPLICATE })
+    );
+
+    expect(onAction).toHaveBeenCalledWith("completed-1", "duplicate");
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
+    );
+
+    expect(onCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it("dispara onCreate desde el empty state", async () => {
+    const onCreate = vi.fn();
+
+    render(
+      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={onCreate} />
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.EMPTY_STATE.DRAFT_CTA })
+    );
+
+    expect(onCreate).toHaveBeenCalledTimes(1);
   });
 });

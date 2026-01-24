@@ -18,6 +18,8 @@ export type ListSummary = {
 
 type ListsScreenProps = {
   lists: ListSummary[];
+  onAction: (listId: string, action: ListActionKey) => void;
+  onCreate: () => void;
 };
 
 const TAB_LABELS: Record<TabKey, string> = {
@@ -47,7 +49,7 @@ const STATUS_TO_TAB: Record<ListStatus, TabKey> = {
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
 
-const ListsScreen = ({ lists }: ListsScreenProps) => {
+const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("DRAFT");
 
   const filteredLists = useMemo(
@@ -65,6 +67,7 @@ const ListsScreen = ({ lists }: ListsScreenProps) => {
         </div>
         <button
           type="button"
+          onClick={onCreate}
           className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
         >
           {UI_TEXT.LISTS.NEW_LIST_LABEL}
@@ -98,6 +101,7 @@ const ListsScreen = ({ lists }: ListsScreenProps) => {
           {activeTab === "DRAFT" ? (
             <button
               type="button"
+              onClick={onCreate}
               className="mt-4 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
             >
               {UI_TEXT.LISTS.EMPTY_STATE.DRAFT_CTA}
@@ -124,6 +128,7 @@ const ListsScreen = ({ lists }: ListsScreenProps) => {
                   <button
                     key={action}
                     type="button"
+                    onClick={() => onAction(list.id, action)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                       action === "delete"
                         ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
