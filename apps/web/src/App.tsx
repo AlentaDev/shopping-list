@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import Catalog from "@src/features/catalog/Catalog";
+import { Lists } from "@src/features/lists";
 import ShoppingList from "@src/features/shopping-list/ShoppingList";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
@@ -15,10 +16,14 @@ import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 
 const DEFAULT_PRODUCT_NAME = "";
 const LOGIN_PATH = "/auth/login";
+const LISTS_PATH = "/lists";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState(() =>
+    window.location.pathname,
+  );
   const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
     resolveAuthMode(window.location.pathname),
   );
@@ -38,7 +43,9 @@ const App = () => {
 
   useEffect(() => {
     const handlePopState = () => {
-      setAuthMode(resolveAuthMode(window.location.pathname));
+      const path = window.location.pathname;
+      setCurrentPath(path);
+      setAuthMode(resolveAuthMode(path));
     };
 
     window.addEventListener("popstate", handlePopState);
@@ -68,6 +75,7 @@ const App = () => {
 
   const navigate = (path: string) => {
     window.history.pushState({}, "", path);
+    setCurrentPath(path);
     setAuthMode(resolveAuthMode(path));
   };
 
@@ -112,6 +120,19 @@ const App = () => {
     ) : (
       <AuthScreen
         mode={authMode}
+        isSubmitting={isAuthSubmitting}
+        errorMessage={authError}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onBack={() => navigate("/")}
+      />
+    );
+  } else if (currentPath === LISTS_PATH) {
+    mainContent = authUser ? (
+      <Lists />
+    ) : (
+      <AuthScreen
+        mode="login"
         isSubmitting={isAuthSubmitting}
         errorMessage={authError}
         onLogin={handleLogin}
@@ -203,7 +224,10 @@ const App = () => {
                     <button
                       type="button"
                       role="menuitem"
-                      onClick={() => setIsUserMenuOpen(false)}
+                      onClick={() => {
+                        navigate(LISTS_PATH);
+                        setIsUserMenuOpen(false);
+                      }}
                       className="flex w-full items-center rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
                     >
                       {UI_TEXT.AUTH.USER_MENU.LISTS}

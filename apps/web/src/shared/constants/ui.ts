@@ -139,6 +139,7 @@ export const UI_TEXT = {
       CONTINUE_LABEL: "Continuar",
       DISCARD_LABEL: "Descartar",
     },
+    UPDATED_AT_LABEL: "Actualizado",
   },
   ITEM_LIST: {
     PRICE_UNAVAILABLE_MESSAGE: "Precio no disponible",
