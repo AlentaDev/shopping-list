@@ -3,6 +3,7 @@ import {
   ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
+  ListStatusTransitionError,
 } from "./errors.js";
 
 type RemoveItemInput = {
@@ -26,6 +27,10 @@ export class RemoveItem {
 
     if (list.ownerUserId !== input.userId) {
       throw new ListForbiddenError();
+    }
+
+    if (list.status === "COMPLETED") {
+      throw new ListStatusTransitionError();
     }
 
     const itemIndex = list.items.findIndex(

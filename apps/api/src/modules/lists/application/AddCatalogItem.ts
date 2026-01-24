@@ -9,6 +9,7 @@ import {
   CatalogProviderError,
   ListForbiddenError,
   ListNotFoundError,
+  ListStatusTransitionError,
 } from "./errors.js";
 
 type AddCatalogItemInput = {
@@ -34,6 +35,10 @@ export class AddCatalogItem {
 
     if (list.ownerUserId !== input.userId) {
       throw new ListForbiddenError();
+    }
+
+    if (list.status === "COMPLETED") {
+      throw new ListStatusTransitionError();
     }
 
     let product: MercadonaProductDetail;
