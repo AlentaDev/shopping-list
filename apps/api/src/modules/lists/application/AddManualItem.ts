@@ -1,7 +1,11 @@
 import type { ListItem } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
-import { ListForbiddenError, ListNotFoundError } from "./errors.js";
+import {
+  ListForbiddenError,
+  ListNotFoundError,
+  ListStatusTransitionError,
+} from "./errors.js";
 
 type AddManualItemInput = {
   userId: string;
@@ -25,6 +29,10 @@ export class AddManualItem {
 
     if (list.ownerUserId !== input.userId) {
       throw new ListForbiddenError();
+    }
+
+    if (list.status === "COMPLETED") {
+      throw new ListStatusTransitionError();
     }
 
     const now = new Date();

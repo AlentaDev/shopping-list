@@ -4,6 +4,7 @@ import {
   ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
+  ListStatusTransitionError,
 } from "./errors.js";
 
 type UpdateItemInput = {
@@ -27,6 +28,10 @@ export class UpdateItem {
 
     if (list.ownerUserId !== input.userId) {
       throw new ListForbiddenError();
+    }
+
+    if (list.status === "COMPLETED") {
+      throw new ListStatusTransitionError();
     }
 
     const item = list.items.find(
