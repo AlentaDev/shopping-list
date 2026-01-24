@@ -13,6 +13,12 @@ Permitir a los usuarios **preparar listas de la compra en PC**, guardarlas en su
 * **ACTIVE**: lista preparada para comprar, visible en web y móvil.
 * **COMPLETED**: compra finalizada, visible en historial.
 
+### Autosave con sesión (decisión)
+
+Cuando el usuario ya está autenticado, el autosave se persiste en servidor.
+El `LOCAL_DRAFT` solo se mantiene en navegador como autosave temporal tras login,
+hasta que el usuario lo descarte o confirme.
+
 ---
 
 ## Actores
