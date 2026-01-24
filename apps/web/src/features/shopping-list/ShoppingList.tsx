@@ -6,6 +6,7 @@ import { useList } from "@src/context/useList";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
+import { useAutosaveDraft } from "./services/useAutosaveDraft";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -21,6 +22,9 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const [listTitle, setListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
+  const draftTitle = listName.trim() || listTitle;
+
+  useAutosaveDraft({ title: draftTitle, items }, { enabled: items.length > 0 });
 
   const sortedItems = useMemo(
     () =>
