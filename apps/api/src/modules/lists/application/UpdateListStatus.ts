@@ -20,7 +20,7 @@ type UpdateListStatusResult = {
 
 const ALLOWED_TRANSITIONS: Record<ListStatus, ListStatus[]> = {
   DRAFT: ["ACTIVE"],
-  ACTIVE: ["COMPLETED"],
+  ACTIVE: [],
   COMPLETED: [],
 };
 

@@ -53,7 +53,7 @@ describe("UpdateListStatus", () => {
       ownerUserId: "user-1",
       title: "Weekly groceries",
       isAutosaveDraft: false,
-      status: "DRAFT",
+      status: "ACTIVE",
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),
