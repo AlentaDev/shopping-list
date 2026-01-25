@@ -79,7 +79,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsAuthSubmitting(true);
     try {
       const user = await registerUser(values);
-      // NO autenticamos automáticamente después del registro
+      setAuthUser(user);
+      try {
+        await syncLocalDraftToRemoteList();
+      } catch (error) {
+        console.warn(
+          "No se pudo sincronizar el borrador local tras registro.",
+          error,
+        );
+      }
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));

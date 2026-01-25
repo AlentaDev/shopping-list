@@ -139,7 +139,7 @@ describe("AuthProvider", () => {
     expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
-  it("handles register without authenticating user", async () => {
+  it("handles register and authenticates user", async () => {
     vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
     const mockUser = {
       id: "1",
@@ -162,9 +162,11 @@ describe("AuthProvider", () => {
 
     await waitFor(() => {
       expect(registerUser).toHaveBeenCalled();
-      // Después del registro, el usuario NO debe estar autenticado
-      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "test@example.com",
+      );
     });
+    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
   it("shows a descriptive error when register fails with duplicate email", async () => {

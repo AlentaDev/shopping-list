@@ -130,7 +130,7 @@ const mockCatalogRoutes = async (
   });
 };
 
-test("auth happy path permite registrar, iniciar sesión y cerrar sesión", async ({
+test("auth happy path permite registrar con auto-login y cerrar sesión", async ({
   page,
 }) => {
   await mockAuthRoutes(page);
@@ -155,13 +155,8 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
     USER.postalCode,
   );
 
-  // Después del registro, debería redirigir a la pantalla de login
-  await page.waitForURL("/auth/login");
-
-  await expect(
-    authPage.title,
-    "El título de login debe mostrarse después del registro",
-  ).toHaveText("Iniciar sesión");
+  // Después del registro, debería redirigir a la pantalla principal
+  await page.waitForURL("/");
 
   // Verificar que aparece el toast de bienvenida
   await expect(
@@ -169,19 +164,13 @@ test("auth happy path permite registrar, iniciar sesión y cerrar sesión", asyn
     "El toast de bienvenida debe aparecer después del registro",
   ).toBeVisible({ timeout: 5000 });
 
-  // Ahora iniciar sesión
-  await authPage.login(USER.email, "Password123!");
-
-  // Esperar a que navegue a la home después del login
-  await page.waitForURL("/");
-
   const userMenuButton = page.getByRole("button", {
     name: "Abrir menú de usuario",
   });
 
   await expect(
     userMenuButton,
-    "El menú de usuario debe mostrarse tras iniciar sesión",
+    "El menú de usuario debe mostrarse tras el registro",
   ).toBeVisible({ timeout: 10000 });
 
   // Verificar que el texto del botón contiene el nombre del usuario

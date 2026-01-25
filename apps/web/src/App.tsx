@@ -84,11 +84,13 @@ const App = () => {
       const user = await register(values);
       // Mostrar toast de bienvenida
       showToast({
-        message: `¡Gracias ${user.name} por registrarte en Lista de Compra! Por favor, inicia sesión para continuar`,
+        message: UI_TEXT.AUTH.REGISTER.WELCOME_MESSAGE.replace(
+          "{name}",
+          user.name,
+        ),
         productName: DEFAULT_PRODUCT_NAME,
       });
-      // Redirigir a la pantalla de login
-      navigate(LOGIN_PATH);
+      navigate("/");
     } catch {
       // Error is already handled by AuthProvider and displayed via authError
     }
