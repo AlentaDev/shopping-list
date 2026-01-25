@@ -19,4 +19,4 @@ export const canEditList = (status: ListStatus): boolean =>
 export const canDuplicateList = (status: ListStatus): boolean =>
   status === LIST_STATUS.COMPLETED;
 
-export const canDeleteList = (_status: ListStatus): boolean => true;
+export const canDeleteList = (status: ListStatus): boolean => Boolean(status);

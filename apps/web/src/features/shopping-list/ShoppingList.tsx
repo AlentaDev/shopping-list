@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
@@ -7,6 +7,7 @@ import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
+import type { AutosaveDraftInput } from "./services/types";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -16,7 +17,7 @@ type ShoppingListProps = {
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
 const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
-  const { items, total, updateQuantity, removeItem } = useList();
+  const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState("");
   const [listTitle, setListTitle] = useState<string>(
@@ -24,7 +25,34 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   );
   const draftTitle = listName.trim() || listTitle;
 
-  useAutosaveDraft({ title: draftTitle, items }, { enabled: items.length > 0 });
+  const handleRehydrate = useCallback(
+    (draft: AutosaveDraftInput) => {
+      if (items.length > 0 || draft.items.length === 0) {
+        return;
+      }
+
+      const restoredTitle =
+        draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
+      const restoredItems = draft.items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        category: "",
+        thumbnail: null,
+        price: null,
+        quantity: item.qty,
+      }));
+
+      setItems(restoredItems);
+      setListName(draft.title);
+      setListTitle(restoredTitle);
+    },
+    [items.length, setItems],
+  );
+
+  useAutosaveDraft(
+    { title: draftTitle, items },
+    { enabled: items.length > 0, onRehydrate: handleRehydrate },
+  );
 
   const sortedItems = useMemo(
     () =>

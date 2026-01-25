@@ -22,9 +22,20 @@ type FetchResponse = {
 
 type HarnessProps = {
   enabled?: boolean;
+  onRehydrate?: (draft: {
+    title: string;
+    items: {
+      id: string;
+      kind: "manual";
+      name: string;
+      qty: number;
+      checked: boolean;
+      note?: string | null;
+    }[];
+  }) => void;
 };
 
-const Harness = ({ enabled = true }: HarnessProps) => {
+const Harness = ({ enabled = true, onRehydrate }: HarnessProps) => {
   const [items, setItems] = useState<ListItem[]>([]);
 
   useAutosaveDraft(
@@ -32,7 +43,7 @@ const Harness = ({ enabled = true }: HarnessProps) => {
       title: "Lista semanal",
       items,
     },
-    { enabled }
+    { enabled, onRehydrate }
   );
 
   return (
@@ -94,6 +105,29 @@ describe("useAutosaveDraft", () => {
       "/api/lists/autosave",
       expect.objectContaining({ method: "PUT" })
     );
+  });
+
+  it("rehidrata desde el borrador local al montar", () => {
+    const onRehydrate = vi.fn();
+    const localDraft = {
+      title: "Lista recuperada",
+      items: [
+        {
+          id: "item-1",
+          kind: "manual",
+          name: "Leche",
+          qty: 2,
+          checked: false,
+          note: null,
+        },
+      ],
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
+    render(<Harness onRehydrate={onRehydrate} />);
+
+    expect(onRehydrate).toHaveBeenCalledWith(localDraft);
   });
 
   it("solo guarda en localStorage cuando está deshabilitado", async () => {

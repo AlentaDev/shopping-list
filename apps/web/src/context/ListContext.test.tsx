@@ -12,8 +12,15 @@ const LINES_COUNT_TEST_ID = "lines-count";
 const TOTAL_AMOUNT_TEST_ID = "total-amount";
 
 const TestConsumer = () => {
-  const { items, linesCount, total, addItem, updateQuantity, removeItem } =
-    useList();
+  const {
+    items,
+    linesCount,
+    total,
+    addItem,
+    setItems,
+    updateQuantity,
+    removeItem,
+  } = useList();
 
   return (
     <div>
@@ -60,6 +67,23 @@ const TestConsumer = () => {
       </button>
       <button type="button" onClick={() => removeItem("item-2")}>
         Remove
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          setItems([
+            {
+              id: "item-4",
+              name: "Café molido",
+              category: "Despensa",
+              thumbnail: null,
+              price: 3.1,
+              quantity: 1,
+            },
+          ])
+        }
+      >
+        Replace all
       </button>
     </div>
   );
@@ -171,5 +195,18 @@ describe("ListContext", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add new" }));
 
     expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("4");
+  });
+
+  it("replaces items when setItems is called", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("1");
+    expect(screen.getByTestId(TOTAL_AMOUNT_TEST_ID)).toHaveTextContent("3.10");
   });
 });
