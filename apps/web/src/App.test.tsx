@@ -406,7 +406,7 @@ describe("App", () => {
     });
   });
 
-  it("redirects to login screen after successful registration with welcome toast", async () => {
+  it("auto-logs in after successful registration with welcome toast", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async (input) => {
         if (input === rootCategoriesUrl) {
@@ -432,6 +432,13 @@ describe("App", () => {
               email: "ana@example.com",
               postalCode: "28001",
             }),
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
           };
         }
 
@@ -475,20 +482,18 @@ describe("App", () => {
       screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL }),
     );
 
-    // Verificar que se redirige a la pantalla de login
-    await waitFor(() => {
-      expect(screen.getByText(UI_TEXT.AUTH.LOGIN.TITLE)).toBeInTheDocument();
-    });
-
     // Verificar que aparece el toast de bienvenida
     expect(
       await screen.findByText(/gracias.*ana.*por registrarte/i),
     ).toBeInTheDocument();
 
-    // Verificar que el usuario NO está autenticado (no aparece el menú de usuario)
-    expect(
-      screen.queryByRole("button", { name: /hola ana/i }),
-    ).not.toBeInTheDocument();
+    // Verificar que el usuario queda autenticado (aparece el menú de usuario)
+    await waitFor(() => {
+      const userMenuButton = screen.getByRole("button", {
+        name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
+      });
+      expect(userMenuButton).toHaveTextContent(/hola ana/i);
+    });
   });
 
   it("closes user menu when clicking outside of it", async () => {

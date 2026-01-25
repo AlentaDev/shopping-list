@@ -61,6 +61,7 @@ export const UI_TEXT = {
     REGISTER: {
       TITLE: "Crear cuenta",
       SUBTITLE: "Empieza a organizar tu compra",
+      WELCOME_MESSAGE: "¡Gracias {name} por registrarte en Lista de Compra!",
       NAME_LABEL: "Nombre",
       NAME_PLACEHOLDER: "Tu nombre",
       EMAIL_LABEL: "Email",
