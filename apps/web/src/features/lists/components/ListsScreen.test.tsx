@@ -4,8 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import ListsScreen, { type ListSummary } from "./ListsScreen";
+import ListsScreen from "./ListsScreen";
 import { LIST_STATUS } from "../services/listActions";
+import type { ListSummary } from "../services/types";
 
 const sampleLists: ListSummary[] = [
   {
