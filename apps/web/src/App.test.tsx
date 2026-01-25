@@ -7,6 +7,10 @@ import App from "@src/App";
 import { AppProviders } from "@src/providers/AppProviders";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
+vi.mock("@src/features/shopping-list/services/LocalDraftSyncService", () => ({
+  syncLocalDraftToRemoteList: vi.fn().mockResolvedValue(null),
+}));
+
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;

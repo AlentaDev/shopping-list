@@ -16,6 +16,7 @@ import {
   type RegisterInput,
   type AuthUser,
 } from "@src/features/auth/services/AuthService";
+import { syncLocalDraftToRemoteList } from "@src/features/shopping-list/services/LocalDraftSyncService";
 
 export type AuthContextType = {
   authUser: AuthUser | null;
@@ -52,6 +53,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const user = await getCurrentUser();
         if (isActive) {
           setAuthUser(user);
+          try {
+            await syncLocalDraftToRemoteList();
+          } catch (error) {
+            console.warn(
+              "No se pudo sincronizar el borrador local tras recuperar sesión.",
+              error,
+            );
+          }
         }
       } catch {
         // No-op: usuario no autenticado
@@ -86,6 +95,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const user = await loginUser(values);
       setAuthUser(user);
+      try {
+        await syncLocalDraftToRemoteList();
+      } catch (error) {
+        console.warn(
+          "No se pudo sincronizar el borrador local tras login.",
+          error,
+        );
+      }
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));
