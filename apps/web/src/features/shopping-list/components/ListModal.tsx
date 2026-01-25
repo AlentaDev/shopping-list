@@ -4,11 +4,18 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 type ListModalProps = {
   isOpen: boolean;
   onClose: () => void;
+  onReadyToShop?: () => void;
   children: ReactNode;
   title?: string;
 };
 
-const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
+const ListModal = ({
+  isOpen,
+  onClose,
+  onReadyToShop,
+  children,
+  title,
+}: ListModalProps) => {
   const titleId = useId();
   const previousOverflow = useRef<string | null>(null);
 
@@ -69,7 +76,16 @@ const ListModal = ({ isOpen, onClose, children, title }: ListModalProps) => {
             </h2>
           </div>
           <div className="px-6 py-4">{children}</div>
-          <div className="flex justify-end border-t border-slate-200 px-6 py-4">
+          <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
+            {onReadyToShop ? (
+              <button
+                type="button"
+                onClick={onReadyToShop}
+                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              >
+                {UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL}
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onClose}

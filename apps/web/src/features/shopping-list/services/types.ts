@@ -1,3 +1,5 @@
+import type { ListStatus } from "./listStatus";
+
 export type AutosaveItemInput = {
   id: string;
   kind: "manual";
@@ -26,5 +28,11 @@ export type AutosaveDraft = {
 export type AutosaveSummary = {
   id: string;
   title: string;
+  updatedAt: string;
+};
+
+export type ListStatusSummary = {
+  id: string;
+  status: ListStatus;
   updatedAt: string;
 };

@@ -11,6 +11,12 @@ import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraftInput } from "./services/types";
+import { activateList } from "./services/ListStatusService";
+import {
+  LIST_STATUS,
+  canActivateList,
+  type ListStatus,
+} from "./services/listStatus";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -27,6 +33,11 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const [listTitle, setListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
+  const [listId, setListId] = useState<string | null>(null);
+  const [listStatus, setListStatus] = useState<ListStatus>(
+    LIST_STATUS.LOCAL_DRAFT,
+  );
+  const canReadyToShop = canActivateList(listStatus);
   const draftTitle = listName.trim() || listTitle;
 
   const handleRehydrate = useCallback(
@@ -106,8 +117,30 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
     setViewMode(SHOPPING_LIST_VIEW.LIST);
   };
 
+  const handleReadyToShop = useCallback(async () => {
+    if (!canActivateList(listStatus)) {
+      return;
+    }
+
+    try {
+      const response = await activateList({
+        status: listStatus,
+        listId,
+      });
+      setListId(response.id);
+      setListStatus(response.status);
+    } catch (error) {
+      console.warn("No se pudo activar la lista.", error);
+    }
+  }, [listId, listStatus]);
+
   return (
-    <ListModal isOpen={isOpen} onClose={onClose} title={listTitle}>
+    <ListModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={listTitle}
+      onReadyToShop={canReadyToShop ? handleReadyToShop : undefined}
+    >
       {viewMode === SHOPPING_LIST_VIEW.LIST ? (
         <div className="space-y-6">
           {autosaveDraft ? (

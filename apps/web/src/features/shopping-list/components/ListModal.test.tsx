@@ -120,4 +120,20 @@ describe("ListModal", () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("muestra y ejecuta la acción de lista lista para comprar", async () => {
+    const onReadyToShop = vi.fn();
+
+    render(
+      <ListModal isOpen onClose={vi.fn()} onReadyToShop={onReadyToShop}>
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Lista lista para comprar" }),
+    );
+
+    expect(onReadyToShop).toHaveBeenCalledTimes(1);
+  });
 });
