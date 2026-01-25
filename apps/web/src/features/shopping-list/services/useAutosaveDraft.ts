@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { ListItem } from "@src/context/ListContextValue";
 import {
   createAutosaveScheduler,
+  loadLocalDraft,
   saveLocalDraft,
 } from "./AutosaveService";
 import type { AutosaveDraftInput, AutosaveItemInput } from "./types";
@@ -9,6 +10,7 @@ import type { AutosaveDraftInput, AutosaveItemInput } from "./types";
 type UseAutosaveDraftOptions = {
   enabled?: boolean;
   debounceMs?: number;
+  onRehydrate?: (draft: AutosaveDraftInput) => void;
 };
 
 type UseAutosaveDraftParams = {
@@ -39,8 +41,9 @@ export const useAutosaveDraft = (
   { title, items }: UseAutosaveDraftParams,
   options: UseAutosaveDraftOptions = {}
 ) => {
-  const { enabled = true, debounceMs } = options;
+  const { enabled = true, debounceMs, onRehydrate } = options;
   const schedulerRef = useRef<AutosaveScheduler | null>(null);
+  const hasRehydratedRef = useRef(false);
 
   const draft = useMemo(
     () => buildAutosaveDraft(title, items),
@@ -55,6 +58,20 @@ export const useAutosaveDraft = (
       schedulerRef.current = null;
     };
   }, [debounceMs]);
+
+  useEffect(() => {
+    if (hasRehydratedRef.current) {
+      return;
+    }
+
+    const localDraft = loadLocalDraft();
+
+    if (localDraft && onRehydrate) {
+      onRehydrate(localDraft);
+    }
+
+    hasRehydratedRef.current = true;
+  }, [onRehydrate]);
 
   useEffect(() => {
     if (!enabled) {

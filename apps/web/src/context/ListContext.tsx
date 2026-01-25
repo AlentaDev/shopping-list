@@ -7,6 +7,7 @@ import {
 
 type ListAction =
   | { type: "ADD_ITEM"; item: ListItem }
+  | { type: "SET_ITEMS"; items: ListItem[] }
   | { type: "UPDATE_QUANTITY"; itemId: string; quantity: number }
   | { type: "REMOVE_ITEM"; itemId: string };
 
@@ -27,6 +28,8 @@ const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
 
       return [...state, { ...action.item, quantity: 1 }];
     }
+    case "SET_ITEMS":
+      return [...action.items];
     case "UPDATE_QUANTITY":
       return state.map((item) =>
         item.id === action.itemId
@@ -52,6 +55,10 @@ export function ListProvider({ children, initialItems }: ListProviderProps) {
     dispatch({ type: "ADD_ITEM", item });
   }, []);
 
+  const setItems = useCallback((nextItems: ListItem[]) => {
+    dispatch({ type: "SET_ITEMS", items: nextItems });
+  }, []);
+
   const updateQuantity = useCallback((itemId: string, quantity: number) => {
     dispatch({ type: "UPDATE_QUANTITY", itemId, quantity });
   }, []);
@@ -75,6 +82,7 @@ export function ListProvider({ children, initialItems }: ListProviderProps) {
     linesCount,
     total,
     addItem,
+    setItems,
     updateQuantity,
     removeItem,
   };
