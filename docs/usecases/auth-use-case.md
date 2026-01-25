@@ -58,7 +58,7 @@ El usuario intenta registrarse con datos inválidos o un email ya registrado.
 
 ---
 
-### CU-AUTH-02: Inicio de sesión
+### CU-AUTH-03: Inicio de sesión
 
 **Actor:** Usuario no registrado
 
@@ -76,7 +76,7 @@ El usuario inicia sesión con sus credenciales existentes.
 
 ---
 
-### CU-AUTH-03: Inicio de sesión con credenciales inválidas
+### CU-AUTH-04: Inicio de sesión con credenciales inválidas
 
 **Actor:** Usuario no registrado
 
@@ -94,7 +94,7 @@ El usuario intenta iniciar sesión con credenciales incorrectas.
 
 ---
 
-### CU-AUTH-04: Recuperación de sesión (refresh automático)
+### CU-AUTH-05: Recuperación de sesión (refresh automático)
 
 **Actor:** Usuario registrado
 
@@ -111,7 +111,7 @@ El usuario mantiene la sesión activa mediante renovación automática.
 
 ---
 
-### CU-AUTH-05: Fallo de refresh de sesión
+### CU-AUTH-06: Fallo de refresh de sesión
 
 **Actor:** Usuario registrado
 
@@ -128,7 +128,7 @@ El sistema no puede renovar la sesión del usuario.
 
 ---
 
-### CU-AUTH-06: Cierre de sesión
+### CU-AUTH-07: Cierre de sesión
 
 **Actor:** Usuario registrado
 
