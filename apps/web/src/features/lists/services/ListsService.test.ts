@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  activateList,
+  completeList,
+  createList,
   deleteList,
   duplicateList,
   getListDetail,
   getLists,
 } from "./ListsService";
 import { LIST_STATUS } from "./listActions";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {
   ok: boolean;
@@ -134,6 +138,111 @@ describe("ListsService", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-4",
       expect.objectContaining({ method: "DELETE" })
+    );
+  });
+
+  it("activates list with PATCH", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "list-5",
+        status: LIST_STATUS.ACTIVE,
+        updatedAt: "2024-02-04T10:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(activateList("list-5")).resolves.toEqual({
+      id: "list-5",
+      status: LIST_STATUS.ACTIVE,
+      updatedAt: "2024-02-04T10:00:00.000Z",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-5/status",
+      expect.objectContaining({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
+      })
+    );
+  });
+
+  it("completes list with POST", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "list-6",
+        status: LIST_STATUS.COMPLETED,
+        updatedAt: "2024-02-05T10:00:00.000Z",
+        items: [],
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      completeList("list-6", { checkedItemIds: ["item-1", "item-2"] })
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-6/complete",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkedItemIds: ["item-1", "item-2"] }),
+      })
+    );
+  });
+
+  it("creates list with default title", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "list-7",
+        title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+        updatedAt: "2024-02-06T10:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createList()).resolves.toEqual({
+      id: "list-7",
+      title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+      updatedAt: "2024-02-06T10:00:00.000Z",
+      status: LIST_STATUS.DRAFT,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE }),
+      })
+    );
+  });
+
+  it("throws when list creation fails", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(createList("Mercado")).rejects.toThrow(
+      "Unable to create list."
     );
   });
 });

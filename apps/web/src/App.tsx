@@ -7,6 +7,7 @@ import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import {
   AuthLoggedInNotice,
   AuthScreen,
@@ -51,6 +52,17 @@ const App = () => {
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOpenCart = () => {
+      setIsCartOpen(true);
+    };
+
+    window.addEventListener(APP_EVENTS.OPEN_CART, handleOpenCart);
+    return () => {
+      window.removeEventListener(APP_EVENTS.OPEN_CART, handleOpenCart);
     };
   }, []);
 

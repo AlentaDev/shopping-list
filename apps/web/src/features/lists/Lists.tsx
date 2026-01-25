@@ -3,11 +3,15 @@ import ListsScreen from "./components/ListsScreen";
 import type { ListActionKey } from "./services/listActions";
 import type { ListSummary } from "./services/types";
 import {
+  activateList,
+  completeList,
+  createList,
   deleteList,
   duplicateList,
   getListDetail,
   getLists,
 } from "./services/ListsService";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 
 const Lists = () => {
   const [lists, setLists] = useState<ListSummary[]>([]);
@@ -41,6 +45,22 @@ const Lists = () => {
   }, []);
 
   const handleAction = async (listId: string, action: ListActionKey) => {
+    if (action === "activate") {
+      await activateList(listId);
+      await loadLists();
+      return;
+    }
+
+    if (action === "complete") {
+      const listDetail = await getListDetail(listId);
+      const checkedItemIds = listDetail.items
+        .filter((item) => item.checked)
+        .map((item) => item.id);
+      await completeList(listId, { checkedItemIds });
+      await loadLists();
+      return;
+    }
+
     if (action === "duplicate") {
       await duplicateList(listId);
       await loadLists();
@@ -58,7 +78,11 @@ const Lists = () => {
     }
   };
 
-  const handleCreate = () => {};
+  const handleCreate = async () => {
+    await createList();
+    await loadLists();
+    window.dispatchEvent(new Event(APP_EVENTS.OPEN_CART));
+  };
 
   return (
     <ListsScreen lists={lists} onAction={handleAction} onCreate={handleCreate} />

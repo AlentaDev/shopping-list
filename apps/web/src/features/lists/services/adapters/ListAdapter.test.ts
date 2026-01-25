@@ -3,6 +3,8 @@ import { LIST_STATUS } from "../listActions";
 import {
   adaptListCollectionResponse,
   adaptListDetailResponse,
+  adaptListStatusSummaryResponse,
+  adaptListSummaryResponse,
 } from "./ListAdapter";
 
 describe("ListAdapter", () => {
@@ -54,6 +56,36 @@ describe("ListAdapter", () => {
           status: LIST_STATUS.DRAFT,
         },
       ],
+    });
+  });
+
+  it("normalizes list summary payload", () => {
+    const payload = {
+      id: "list-3",
+      title: "Caprichos",
+      updatedAt: "2024-02-03T10:00:00.000Z",
+      status: LIST_STATUS.ACTIVE,
+    };
+
+    expect(adaptListSummaryResponse(payload)).toEqual({
+      id: "list-3",
+      title: "Caprichos",
+      updatedAt: "2024-02-03T10:00:00.000Z",
+      status: LIST_STATUS.ACTIVE,
+    });
+  });
+
+  it("normalizes list status summary payload", () => {
+    const payload = {
+      id: "list-4",
+      status: LIST_STATUS.ACTIVE,
+      updatedAt: "2024-02-04T10:00:00.000Z",
+    };
+
+    expect(adaptListStatusSummaryResponse(payload)).toEqual({
+      id: "list-4",
+      status: LIST_STATUS.ACTIVE,
+      updatedAt: "2024-02-04T10:00:00.000Z",
     });
   });
 
