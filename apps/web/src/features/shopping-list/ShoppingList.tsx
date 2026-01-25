@@ -12,6 +12,7 @@ import { useAutosaveDraft } from "./services/useAutosaveDraft";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
+import { deleteListItem } from "./services/ListItemsService";
 import {
   LIST_STATUS,
   canActivateList,
@@ -21,11 +22,18 @@ import {
 type ShoppingListProps = {
   isOpen: boolean;
   onClose: () => void;
+  initialListId?: string | null;
+  initialListStatus?: ListStatus;
 };
 
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
-const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
+const ShoppingList = ({
+  isOpen,
+  onClose,
+  initialListId,
+  initialListStatus,
+}: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
@@ -33,10 +41,12 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   const [listTitle, setListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
-  const [listId, setListId] = useState<string | null>(null);
+  const [listId, setListId] = useState<string | null>(initialListId ?? null);
   const [listStatus, setListStatus] = useState<ListStatus>(
-    LIST_STATUS.LOCAL_DRAFT,
+    initialListStatus ?? LIST_STATUS.LOCAL_DRAFT,
   );
+  const [pendingRemoval, setPendingRemoval] =
+    useState<ShoppingListItem | null>(null);
   const canReadyToShop = canActivateList(listStatus);
   const draftTitle = listName.trim() || listTitle;
 
@@ -75,6 +85,11 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
       onRehydrate: handleRehydrate,
     });
 
+  const handleClose = () => {
+    setPendingRemoval(null);
+    onClose();
+  };
+
   const sortedItems = useMemo(
     () =>
       [...items].sort((left, right) => {
@@ -98,8 +113,29 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
     updateQuantity(id, currentQuantity - 1);
   };
 
-  const handleRemove = (id: string) => {
-    removeItem(id);
+  const handleRemoveRequest = (item: ShoppingListItem) => {
+    setPendingRemoval(item);
+  };
+
+  const handleCancelRemove = () => {
+    setPendingRemoval(null);
+  };
+
+  const handleConfirmRemove = async () => {
+    if (!pendingRemoval) {
+      return;
+    }
+
+    try {
+      if (listId) {
+        await deleteListItem({ listId, itemId: pendingRemoval.id });
+      }
+
+      removeItem(pendingRemoval.id);
+      setPendingRemoval(null);
+    } catch (error) {
+      console.warn("No se pudo eliminar el item.", error);
+    }
   };
 
   const handleStartSave = () => {
@@ -137,7 +173,7 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
   return (
     <ListModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={listTitle}
       onReadyToShop={canReadyToShop ? handleReadyToShop : undefined}
     >
@@ -163,10 +199,10 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
               items={sortedItems as ShoppingListItem[]}
               onIncrement={handleIncrement}
               onDecrement={handleDecrement}
-              onRemove={handleRemove}
+              onRemove={handleRemoveRequest}
             />
           )}
-          <Total total={total} onAddMore={onClose} onSave={handleStartSave} />
+          <Total total={total} onAddMore={handleClose} onSave={handleStartSave} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -204,6 +240,42 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
           </div>
         </div>
       )}
+      {pendingRemoval ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h3 className="text-lg font-semibold text-slate-900">
+              {UI_TEXT.SHOPPING_LIST.DELETE_CONFIRMATION.TITLE}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {UI_TEXT.SHOPPING_LIST.DELETE_CONFIRMATION.MESSAGE}{" "}
+              <span className="font-semibold text-slate-800">
+                {pendingRemoval.name}
+              </span>
+              .
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancelRemove}
+                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              >
+                {UI_TEXT.SHOPPING_LIST.DELETE_CONFIRMATION.CANCEL_LABEL}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRemove}
+                className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+              >
+                {UI_TEXT.SHOPPING_LIST.DELETE_CONFIRMATION.CONFIRM_LABEL}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </ListModal>
   );
 };

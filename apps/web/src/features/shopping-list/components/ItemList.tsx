@@ -6,7 +6,7 @@ type ItemListProps = {
   items: ShoppingListItem[];
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
-  onRemove: (id: string) => void;
+  onRemove: (item: ShoppingListItem) => void;
 };
 
 const ItemList = ({
@@ -74,7 +74,7 @@ const ItemList = ({
           </div>
           <button
             type="button"
-            onClick={() => onRemove(item.id)}
+            onClick={() => onRemove(item)}
             aria-label={`${UI_TEXT.ITEM_LIST.REMOVE_ITEM_LABEL} ${item.name}`}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-slate-400 transition hover:border-slate-200 hover:text-slate-600"
           >
