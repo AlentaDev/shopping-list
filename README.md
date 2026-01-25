@@ -97,6 +97,35 @@ No se acepta código nuevo sin tests asociados.
 
 ---
 
+## Instalación local
+
+1. Instala dependencias:
+   ```bash
+   pnpm install
+   ```
+2. Configura el entorno (API + Web):
+   - **API**: usa el archivo de ejemplo `apps/api/.env.example` y crea `apps/api/.env` con las variables mínimas:
+     - `PORT`
+     - `CORS_ORIGIN`
+     - `DB_HOST`
+     - `DB_PORT`
+     - `DB_NAME`
+     - `DB_USER`
+     - `DB_PASSWORD`
+     - `DB_SSL`
+   - **Web**: actualmente no requiere variables de entorno. Si en el futuro se añadieran, coloca el archivo en `apps/web/.env`.
+3. Ejecuta migraciones locales:
+   ```bash
+   pnpm -C apps/api database:migrate
+   ```
+   - Ejecuta este comando **después** de levantar la base de datos y **antes** de iniciar la API.
+4. Levanta los servicios:
+   ```bash
+   pnpm dev
+   ```
+
+---
+
 ## Estado del proyecto
 
 Este repositorio proporciona un **scaffold base** preparado para evolucionar de forma incremental.
