@@ -9,3 +9,7 @@ export const SHOPPING_LIST_VIEW = {
   LIST: "list",
   SAVE: "save",
 } as const;
+
+export const APP_EVENTS = {
+  OPEN_CART: "app:open-cart",
+} as const;

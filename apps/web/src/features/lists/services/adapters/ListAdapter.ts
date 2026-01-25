@@ -3,6 +3,7 @@ import type {
   ListCollection,
   ListDetail,
   ListItem,
+  ListStatusSummary,
   ListSummary,
 } from "../types";
 
@@ -45,6 +46,12 @@ type ListDetailPayload = {
   status?: string;
 };
 
+type ListStatusSummaryPayload = {
+  id?: string;
+  status?: string;
+  updatedAt?: string;
+};
+
 const resolveStatus = (status?: string): ListSummary["status"] => {
   if (status && STATUS_VALUES.has(status)) {
     return status as ListSummary["status"];
@@ -76,6 +83,21 @@ const adaptListSummary = (list: ListSummaryPayload): ListSummary => ({
   updatedAt: list.updatedAt ?? "",
   status: resolveStatus(list.status),
 });
+
+export const adaptListSummaryResponse = (payload: unknown): ListSummary =>
+  adaptListSummary(payload as ListSummaryPayload);
+
+export const adaptListStatusSummaryResponse = (
+  payload: unknown,
+): ListStatusSummary => {
+  const data = payload as ListStatusSummaryPayload;
+
+  return {
+    id: data.id ?? "",
+    status: resolveStatus(data.status),
+    updatedAt: data.updatedAt ?? "",
+  };
+};
 
 export const adaptListCollectionResponse = (
   payload: unknown,

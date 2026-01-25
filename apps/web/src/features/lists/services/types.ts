@@ -33,6 +33,12 @@ export type ListDetail = {
   status?: ListStatus;
 };
 
+export type ListStatusSummary = {
+  id: string;
+  status: ListStatus;
+  updatedAt: string;
+};
+
 export type ListCollection = {
   lists: ListSummary[];
 };

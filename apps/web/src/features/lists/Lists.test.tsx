@@ -5,6 +5,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Lists from "./Lists";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import { LIST_STATUS } from "./services/listActions";
 
 type FetchResponse = {
@@ -31,6 +32,12 @@ describe("Lists", () => {
                 status: LIST_STATUS.DRAFT,
               },
               {
+                id: "active-1",
+                title: "Despensa",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                status: LIST_STATUS.ACTIVE,
+              },
+              {
                 id: "completed-1",
                 title: "Navidad",
                 updatedAt: "2024-02-02T10:00:00.000Z",
@@ -48,6 +55,59 @@ describe("Lists", () => {
             id: "draft-1",
             title: "Compra semanal",
             updatedAt: "2024-02-01T10:00:00.000Z",
+            items: [],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/draft-1/status" && init?.method === "PATCH") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-1",
+            status: LIST_STATUS.ACTIVE,
+            updatedAt: "2024-02-01T12:00:00.000Z",
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-1") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "active-1",
+            title: "Despensa",
+            updatedAt: "2024-02-01T11:00:00.000Z",
+            status: LIST_STATUS.ACTIVE,
+            items: [
+              {
+                id: "item-1",
+                kind: "manual",
+                name: "Leche",
+                qty: 1,
+                checked: true,
+                updatedAt: "2024-02-01T11:30:00.000Z",
+              },
+              {
+                id: "item-2",
+                kind: "manual",
+                name: "Pan",
+                qty: 1,
+                checked: false,
+                updatedAt: "2024-02-01T11:35:00.000Z",
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-1/complete" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "active-1",
+            status: LIST_STATUS.COMPLETED,
+            updatedAt: "2024-02-01T12:30:00.000Z",
             items: [],
           }),
         };
@@ -73,6 +133,17 @@ describe("Lists", () => {
         };
       }
 
+      if (url === "/api/lists" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "created-1",
+            title: "Tu lista",
+            updatedAt: "2024-02-03T10:00:00.000Z",
+          }),
+        };
+      }
+
       return {
         ok: false,
         json: async () => ({}),
@@ -80,10 +151,26 @@ describe("Lists", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
+    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
 
     render(<Lists />);
 
     expect(await screen.findByText("Compra semanal")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
+
+    expect(dispatchSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: APP_EVENTS.OPEN_CART })
+    );
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
@@ -91,6 +178,38 @@ describe("Lists", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/lists/draft-1");
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE })
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/draft-1/status",
+        expect.objectContaining({ method: "PATCH" })
+      );
+    });
+
+    await userEvent.click(
+      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.ACTIVE })
+    );
+
+    expect(await screen.findByText("Despensa")).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith("/api/lists/active-1");
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/active-1/complete",
+        expect.objectContaining({ method: "POST" })
+      );
     });
 
     await userEvent.click(
