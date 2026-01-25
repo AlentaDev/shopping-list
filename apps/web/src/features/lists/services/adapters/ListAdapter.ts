@@ -40,8 +40,12 @@ type ListDetailPayload = {
   status?: string;
 };
 
-const resolveStatus = (status?: string): ListSummary["status"] =>
-  STATUS_VALUES.has(status ?? "") ? (status as ListSummary["status"]) : LIST_STATUS.DRAFT;
+const resolveStatus = (status?: string): ListSummary["status"] => {
+  if (status && STATUS_VALUES.has(status)) {
+    return status as ListSummary["status"];
+  }
+  return LIST_STATUS.DRAFT;
+};
 
 const adaptListItem = (item: ListItemPayload): ListItem => ({
   id: item.id ?? "",
