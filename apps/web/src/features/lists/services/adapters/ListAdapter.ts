@@ -1,7 +1,12 @@
 import { LIST_STATUS } from "../listActions";
-import type { ListCollection, ListDetail, ListItem, ListSummary } from "../types";
+import type {
+  ListCollection,
+  ListDetail,
+  ListItem,
+  ListSummary,
+} from "../types";
 
-const STATUS_VALUES = new Set(Object.values(LIST_STATUS));
+const STATUS_VALUES: Set<string> = new Set(Object.values(LIST_STATUS));
 
 type ListSummaryPayload = {
   id?: string;
@@ -72,9 +77,13 @@ const adaptListSummary = (list: ListSummaryPayload): ListSummary => ({
   status: resolveStatus(list.status),
 });
 
-export const adaptListCollectionResponse = (payload: unknown): ListCollection => {
+export const adaptListCollectionResponse = (
+  payload: unknown,
+): ListCollection => {
   const data = payload as ListCollectionPayload;
-  const lists = Array.isArray(data.lists) ? data.lists.map(adaptListSummary) : [];
+  const lists = Array.isArray(data.lists)
+    ? data.lists.map(adaptListSummary)
+    : [];
 
   return { lists };
 };
