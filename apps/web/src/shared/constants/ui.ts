@@ -103,6 +103,12 @@ export const UI_TEXT = {
     LIST_NAME_PLACEHOLDER: "Ej. Compra semanal",
     CANCEL_LABEL: "Cancelar",
     SAVE_LABEL: "Guardar",
+    AUTOSAVE_RECOVERY: {
+      TITLE: "Hemos encontrado un borrador guardado",
+      MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",
+      CONTINUE_LABEL: "Continuar",
+      DISCARD_LABEL: "Descartar",
+    },
   },
   LIST_MODAL: {
     DEFAULT_LIST_TITLE: "Tu lista",

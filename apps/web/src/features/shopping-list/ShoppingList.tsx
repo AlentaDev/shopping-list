@@ -2,11 +2,14 @@ import { useCallback, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
+import AutosaveRecoveryBanner from "./components/AutosaveRecoveryBanner";
 import { useList } from "@src/context/useList";
+import { useAuth } from "@src/context/useAuth";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
+import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraftInput } from "./services/types";
 
 type ShoppingListProps = {
@@ -17,6 +20,7 @@ type ShoppingListProps = {
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
 const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
+  const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState("");
@@ -53,6 +57,12 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
     { title: draftTitle, items },
     { enabled: items.length > 0, onRehydrate: handleRehydrate },
   );
+
+  const { draft: autosaveDraft, handleContinue, handleDiscard } =
+    useAutosaveRecovery({
+      enabled: Boolean(authUser),
+      onRehydrate: handleRehydrate,
+    });
 
   const sortedItems = useMemo(
     () =>
@@ -100,6 +110,12 @@ const ShoppingList = ({ isOpen, onClose }: ShoppingListProps) => {
     <ListModal isOpen={isOpen} onClose={onClose} title={listTitle}>
       {viewMode === SHOPPING_LIST_VIEW.LIST ? (
         <div className="space-y-6">
+          {autosaveDraft ? (
+            <AutosaveRecoveryBanner
+              onContinue={handleContinue}
+              onDiscard={handleDiscard}
+            />
+          ) : null}
           {sortedItems.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
               <p className="text-sm font-semibold text-slate-700">

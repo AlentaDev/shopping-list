@@ -6,12 +6,19 @@ import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
+import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
   const appleName = "Manzanas Fuji";
   const milkName = "Leche entera";
   const breadName = "Pan integral multicereal extra largo";
+  const authUser = {
+    id: "user-1",
+    name: "María",
+    email: "maria@example.com",
+    postalCode: "28001",
+  };
   const initialItems: ListItem[] = [
     {
       id: "item-1",
@@ -49,12 +56,39 @@ describe("ShoppingList", () => {
     localStorage.clear();
   });
 
-  it("sorts items by category", () => {
+  const baseAuthContext: AuthContextType = {
+    authUser: null,
+    isAuthSubmitting: false,
+    authError: null,
+    isUserMenuOpen: false,
+    setIsUserMenuOpen: vi.fn(),
+    register: vi.fn(),
+    login: vi.fn(),
+    logout: vi.fn(),
+  };
+
+  const renderShoppingList = ({
+    items = initialItems,
+    authenticated = false,
+  }: {
+    items?: ListItem[];
+    authenticated?: boolean;
+  } = {}) =>
     render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
+      <AuthContext.Provider
+        value={{
+          ...baseAuthContext,
+          authUser: authenticated ? authUser : null,
+        }}
+      >
+        <ListProvider initialItems={items}>
+          <ShoppingList isOpen onClose={vi.fn()} />
+        </ListProvider>
+      </AuthContext.Provider>,
     );
+
+  it("sorts items by category", () => {
+    renderShoppingList();
 
     const itemNames = screen
       .getAllByTestId("item-name")
@@ -68,11 +102,7 @@ describe("ShoppingList", () => {
   });
 
   it("never decrements below 1", async () => {
-    render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList();
 
     const decrementButton = screen.getByRole("button", {
       name: `Disminuir cantidad de ${appleName}`,
@@ -86,11 +116,7 @@ describe("ShoppingList", () => {
   });
 
   it("removes a line item and updates total", async () => {
-    render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList();
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/4,60\s?€/);
 
@@ -103,11 +129,7 @@ describe("ShoppingList", () => {
   });
 
   it("updates total when incrementing quantity", async () => {
-    render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList();
 
     await userEvent.click(
       screen.getByRole("button", {
@@ -119,11 +141,7 @@ describe("ShoppingList", () => {
   });
 
   it("shows the save step and allows canceling", async () => {
-    render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList();
 
     await userEvent.click(
       screen.getByRole("button", { name: "Guardar lista" }),
@@ -139,11 +157,7 @@ describe("ShoppingList", () => {
   });
 
   it("shows the list name in the modal title after saving", async () => {
-    render(
-      <ListProvider initialItems={initialItems}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList();
 
     await userEvent.click(
       screen.getByRole("button", { name: "Guardar lista" }),
@@ -162,11 +176,7 @@ describe("ShoppingList", () => {
   });
 
   it("shows an empty state message when there are no items", () => {
-    render(
-      <ListProvider initialItems={[]}>
-        <ShoppingList isOpen onClose={vi.fn()} />
-      </ListProvider>,
-    );
+    renderShoppingList({ items: [] });
 
     expect(
       screen.getByText("Tu lista está en modo zen 🧘‍♂️"),
@@ -176,5 +186,94 @@ describe("ShoppingList", () => {
         "Añade algo del catálogo y empezamos a llenar la cesta.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("muestra el banner de recuperación y permite continuar", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async (_input, init) => {
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista recuperada",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+          items: [
+            {
+              id: "item-1",
+              kind: "manual",
+              name: "Leche",
+              qty: 2,
+              checked: false,
+              note: null,
+              updatedAt: "2024-01-01T00:00:00.000Z",
+            },
+          ],
+        }),
+      };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({ items: [], authenticated: true });
+
+    expect(
+      await screen.findByText("Hemos encontrado un borrador guardado"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+
+    expect(screen.getByText("Leche")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Hemos encontrado un borrador guardado"),
+    ).toBeNull();
+  });
+
+  it("descarta el autosave remoto desde el banner", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async (_input, init) => {
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista recuperada",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+          items: [],
+        }),
+      };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({ items: [], authenticated: true });
+
+    await screen.findByText("Hemos encontrado un borrador guardado");
+
+    await user.click(screen.getByRole("button", { name: "Descartar" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(
+      screen.queryByText("Hemos encontrado un borrador guardado"),
+    ).toBeNull();
   });
 });
