@@ -201,6 +201,12 @@ paths:
       summary: Listar listas del usuario
       security:
         - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ListStatus"
       responses:
         "200":
           description: Listas del usuario
@@ -210,6 +216,55 @@ paths:
                 $ref: "#/components/schemas/ListListsResponse"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
+  /api/lists/autosave:
+    get:
+      tags:
+        - lists
+      summary: Obtener borrador de autosave
+      security:
+        - cookieAuth: []
+      responses:
+        "200":
+          description: Borrador de autosave o null si no existe
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutosaveDraft"
+                nullable: true
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+    put:
+      tags:
+        - lists
+      summary: Crear o actualizar borrador de autosave
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertAutosaveDraftRequest"
+      responses:
+        "200":
+          description: Borrador de autosave actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutosaveDraftSummary"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+    delete:
+      tags:
+        - lists
+      summary: Eliminar borrador de autosave
+      security:
+        - cookieAuth: []
+      responses:
+        "204":
+          description: Borrador eliminado
   /api/lists/{id}:
     get:
       tags:
@@ -232,6 +287,143 @@ paths:
                 $ref: "#/components/schemas/ListDetail"
         "400":
           $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+    delete:
+      tags:
+        - lists
+      summary: Eliminar lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista eliminada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/status:
+    patch:
+      tags:
+        - lists
+      summary: Actualizar estado de lista
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListStatusRequest"
+      responses:
+        "200":
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateListStatusResponse"
+        "400":
+          description: Error de validación o transición inválida
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationError"
+                  - $ref: "#/components/schemas/AppError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/complete:
+    post:
+      tags:
+        - lists
+      summary: Completar lista activa
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteListRequest"
+      responses:
+        "200":
+          description: Lista completada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompleteListResponse"
+        "400":
+          description: Error de validación o transición inválida
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationError"
+                  - $ref: "#/components/schemas/AppError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ItemNotFound"
+  /api/lists/{id}/duplicate:
+    post:
+      tags:
+        - lists
+      summary: Duplicar lista completada
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Lista duplicada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateListResponse"
+        "400":
+          description: Error de transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
         "403":
@@ -340,7 +532,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListItemDto"
         "400":
-          $ref: "#/components/responses/ValidationError"
+          description: Error de validación o transición inválida
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ValidationError"
+                  - $ref: "#/components/schemas/AppError"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
         "403":
@@ -371,6 +569,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkResponse"
+        "400":
+          description: Transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
         "403":
@@ -420,6 +624,12 @@ components:
       required:
         - error
         - details
+    ListStatus:
+      type: string
+      enum:
+        - DRAFT
+        - ACTIVE
+        - COMPLETED
     RegisterRequest:
       type: object
       properties:
@@ -472,6 +682,203 @@ components:
           maxLength: 60
       required:
         - title
+    UpdateListStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/ListStatus"
+        checkedItemIds:
+          type: array
+          items:
+            type: string
+      required:
+        - status
+    UpdateListStatusResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          $ref: "#/components/schemas/ListStatus"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - status
+        - updatedAt
+    CompleteListRequest:
+      type: object
+      properties:
+        checkedItemIds:
+          type: array
+          items:
+            type: string
+      required:
+        - checkedItemIds
+    CompleteListResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [COMPLETED]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListItemDto"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - status
+        - items
+        - updatedAt
+    DuplicateListResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListItemDto"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - status
+        - items
+        - updatedAt
+    AutosaveDraft:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutosaveItem"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - items
+        - updatedAt
+    AutosaveDraftSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - updatedAt
+    UpsertAutosaveDraftRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 60
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutosaveItem"
+      required:
+        - title
+        - items
+    AutosaveItem:
+      oneOf:
+        - $ref: "#/components/schemas/AutosaveManualItem"
+        - $ref: "#/components/schemas/AutosaveCatalogItem"
+      discriminator:
+        propertyName: kind
+    AutosaveManualItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [manual]
+        name:
+          type: string
+        qty:
+          type: number
+        checked:
+          type: boolean
+        note:
+          type: string
+      required:
+        - id
+        - kind
+        - name
+        - qty
+        - checked
+    AutosaveCatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [catalog]
+        name:
+          type: string
+        qty:
+          type: number
+        checked:
+          type: boolean
+        note:
+          type: string
+        source:
+          type: string
+          enum: [mercadona]
+        sourceProductId:
+          type: string
+        thumbnail:
+          type: string
+          nullable: true
+        price:
+          type: number
+          nullable: true
+        unitSize:
+          type: number
+          nullable: true
+        unitFormat:
+          type: string
+          nullable: true
+        unitPrice:
+          type: number
+          nullable: true
+        isApproxSize:
+          type: boolean
+      required:
+        - id
+        - kind
+        - name
+        - qty
+        - checked
+        - source
+        - sourceProductId
     ListSummary:
       type: object
       properties:
@@ -840,6 +1247,14 @@ components:
             $ref: "#/components/schemas/AppError"
           example:
             error: item_not_found
+    InvalidListStatusTransition:
+      description: Transición de estado inválida
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AppError"
+          example:
+            error: invalid_list_status_transition
     CatalogProviderFailed:
       description: Error del proveedor de catálogo
       content:
