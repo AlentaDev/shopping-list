@@ -43,6 +43,11 @@ export class ShoppingListPage {
     await this.getItem(name)
       .getByRole("button", { name: `Eliminar ${name}`, exact: true })
       .click();
+
+    // Confirmar la eliminación en el modal de confirmación
+    await this.page
+      .getByRole("button", { name: "Sí, eliminar", exact: true })
+      .click();
   }
 
   async getItemQuantity(name: string): Promise<number> {
