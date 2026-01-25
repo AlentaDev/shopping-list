@@ -72,6 +72,18 @@ export async function getCurrentUser(): Promise<AuthUser> {
   return (await response.json()) as AuthUser;
 }
 
+export async function refreshSession(): Promise<{ ok: boolean }> {
+  const response = await fetch("/api/auth/refresh", {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    await throwAuthErrorFromResponse(response, "Unable to refresh session");
+  }
+
+  return (await response.json()) as { ok: boolean };
+}
+
 export async function logoutUser(): Promise<{ ok: boolean }> {
   const response = await fetch("/api/auth/logout", {
     method: "POST",

@@ -11,6 +11,7 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  refreshSession,
   AuthServiceError,
   type LoginInput,
   type RegisterInput,
@@ -48,22 +49,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isActive = true;
 
+    const applyAuthenticatedUser = async (user: AuthUser) => {
+      if (!isActive) {
+        return;
+      }
+      setAuthUser(user);
+      try {
+        await syncLocalDraftToRemoteList();
+      } catch (error) {
+        console.warn(
+          "No se pudo sincronizar el borrador local tras recuperar sesión.",
+          error,
+        );
+      }
+    };
+
     const loadCurrentUser = async () => {
       try {
         const user = await getCurrentUser();
-        if (isActive) {
-          setAuthUser(user);
-          try {
-            await syncLocalDraftToRemoteList();
-          } catch (error) {
-            console.warn(
-              "No se pudo sincronizar el borrador local tras recuperar sesión.",
-              error,
-            );
-          }
+        await applyAuthenticatedUser(user);
+      } catch (error) {
+        if (
+          error instanceof AuthServiceError &&
+          error.code === "not_authenticated" &&
+          isActive
+        ) {
+          setAuthUser(null);
+          setIsUserMenuOpen(false);
+          setAuthError(resolveAuthErrorMessage(error));
+          return;
         }
-      } catch {
-        // No-op: usuario no autenticado
+        try {
+          await refreshSession();
+          const refreshedUser = await getCurrentUser();
+          await applyAuthenticatedUser(refreshedUser);
+        } catch (refreshError) {
+          if (
+            refreshError instanceof AuthServiceError &&
+            refreshError.code === "not_authenticated" &&
+            isActive
+          ) {
+            setAuthUser(null);
+            setIsUserMenuOpen(false);
+            setAuthError(resolveAuthErrorMessage(refreshError));
+          }
+          // No-op: usuario no autenticado
+        }
       }
     };
 
