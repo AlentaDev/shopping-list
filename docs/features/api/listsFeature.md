@@ -129,12 +129,20 @@ Si no hay borrador autosave, responde con `null`.
 }
 ```
 
+Para completar la lista y sincronizar items marcados:
+
+```json
+{
+  "status": "COMPLETED",
+  "checkedItemIds": ["uuid"]
+}
+```
+
 **Response 200**
 
 ```json
 {
   "id": "uuid",
-  "title": "Groceries",
   "status": "ACTIVE",
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }

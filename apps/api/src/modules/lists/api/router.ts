@@ -141,6 +141,7 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         userId,
         listId: params.id,
         status: input.status,
+        checkedItemIds: input.checkedItemIds,
       });
 
       res.status(200).json(response);
