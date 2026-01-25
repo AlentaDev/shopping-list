@@ -17,6 +17,7 @@ const CURRENT_USER_URL = "/api/users/me";
 const AUTH_LOGIN_URL = "/api/auth/login";
 const AUTH_LOGOUT_URL = "/api/auth/logout";
 const AUTH_REGISTER_URL = "/api/auth/register";
+const AUTOSAVE_URL = "/api/lists/autosave";
 const TEST_POSTAL_CODE = "28001";
 const CHILD_CATEGORY_ID = "child-1";
 const CHILD_CATEGORY_NAME = "Bollería";
@@ -84,6 +85,27 @@ describe("App", () => {
           return {
             ok: false,
             json: async () => ({}),
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
           };
         }
 
@@ -245,6 +267,13 @@ describe("App", () => {
         return {
           ok: false,
           json: async () => ({}),
+        };
+      }
+
+      if (input === AUTOSAVE_URL) {
+        return {
+          ok: true,
+          json: async () => null,
         };
       }
 
@@ -477,6 +506,13 @@ describe("App", () => {
               email: "ada@example.com",
               postalCode: "28001",
             }),
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
           };
         }
 
