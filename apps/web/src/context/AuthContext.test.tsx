@@ -21,6 +21,10 @@ vi.mock("@src/features/auth/services/AuthService", async () => {
   };
 });
 
+vi.mock("@src/features/shopping-list/services/LocalDraftSyncService", () => ({
+  syncLocalDraftToRemoteList: vi.fn(),
+}));
+
 import {
   getCurrentUser,
   registerUser,
@@ -28,6 +32,7 @@ import {
   logoutUser,
   AuthServiceError,
 } from "@src/features/auth/services/AuthService";
+import { syncLocalDraftToRemoteList } from "@src/features/shopping-list/services/LocalDraftSyncService";
 const TEST_EMAIL = "test@example.com";
 const TEST_PASSWORD = "password"; // nosem
 const TEST_POSTAL_CODE = "28001";
@@ -131,6 +136,7 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
+    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
   it("handles register without authenticating user", async () => {
@@ -212,6 +218,7 @@ describe("AuthProvider", () => {
         "test@example.com",
       );
     });
+    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
   it("handles logout", async () => {
