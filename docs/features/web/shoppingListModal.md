@@ -7,7 +7,7 @@ frontend, permitiendo editar cantidades, eliminar líneas y ver el total.
 
 ## Endpoints
 
-No aplica en esta iteración (mock local).
+- `PATCH /api/lists/:id/status` para activar la lista con `ACTIVE`.
 
 ## Reglas importantes
 
@@ -18,7 +18,8 @@ No aplica en esta iteración (mock local).
 - Al guardar se muestra el nombre en el título del modal; si está vacío, usa "Tu lista".
 - El decremento nunca baja de 1 incluso si se manipula el HTML.
 - Si no hay items se muestra un estado vacío con mensaje.
-- No hay integración backend en esta iteración.
+- Al marcar "Lista lista para comprar", se activa el estado remoto y si está en LOCAL_DRAFT
+  se crea primero la lista remota.
 
 ## Notas de implementación
 
