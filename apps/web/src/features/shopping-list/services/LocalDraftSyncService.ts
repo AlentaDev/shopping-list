@@ -31,9 +31,10 @@ const createList = async (
 };
 
 const buildItemPayload = (item: AutosaveItemInput) => {
-  const payload: { name: string; qty: number; note?: string } = {
+  const payload: { name: string; qty: number; checked: boolean; note?: string } = {
     name: item.name,
     qty: item.qty,
+    checked: item.checked,
   };
 
   if (item.note) {

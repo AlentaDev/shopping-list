@@ -80,7 +80,12 @@ describe("LocalDraftSyncService", () => {
       "/api/lists/list-1/items",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ name: "Leche", qty: 2, note: "Sin lactosa" }),
+        body: JSON.stringify({
+          name: "Leche",
+          qty: 2,
+          checked: false,
+          note: "Sin lactosa",
+        }),
       }),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
@@ -88,7 +93,7 @@ describe("LocalDraftSyncService", () => {
       "/api/lists/list-1/items",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ name: "Pan", qty: 1 }),
+        body: JSON.stringify({ name: "Pan", qty: 1, checked: false }),
       }),
     );
     expect(localStorage.getItem("lists.localDraft")).toBeNull();
