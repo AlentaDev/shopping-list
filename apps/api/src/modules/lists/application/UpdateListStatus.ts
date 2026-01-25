@@ -1,5 +1,6 @@
 import type { ListRepository } from "./ports.js";
 import {
+  ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
@@ -10,6 +11,7 @@ type UpdateListStatusInput = {
   userId: string;
   listId: string;
   status: ListStatus;
+  checkedItemIds?: string[];
 };
 
 type UpdateListStatusResult = {
@@ -20,7 +22,7 @@ type UpdateListStatusResult = {
 
 const ALLOWED_TRANSITIONS: Record<ListStatus, ListStatus[]> = {
   DRAFT: ["ACTIVE"],
-  ACTIVE: [],
+  ACTIVE: ["COMPLETED"],
   COMPLETED: [],
 };
 
@@ -45,9 +47,35 @@ export class UpdateListStatus {
         throw new ListStatusTransitionError();
       }
 
-      list.status = input.status;
-      list.updatedAt = new Date();
-      await this.listRepository.save(list);
+      if (input.status === "COMPLETED") {
+        if (!input.checkedItemIds) {
+          throw new ListStatusTransitionError();
+        }
+
+        const checkedIds = new Set(input.checkedItemIds);
+        for (const checkedId of checkedIds) {
+          if (!list.items.some((item) => item.id === checkedId)) {
+            throw new ItemNotFoundError();
+          }
+        }
+
+        const now = new Date();
+        for (const item of list.items) {
+          const shouldBeChecked = checkedIds.has(item.id);
+          if (item.checked !== shouldBeChecked) {
+            item.checked = shouldBeChecked;
+            item.updatedAt = now;
+          }
+        }
+
+        list.status = "COMPLETED";
+        list.updatedAt = now;
+        await this.listRepository.save(list);
+      } else {
+        list.status = input.status;
+        list.updatedAt = new Date();
+        await this.listRepository.save(list);
+      }
     }
 
     return {

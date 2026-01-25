@@ -25,9 +25,20 @@ export const patchItemSchema = z.object({
   note: z.string().max(240).optional(),
 });
 
-export const updateListStatusSchema = z.object({
-  status: z.enum(LIST_STATUSES),
-});
+export const updateListStatusSchema = z
+  .object({
+    status: z.enum(LIST_STATUSES),
+    checkedItemIds: z.array(z.string().min(1)).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.status === "COMPLETED" && !value.checkedItemIds) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "checkedItemIds is required when completing a list.",
+        path: ["checkedItemIds"],
+      });
+    }
+  });
 
 export const completeListSchema = z.object({
   checkedItemIds: z.array(z.string().min(1)),
