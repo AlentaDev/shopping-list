@@ -103,6 +103,12 @@ export const UI_TEXT = {
     LIST_NAME_PLACEHOLDER: "Ej. Compra semanal",
     CANCEL_LABEL: "Cancelar",
     SAVE_LABEL: "Guardar",
+    DELETE_CONFIRMATION: {
+      TITLE: "¿Eliminar producto de la lista?",
+      MESSAGE: "Vas a quitar el producto",
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: "Sí, eliminar",
+    },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos encontrado un borrador guardado",
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",

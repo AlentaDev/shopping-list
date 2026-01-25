@@ -70,9 +70,13 @@ describe("ShoppingList", () => {
   const renderShoppingList = ({
     items = initialItems,
     authenticated = false,
+    listId,
+    listStatus,
   }: {
     items?: ListItem[];
     authenticated?: boolean;
+    listId?: string | null;
+    listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -82,7 +86,12 @@ describe("ShoppingList", () => {
         }}
       >
         <ListProvider initialItems={items}>
-          <ShoppingList isOpen onClose={vi.fn()} />
+          <ShoppingList
+            isOpen
+            onClose={vi.fn()}
+            initialListId={listId}
+            initialListStatus={listStatus}
+          />
         </ListProvider>
       </AuthContext.Provider>,
     );
@@ -124,8 +133,64 @@ describe("ShoppingList", () => {
       screen.getByRole("button", { name: `Eliminar ${milkName}` }),
     );
 
+    expect(
+      screen.getByText("¿Eliminar producto de la lista?"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Sí, eliminar" }),
+    );
+
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/2,70\s?€/);
     expect(screen.queryByText(milkName)).toBeNull();
+  });
+
+  it("permite cancelar el borrado desde la confirmación", async () => {
+    renderShoppingList();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
+    );
+
+    expect(
+      screen.getByText("¿Eliminar producto de la lista?"),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(
+      screen.queryByText("¿Eliminar producto de la lista?"),
+    ).toBeNull();
+    expect(screen.getByText(appleName)).toBeInTheDocument();
+  });
+
+  it("confirma el borrado remoto cuando hay listId", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async () => ({
+      ok: true,
+      json: async () => ({}),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({ listId: "list-99", listStatus: "ACTIVE" });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Sí, eliminar" }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-99/items/item-1",
+      expect.objectContaining({ method: "DELETE" }),
+    );
   });
 
   it("updates total when incrementing quantity", async () => {
