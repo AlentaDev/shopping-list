@@ -6,15 +6,9 @@ import {
   type ListActionKey,
   type ListStatus,
 } from "../services/listActions";
+import type { ListSummary } from "../services/types";
 
 type TabKey = "DRAFT" | "ACTIVE" | "COMPLETED";
-
-export type ListSummary = {
-  id: string;
-  title: string;
-  updatedAt: string;
-  status: ListStatus;
-};
 
 type ListsScreenProps = {
   lists: ListSummary[];
