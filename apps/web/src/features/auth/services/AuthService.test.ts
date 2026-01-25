@@ -5,6 +5,7 @@ import {
   loginUser,
   registerUser,
   logoutUser,
+  refreshSession,
 } from "./AuthService";
 
 const FINGERPRINT = "test-device-fingerprint";
@@ -145,6 +146,23 @@ describe("AuthService", () => {
     });
   });
 
+  it("refreshes the user session", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({ ok: true }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(refreshSession()).resolves.toEqual({ ok: true });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/refresh", {
+      method: "POST",
+    });
+  });
+
   it("loads the current user", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -186,5 +204,21 @@ describe("AuthService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(logoutUser()).rejects.toThrow("Unable to logout");
+  });
+
+  it("throws a typed error when refresh session fails with an error code", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({ error: "not_authenticated" }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(refreshSession()).rejects.toBeInstanceOf(AuthServiceError);
+    await expect(refreshSession()).rejects.toMatchObject({
+      code: "not_authenticated",
+    });
   });
 });

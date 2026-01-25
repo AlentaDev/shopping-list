@@ -18,6 +18,7 @@ vi.mock("@src/features/auth/services/AuthService", async () => {
     registerUser: vi.fn(),
     loginUser: vi.fn(),
     logoutUser: vi.fn(),
+    refreshSession: vi.fn(),
   };
 });
 
@@ -30,6 +31,7 @@ import {
   registerUser,
   loginUser,
   logoutUser,
+  refreshSession,
   AuthServiceError,
 } from "@src/features/auth/services/AuthService";
 import { syncLocalDraftToRemoteList } from "@src/features/shopping-list/services/LocalDraftSyncService";
@@ -90,6 +92,7 @@ function TestComponent() {
 describe("AuthProvider", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(refreshSession).mockRejectedValue(new Error("No refresh"));
   });
 
   afterEach(() => {
@@ -136,6 +139,35 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
+    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
+  });
+
+  it("refreshes session and retries current user when initial load fails", async () => {
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(getCurrentUser)
+      .mockRejectedValueOnce(new Error("Not logged in"))
+      .mockResolvedValueOnce(mockUser);
+    vi.mocked(refreshSession).mockResolvedValueOnce({ ok: true });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "test@example.com",
+      );
+    });
+
+    expect(getCurrentUser).toHaveBeenCalledTimes(2);
+    expect(refreshSession).toHaveBeenCalled();
     expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
