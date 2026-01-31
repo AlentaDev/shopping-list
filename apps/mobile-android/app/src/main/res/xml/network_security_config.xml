@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Permitir HTTP en desarrollo (10.0.2.2 es localhost en emulador) -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+
+    <!-- HTTPS para producción y otros dominios -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.tu-dominio.com</domain>
+    </domain-config>
+</network-security-config>
+

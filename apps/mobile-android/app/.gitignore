@@ -1,0 +1,40 @@
+# Android / Gradle
+**/.gradle/
+**/build/
+**/out/
+**/local.properties
+
+# Android Studio / IntelliJ
+**/.idea/
+**/*.iml
+
+# Kotlin cache
+**/.kotlin/
+
+# Native / CMake / external builds
+**/.cxx/
+**/.externalNativeBuild/
+
+# Build outputs
+**/captures/
+**/outputs/
+*.apk
+*.ap_
+*.aab
+
+# Signing keys and secrets
+*.jks
+*.keystore
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+
+# Logs, temp, debug
+*.log
+*.tmp
+*.hprof
+*.orig
+
+# Gradle wrapper (optional)
+**/gradle-wrapper.jar
