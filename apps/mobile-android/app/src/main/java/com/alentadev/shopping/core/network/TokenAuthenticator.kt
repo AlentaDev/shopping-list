@@ -1,4 +1,4 @@
-package com.alentadev.shopping.network
+package com.alentadev.shopping.core.network
 
 import android.util.Log
 import okhttp3.Authenticator

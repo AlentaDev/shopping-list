@@ -1,4 +1,4 @@
-package com.alentadev.shopping.network
+package com.alentadev.shopping.core.network
 
 import android.content.Context
 import android.util.Log
@@ -112,4 +112,5 @@ class PersistentCookieJar(private val context: Context) : CookieJar {
         }
     }
 }
+
 

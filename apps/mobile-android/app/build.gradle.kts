@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -65,6 +67,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
+    // ViewModel para Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
     // Retrofit + OkHttp
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
@@ -77,7 +82,24 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    // Hilt - Inyección de dependencias
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // Room - Base de datos local
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
+
+    // Coil - Carga de imágenes
+    implementation(libs.coil.compose)
+
+    // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

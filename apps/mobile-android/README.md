@@ -10,11 +10,20 @@ cargar el resto del repositorio.
 - Offline-first para uso en supermercado.
 - Login obligatorio con cuenta creada en la web.
 
-## Documentación local
+## Documentación
 
-- `AGENTS.md`: reglas operativas para IA y contribuciones.
-- `docs/architecture.md`: arquitectura móvil y decisiones clave.
-- `docs/use-cases/`: casos de uso definitivos.
+### Arquitectura y Casos de Uso
+- `AGENTS.md`: reglas operativas para IA y contribuciones
+- `docs/architecture.md`: arquitectura móvil y decisiones clave
+- `docs/use-cases/`: casos de uso definitivos
+- `docs/implementation/005-understanding.md`: análisis completo del proyecto
+- `docs/implementation/006-implementation-plan.md`: plan de implementación por fases
+
+### Debugging y Troubleshooting
+- `.github/docs/debugging/002-monitorizacion.md`: guía de monitorización
+- `.github/docs/debugging/003-conexion-debugging.md`: debugging de conexión
+- `.github/docs/debugging/004-solucion-conexion.md`: soluciones implementadas
+- `.github/docs/archive/001-retrofit-setup.md`: setup histórico de Retrofit
 
 ## Principios clave
 
