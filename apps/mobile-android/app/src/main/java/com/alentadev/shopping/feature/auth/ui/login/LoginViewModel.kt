@@ -1,0 +1,106 @@
+package com.alentadev.shopping.feature.auth.ui.login
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
+import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val loginUseCase: LoginUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
+    val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+
+    private val _email = MutableStateFlow("")
+    val email: StateFlow<String> = _email.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password: StateFlow<String> = _password.asStateFlow()
+
+    private val _cookieTestResult = MutableStateFlow<String>("")
+    val cookieTestResult: StateFlow<String> = _cookieTestResult.asStateFlow()
+
+    fun onEmailChanged(newEmail: String) {
+        _email.value = newEmail
+    }
+
+    fun onPasswordChanged(newPassword: String) {
+        _password.value = newPassword
+    }
+
+    fun onLoginClicked() {
+        // Validaciones
+        val email = _email.value.trim()
+        val password = _password.value
+
+        if (email.isEmpty()) {
+            _uiState.value = LoginUiState.Error("El email no puede estar vacío")
+            return
+        }
+
+        if (password.isEmpty()) {
+            _uiState.value = LoginUiState.Error("La contraseña no puede estar vacía")
+            return
+        }
+
+        if (!isValidEmail(email)) {
+            _uiState.value = LoginUiState.Error("Formato de email inválido")
+            return
+        }
+
+        // Llamar al use case
+        viewModelScope.launch {
+            _uiState.value = LoginUiState.Loading
+
+            try {
+                Log.d("LoginViewModel", "Iniciando login para email: $email")
+                val session = loginUseCase.execute(email, password)
+                Log.d("LoginViewModel", "Login exitoso: ${session.user.name}")
+                _uiState.value = LoginUiState.Success(session.user)
+            } catch (e: IllegalArgumentException) {
+                Log.e("LoginViewModel", "IllegalArgumentException en login: ${e.message}", e)
+                _uiState.value = LoginUiState.Error("Credenciales inválidas")
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Exception en login: ${e.javaClass.name} - ${e.message}", e)
+                e.printStackTrace()
+                _uiState.value = LoginUiState.Error(
+                    when {
+                        e.message?.contains("Connection") == true -> "Error de conexión. Reintentando..."
+                        e.message?.contains("timeout") == true -> "Timeout. Por favor intenta de nuevo."
+                        else -> "Error: ${e.message ?: "Desconocido"}"
+                    }
+                )
+            }
+        }
+    }
+
+    fun testCookies() {
+        viewModelScope.launch {
+            try {
+                Log.d("LoginViewModel", "Probando cookies con getCurrentUser...")
+                val user = getCurrentUserUseCase.execute()
+                val message = "✅ Cookies funcionan! Usuario: ${user.name} (${user.email})"
+                Log.d("LoginViewModel", message)
+                _cookieTestResult.value = message
+            } catch (e: Exception) {
+                val message = "❌ Cookies NO funcionan: ${e.message}"
+                Log.e("LoginViewModel", message, e)
+                _cookieTestResult.value = message
+            }
+        }
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return email.contains("@") && email.contains(".")
+    }
+}

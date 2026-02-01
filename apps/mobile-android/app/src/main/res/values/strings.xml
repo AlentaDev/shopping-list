@@ -1,3 +1,23 @@
 <resources>
-    <string name="app_name">Shopping</string>
+    <string name="app_name">Shopping List</string>
+
+    <!-- Auth / Login -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="login_email_hint">Email</string>
+    <string name="login_email_placeholder">usuario@ejemplo.com</string>
+    <string name="login_password_hint">Contraseña</string>
+    <string name="login_password_placeholder">Ingresa tu contraseña</string>
+    <string name="login_button">Iniciar Sesión</string>
+    <string name="login_loading">Autenticando…</string>
+    <string name="login_show_password">Mostrar</string>
+    <string name="login_hide_password">Ocultar</string>
+
+    <!-- Error messages -->
+    <string name="error_email_empty">El email no puede estar vacío</string>
+    <string name="error_email_invalid">Formato de email inválido</string>
+    <string name="error_password_empty">La contraseña no puede estar vacía</string>
+    <string name="error_credentials_invalid">Credenciales inválidas</string>
+    <string name="error_network_connection">Error de conexión. Reintentando…</string>
+    <string name="error_network_timeout">Timeout. Por favor intenta de nuevo.</string>
+    <string name="error_unknown">Error: </string>
 </resources>

@@ -6,11 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.rememberNavController
+import com.alentadev.shopping.ui.navigation.AppNavHost
 import com.alentadev.shopping.ui.theme.ShoppingTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -30,28 +31,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    Scaffold(
+    Surface(
         modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                title = { Text("Shopping List") }
-            )
-        }
-    ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Text(
-                text = "FASE 0 completada ✅\nArquitectura lista para implementar features",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
+        color = MaterialTheme.colorScheme.background
+    ) {
+        val navController = rememberNavController()
+        AppNavHost(
+            navController = navController,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

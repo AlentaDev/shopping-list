@@ -13,24 +13,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.alentadev.shopping.network.RetrofitClient
+import com.alentadev.shopping.core.network.ApiService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
+
+import com.alentadev.shopping.core.data.dto.HealthStatus
 
 private const val TAG = "HealthCheckScreen"
 
 sealed class HealthUiState {
     object Idle : HealthUiState()
     object Loading : HealthUiState()
-    data class Success(val response: Map<String, String>, val responseTime: Long) : HealthUiState()
+    data class Success(val response: HealthStatus, val responseTime: Long) : HealthUiState()
     data class Error(val message: String, val code: Int?, val details: String? = null) : HealthUiState()
 }
 
-class HealthViewModel : ViewModel() {
+@HiltViewModel
+class HealthViewModel @Inject constructor(
+    private val apiService: ApiService
+) : ViewModel() {
     var uiState by mutableStateOf<HealthUiState>(HealthUiState.Idle)
         private set
 
@@ -43,9 +50,6 @@ class HealthViewModel : ViewModel() {
                 Log.d(TAG, "=== INICIANDO VERIFICACIÓN DE SALUD ===")
                 Log.d(TAG, "Timestamp: ${System.currentTimeMillis()}")
 
-                Log.d(TAG, "Obteniendo ApiService...")
-                val apiService = RetrofitClient.getApiService()
-                Log.d(TAG, "ApiService obtenido")
 
                 Log.d(TAG, "Realizando petición HTTP GET /health...")
                 val response = apiService.getHealth()
@@ -102,7 +106,7 @@ class HealthViewModel : ViewModel() {
 @Composable
 fun HealthCheckScreen(
     modifier: Modifier = Modifier,
-    viewModel: HealthViewModel = viewModel()
+    viewModel: HealthViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
 
@@ -268,15 +272,7 @@ fun SuccessCard(state: HealthUiState.Success) {
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-            state.response["status"]?.let { status ->
-                InfoRow("Estado", status)
-            }
-            state.response["timestamp"]?.let { timestamp ->
-                InfoRow("Timestamp", timestamp)
-            }
-            state.response["message"]?.let { message ->
-                InfoRow("Mensaje", message)
-            }
+            InfoRow("Estado", state.response.status)
             InfoRow("Tiempo de respuesta", "${state.responseTime} ms")
             InfoRow("Hora local", getCurrentTime())
         }

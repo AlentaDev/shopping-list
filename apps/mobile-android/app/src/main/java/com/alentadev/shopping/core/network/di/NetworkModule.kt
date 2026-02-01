@@ -5,7 +5,9 @@ import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.DebugInterceptor
 import com.alentadev.shopping.core.network.PersistentCookieJar
+import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.TokenAuthenticator
+import com.alentadev.shopping.feature.auth.data.remote.AuthApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,23 +56,26 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideTokenAuthenticator(
-        cookieJar: PersistentCookieJar
-    ): TokenAuthenticator = TokenAuthenticator(cookieJar)
+    fun provideRetryInterceptor(): RetryInterceptor = RetryInterceptor()
 
     @Singleton
     @Provides
     fun provideOkHttpClient(
+        retryInterceptor: RetryInterceptor,
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
-        tokenAuthenticator: TokenAuthenticator
+        retrofit: dagger.Lazy<Retrofit>  // Lazy para evitar ciclo
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(retryInterceptor)
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)
-            .authenticator(tokenAuthenticator)
+            .authenticator(TokenAuthenticator(cookieJar) {
+                // Provider lazy de AuthApi
+                retrofit.get().create(AuthApi::class.java)
+            })
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
@@ -95,5 +100,10 @@ object NetworkModule {
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
-}
 
+    @Singleton
+    @Provides
+    fun provideAuthApi(retrofit: Retrofit): AuthApi {
+        return retrofit.create(AuthApi::class.java)
+    }
+}
