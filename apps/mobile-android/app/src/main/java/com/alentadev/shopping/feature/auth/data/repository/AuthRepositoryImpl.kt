@@ -36,8 +36,8 @@ class AuthRepositoryImpl(
      */
     override suspend fun login(email: String, password: String): Session {
         try {
-            val response = remoteDataSource.login(email, password)
-            val user = response.user.toDomain()
+            val userDto = remoteDataSource.login(email, password)
+            val user = userDto.toDomain()
             val session = Session(user = user)
 
             localDataSource.saveSession(session)

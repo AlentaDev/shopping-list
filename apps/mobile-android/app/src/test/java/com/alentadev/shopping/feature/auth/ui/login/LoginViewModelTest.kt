@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.auth.ui.login
 
 import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.entity.User
+import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -21,6 +22,7 @@ import org.junit.runner.Description
 
 class LoginViewModelTest {
     private lateinit var loginUseCase: LoginUseCase
+    private lateinit var getCurrentUserUseCase: GetCurrentUserUseCase
     private lateinit var viewModel: LoginViewModel
 
     @get:Rule
@@ -29,7 +31,8 @@ class LoginViewModelTest {
     @Before
     fun setup() {
         loginUseCase = mockk()
-        viewModel = LoginViewModel(loginUseCase)
+        getCurrentUserUseCase = mockk()
+        viewModel = LoginViewModel(loginUseCase, getCurrentUserUseCase)
     }
 
     @Test

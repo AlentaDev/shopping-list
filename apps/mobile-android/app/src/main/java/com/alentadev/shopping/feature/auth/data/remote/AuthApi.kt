@@ -1,7 +1,6 @@
 package com.alentadev.shopping.feature.auth.data.remote
 
 import com.alentadev.shopping.feature.auth.data.dto.LoginRequest
-import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
 import com.alentadev.shopping.feature.auth.data.dto.OkResponse
 import retrofit2.http.Body
@@ -17,10 +16,10 @@ interface AuthApi {
     /**
      * Login con email y password
      * @param request Email y password del usuario
-     * @return Sesión con usuario y token de acceso
+     * @return Usuario autenticado (el backend devuelve directamente el usuario, no wrapped)
      */
     @POST("api/auth/login")
-    suspend fun login(@Body request: LoginRequest): LoginResponse
+    suspend fun login(@Body request: LoginRequest): PublicUserDto
 
     /**
      * Logout del usuario

@@ -1,7 +1,9 @@
 package com.alentadev.shopping.feature.auth.ui.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase
+    private val loginUseCase: LoginUseCase,
+    private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -23,6 +26,9 @@ class LoginViewModel @Inject constructor(
 
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
+
+    private val _cookieTestResult = MutableStateFlow<String>("")
+    val cookieTestResult: StateFlow<String> = _cookieTestResult.asStateFlow()
 
     fun onEmailChanged(newEmail: String) {
         _email.value = newEmail
@@ -57,11 +63,16 @@ class LoginViewModel @Inject constructor(
             _uiState.value = LoginUiState.Loading
 
             try {
+                Log.d("LoginViewModel", "Iniciando login para email: $email")
                 val session = loginUseCase.execute(email, password)
+                Log.d("LoginViewModel", "Login exitoso: ${session.user.name}")
                 _uiState.value = LoginUiState.Success(session.user)
-            } catch (_: IllegalArgumentException) {
+            } catch (e: IllegalArgumentException) {
+                Log.e("LoginViewModel", "IllegalArgumentException en login: ${e.message}", e)
                 _uiState.value = LoginUiState.Error("Credenciales inválidas")
             } catch (e: Exception) {
+                Log.e("LoginViewModel", "Exception en login: ${e.javaClass.name} - ${e.message}", e)
+                e.printStackTrace()
                 _uiState.value = LoginUiState.Error(
                     when {
                         e.message?.contains("Connection") == true -> "Error de conexión. Reintentando..."
@@ -73,8 +84,23 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    fun testCookies() {
+        viewModelScope.launch {
+            try {
+                Log.d("LoginViewModel", "Probando cookies con getCurrentUser...")
+                val user = getCurrentUserUseCase.execute()
+                val message = "✅ Cookies funcionan! Usuario: ${user.name} (${user.email})"
+                Log.d("LoginViewModel", message)
+                _cookieTestResult.value = message
+            } catch (e: Exception) {
+                val message = "❌ Cookies NO funcionan: ${e.message}"
+                Log.e("LoginViewModel", message, e)
+                _cookieTestResult.value = message
+            }
+        }
+    }
+
     private fun isValidEmail(email: String): Boolean {
         return email.contains("@") && email.contains(".")
     }
 }
-

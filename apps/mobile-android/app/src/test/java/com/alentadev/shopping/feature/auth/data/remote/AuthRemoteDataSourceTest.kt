@@ -1,7 +1,6 @@
 package com.alentadev.shopping.feature.auth.data.remote
 
 import com.alentadev.shopping.core.device.DeviceFingerprintProvider
-import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.OkResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
 import io.mockk.coEvery
@@ -35,23 +34,20 @@ class AuthRemoteDataSourceTest {
             email = email,
             postalCode = "28001"
         )
-        val expectedResponse = LoginResponse(
-            user = expectedUser
-        )
 
         coEvery { deviceFingerprintProvider.getFingerprint() } returns fingerprint
         coEvery {
             authApi.login(match {
                 it.email == email && it.password == password && it.fingerprint == fingerprint
             })
-        } returns expectedResponse
+        } returns expectedUser
 
         // Act
         val result = authRemoteDataSource.login(email, password)
 
         // Assert
-        assertEquals(expectedResponse, result)
-        assertEquals(email, result.user.email)
+        assertEquals(expectedUser, result)
+        assertEquals(email, result.email)
     }
 
     @Test
@@ -60,25 +56,23 @@ class AuthRemoteDataSourceTest {
         val email = "user@example.com"
         val password = "pass123"
         val fingerprint = "device-fingerprint-456"
-        val response = LoginResponse(
-            user = PublicUserDto(
-                id = "user-456",
-                name = "User Name",
-                email = email,
-                postalCode = "08002"
-            )
+        val user = PublicUserDto(
+            id = "user-456",
+            name = "User Name",
+            email = email,
+            postalCode = "08002"
         )
 
         coEvery { deviceFingerprintProvider.getFingerprint() } returns fingerprint
-        coEvery { authApi.login(any()) } returns response
+        coEvery { authApi.login(any()) } returns user
 
         // Act
         val result = authRemoteDataSource.login(email, password)
 
         // Assert
-        assertNotNull(result.user)
-        assertEquals(email, result.user.email)
-        assertEquals("user-456", result.user.id)
+        assertNotNull(result)
+        assertEquals(email, result.email)
+        assertEquals("user-456", result.id)
     }
 
     @Test

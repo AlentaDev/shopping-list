@@ -60,25 +60,22 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideTokenAuthenticator(
-        cookieJar: PersistentCookieJar
-    ): TokenAuthenticator = TokenAuthenticator(cookieJar)
-
-    @Singleton
-    @Provides
     fun provideOkHttpClient(
         retryInterceptor: RetryInterceptor,
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
-        tokenAuthenticator: TokenAuthenticator
+        retrofit: dagger.Lazy<Retrofit>  // Lazy para evitar ciclo
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(retryInterceptor)
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)
-            .authenticator(tokenAuthenticator)
+            .authenticator(TokenAuthenticator(cookieJar) {
+                // Provider lazy de AuthApi
+                retrofit.get().create(AuthApi::class.java)
+            })
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
