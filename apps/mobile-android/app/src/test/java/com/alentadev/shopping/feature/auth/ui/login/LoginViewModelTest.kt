@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -20,6 +21,7 @@ import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
     private lateinit var loginUseCase: LoginUseCase
     private lateinit var getCurrentUserUseCase: GetCurrentUserUseCase
@@ -36,7 +38,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with valid credentials shows success`() = runTest {
+    fun `onLoginClicked with valid credentials shows success`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val email = "test@example.com"
         val password = "password123"
@@ -55,7 +57,6 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
-        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value
@@ -64,7 +65,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with empty email shows error`() = runTest {
+    fun `onLoginClicked with empty email shows error`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         viewModel.onEmailChanged("")
         viewModel.onPasswordChanged("password123")
@@ -79,7 +80,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with empty password shows error`() = runTest {
+    fun `onLoginClicked with empty password shows error`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         viewModel.onEmailChanged("test@example.com")
         viewModel.onPasswordChanged("")
@@ -94,7 +95,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with invalid email format shows error`() = runTest {
+    fun `onLoginClicked with invalid email format shows error`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         viewModel.onEmailChanged("invalidemail")
         viewModel.onPasswordChanged("password123")
@@ -109,7 +110,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with invalid credentials shows error`() = runTest {
+    fun `onLoginClicked with invalid credentials shows error`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val email = "test@example.com"
         val password = "wrongpassword"
@@ -123,7 +124,6 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
-        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value
@@ -144,7 +144,7 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun `onLoginClicked with network error shows appropriate message`() = runTest {
+    fun `onLoginClicked with network error shows appropriate message`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val email = "test@example.com"
         val password = "password123"
@@ -158,7 +158,6 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
-        mainDispatcherRule.testDispatcher.scheduler.advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value

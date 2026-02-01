@@ -1,6 +1,5 @@
 package com.alentadev.shopping.feature.auth.data.repository
 
-import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
 import com.alentadev.shopping.feature.auth.data.local.AuthLocalDataSource
 import com.alentadev.shopping.feature.auth.data.remote.AuthRemoteDataSource
@@ -38,13 +37,9 @@ class AuthRepositoryImplTest {
             email = email,
             postalCode = "28001"
         )
-        val response = LoginResponse(
-            user = userDto
-        )
 
-        coEvery { remoteDataSource.login(email, password) } returns response
+        coEvery { remoteDataSource.login(email, password) } returns userDto
         coEvery { localDataSource.saveSession(any()) } returns Unit
-        coEvery { localDataSource.saveAccessToken(any()) } returns Unit
 
         // Act
         val result = authRepository.login(email, password)
@@ -53,7 +48,6 @@ class AuthRepositoryImplTest {
         assertEquals("user-123", result.user.id)
         assertEquals(email, result.user.email)
         coVerify { localDataSource.saveSession(any()) }
-        coVerify(exactly = 0) { localDataSource.saveAccessToken(any()) }
     }
 
     @Test
@@ -61,16 +55,14 @@ class AuthRepositoryImplTest {
         // Arrange
         val email = "user@example.com"
         val password = "pass123"
-        val response = LoginResponse(
-            user = PublicUserDto(
-                id = "user-456",
-                name = "User Name",
-                email = email,
-                postalCode = "08002"
-            )
+        val userDto = PublicUserDto(
+            id = "user-456",
+            name = "User Name",
+            email = email,
+            postalCode = "08002"
         )
 
-        coEvery { remoteDataSource.login(email, password) } returns response
+        coEvery { remoteDataSource.login(email, password) } returns userDto
         coEvery { localDataSource.saveSession(any()) } returns Unit
 
         // Act
