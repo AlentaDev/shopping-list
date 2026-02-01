@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { AutosaveDraftInput } from "./types";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {
   ok: boolean;
@@ -138,6 +139,48 @@ describe("LocalDraftSyncService", () => {
     );
     expect(localStorage.getItem("lists.localDraft")).toBe(
       JSON.stringify(SAMPLE_DRAFT),
+    );
+  });
+
+  it("usa el título por defecto si el borrador local no tiene título", async () => {
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        ...SAMPLE_DRAFT,
+        title: "   ",
+      }),
+    );
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "list-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "item-remote-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "item-remote-2" }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(syncLocalDraftToRemoteList()).resolves.toEqual({
+      listId: "list-1",
+      itemsCreated: 2,
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/lists",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+        }),
+      }),
     );
   });
 });

@@ -1,5 +1,6 @@
 import { clearLocalDraft, loadLocalDraft } from "./AutosaveService";
 import type { AutosaveDraftInput, AutosaveItemInput } from "./types";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 const LISTS_ENDPOINT = "/api/lists";
 
@@ -15,12 +16,14 @@ type SyncResult = {
 const createList = async (
   draft: AutosaveDraftInput,
 ): Promise<ListSummaryResponse> => {
+  const title =
+    draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
   const response = await fetch(LISTS_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title: draft.title }),
+    body: JSON.stringify({ title }),
   });
 
   if (!response.ok) {
