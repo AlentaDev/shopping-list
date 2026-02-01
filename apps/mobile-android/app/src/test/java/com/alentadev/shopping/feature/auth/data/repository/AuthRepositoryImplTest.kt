@@ -39,8 +39,7 @@ class AuthRepositoryImplTest {
             postalCode = "28001"
         )
         val response = LoginResponse(
-            user = userDto,
-            accessToken = "token-abc"
+            user = userDto
         )
 
         coEvery { remoteDataSource.login(email, password) } returns response
@@ -54,7 +53,7 @@ class AuthRepositoryImplTest {
         assertEquals("user-123", result.user.id)
         assertEquals(email, result.user.email)
         coVerify { localDataSource.saveSession(any()) }
-        coVerify { localDataSource.saveAccessToken("token-abc") }
+        coVerify(exactly = 0) { localDataSource.saveAccessToken(any()) }
     }
 
     @Test
@@ -68,13 +67,11 @@ class AuthRepositoryImplTest {
                 name = "User Name",
                 email = email,
                 postalCode = "08002"
-            ),
-            accessToken = "jwt-token"
+            )
         )
 
         coEvery { remoteDataSource.login(email, password) } returns response
         coEvery { localDataSource.saveSession(any()) } returns Unit
-        coEvery { localDataSource.saveAccessToken(any()) } returns Unit
 
         // Act
         val result = authRepository.login(email, password)
@@ -186,4 +183,3 @@ class AuthRepositoryImplTest {
         }
     }
 }
-

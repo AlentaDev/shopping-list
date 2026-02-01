@@ -13,18 +13,20 @@
 - Jetpack Compose + Material3
 - DataStore (para cookies persistentes)
 - PersistentCookieJar (cookies HttpOnly)
-- TokenAuthenticator (refresh automático en 401)
+- TokenAuthenticator (refresh automático en 401) ✨ MEJORADO
 - DebugInterceptor (logging avanzado)
+- RetryInterceptor (backoff exponencial 1s, 2s, 4s) ✨ NUEVO
 - Endpoints básicos: `/health`, `/api/auth/login`, `/api/lists`
+- **FASE 1.1**: Domain Layer completa (11 tests)
+- **FASE 1.2**: Data Layer completa (8 tests)
+- **FASE 1.3**: Network Integration (retry, cleanup, Hilt unificado)
 
 ### ❌ **Falta implementar**
-- Clean Architecture (feature-first)
-- Room (almacenamiento local para offline-first)
-- Coil (carga de imágenes)
-- ViewModels (MVVM)
-- DTOs completos según OpenAPI
-- Tests (TDD)
-- Features completas (auth, lists, detail, complete, sync)
+- **FASE 1.4**: UI Layer de Login (LoginScreen, ViewModel, Strings)
+- Clean Architecture - MVVM UI completa
+- ViewModels con StateFlow en UI
+- Navegación completa (NavGraph)
+- FASE 2+: Listas, detalle, sincronización
 
 ---
 
@@ -110,34 +112,41 @@ com.alentadev.shopping/
 **Objetivo**: Login funcional con refresh automático
 
 #### 1.1 Domain Layer
-- [ ] `User.kt` (entity)
-- [ ] `Session.kt` (entity)
-- [ ] `LoginUseCase.kt`
-- [ ] `LogoutUseCase.kt`
-- [ ] `GetCurrentUserUseCase.kt`
-- [ ] Tests unitarios de casos de uso
+- [x] `User.kt` (entity) ✅ COMPLETADO
+- [x] `Session.kt` (entity) ✅ COMPLETADO
+- [x] `LoginUseCase.kt` ✅ COMPLETADO
+- [x] `LogoutUseCase.kt` ✅ COMPLETADO
+- [x] `GetCurrentUserUseCase.kt` ✅ COMPLETADO
+- [x] Tests unitarios de casos de uso ✅ COMPLETADO (11 tests)
 
 #### 1.2 Data Layer
-- [ ] `AuthApi.kt` (endpoints: /login, /logout, /refresh, /users/me)
-- [ ] `AuthRemoteDataSource.kt`
-- [ ] `AuthLocalDataSource.kt` (Room + DataStore)
-- [ ] `AuthRepository.kt` (implementación)
-- [ ] Mappers: DTO ↔ Entity
-- [ ] Tests de repository
+- [x] `AuthApi.kt` (endpoints: /login, /logout, /refresh, /users/me) ✅ COMPLETADO
+- [x] `AuthRemoteDataSource.kt` ✅ COMPLETADO
+- [x] `AuthLocalDataSource.kt` (DataStore) ✅ COMPLETADO (Room pendiente para futuras fases)
+- [x] `AuthRepository.kt` (implementación) ✅ COMPLETADO
+- [x] Mappers: DTO ↔ Entity ✅ COMPLETADO
+- [x] Tests de repository ✅ COMPLETADO (8 tests)
 
-#### 1.3 UI Layer
-- [ ] `LoginScreen.kt` (Compose)
-- [ ] `LoginViewModel.kt` (state management)
-- [ ] `LoginUiState.kt` (sealed class)
-- [ ] Navegación: LoginScreen → ActiveListsScreen
-- [ ] Strings.xml (mensajes de error)
-- [ ] Tests de ViewModel
 
-#### 1.4 Integración
-- [ ] Validar TokenAuthenticator con nuevos DTOs
-- [ ] Manejo de errores (401, 400, red)
-- [ ] Loading states
-- [ ] Retry con backoff (2 intentos: 1s, 3s)
+#### 1.3 Integración & Network
+- [x] Validar TokenAuthenticator con nuevos DTOs ✅ COMPLETADO
+- [x] Manejo de errores (401, 400, red) ✅ COMPLETADO
+- [x] Loading states (preparado en HealthCheckScreen) ✅ COMPLETADO
+- [x] Retry con backoff (3 intentos: 1s, 2s, 4s) ✅ COMPLETADO (RetryInterceptor)
+- [x] Eliminar código legacy (network/ folder) ✅ COMPLETADO
+- [x] Hilt injection unificado ✅ COMPLETADO
+- [x] RetryInterceptor implementado ✅ COMPLETADO
+- [x] TokenAuthenticator mejorado con refresh en 401 ✅ COMPLETADO
+
+#### 1.4 Presentation Layer (UI + State Management)
+- [ ] `LoginScreen.kt` (Compose UI completa)
+- [ ] `LoginViewModel.kt` (@HiltViewModel con StateFlow)
+- [ ] `LoginUiState.kt` (sealed class: Idle, Loading, Success, Error)
+- [ ] `LoginNavigation.kt` (rutas y transiciones)
+- [ ] `Strings.xml` (textos de login, errores, validaciones)
+- [ ] Tests de ViewModel (verificar flujos de estado)
+- [ ] Integración con navegación de app (NavGraph)
+- [ ] Manejo de back button (no permitir volver de login)
 
 ---
 
@@ -334,23 +343,29 @@ com.alentadev.shopping/
 
 ## 🚀 Orden de Ejecución Recomendado
 
-### **Sprint 1: Fundamentos + Auth (1-2 semanas)**
-1. FASE 0.1-0.4: Dependencias + estructura + DTOs + Room
-2. FASE 1: Auth completa (TDD)
+### **Sprint 1: Fundamentos + Auth Domain & Data (✅ COMPLETADO)**
+1. ✅ FASE 0: Dependencias + estructura + DTOs + Network setup
+2. ✅ FASE 1.1: Domain Layer (LoginUseCase, LogoutUseCase, GetCurrentUserUseCase)
+3. ✅ FASE 1.2: Data Layer (AuthRepository, RemoteDataSource, LocalDataSource)
+4. ✅ FASE 1.4: Network Integration (RetryInterceptor, TokenAuthenticator mejorado, cleanup)
 
-### **Sprint 2: Listas (1 semana)**
-3. FASE 2: Active Lists con offline-first básico
+### **Sprint 2: Auth UI + Login Screen (📋 PRÓXIMO)**
+5. 📋 FASE 1.4: Presentation Layer (LoginScreen, ViewModel, StateFlow, Strings.xml)
+6. 📋 FASE 1.4: Navigation setup (NavGraph, LoginScreen → ActiveListsScreen)
 
-### **Sprint 3: Detalle (1-2 semanas)**
-4. FASE 3: List Detail + checks + total
+### **Sprint 3: Listas (⏳ PENDIENTE)**
+7. FASE 2: Active Lists con offline-first básico
 
-### **Sprint 4: Completar + Sync (1 semana)**
-5. FASE 4: Completar lista
-6. FASE 5: Sincronización avanzada
+### **Sprint 4: Detalle (⏳ PENDIENTE)**
+8. FASE 3: List Detail + checks + total
 
-### **Sprint 5: Quality (1 semana)**
-7. FASE 6: Testing exhaustivo
-8. FASE 7: Polish y documentación
+### **Sprint 5: Completar + Sync (⏳ PENDIENTE)**
+9. FASE 4: Completar lista
+10. FASE 5: Sincronización avanzada
+
+### **Sprint 6: Quality (⏳ PENDIENTE)**
+11. FASE 6: Testing exhaustivo
+12. FASE 7: Polish y documentación
 
 ---
 

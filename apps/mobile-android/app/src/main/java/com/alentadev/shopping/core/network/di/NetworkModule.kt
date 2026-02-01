@@ -5,6 +5,7 @@ import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.DebugInterceptor
 import com.alentadev.shopping.core.network.PersistentCookieJar
+import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.TokenAuthenticator
 import dagger.Module
 import dagger.Provides
@@ -54,6 +55,10 @@ object NetworkModule {
 
     @Singleton
     @Provides
+    fun provideRetryInterceptor(): RetryInterceptor = RetryInterceptor()
+
+    @Singleton
+    @Provides
     fun provideTokenAuthenticator(
         cookieJar: PersistentCookieJar
     ): TokenAuthenticator = TokenAuthenticator(cookieJar)
@@ -61,12 +66,14 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideOkHttpClient(
+        retryInterceptor: RetryInterceptor,
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
         tokenAuthenticator: TokenAuthenticator
     ): OkHttpClient {
         return OkHttpClient.Builder()
+            .addInterceptor(retryInterceptor)
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)

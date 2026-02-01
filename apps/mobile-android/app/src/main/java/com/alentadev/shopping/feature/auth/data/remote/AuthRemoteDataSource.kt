@@ -40,4 +40,3 @@ class AuthRemoteDataSource(
         return authApi.getCurrentUser()
     }
 }
-

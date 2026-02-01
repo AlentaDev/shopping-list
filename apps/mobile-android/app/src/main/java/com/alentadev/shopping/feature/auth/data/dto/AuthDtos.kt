@@ -16,15 +16,12 @@ data class LoginRequest(
 )
 
 /**
- * Response del servidor con usuario y token
+ * Response del servidor con usuario autenticado
  */
 @Serializable
 data class LoginResponse(
     @SerialName("user")
-    val user: PublicUserDto,
-
-    @SerialName("accessToken")
-    val accessToken: String
+    val user: PublicUserDto
 )
 
 /**
@@ -46,12 +43,12 @@ data class PublicUserDto(
 )
 
 /**
- * Response para refresh token
+ * Response generica de ok
  */
 @Serializable
-data class RefreshTokenResponse(
-    @SerialName("accessToken")
-    val accessToken: String
+data class OkResponse(
+    @SerialName("ok")
+    val ok: Boolean = true
 )
 
 /**
@@ -68,4 +65,3 @@ data class ErrorDto(
     @SerialName("timestamp")
     val timestamp: String? = null
 )
-

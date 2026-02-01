@@ -36,24 +36,14 @@ class AuthRepositoryImpl(
      */
     override suspend fun login(email: String, password: String): Session {
         try {
-            // Llamar API remota
             val response = remoteDataSource.login(email, password)
-
-            // Convertir DTO a entidad de dominio
             val user = response.user.toDomain()
-
-            // Crear sesión
             val session = Session(user = user)
 
-            // Guardar sesión localmente
             localDataSource.saveSession(session)
-
-            // Guardar token de acceso
-            localDataSource.saveAccessToken(response.accessToken)
 
             return session
         } catch (e: Exception) {
-            // Verificar si es 401 (credenciales inválidas)
             if (e.message?.contains("401") == true) {
                 throw IllegalArgumentException("Credenciales inválidas")
             }

@@ -3,7 +3,7 @@ package com.alentadev.shopping.feature.auth.data.remote
 import com.alentadev.shopping.feature.auth.data.dto.LoginRequest
 import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
-import com.alentadev.shopping.feature.auth.data.dto.RefreshTokenResponse
+import com.alentadev.shopping.feature.auth.data.dto.OkResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -27,7 +27,7 @@ interface AuthApi {
      * Invalida la sesión actual
      */
     @POST("api/auth/logout")
-    suspend fun logout()
+    suspend fun logout(): OkResponse
 
     /**
      * Refresh del token de acceso
@@ -35,7 +35,7 @@ interface AuthApi {
      * @return Nuevo token de acceso
      */
     @POST("api/auth/refresh")
-    suspend fun refreshToken(): RefreshTokenResponse
+    suspend fun refreshToken(): OkResponse
 
     /**
      * Obtener datos del usuario actual autenticado
@@ -44,4 +44,3 @@ interface AuthApi {
     @GET("api/users/me")
     suspend fun getCurrentUser(): PublicUserDto
 }
-

@@ -66,6 +66,30 @@ Contiene:
 - 12 tests de integración (100% coverage)
 - Estrategia offline-first
 
+### 012-phase-1-network-integration.md
+**Fase 1.3: Network Integration & Cleanup - COMPLETADA ✅**
+
+Contiene:
+- RetryInterceptor con backoff exponencial (1s, 2s, 4s)
+- TokenAuthenticator mejorado con refresh en 401
+- Eliminación de código legacy (network/ folder)
+- Unificación con Hilt
+- HealthCheckScreen migrado a Hilt
+- Tests de RetryInterceptor
+
+### 013-phase-1-4-presentation-auth.md
+**Fase 1.4: Presentation Layer (UI + State Management) - PENDIENTE 📋**
+
+Contiene:
+- LoginScreen.kt (Compose UI completa)
+- LoginViewModel.kt (@HiltViewModel con StateFlow)
+- LoginUiState.kt (sealed class)
+- LoginNavigation.kt (rutas y transiciones)
+- Strings.xml (textos de login)
+- Tests de ViewModel
+- NavGraph integration
+- Back button handling
+
 ---
 
 ## 🔄 Orden de Lectura Recomendado
@@ -75,7 +99,9 @@ Contiene:
 3. **009-phase-0-completed.md** → Fundación lista ✅
 4. **010-phase-1-domain-auth.md** → Domain Layer completado ✅
 5. **011-phase-1-data-auth.md** → Data Layer completado ✅
-6. Proceder con FASE 1.3 (Presentation Layer)
+6. **012-phase-1-network-integration.md** → Network Integration completado ✅
+7. **013-phase-1-4-presentation-auth.md** → Presentación Layer (próximo paso)
+8. Proceder con FASE 2 (Listas Activas)
 
 ## 📊 Estado de Implementación
 
@@ -84,7 +110,8 @@ Contiene:
 | FASE 0 | Fundación | ✅ COMPLETADA |
 | FASE 1.1 | Domain Layer (Auth) | ✅ COMPLETADA |
 | FASE 1.2 | Data Layer (Auth) | ✅ COMPLETADA |
-| FASE 1.3 | Presentation Layer (Auth) | 📋 Próxima |
+| FASE 1.3 | Network Integration | ✅ COMPLETADA |
+| FASE 1.4 | Presentation Layer (Auth UI) | 📋 PRÓXIMA |
 | FASE 2 | Lists Management | ⏳ Pendiente |
 | FASE 3+ | Features Adicionales | ⏳ Pendiente |
 

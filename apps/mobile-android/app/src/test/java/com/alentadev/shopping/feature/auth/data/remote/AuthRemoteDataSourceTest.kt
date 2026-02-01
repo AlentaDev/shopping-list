@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.auth.data.remote
 import com.alentadev.shopping.feature.auth.data.dto.LoginRequest
 import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
+import com.alentadev.shopping.feature.auth.data.dto.OkResponse
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -32,8 +33,7 @@ class AuthRemoteDataSourceTest {
             postalCode = "28001"
         )
         val expectedResponse = LoginResponse(
-            user = expectedUser,
-            accessToken = "token-abc123"
+            user = expectedUser
         )
 
         coEvery {
@@ -49,7 +49,7 @@ class AuthRemoteDataSourceTest {
     }
 
     @Test
-    fun `login returns response with access token`() = runTest {
+    fun `login returns response without access token`() = runTest {
         // Arrange
         val email = "user@example.com"
         val password = "pass123"
@@ -59,8 +59,7 @@ class AuthRemoteDataSourceTest {
                 name = "User Name",
                 email = email,
                 postalCode = "08002"
-            ),
-            accessToken = "jwt-token-xyz789"
+            )
         )
 
         coEvery { authApi.login(any()) } returns response
@@ -69,19 +68,19 @@ class AuthRemoteDataSourceTest {
         val result = authRemoteDataSource.login(email, password)
 
         // Assert
-        assertNotNull(result.accessToken)
-        assertEquals("jwt-token-xyz789", result.accessToken)
+        assertNotNull(result.user)
+        assertEquals(email, result.user.email)
     }
 
     @Test
     fun `logout calls api logout endpoint`() = runTest {
         // Arrange
-        coEvery { authApi.logout() } returns Unit
+        coEvery { authApi.logout() } returns OkResponse(true)
 
         // Act
         authRemoteDataSource.logout()
 
-        // Assert - implícitamente pasa si no lanza excepción
+        // Assert
         assertTrue(true)
     }
 
@@ -105,4 +104,3 @@ class AuthRemoteDataSourceTest {
         assertEquals("user-789", result.id)
     }
 }
-
