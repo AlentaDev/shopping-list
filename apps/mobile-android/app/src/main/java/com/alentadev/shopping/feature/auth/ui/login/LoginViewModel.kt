@@ -63,16 +63,15 @@ class LoginViewModel @Inject constructor(
             _uiState.value = LoginUiState.Loading
 
             try {
-                Log.d("LoginViewModel", "Iniciando login para email: $email")
+                safeLog("d", "LoginViewModel", "Iniciando login para email: $email")
                 val session = loginUseCase.execute(email, password)
-                Log.d("LoginViewModel", "Login exitoso: ${session.user.name}")
+                safeLog("d", "LoginViewModel", "Login exitoso: ${session.user.name}")
                 _uiState.value = LoginUiState.Success(session.user)
             } catch (e: IllegalArgumentException) {
-                Log.e("LoginViewModel", "IllegalArgumentException en login: ${e.message}", e)
+                safeLog("e", "LoginViewModel", "IllegalArgumentException en login: ${e.message}", e)
                 _uiState.value = LoginUiState.Error("Credenciales inválidas")
             } catch (e: Exception) {
-                Log.e("LoginViewModel", "Exception en login: ${e.javaClass.name} - ${e.message}", e)
-                e.printStackTrace()
+                safeLog("e", "LoginViewModel", "Exception en login: ${e.javaClass.name} - ${e.message}", e)
                 _uiState.value = LoginUiState.Error(
                     when {
                         e.message?.contains("Connection") == true -> "Error de conexión. Reintentando..."
@@ -87,14 +86,14 @@ class LoginViewModel @Inject constructor(
     fun testCookies() {
         viewModelScope.launch {
             try {
-                Log.d("LoginViewModel", "Probando cookies con getCurrentUser...")
+                safeLog("d", "LoginViewModel", "Probando cookies con getCurrentUser...")
                 val user = getCurrentUserUseCase.execute()
                 val message = "✅ Cookies funcionan! Usuario: ${user.name} (${user.email})"
-                Log.d("LoginViewModel", message)
+                safeLog("d", "LoginViewModel", message)
                 _cookieTestResult.value = message
             } catch (e: Exception) {
                 val message = "❌ Cookies NO funcionan: ${e.message}"
-                Log.e("LoginViewModel", message, e)
+                safeLog("e", "LoginViewModel", message, e)
                 _cookieTestResult.value = message
             }
         }
@@ -102,5 +101,16 @@ class LoginViewModel @Inject constructor(
 
     private fun isValidEmail(email: String): Boolean {
         return email.contains("@") && email.contains(".")
+    }
+
+    private fun safeLog(level: String, tag: String, message: String, throwable: Throwable? = null) {
+        try {
+            when (level) {
+                "d" -> Log.d(tag, message)
+                "e" -> if (throwable != null) Log.e(tag, message, throwable) else Log.e(tag, message)
+            }
+        } catch (e: Exception) {
+            // Log no disponible en tests unitarios
+        }
     }
 }

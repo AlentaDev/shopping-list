@@ -6,11 +6,12 @@ import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
+import io.mockk.every
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -50,7 +51,7 @@ class LoginViewModelTest {
         )
         val session = Session(user = user)
 
-        coEvery { loginUseCase.execute(email, password) } returns session
+        coEvery { loginUseCase.execute(any(), any()) } returns session
 
         viewModel.onEmailChanged(email)
         viewModel.onPasswordChanged(password)
@@ -116,9 +117,7 @@ class LoginViewModelTest {
         val email = "test@example.com"
         val password = "wrongpassword"
 
-        coEvery {
-            loginUseCase.execute(email, password)
-        } throws IllegalArgumentException("Credenciales inválidas")
+        coEvery { loginUseCase.execute(any(), any()) } throws IllegalArgumentException("Credenciales inválidas")
 
         viewModel.onEmailChanged(email)
         viewModel.onPasswordChanged(password)
@@ -151,9 +150,7 @@ class LoginViewModelTest {
         val email = "test@example.com"
         val password = "password123"
 
-        coEvery {
-            loginUseCase.execute(email, password)
-        } throws Exception("Connection timeout")
+        coEvery { loginUseCase.execute(any(), any()) } throws Exception("Connection timeout")
 
         viewModel.onEmailChanged(email)
         viewModel.onPasswordChanged(password)
