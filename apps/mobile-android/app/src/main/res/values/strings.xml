@@ -20,4 +20,14 @@
     <string name="error_network_connection">Error de conexión. Reintentando…</string>
     <string name="error_network_timeout">Timeout. Por favor intenta de nuevo.</string>
     <string name="error_unknown">Error: </string>
+
+    <!-- Lists / Active Lists -->
+    <string name="lists_title">Listas Activas</string>
+    <string name="lists_empty">No tienes listas activas</string>
+    <string name="lists_empty_subtitle">Crea una lista en la web para empezar</string>
+    <string name="lists_loading">Cargando listas…</string>
+    <string name="lists_error">No se pudieron cargar las listas</string>
+    <string name="lists_items_count">Items: %1$d</string>
+    <string name="lists_updated_at">Actualizado: %1$s</string>
+    <string name="lists_offline_banner">Sin conexión. Mostrando datos guardados</string>
 </resources>

@@ -6,6 +6,8 @@ import androidx.navigation.compose.NavHost
 import androidx.compose.ui.Modifier
 import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE
 import com.alentadev.shopping.feature.auth.ui.navigation.loginScreen
+import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_ROUTE
+import com.alentadev.shopping.feature.lists.ui.navigation.activeListsScreen
 
 @Composable
 fun AppNavHost(
@@ -19,10 +21,9 @@ fun AppNavHost(
     ) {
         loginScreen(
             onNavigateToActiveListsScreen = {
-                // TODO: Navegar a ActiveListsScreen cuando esté implementado
-                // navController.navigate(ACTIVE_LISTS_ROUTE)
+                navController.navigate(ACTIVE_LISTS_ROUTE)
             }
         )
+        activeListsScreen()
     }
 }
-

@@ -27,4 +27,3 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun itemEntityDao(): ItemEntityDao
     abstract fun syncMetadataDao(): SyncMetadataDao
 }
-
