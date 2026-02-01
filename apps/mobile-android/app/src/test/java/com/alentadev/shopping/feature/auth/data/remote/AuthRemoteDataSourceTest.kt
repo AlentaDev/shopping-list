@@ -1,9 +1,9 @@
 package com.alentadev.shopping.feature.auth.data.remote
 
-import com.alentadev.shopping.feature.auth.data.dto.LoginRequest
+import com.alentadev.shopping.core.device.DeviceFingerprintProvider
 import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
-import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
 import com.alentadev.shopping.feature.auth.data.dto.OkResponse
+import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -13,19 +13,22 @@ import org.junit.Test
 
 class AuthRemoteDataSourceTest {
     private lateinit var authApi: AuthApi
+    private lateinit var deviceFingerprintProvider: DeviceFingerprintProvider
     private lateinit var authRemoteDataSource: AuthRemoteDataSource
 
     @Before
     fun setup() {
         authApi = mockk()
-        authRemoteDataSource = AuthRemoteDataSource(authApi)
+        deviceFingerprintProvider = mockk()
+        authRemoteDataSource = AuthRemoteDataSource(authApi, deviceFingerprintProvider)
     }
 
     @Test
-    fun `login calls api with correct credentials`() = runTest {
+    fun `login calls api with correct credentials and device fingerprint`() = runTest {
         // Arrange
         val email = "test@example.com"
         val password = "password123"
+        val fingerprint = "device-fingerprint-123"
         val expectedUser = PublicUserDto(
             id = "user-123",
             name = "Test User",
@@ -36,8 +39,11 @@ class AuthRemoteDataSourceTest {
             user = expectedUser
         )
 
+        coEvery { deviceFingerprintProvider.getFingerprint() } returns fingerprint
         coEvery {
-            authApi.login(LoginRequest(email, password))
+            authApi.login(match {
+                it.email == email && it.password == password && it.fingerprint == fingerprint
+            })
         } returns expectedResponse
 
         // Act
@@ -49,10 +55,11 @@ class AuthRemoteDataSourceTest {
     }
 
     @Test
-    fun `login returns response without access token`() = runTest {
+    fun `login returns response with user data`() = runTest {
         // Arrange
         val email = "user@example.com"
         val password = "pass123"
+        val fingerprint = "device-fingerprint-456"
         val response = LoginResponse(
             user = PublicUserDto(
                 id = "user-456",
@@ -62,6 +69,7 @@ class AuthRemoteDataSourceTest {
             )
         )
 
+        coEvery { deviceFingerprintProvider.getFingerprint() } returns fingerprint
         coEvery { authApi.login(any()) } returns response
 
         // Act
@@ -70,6 +78,7 @@ class AuthRemoteDataSourceTest {
         // Assert
         assertNotNull(result.user)
         assertEquals(email, result.user.email)
+        assertEquals("user-456", result.user.id)
     }
 
     @Test
@@ -80,7 +89,7 @@ class AuthRemoteDataSourceTest {
         // Act
         authRemoteDataSource.logout()
 
-        // Assert
+        // Assert - simplemente verificar que no lanza excepción
         assertTrue(true)
     }
 

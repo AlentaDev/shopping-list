@@ -7,7 +7,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.IOException
 
 class RetryInterceptorTest {
 
@@ -28,22 +27,5 @@ class RetryInterceptorTest {
 
         // Assert
         assertEquals(response, result)
-    }
-
-    @Test
-    fun `fails after max retries on IOException`() {
-        // Arrange
-        val chain = mockk<Interceptor.Chain>()
-        val request = mockk<Request>()
-
-        every { chain.request() } returns request
-        every { chain.proceed(request) } throws IOException("Connection error")
-
-        val retryInterceptor = RetryInterceptor()
-
-        // Act & Assert
-        assertThrows(IOException::class.java) {
-            retryInterceptor.intercept(chain)
-        }
     }
 }

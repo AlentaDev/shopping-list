@@ -1,15 +1,18 @@
 package com.alentadev.shopping.feature.auth.data.remote
 
+import com.alentadev.shopping.core.device.DeviceFingerprintProvider
 import com.alentadev.shopping.feature.auth.data.dto.LoginRequest
 import com.alentadev.shopping.feature.auth.data.dto.LoginResponse
 import com.alentadev.shopping.feature.auth.data.dto.PublicUserDto
+import javax.inject.Inject
 
 /**
  * Fuente de datos remota para autenticación
  * Abstrae las llamadas HTTP a la API
  */
-class AuthRemoteDataSource(
-    private val authApi: AuthApi
+class AuthRemoteDataSource @Inject constructor(
+    private val authApi: AuthApi,
+    private val deviceFingerprintProvider: DeviceFingerprintProvider
 ) {
 
     /**
@@ -20,7 +23,8 @@ class AuthRemoteDataSource(
      * @throws Exception si hay error de red o servidor
      */
     suspend fun login(email: String, password: String): LoginResponse {
-        return authApi.login(LoginRequest(email, password))
+        val fingerprint = deviceFingerprintProvider.getFingerprint()
+        return authApi.login(LoginRequest(email, password, fingerprint))
     }
 
     /**

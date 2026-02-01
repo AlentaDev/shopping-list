@@ -7,6 +7,7 @@ import com.alentadev.shopping.core.network.DebugInterceptor
 import com.alentadev.shopping.core.network.PersistentCookieJar
 import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.TokenAuthenticator
+import com.alentadev.shopping.feature.auth.data.remote.AuthApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -102,5 +103,10 @@ object NetworkModule {
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
-}
 
+    @Singleton
+    @Provides
+    fun provideAuthApi(retrofit: Retrofit): AuthApi {
+        return retrofit.create(AuthApi::class.java)
+    }
+}

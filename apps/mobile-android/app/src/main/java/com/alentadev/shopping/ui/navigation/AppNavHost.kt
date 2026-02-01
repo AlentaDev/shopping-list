@@ -1,0 +1,28 @@
+package com.alentadev.shopping.ui.navigation
+
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.compose.ui.Modifier
+import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE
+import com.alentadev.shopping.feature.auth.ui.navigation.loginScreen
+
+@Composable
+fun AppNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = LOGIN_ROUTE,
+        modifier = modifier
+    ) {
+        loginScreen(
+            onNavigateToActiveListsScreen = {
+                // TODO: Navegar a ActiveListsScreen cuando esté implementado
+                // navController.navigate(ACTIVE_LISTS_ROUTE)
+            }
+        )
+    }
+}
+

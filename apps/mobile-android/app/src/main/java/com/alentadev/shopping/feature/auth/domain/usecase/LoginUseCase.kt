@@ -2,17 +2,13 @@ package com.alentadev.shopping.feature.auth.domain.usecase
 
 import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.repository.AuthRepository
+import javax.inject.Inject
 
 /**
  * Caso de uso para autenticación de usuario.
  * Valida credenciales y obtiene sesión del repositorio.
- *
- * Responsabilidades:
- * - Validar formato de email
- * - Validar que email y password no están vacíos
- * - Delegar al repositorio la autenticación
  */
-class LoginUseCase(
+class LoginUseCase @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     suspend fun execute(email: String, password: String): Session {

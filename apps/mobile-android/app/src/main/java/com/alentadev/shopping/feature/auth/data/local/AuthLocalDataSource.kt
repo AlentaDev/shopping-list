@@ -9,8 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
-class AuthLocalDataSource(
+class AuthLocalDataSource @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
 
@@ -44,10 +45,6 @@ class AuthLocalDataSource(
         } else {
             null
         }
-    }
-
-    fun getAccessToken(): Flow<String?> = dataStore.data.map { preferences ->
-        preferences[TOKEN_KEY]
     }
 
     suspend fun clearSession() {

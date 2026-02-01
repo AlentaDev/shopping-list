@@ -12,7 +12,10 @@ data class LoginRequest(
     val email: String,
 
     @SerialName("password")
-    val password: String
+    val password: String,
+
+    @SerialName("fingerprint")
+    val fingerprint: String  // Generado dinámicamente por DeviceFingerprintProvider
 )
 
 /**
@@ -51,17 +54,3 @@ data class OkResponse(
     val ok: Boolean = true
 )
 
-/**
- * Error del servidor
- */
-@Serializable
-data class ErrorDto(
-    @SerialName("status")
-    val status: Int,
-
-    @SerialName("message")
-    val message: String,
-
-    @SerialName("timestamp")
-    val timestamp: String? = null
-)
