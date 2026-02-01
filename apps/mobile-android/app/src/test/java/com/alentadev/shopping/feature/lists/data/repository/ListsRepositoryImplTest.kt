@@ -63,12 +63,12 @@ class ListsRepositoryImplTest {
         coEvery { remoteDataSource.getActiveLists() } throws error
 
         // Act & Assert
-        val exception = assertThrows(Exception::class.java) {
-            runTest {
-                repository.getActiveLists()
-            }
+        try {
+            repository.getActiveLists()
+            fail("Expected exception to be thrown")
+        } catch (exception: Exception) {
+            assertEquals("Network error", exception.message)
         }
-        assertEquals("Network error", exception.message)
     }
 
     @Test

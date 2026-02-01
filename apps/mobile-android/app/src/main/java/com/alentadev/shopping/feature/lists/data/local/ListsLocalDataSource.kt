@@ -2,6 +2,8 @@ package com.alentadev.shopping.feature.lists.data.local
 
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
+import com.alentadev.shopping.core.data.database.entity.ListEntity
+import com.alentadev.shopping.core.data.database.dao.ListEntityDao
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -11,7 +13,7 @@ import javax.inject.Inject
  * Se usa para offline-first: caché local de listas
  */
 class ListsLocalDataSource @Inject constructor(
-    private val listDao: ListDao
+    private val listDao: ListEntityDao
 ) {
 
     /**
@@ -19,7 +21,7 @@ class ListsLocalDataSource @Inject constructor(
      * @return Flow de lista de listas activas (observable)
      */
     fun getActiveListsFlow(): Flow<List<ShoppingList>> {
-        return listDao.getActiveListsFlow().map { entities ->
+        return listDao.getListsByStatusFlow("ACTIVE").map { entities ->
             entities.map { it.toDomain() }
         }
     }
@@ -39,7 +41,7 @@ class ListsLocalDataSource @Inject constructor(
      * @param list ShoppingList a guardar
      */
     suspend fun saveList(list: ShoppingList) {
-        listDao.insertList(list.toEntity())
+        listDao.insert(list.toEntity())
     }
 
     /**
@@ -47,7 +49,7 @@ class ListsLocalDataSource @Inject constructor(
      * @param lists Lista de ShoppingList a guardar
      */
     suspend fun saveLists(lists: List<ShoppingList>) {
-        listDao.insertLists(lists.map { it.toEntity() })
+        listDao.insertAll(lists.map { it.toEntity() })
     }
 
     /**
@@ -56,6 +58,13 @@ class ListsLocalDataSource @Inject constructor(
      */
     suspend fun deleteAll() {
         listDao.deleteAll()
+    }
+
+    /**
+     * Obtiene listas activas localmente una sola vez (sin Flow)
+     */
+    suspend fun getActiveListsOnce(): List<ShoppingList> {
+        return listDao.getListsByStatus("ACTIVE").map { it.toDomain() }
     }
 
     // Mappers domain ↔ entity
@@ -70,8 +79,8 @@ class ListsLocalDataSource @Inject constructor(
                 "COMPLETED" -> ListStatus.COMPLETED
                 else -> ListStatus.ACTIVE
             },
-            updatedAt = updatedAt,
-            itemCount = itemCount
+            updatedAt = updatedAt.toLongOrNull() ?: 0L,
+            itemCount = 0  // No disponible en la entidad global, usar 0 por defecto
         )
     }
 
@@ -80,10 +89,8 @@ class ListsLocalDataSource @Inject constructor(
             id = id,
             title = title,
             status = status.name,
-            updatedAt = updatedAt,
-            itemCount = itemCount,
+            updatedAt = updatedAt.toString(),
             syncedAt = System.currentTimeMillis()
         )
     }
 }
-

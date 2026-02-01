@@ -4,7 +4,6 @@ import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
 import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
 import com.alentadev.shopping.feature.lists.data.local.ListsLocalDataSource
-import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 /**
@@ -16,16 +15,6 @@ class ListsRepositoryImpl @Inject constructor(
     private val localDataSource: ListsLocalDataSource
 ) : ListsRepository {
 
-    /**
-     * Obtiene listas activas con estrategia offline-first
-     * 1. Devuelve caché local si existe
-     * 2. Intenta actualizar desde servidor
-     * 3. Guarda actualización en local
-     * @return Flow observable de listas activas
-     */
-    override fun getActiveListsFlow(): Flow<List<ShoppingList>> {
-        return localDataSource.getActiveListsFlow()
-    }
 
     /**
      * Obtiene listas activas una sola vez
@@ -39,9 +28,9 @@ class ListsRepositoryImpl @Inject constructor(
             // Guarda en local para caché
             localDataSource.saveLists(lists)
             lists
-        } catch (e: Exception) {
-            // Si falla, intenta usar caché (aunque retorna vacío si no existe)
-            throw e
+        } catch (exception: Exception) {
+            // Si falla, relanza la excepción sin fallback a caché
+            throw exception
         }
     }
 
@@ -68,9 +57,31 @@ class ListsRepositoryImpl @Inject constructor(
     override suspend fun getListById(listId: String): ShoppingList? {
         return try {
             remoteDataSource.getListDetail(listId)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             localDataSource.getListById(listId)
         }
     }
-}
 
+    /**
+     * Obtiene listas activas con fuente preferida
+     * 1. Intenta obtener del servidor y guardar en caché
+     * 2. Si falla, obtiene de la caché local
+     * @return Resultado con listas y origen (servidor/caché)
+     */
+    override suspend fun getActiveListsWithSource(): com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult {
+        return try {
+            val lists = remoteDataSource.getActiveLists()
+            localDataSource.saveLists(lists)
+            com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult(
+                lists = lists,
+                fromCache = false
+            )
+        } catch (_: Exception) {
+            val cached = localDataSource.getActiveListsOnce()
+            com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult(
+                lists = cached,
+                fromCache = true
+            )
+        }
+    }
+}

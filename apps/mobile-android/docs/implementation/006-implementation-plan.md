@@ -204,20 +204,22 @@ com.alentadev.shopping/
 - [x] Tests de remote data source (5 tests) ✅ CREADO
 - [ ] Compilar y ejecutar tests
 
-#### 2.3 UI Layer
-- [ ] `ActiveListsScreen.kt` (lista con LazyColumn)
-- [ ] `ListsViewModel.kt` (LiveData/StateFlow)
-- [ ] `ListsUiState.kt` (Loading, Success, Error, Empty)
-- [ ] `ListCard.kt` (componente reutilizable)
+#### 2.3 UI Layer ✅ IMPLEMENTADA (pendiente ejecutar tests)
+- [x] `ActiveListsScreen.kt` (lista con LazyColumn) ✅ CREADO
+- [x] `ListsViewModel.kt` (StateFlow) ✅ CREADO
+- [x] `ListsUiState.kt` (Loading, Success, Error, Empty) ✅ CREADO
+- [x] `ListCard.kt` (componente reutilizable) ✅ CREADO
 - [ ] Pull-to-refresh
-- [ ] Strings.xml
-- [ ] Tests de ViewModel
+- [x] Strings.xml ✅ AÑADIDO
+- [x] Tests de ViewModel ✅ CREADO
+- [ ] Compilar y ejecutar tests
 
-#### 2.4 Offline-first
-- [ ] Guardar snapshot local al cargar listas
-- [ ] Detectar falta de red
-- [ ] Mostrar banner "Sin conexión. Usando datos guardados."
-- [ ] Estado vacío: "No tienes listas activas"
+#### 2.4 Offline-first ✅ COMPLETADA
+- [x] Guardar snapshot local al cargar listas ✅ (ListsRepositoryImpl)
+- [x] Fallback a cache local cuando no hay red ✅ (getActiveListsWithSource)
+- [x] Detectar falta de red ✅ (NetworkMonitor con Flow)
+- [x] Mostrar banner "Sin conexión. Mostrando datos guardados" ✅ (ActiveListsScreen)
+- [x] Estado vacío: "No tienes listas activas" + subtítulo ✅ (ActiveListsScreen)
 
 ---
 
@@ -457,4 +459,3 @@ Antes de empezar FASE 0:
 - [ ] Revisar gitignore (si aún no está hecho)
 
 **¿Listo para empezar?** 🚀
-

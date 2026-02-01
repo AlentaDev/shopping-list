@@ -32,5 +32,10 @@ interface ListsRepository {
      * @throws Exception si hay error
      */
     suspend fun getListById(listId: String): ShoppingList?
-}
 
+    /**
+     * Obtiene listas activas con metadata de origen (cache o remoto)
+     * @return ActiveListsResult con flag fromCache
+     */
+    suspend fun getActiveListsWithSource(): com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult
+}
