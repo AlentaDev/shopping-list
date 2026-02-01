@@ -53,6 +53,19 @@ Contiene:
 - Patrones aplicados
 - Próximos pasos
 
+### 011-phase-1-data-auth.md
+**Fase 1.2: Data Layer (Autenticación) - COMPLETADA ✅**
+
+Contiene:
+- DTOs para comunicación HTTP
+- AuthApi (Retrofit endpoints)
+- Remote Data Source (API calls)
+- Local Data Source (DataStore)
+- Mappers (conversión DTO ↔ Entity)
+- AuthRepositoryImpl (implementación)
+- 12 tests de integración (100% coverage)
+- Estrategia offline-first
+
 ---
 
 ## 🔄 Orden de Lectura Recomendado
@@ -61,7 +74,8 @@ Contiene:
 2. **006-implementation-plan.md** → Conocer el plan de acción
 3. **009-phase-0-completed.md** → Fundación lista ✅
 4. **010-phase-1-domain-auth.md** → Domain Layer completado ✅
-5. Proceder con FASE 1.2 (Data Layer)
+5. **011-phase-1-data-auth.md** → Data Layer completado ✅
+6. Proceder con FASE 1.3 (Presentation Layer)
 
 ## 📊 Estado de Implementación
 
@@ -69,8 +83,8 @@ Contiene:
 |------|-------------|--------|
 | FASE 0 | Fundación | ✅ COMPLETADA |
 | FASE 1.1 | Domain Layer (Auth) | ✅ COMPLETADA |
-| FASE 1.2 | Data Layer (Auth) | 📋 Próxima |
-| FASE 1.3 | Presentation Layer (Auth) | ⏳ Pendiente |
+| FASE 1.2 | Data Layer (Auth) | ✅ COMPLETADA |
+| FASE 1.3 | Presentation Layer (Auth) | 📋 Próxima |
 | FASE 2 | Lists Management | ⏳ Pendiente |
 | FASE 3+ | Features Adicionales | ⏳ Pendiente |
 
