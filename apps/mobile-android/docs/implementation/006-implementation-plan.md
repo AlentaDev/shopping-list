@@ -192,13 +192,17 @@ com.alentadev.shopping/
 - [x] `RefreshListsUseCaseTest.kt` - 4 tests ✅ CREADO
 - [ ] Compilar y ejecutar tests
 
-#### 2.2 Data Layer
-- [ ] `ListsApi.kt` (GET /api/lists?status=ACTIVE)
-- [ ] `ListEntity.kt` (Room)
-- [ ] `ListDao.kt` (queries para snapshot local)
-- [ ] `ListsRepository.kt` (remote + local con offline-first)
-- [ ] Mappers DTO ↔ Entity ↔ Domain
-- [ ] Tests de repository
+#### 2.2 Data Layer ✅ COMPLETADA
+- [x] `ListsApi.kt` (GET /api/lists?status=ACTIVE) ✅ CREADO
+- [x] `ListEntity.kt` (Room) ✅ CREADO
+- [x] `ListDao.kt` (queries para snapshot local) ✅ CREADO
+- [x] `ListsRemoteDataSource.kt` (acceso a API) ✅ CREADO
+- [x] `ListsLocalDataSource.kt` (acceso a Room) ✅ CREADO
+- [x] `ListsRepositoryImpl.kt` (offline-first: remote + local) ✅ CREADO
+- [x] `ListDtos.kt` - ListSummaryDto ✅ CREADO
+- [x] Tests de repository (6 tests) ✅ CREADO
+- [x] Tests de remote data source (5 tests) ✅ CREADO
+- [ ] Compilar y ejecutar tests
 
 #### 2.3 UI Layer
 - [ ] `ActiveListsScreen.kt` (lista con LazyColumn)
