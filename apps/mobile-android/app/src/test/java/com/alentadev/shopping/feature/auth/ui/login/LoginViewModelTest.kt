@@ -57,6 +57,7 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
+        advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value
@@ -124,6 +125,7 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
+        advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value
@@ -158,6 +160,7 @@ class LoginViewModelTest {
 
         // Act
         viewModel.onLoginClicked()
+        advanceUntilIdle()
 
         // Assert
         val state = viewModel.uiState.value
