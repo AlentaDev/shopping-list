@@ -45,7 +45,9 @@ export const clearLocalDraft = (): void => {
 export const getAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveDraft | null> => {
-  const response = await fetch(AUTOSAVE_ENDPOINT);
+  const response = await fetch(AUTOSAVE_ENDPOINT, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load autosave.");
@@ -65,6 +67,7 @@ export const putAutosave = async (
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(draft),
   });
 
@@ -82,6 +85,7 @@ export const deleteAutosave = async (
 ): Promise<void> => {
   const response = await fetch(AUTOSAVE_ENDPOINT, {
     method: "DELETE",
+    credentials: "include",
   });
 
   if (!response.ok) {

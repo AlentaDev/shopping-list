@@ -72,7 +72,10 @@ describe("AutosaveService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getAutosave()).resolves.toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith("/api/lists/autosave");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ credentials: "include" })
+    );
   });
 
   it("envía el borrador al endpoint de autosave", async () => {
@@ -95,6 +98,7 @@ describe("AutosaveService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
+        credentials: "include",
         body: JSON.stringify(SAMPLE_DRAFT),
       })
     );
@@ -113,7 +117,7 @@ describe("AutosaveService", () => {
     await expect(deleteAutosave()).resolves.toBeUndefined();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "DELETE" })
+      expect.objectContaining({ method: "DELETE", credentials: "include" })
     );
   });
 
@@ -145,7 +149,7 @@ describe("AutosaveService", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "PUT" })
+      expect.objectContaining({ method: "PUT", credentials: "include" })
     );
   });
 
@@ -174,7 +178,7 @@ describe("AutosaveService", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "PUT" })
+      expect.objectContaining({ method: "PUT", credentials: "include" })
     );
   });
 
@@ -217,6 +221,7 @@ describe("AutosaveService", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
       expect.objectContaining({
+        credentials: "include",
         body: JSON.stringify(secondDraft),
       })
     );

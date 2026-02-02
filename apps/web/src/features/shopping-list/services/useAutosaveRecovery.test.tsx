@@ -88,7 +88,10 @@ describe("useAutosaveRecovery", () => {
 
     render(<Harness />);
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/lists/autosave");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ credentials: "include" }),
+    );
     expect(await screen.findByText("Lista recuperada")).toBeInTheDocument();
   });
 
@@ -156,7 +159,7 @@ describe("useAutosaveRecovery", () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/autosave",
-        expect.objectContaining({ method: "DELETE" }),
+        expect.objectContaining({ method: "DELETE", credentials: "include" }),
       );
     });
 
