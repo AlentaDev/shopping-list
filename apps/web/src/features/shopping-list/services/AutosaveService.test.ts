@@ -26,6 +26,9 @@ const SAMPLE_DRAFT: AutosaveDraftInput = {
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
+  status?: number;
+  statusText?: string;
+  text?: () => Promise<string>;
 };
 
 describe("AutosaveService", () => {
@@ -102,6 +105,37 @@ describe("AutosaveService", () => {
         body: JSON.stringify(SAMPLE_DRAFT),
       })
     );
+  });
+
+  it("registra el error cuando el autosave remoto falla", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        json: async () => ({}),
+        text: async () => "invalid payload",
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).rejects.toThrow(
+      "Unable to save autosave."
+    );
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Autosave remoto falló.",
+      expect.objectContaining({
+        status: 400,
+        statusText: "Bad Request",
+        responseBody: "invalid payload",
+        draft: SAMPLE_DRAFT,
+      })
+    );
+
+    warnSpy.mockRestore();
   });
 
   it("elimina el autosave del servidor", async () => {

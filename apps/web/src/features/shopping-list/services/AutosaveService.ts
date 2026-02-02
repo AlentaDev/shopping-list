@@ -72,6 +72,20 @@ export const putAutosave = async (
   });
 
   if (!response.ok) {
+    let responseBody: string | null = null;
+
+    try {
+      responseBody = await response.text();
+    } catch (error) {
+      console.warn("No se pudo leer el cuerpo del error de autosave.", error);
+    }
+
+    console.warn("Autosave remoto falló.", {
+      status: response.status,
+      statusText: response.statusText,
+      responseBody,
+      draft,
+    });
     throw new Error(options.errorMessage ?? "Unable to save autosave.");
   }
 
