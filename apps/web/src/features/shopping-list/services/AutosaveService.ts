@@ -95,15 +95,18 @@ type AutosaveScheduler = {
 };
 
 export const createAutosaveScheduler = (
-  options: { debounceMs?: number } = {}
+  options: { debounceMs?: number; persistLocal?: boolean } = {}
 ): AutosaveScheduler => {
   const debounceMs = options.debounceMs ?? DEFAULT_AUTOSAVE_DEBOUNCE_MS;
+  const persistLocal = options.persistLocal ?? true;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let latestDraft: AutosaveDraftInput | null = null;
 
   const schedule = (draft: AutosaveDraftInput) => {
     latestDraft = draft;
-    saveLocalDraft(draft);
+    if (persistLocal) {
+      saveLocalDraft(draft);
+    }
 
     if (timeoutId) {
       clearTimeout(timeoutId);

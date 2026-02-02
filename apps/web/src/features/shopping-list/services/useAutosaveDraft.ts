@@ -11,6 +11,7 @@ type UseAutosaveDraftOptions = {
   enabled?: boolean;
   debounceMs?: number;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
+  persistLocal?: boolean;
 };
 
 type UseAutosaveDraftParams = {
@@ -22,11 +23,15 @@ type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
 
 const mapListItemToAutosave = (item: ListItem): AutosaveItemInput => ({
   id: item.id,
-  kind: "manual",
+  kind: "catalog",
   name: item.name,
   qty: item.quantity,
   checked: false,
   note: null,
+  source: "mercadona",
+  sourceProductId: item.id,
+  thumbnail: item.thumbnail ?? null,
+  price: item.price ?? null,
 });
 
 const buildAutosaveDraft = (
@@ -41,7 +46,8 @@ export const useAutosaveDraft = (
   { title, items }: UseAutosaveDraftParams,
   options: UseAutosaveDraftOptions = {}
 ) => {
-  const { enabled = true, debounceMs, onRehydrate } = options;
+  const { enabled = true, debounceMs, onRehydrate, persistLocal = true } =
+    options;
   const schedulerRef = useRef<AutosaveScheduler | null>(null);
   const hasRehydratedRef = useRef(false);
 
@@ -51,13 +57,16 @@ export const useAutosaveDraft = (
   );
 
   useEffect(() => {
-    schedulerRef.current = createAutosaveScheduler({ debounceMs });
+    schedulerRef.current = createAutosaveScheduler({
+      debounceMs,
+      persistLocal,
+    });
 
     return () => {
       schedulerRef.current?.cancel();
       schedulerRef.current = null;
     };
-  }, [debounceMs]);
+  }, [debounceMs, persistLocal]);
 
   useEffect(() => {
     if (hasRehydratedRef.current) {
@@ -75,10 +84,12 @@ export const useAutosaveDraft = (
 
   useEffect(() => {
     if (!enabled) {
-      saveLocalDraft(draft);
+      if (persistLocal) {
+        saveLocalDraft(draft);
+      }
       return;
     }
 
     schedulerRef.current?.schedule(draft);
-  }, [draft, enabled]);
+  }, [draft, enabled, persistLocal]);
 };

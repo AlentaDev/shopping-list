@@ -10,6 +10,7 @@ type ListSummary = {
   id: string;
   title: string;
   updatedAt: string;
+  status: List["status"];
 };
 
 export class CreateList {
@@ -37,6 +38,7 @@ export class CreateList {
       id: list.id,
       title: list.title,
       updatedAt: list.updatedAt.toISOString(),
+      status: list.status,
     };
   }
 }

@@ -46,6 +46,7 @@ describe("ListLists", () => {
         id: "list-completed",
         title: "Groceries",
         updatedAt: "2024-02-01T10:00:00.000Z",
+        status: "COMPLETED",
       },
     ]);
   });
@@ -75,11 +76,13 @@ describe("ListLists", () => {
         id: "list-1",
         title: "Groceries",
         updatedAt: "2024-01-02T10:00:00.000Z",
+        status: "ACTIVE",
       },
       {
         id: "list-2",
         title: "Groceries",
         updatedAt: "2024-01-02T10:00:00.000Z",
+        status: "COMPLETED",
       },
     ]);
   });

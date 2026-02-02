@@ -149,6 +149,35 @@ describe("AutosaveService", () => {
     );
   });
 
+  it("omite el guardado local cuando persistLocal es false", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const scheduler = createAutosaveScheduler({ persistLocal: false });
+
+    scheduler.schedule(SAMPLE_DRAFT);
+
+    expect(localStorage.getItem("lists.localDraft")).toBeNull();
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" })
+    );
+  });
+
   it("usa el último borrador si hay cambios rápidos", async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(

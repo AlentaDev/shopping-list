@@ -18,6 +18,15 @@ const mapAutosaveToDraftInput = (
     qty: item.qty,
     checked: item.checked,
     note: item.note ?? null,
+    source: item.kind === "catalog" ? item.source ?? "mercadona" : undefined,
+    sourceProductId:
+      item.kind === "catalog" ? item.sourceProductId ?? item.id : undefined,
+    thumbnail: item.thumbnail ?? null,
+    price: item.price ?? null,
+    unitSize: item.unitSize ?? null,
+    unitFormat: item.unitFormat ?? null,
+    unitPrice: item.unitPrice ?? null,
+    isApproxSize: item.isApproxSize ?? false,
   })),
 });
 

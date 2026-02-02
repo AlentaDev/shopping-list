@@ -64,8 +64,8 @@ const ShoppingList = ({
         id: item.id,
         name: item.name,
         category: "",
-        thumbnail: null,
-        price: null,
+        thumbnail: item.thumbnail ?? null,
+        price: item.price ?? null,
         quantity: item.qty,
       }));
 

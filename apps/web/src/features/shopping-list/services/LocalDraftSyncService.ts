@@ -33,7 +33,7 @@ const createList = async (
   return (await response.json()) as ListSummaryResponse;
 };
 
-const buildItemPayload = (item: AutosaveItemInput) => {
+const buildManualItemPayload = (item: AutosaveItemInput) => {
   const payload: { name: string; qty: number; checked: boolean; note?: string } = {
     name: item.name,
     qty: item.qty,
@@ -47,13 +47,28 @@ const buildItemPayload = (item: AutosaveItemInput) => {
   return payload;
 };
 
+const buildCatalogItemPayload = (item: AutosaveItemInput) => ({
+  source: item.kind === "catalog" ? item.source : "mercadona",
+  productId:
+    item.kind === "catalog" ? item.sourceProductId : item.id,
+  qty: item.qty,
+  note: item.note ?? undefined,
+});
+
 const createListItem = async (listId: string, item: AutosaveItemInput) => {
-  const response = await fetch(`${LISTS_ENDPOINT}/${listId}/items`, {
+  const isCatalogItem = item.kind === "catalog";
+  const endpoint = isCatalogItem
+    ? `${LISTS_ENDPOINT}/${listId}/items/from-catalog`
+    : `${LISTS_ENDPOINT}/${listId}/items`;
+  const body = isCatalogItem
+    ? buildCatalogItemPayload(item)
+    : buildManualItemPayload(item);
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(buildItemPayload(item)),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {

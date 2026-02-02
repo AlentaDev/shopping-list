@@ -139,7 +139,7 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
-    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
+    expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
   });
 
   it("refreshes session and retries current user when initial load fails", async () => {
@@ -168,7 +168,7 @@ describe("AuthProvider", () => {
 
     expect(getCurrentUser).toHaveBeenCalledTimes(2);
     expect(refreshSession).toHaveBeenCalled();
-    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
+    expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
   });
 
   it("handles register and authenticates user", async () => {

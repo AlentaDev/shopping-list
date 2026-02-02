@@ -49,18 +49,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isActive = true;
 
-    const applyAuthenticatedUser = async (user: AuthUser) => {
+    const applyAuthenticatedUser = async (
+      user: AuthUser,
+      options: { syncLocalDraft?: boolean } = {},
+    ) => {
       if (!isActive) {
         return;
       }
       setAuthUser(user);
-      try {
-        await syncLocalDraftToRemoteList();
-      } catch (error) {
-        console.warn(
-          "No se pudo sincronizar el borrador local tras recuperar sesión.",
-          error,
-        );
+      if (options.syncLocalDraft) {
+        try {
+          await syncLocalDraftToRemoteList();
+        } catch (error) {
+          console.warn(
+            "No se pudo sincronizar el borrador local tras recuperar sesión.",
+            error,
+          );
+        }
       }
     };
 
