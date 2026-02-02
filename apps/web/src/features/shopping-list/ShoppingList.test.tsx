@@ -7,6 +7,7 @@ import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
 import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -356,5 +357,15 @@ describe("ShoppingList", () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     vi.useRealTimers();
+  });
+
+  it("oculta la acción de activar lista si no hay sesión", () => {
+    renderShoppingList({ authenticated: false, listStatus: "LOCAL_DRAFT" });
+
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
+    ).toBeNull();
   });
 });

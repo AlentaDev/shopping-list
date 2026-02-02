@@ -49,7 +49,7 @@ const ShoppingList = ({
   );
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
-  const canReadyToShop = canActivateList(listStatus);
+  const canReadyToShop = Boolean(authUser) && canActivateList(listStatus);
   const draftTitle = listName.trim() || listTitle;
 
   const handleRehydrate = useCallback(
@@ -159,7 +159,7 @@ const ShoppingList = ({
   };
 
   const handleReadyToShop = useCallback(async () => {
-    if (!canActivateList(listStatus)) {
+    if (!authUser || !canActivateList(listStatus)) {
       return;
     }
 
@@ -173,7 +173,7 @@ const ShoppingList = ({
     } catch (error) {
       console.warn("No se pudo activar la lista.", error);
     }
-  }, [listId, listStatus]);
+  }, [authUser, listId, listStatus]);
 
   return (
     <ListModal
