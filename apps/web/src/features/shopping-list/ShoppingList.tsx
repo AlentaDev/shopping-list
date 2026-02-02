@@ -24,6 +24,7 @@ type ShoppingListProps = {
   onClose: () => void;
   initialListId?: string | null;
   initialListStatus?: ListStatus;
+  initialListTitle?: string;
 };
 
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
@@ -33,13 +34,14 @@ const ShoppingList = ({
   onClose,
   initialListId,
   initialListStatus,
+  initialListTitle,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
-  const [listName, setListName] = useState("");
+  const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
-    UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+    initialListTitle ?? UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [listId, setListId] = useState<string | null>(initialListId ?? null);
   const [listStatus, setListStatus] = useState<ListStatus>(
@@ -76,7 +78,10 @@ const ShoppingList = ({
 
   useAutosaveDraft(
     { title: draftTitle, items },
-    { enabled: items.length > 0, onRehydrate: handleRehydrate },
+    {
+      enabled: items.length > 0 && Boolean(authUser),
+      onRehydrate: handleRehydrate,
+    },
   );
 
   const { draft: autosaveDraft, handleContinue, handleDiscard } =

@@ -72,11 +72,13 @@ describe("ShoppingList", () => {
     authenticated = false,
     listId,
     listStatus,
+    listTitle,
   }: {
     items?: ListItem[];
     authenticated?: boolean;
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
+    listTitle?: string;
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -91,6 +93,7 @@ describe("ShoppingList", () => {
             onClose={vi.fn()}
             initialListId={listId}
             initialListStatus={listStatus}
+            initialListTitle={listTitle}
           />
         </ListProvider>
       </AuthContext.Provider>,
@@ -340,5 +343,18 @@ describe("ShoppingList", () => {
     expect(
       screen.queryByText("Hemos encontrado un borrador guardado"),
     ).toBeNull();
+  });
+
+  it("no intenta guardar autosave remoto si el usuario no está autenticado", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({ authenticated: false });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });
