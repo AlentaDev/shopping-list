@@ -85,7 +85,7 @@ describe("useAutosaveDraft", () => {
           name: "Leche",
           qty: 2,
           checked: false,
-          note: null,
+          note: "",
           source: "mercadona",
           sourceProductId: "item-1",
           thumbnail: null,

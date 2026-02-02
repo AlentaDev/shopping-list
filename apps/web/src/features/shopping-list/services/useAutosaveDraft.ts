@@ -27,7 +27,7 @@ const mapListItemToAutosave = (item: ListItem): AutosaveItemInput => ({
   name: item.name,
   qty: item.quantity,
   checked: false,
-  note: null,
+  note: "",
   source: "mercadona",
   sourceProductId: item.id,
   thumbnail: item.thumbnail ?? null,
