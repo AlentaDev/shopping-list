@@ -36,11 +36,19 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
     {
       "id": "uuid",
       "title": "Groceries",
+      "status": "ACTIVE",
+      "itemCount": 12,
+      "activatedAt": "2024-01-01T00:00:00.000Z",
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ]
 }
 ```
+
+**Notas**
+
+- El listado general excluye el autosave draft y listas en estado `DRAFT`.
+- Orden por fecha más reciente (Activas: `activatedAt`, Historial: `updatedAt`).
 
 ### GET /api/lists/autosave
 
@@ -105,6 +113,9 @@ Si no hay borrador autosave, responde con `null`.
 {
   "id": "uuid",
   "title": "Groceries",
+  "status": "ACTIVE",
+  "isEditing": false,
+  "activatedAt": "2024-01-01T00:00:00.000Z",
   "items": [
     {
       "id": "uuid",
@@ -256,3 +267,10 @@ Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos i
 - La autorización restringe el acceso a las listas del propietario.
 - Validación de payloads con Zod y errores uniformes de validación.
 - La duplicación solo aplica a listas en estado `COMPLETED`.
+
+## Cambios previstos (API)
+
+- Añadir soporte de `isEditing` para marcar listas activas en edición (y bloquear edición en móvil).
+- Persistir `activatedAt` cuando una lista pasa a `ACTIVE`.
+- Ajustar `GET /api/lists` para incluir `status`, `itemCount`, `activatedAt` y excluir autosave/draft.
+- Renombrar el concepto `duplicate` como `reusar` en documentación y UI (el endpoint puede mantenerse con el mismo path).

@@ -886,12 +886,23 @@ components:
           type: string
         title:
           type: string
+        status:
+          $ref: "#/components/schemas/ListStatus"
+        itemCount:
+          type: integer
+          minimum: 0
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
         updatedAt:
           type: string
           format: date-time
       required:
         - id
         - title
+        - status
+        - itemCount
         - updatedAt
     ListListsResponse:
       type: object
@@ -909,6 +920,14 @@ components:
           type: string
         title:
           type: string
+        status:
+          $ref: "#/components/schemas/ListStatus"
+        isEditing:
+          type: boolean
+        activatedAt:
+          type: string
+          format: date-time
+          nullable: true
         items:
           type: array
           items:
@@ -919,6 +938,8 @@ components:
       required:
         - id
         - title
+        - status
+        - isEditing
         - items
         - updatedAt
     AddManualItemRequest:
