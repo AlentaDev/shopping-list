@@ -7,6 +7,25 @@ type UseAutosaveRecoveryOptions = {
   onRehydrate?: (draft: AutosaveDraftInput) => void;
 };
 
+const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
+
+const getAutosaveChecked = () => {
+  try {
+    return sessionStorage.getItem(AUTOSAVE_CHECKED_KEY) === "true";
+  } catch (error) {
+    console.warn("No se pudo leer el estado del autosave.", error);
+    return false;
+  }
+};
+
+const setAutosaveChecked = () => {
+  try {
+    sessionStorage.setItem(AUTOSAVE_CHECKED_KEY, "true");
+  } catch (error) {
+    console.warn("No se pudo guardar el estado del autosave.", error);
+  }
+};
+
 const mapAutosaveToDraftInput = (
   draft: AutosaveDraft,
 ): AutosaveDraftInput => ({
@@ -38,7 +57,7 @@ export const useAutosaveRecovery = (
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || getAutosaveChecked()) {
       setDraft(null);
       return;
     }
@@ -60,6 +79,7 @@ export const useAutosaveRecovery = (
       } finally {
         if (isActive) {
           setIsLoading(false);
+          setAutosaveChecked();
         }
       }
     };
@@ -78,6 +98,7 @@ export const useAutosaveRecovery = (
 
     onRehydrate?.(mapAutosaveToDraftInput(draft));
     setDraft(null);
+    setAutosaveChecked();
   }, [draft, onRehydrate]);
 
   const handleDiscard = useCallback(async () => {
@@ -90,6 +111,7 @@ export const useAutosaveRecovery = (
         errorMessage: "No se pudo descartar el borrador.",
       });
       setDraft(null);
+      setAutosaveChecked();
     } catch (error) {
       console.warn("No se pudo descartar el borrador remoto.", error);
     }

@@ -70,6 +70,7 @@ const Harness = ({ enabled = true, onRehydrate }: HarnessProps) => {
 describe("useAutosaveRecovery", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    sessionStorage.clear();
   });
 
   afterEach(() => {
@@ -164,5 +165,43 @@ describe("useAutosaveRecovery", () => {
     });
 
     expect(screen.getByText("No draft")).toBeInTheDocument();
+  });
+
+  it("no vuelve a consultar autosave si ya se revisó en la sesión", () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => SAMPLE_DRAFT,
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness />);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByText("No draft")).toBeInTheDocument();
+  });
+
+  it("marca el autosave como revisado al descartar", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (_input, init) => {
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return { ok: true, json: async () => SAMPLE_DRAFT };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness />);
+
+    await user.click(await screen.findByRole("button", { name: "Descartar" }));
+
+    expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 });
