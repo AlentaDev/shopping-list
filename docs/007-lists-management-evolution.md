@@ -1,0 +1,49 @@
+# ADR 007: Evolución de la gestión de listas para usuarios autenticados
+
+## Estado
+Propuesto.
+
+## Contexto
+
+Se han refinado los flujos de listas para usuarios autenticados con nuevas reglas de negocio y UX:
+
+- Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
+- En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
+- Las acciones cambian: **Editar/Cerrar/Borrar** en Activas y **Reusar/Cerrar/Borrar** en Historial.
+- Se requiere bloquear la edición en móvil cuando una lista activa esté en edición (`isEditing=true`).
+- Se necesitan campos adicionales en resumen/detalle: `itemCount`, `activatedAt`, `isEditing`.
+- Se requiere persistir `activated_at` e `is_editing` en BD.
+
+Estos cambios afectan **API**, **BD** y **Web**, y deben implementarse de forma incremental y comprobable en los 3 entornos.
+
+## Decisión
+
+Adoptar un plan de migración incremental que prioriza **API/BD primero** y luego **Web**, con las siguientes decisiones:
+
+1. **BD**: añadir columnas `activated_at` y `is_editing` en `lists`.
+2. **API**:
+   - Excluir `DRAFT` y `is_autosave_draft=true` del listado principal por defecto.
+   - Exponer `itemCount`, `activatedAt`, `isEditing` en `ListSummary` y `ListDetail`.
+   - Alinear acciones y endpoints con **editar** y **reusar**.
+   - Ordenar listados por fecha más reciente (activas por `activated_at`, historial por fecha de cierre o `updated_at` si no existe campo específico).
+   - Validar que listas activas/historial nunca queden sin ítems.
+3. **Web**:
+   - UI con solo **Activas** e **Historial**.
+   - Detalle con botones **Editar/Cerrar/Borrar** o **Reusar/Cerrar/Borrar** según el estado.
+   - Mensajes de confirmación para pérdida de draft (solo si tiene ítems).
+   - Bloqueo móvil cuando `isEditing=true`.
+   - Estados de carga con skeletons y botones con loading.
+
+## Consecuencias
+
+- **Compatibilidad**: el backend debe exponer nuevos campos antes de que el frontend los consuma.
+- **Persistencia**: se requiere migración de BD para soportar fechas de activación y bloqueo de edición.
+- **UX**: se simplifica la navegación a Activas/Historial y se elimina el draft del listado principal.
+- **Testing**: los cambios deben entregarse en pasos pequeños y verificables en web, sin romper API/DB.
+
+## Referencias
+
+- `docs/usecases/list-use-cases.md`
+- `docs/features/api/listsFeature.md`
+- `docs/features/web/lists-management.md`
+- `docs/003-rest-api-feature-first.md`
