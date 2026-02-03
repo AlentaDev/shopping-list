@@ -14,12 +14,13 @@ frontend, permitiendo editar cantidades, eliminar líneas y ver el total.
 - El badge del carrito cuenta líneas únicas, no cantidades.
 - El modal se cierra con ESC, clic fuera o el botón "Cerrar".
 - Los items se ordenan por categoría independientemente del orden de alta.
-- Guardar abre un paso adicional con campo de nombre y opción de cancelar.
-- Al guardar se muestra el nombre en el título del modal; si está vacío, usa "Tu lista".
+- El nombre se edita en línea con un icono de lápiz.
+- Si el nombre está vacío, se usa el título genérico configurado en `UI_TEXT`.
 - El decremento nunca baja de 1 incluso si se manipula el HTML.
 - Si no hay items se muestra un estado vacío con mensaje.
-- Al marcar "Lista lista para comprar", se activa el estado remoto y si está en LOCAL_DRAFT
-  se crea primero la lista remota.
+- Al marcar "Confirmar lista", la lista pasa a `ACTIVE` reutilizando el mismo registro.
+- Tras confirmar, el borrador local/autosave se limpia (sin items) y vuelve al título genérico.
+- El borrado de productos es directo (sin modal de confirmación).
 
 ## Notas de implementación
 

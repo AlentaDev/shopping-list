@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Proveer una pantalla dedicada para gestionar listas por estado (`DRAFT`, `ACTIVE`, `COMPLETED`) desde el menú de usuario, con acciones claras por cada estado.
+Proveer una pantalla dedicada para gestionar listas por estado (`ACTIVE`, `COMPLETED`) desde el menú de usuario. El borrador en progreso se gestiona en el modal de lista.
 
 ## Endpoints
 
@@ -13,13 +13,11 @@ Proveer una pantalla dedicada para gestionar listas por estado (`DRAFT`, `ACTIVE
 
 ## Reglas importantes
 
-- Tabs por estado: **Borradores**, **Activas**, **Historial**.
+- Tabs por estado: **Activas**, **Historial**.
 - Acciones por estado:
-  - `DRAFT`: editar, activar, borrar.
   - `ACTIVE`: editar, completar, borrar.
   - `COMPLETED`: ver, duplicar, borrar.
 - Estados vacíos:
-  - `DRAFT`: CTA “Crear lista”.
   - `ACTIVE` y `COMPLETED`: solo mensaje informativo.
 
 ## Notas de implementación

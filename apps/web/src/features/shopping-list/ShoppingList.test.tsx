@@ -55,6 +55,7 @@ describe("ShoppingList", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   const baseAuthContext: AuthContextType = {
