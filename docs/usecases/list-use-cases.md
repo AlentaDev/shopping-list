@@ -8,16 +8,21 @@ Permitir a los usuarios **preparar listas de la compra en PC**, guardarlas en su
 
 ## Estados de una lista
 
-* **LOCAL_DRAFT**: borrador solo en navegador, antes de registro/login.
-* **DRAFT**: borrador en la nube, editable solo en web.
+* **LOCAL_DRAFT**: único borrador en navegador cuando no hay sesión.
+* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse.
 * **ACTIVE**: lista preparada para comprar, visible en web y móvil.
 * **COMPLETED**: compra finalizada, visible en historial.
 
 ### Autosave con sesión (decisión)
 
 Cuando el usuario ya está autenticado, el autosave se persiste en servidor.
-El `LOCAL_DRAFT` solo se mantiene en navegador como autosave temporal tras login,
-hasta que el usuario lo descarte o confirme.
+La comparación entre el borrador local y el autosave remoto ocurre **una sola vez**
+al iniciar la app o tras login. La regla es:
+
+* Gana el borrador con más productos (`items.length`).
+* Si hay conflicto (local + remoto), se pide al usuario elegir.
+* Si elige el local, se sincroniza el autosave remoto con el local.
+* Si elige el remoto, se reemplaza el borrador local.
 
 ---
 
@@ -54,14 +59,17 @@ El usuario puede crear una lista sin tener cuenta. La lista se guarda automátic
 **Actor:** Usuario no registrado → Usuario registrado (web)
 
 **Descripción:**
-Al registrarse o iniciar sesión, el borrador local se guarda automáticamente en la cuenta del usuario.
+Al registrarse o iniciar sesión, el borrador local se compara con el autosave remoto. Si ambos
+existen, el usuario decide cuál mantener.
 
 **Flujo principal:**
 
 1. El usuario pulsa “Registrarse / Iniciar sesión”.
 2. El sistema detecta un `LOCAL_DRAFT`.
-3. Se crea una lista en la BBDD con estado `DRAFT` usando el contenido local.
-4. El borrador local permanece como autosave temporal hasta que el usuario decida descartarlo.
+3. Si existe autosave remoto, se muestra un modal para elegir:
+   * Mantener la lista local → se sincroniza el autosave remoto con el local.
+   * Mantener la lista remota → se reemplaza el borrador local.
+4. Si no existe autosave remoto, se sincroniza el borrador local al autosave remoto.
 
 **Estado resultante:** `DRAFT`
 
@@ -78,11 +86,9 @@ El usuario crea y edita listas en modo borrador desde el PC.
 
 1. El usuario crea una nueva lista.
 2. Añade, edita o elimina productos.
-3. La lista se autoguarda cada 1–3s en la BBDD si hay cambios.
+3. La lista se autoguarda localmente; si hay sesión, también se sincroniza por autosave.
 4. El usuario puede cerrar sesión o refrescar sin perder cambios.
-5. El usuario puede elegir entre:
-   * “Guardar como borrador” → la lista queda como `DRAFT` en su cuenta.
-   * “Lista lista para comprar” → la lista pasa a `ACTIVE`.
+5. El usuario puede pulsar “Confirmar lista” para pasarla a `ACTIVE`.
 
 **Estado resultante:** `DRAFT` o `ACTIVE`
 
@@ -98,8 +104,8 @@ Si el usuario no guardó explícitamente, el autosave temporal se recupera al vo
 **Flujo principal:**
 
 1. El usuario cierra o pierde la sesión mientras edita.
-2. Al volver a abrir la app, el sistema detecta autosave temporal.
-3. El usuario ve el contenido recuperado para continuar.
+2. Al volver a abrir la app, el sistema compara local vs remoto una única vez.
+3. Se carga el borrador ganador para continuar.
 
 **Estado resultante:** `DRAFT` (autosave temporal)
 
@@ -114,9 +120,9 @@ El usuario decide no continuar con el autosave temporal.
 
 **Flujo principal:**
 
-1. El usuario detecta un autosave temporal recuperado.
-2. El usuario elige descartarlo.
-3. El sistema elimina el autosave temporal.
+1. El usuario recibe el modal de elección local/remoto.
+2. El usuario elige mantener el borrador local.
+3. El sistema sobrescribe el autosave remoto con el borrador local.
 
 **Estado resultante:** sin borrador temporal activo
 
@@ -131,8 +137,9 @@ El usuario indica que la lista está lista para usarse en el móvil.
 
 **Flujo principal:**
 
-1. Desde una lista en `DRAFT`, el usuario pulsa “Lista lista para comprar”.
-2. El sistema cambia el estado de la lista.
+1. Desde una lista en `DRAFT`, el usuario pulsa “Confirmar lista”.
+2. El sistema cambia el estado de la lista a `ACTIVE` **reutilizando el mismo registro**.
+3. El borrador local/autosave se limpia (sin items) y se restaura un título genérico.
 
 **Estado resultante:** `ACTIVE`
 
@@ -163,16 +170,17 @@ El usuario ve únicamente las listas activas y las usa durante la compra. En mó
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-Mientras una lista está activa, el usuario puede seguir editándola desde el PC sin cambiar su estado.
+Al editar una lista `ACTIVE` desde la web, pasa temporalmente a `DRAFT` y deja de estar disponible
+en móvil hasta volver a confirmarla.
 
 **Flujo principal:**
 
 1. El usuario abre una lista `ACTIVE` en la web.
-2. Puede añadir productos o modificar cantidades/notas.
-3. Si intenta borrar un producto, el sistema muestra un aviso.
-4. Los cambios se reflejan en el móvil cuando se sincronice la lista.
+2. El sistema avisa que mientras se edita no estará disponible en móvil.
+3. La lista pasa a `DRAFT` y se permite editar productos.
+4. Al pulsar “Confirmar lista”, vuelve a `ACTIVE`.
 
-**Estado resultante:** `ACTIVE`
+**Estado resultante:** `DRAFT` o `ACTIVE`
 
 ---
 
@@ -250,9 +258,9 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 * Una lista `COMPLETED` **no se reutiliza directamente**: siempre se duplica.
 * Se pueden tener **varias listas activas a la vez**.
 * Todas las listas pueden borrarse.
-* El autoguardado es continuo en web y se sincroniza cada 1–3s si hay cambios.
-* Si el usuario guarda explícitamente como borrador o lista activa, el autosave temporal deja de usarse.
-* Las listas `ACTIVE` **no vuelven a `DRAFT`**: se editan en web sin cambiar estado.
+* El autoguardado es continuo en web y se sincroniza si hay sesión.
+* Solo existe **un borrador en progreso** (local + autosave remoto).
+* Las listas `ACTIVE` **pueden volver a `DRAFT`** durante la edición web.
 * Si una lista `ACTIVE` se borra antes de sincronizar en móvil, la sincronización devuelve error.
 
 ---

@@ -1,6 +1,6 @@
 import type { ListStatus } from "./listStatus";
 
-export type AutosaveItemInput = {
+export type AutosaveManualItemInput = {
   id: string;
   kind: "manual";
   name: string;
@@ -8,6 +8,27 @@ export type AutosaveItemInput = {
   checked: boolean;
   note?: string | null;
 };
+
+export type AutosaveCatalogItemInput = {
+  id: string;
+  kind: "catalog";
+  name: string;
+  qty: number;
+  checked: boolean;
+  note?: string | null;
+  source: "mercadona";
+  sourceProductId: string;
+  thumbnail?: string | null;
+  price?: number | null;
+  unitSize?: number | null;
+  unitFormat?: string | null;
+  unitPrice?: number | null;
+  isApproxSize?: boolean;
+};
+
+export type AutosaveItemInput =
+  | AutosaveManualItemInput
+  | AutosaveCatalogItemInput;
 
 export type AutosaveDraftInput = {
   title: string;

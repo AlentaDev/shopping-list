@@ -6,12 +6,20 @@ import type {
 
 type AutosaveItemPayload = {
   id?: string;
-  kind?: "manual";
+  kind?: "manual" | "catalog";
   name?: string;
   qty?: number;
   checked?: boolean;
   note?: string | null;
   updatedAt?: string;
+  thumbnail?: string | null;
+  price?: number | null;
+  unitSize?: number | null;
+  unitFormat?: string | null;
+  unitPrice?: number | null;
+  isApproxSize?: boolean;
+  source?: "mercadona";
+  sourceProductId?: string;
 };
 
 type AutosavePayload = {
@@ -35,6 +43,14 @@ const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   checked: item.checked ?? false,
   note: item.note ?? null,
   updatedAt: item.updatedAt ?? "",
+  thumbnail: item.thumbnail ?? null,
+  price: item.price ?? null,
+  unitSize: item.unitSize ?? null,
+  unitFormat: item.unitFormat ?? null,
+  unitPrice: item.unitPrice ?? null,
+  isApproxSize: item.isApproxSize ?? false,
+  source: item.source,
+  sourceProductId: item.sourceProductId,
 });
 
 export const adaptAutosaveResponse = (payload: unknown): AutosaveDraft | null => {

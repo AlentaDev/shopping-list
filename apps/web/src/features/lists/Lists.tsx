@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import ListsScreen from "./components/ListsScreen";
 import type { ListActionKey } from "./services/listActions";
-import type { ListSummary } from "./services/types";
+import { LIST_STATUS } from "./services/listActions";
+import type { ListDetail, ListSummary } from "./services/types";
 import {
   activateList,
   completeList,
@@ -11,9 +12,12 @@ import {
   getListDetail,
   getLists,
 } from "./services/ListsService";
-import { APP_EVENTS } from "@src/shared/constants/appState";
 
-const Lists = () => {
+type ListsProps = {
+  onOpenList: (list: ListDetail) => void;
+};
+
+const Lists = ({ onOpenList }: ListsProps) => {
   const [lists, setLists] = useState<ListSummary[]>([]);
 
   const loadLists = useCallback(async () => {
@@ -74,14 +78,21 @@ const Lists = () => {
     }
 
     if (action === "view" || action === "edit") {
-      await getListDetail(listId);
+      const listDetail = await getListDetail(listId);
+      onOpenList(listDetail);
     }
   };
 
   const handleCreate = async () => {
-    await createList();
+    const createdList = await createList();
+    onOpenList({
+      id: createdList.id,
+      title: createdList.title,
+      updatedAt: createdList.updatedAt,
+      items: [],
+      status: LIST_STATUS.DRAFT,
+    });
     await loadLists();
-    window.dispatchEvent(new Event(APP_EVENTS.OPEN_CART));
   };
 
   return (

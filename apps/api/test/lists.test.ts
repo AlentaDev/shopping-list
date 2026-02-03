@@ -121,6 +121,7 @@ describe("lists endpoints", () => {
       id: expect.any(String),
       title: "Groceries",
       updatedAt: expect.any(String),
+      status: "DRAFT",
     });
   });
 
@@ -142,6 +143,7 @@ describe("lists endpoints", () => {
           id: expect.any(String),
           title: "Groceries",
           updatedAt: expect.any(String),
+          status: "DRAFT",
         },
       ],
     });
@@ -167,6 +169,7 @@ describe("lists endpoints", () => {
       title: "Weekly",
       items: [],
       updatedAt: expect.any(String),
+      status: "DRAFT",
     });
   });
 
@@ -509,6 +512,7 @@ describe("lists endpoints", () => {
         },
       ],
       updatedAt: expect.any(String),
+      status: "DRAFT",
     });
   });
 });

@@ -7,6 +7,7 @@ import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
 import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -54,6 +55,7 @@ describe("ShoppingList", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
   });
 
   const baseAuthContext: AuthContextType = {
@@ -72,11 +74,13 @@ describe("ShoppingList", () => {
     authenticated = false,
     listId,
     listStatus,
+    listTitle,
   }: {
     items?: ListItem[];
     authenticated?: boolean;
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
+    listTitle?: string;
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -91,6 +95,7 @@ describe("ShoppingList", () => {
             onClose={vi.fn()}
             initialListId={listId}
             initialListStatus={listStatus}
+            initialListTitle={listTitle}
           />
         </ListProvider>
       </AuthContext.Provider>,
@@ -339,6 +344,29 @@ describe("ShoppingList", () => {
     );
     expect(
       screen.queryByText("Hemos encontrado un borrador guardado"),
+    ).toBeNull();
+  });
+
+  it("no intenta guardar autosave remoto si el usuario no está autenticado", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({ authenticated: false });
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("oculta la acción de activar lista si no hay sesión", () => {
+    renderShoppingList({ authenticated: false, listStatus: "LOCAL_DRAFT" });
+
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
     ).toBeNull();
   });
 });

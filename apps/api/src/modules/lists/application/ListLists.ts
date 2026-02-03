@@ -5,6 +5,7 @@ type ListSummary = {
   id: string;
   title: string;
   updatedAt: string;
+  status: ListStatus;
 };
 
 type ListListsResult = {
@@ -32,6 +33,7 @@ export class ListLists {
         id: list.id,
         title: list.title,
         updatedAt: list.updatedAt.toISOString(),
+        status: list.status,
       })),
     };
   }

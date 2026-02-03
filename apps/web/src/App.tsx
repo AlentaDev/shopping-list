@@ -14,6 +14,16 @@ import {
   type AuthMode,
 } from "@src/features/auth";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
+import type {
+  ListDetail,
+  ListItem as RemoteListItem,
+} from "@src/features/lists/services/types";
+import {
+  LIST_STATUS as SHOPPING_LIST_STATUS,
+  type ListStatus as ShoppingListStatus,
+} from "@src/features/shopping-list/services/listStatus";
+import { LIST_STATUS as LISTS_STATUS } from "@src/features/lists/services/listActions";
+import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
 const DEFAULT_PRODUCT_NAME = "";
 const LOGIN_PATH = "/auth/login";
@@ -28,7 +38,13 @@ const App = () => {
   const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
     resolveAuthMode(window.location.pathname),
   );
-  const { linesCount } = useList();
+  const [currentListId, setCurrentListId] = useState<string | null>(null);
+  const [currentListStatus, setCurrentListStatus] =
+    useState<ShoppingListStatus>(SHOPPING_LIST_STATUS.LOCAL_DRAFT);
+  const [currentListTitle, setCurrentListTitle] = useState(
+    UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+  );
+  const { linesCount, setItems } = useList();
   const {
     authUser,
     isAuthSubmitting,
@@ -126,6 +142,14 @@ const App = () => {
     }
   };
 
+  const handleOpenList = (list: ListDetail) => {
+    setItems(mapListItems(list.items));
+    setCurrentListId(list.id);
+    setCurrentListStatus(resolveShoppingListStatus(list.status));
+    setCurrentListTitle(list.title);
+    setIsCartOpen(true);
+  };
+
   let mainContent = <Catalog isCategoriesOpen={isCategoriesOpen} />;
 
   if (authMode) {
@@ -143,7 +167,7 @@ const App = () => {
     );
   } else if (currentPath === LISTS_PATH) {
     mainContent = authUser ? (
-      <Lists />
+      <Lists onOpenList={handleOpenList} />
     ) : (
       <AuthScreen
         mode="login"
@@ -280,7 +304,14 @@ const App = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8">{mainContent}</main>
-      <ShoppingList isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <ShoppingList
+        key={`${currentListId ?? "local"}-${currentListTitle}`}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        initialListId={currentListId}
+        initialListStatus={currentListStatus}
+        initialListTitle={currentListTitle}
+      />
       <Toast />
     </div>
   );
@@ -297,5 +328,30 @@ function resolveAuthMode(pathname: string): AuthMode | null {
 
   return null;
 }
+
+const mapListItems = (items: RemoteListItem[]): ShoppingListItem[] =>
+  items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    category: "",
+    thumbnail: item.thumbnail ?? null,
+    price: item.price ?? null,
+    quantity: item.qty,
+  }));
+
+const resolveShoppingListStatus = (
+  status?: string,
+): ShoppingListStatus => {
+  switch (status) {
+    case LISTS_STATUS.ACTIVE:
+      return SHOPPING_LIST_STATUS.ACTIVE;
+    case LISTS_STATUS.COMPLETED:
+      return SHOPPING_LIST_STATUS.COMPLETED;
+    case LISTS_STATUS.DRAFT:
+      return SHOPPING_LIST_STATUS.DRAFT;
+    default:
+      return SHOPPING_LIST_STATUS.DRAFT;
+  }
+};
 
 export default App;

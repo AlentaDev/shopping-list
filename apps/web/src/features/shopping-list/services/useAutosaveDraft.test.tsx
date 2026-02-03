@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import type { ListItem } from "@src/context/ListContextValue";
+import type { AutosaveDraftInput } from "./types";
 import { useAutosaveDraft } from "./useAutosaveDraft";
 
 const sampleItem: ListItem = {
@@ -22,17 +23,7 @@ type FetchResponse = {
 
 type HarnessProps = {
   enabled?: boolean;
-  onRehydrate?: (draft: {
-    title: string;
-    items: {
-      id: string;
-      kind: "manual";
-      name: string;
-      qty: number;
-      checked: boolean;
-      note?: string | null;
-    }[];
-  }) => void;
+  onRehydrate?: (draft: AutosaveDraftInput) => void;
 };
 
 const Harness = ({ enabled = true, onRehydrate }: HarnessProps) => {
@@ -90,11 +81,15 @@ describe("useAutosaveDraft", () => {
       items: [
         {
           id: "item-1",
-          kind: "manual",
+          kind: "catalog",
           name: "Leche",
           qty: 2,
           checked: false,
-          note: null,
+          note: "",
+          source: "mercadona",
+          sourceProductId: "item-1",
+          thumbnail: null,
+          price: 1.5,
         },
       ],
     });

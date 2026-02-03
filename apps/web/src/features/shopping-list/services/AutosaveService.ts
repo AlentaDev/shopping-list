@@ -45,7 +45,9 @@ export const clearLocalDraft = (): void => {
 export const getAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveDraft | null> => {
-  const response = await fetch(AUTOSAVE_ENDPOINT);
+  const response = await fetch(AUTOSAVE_ENDPOINT, {
+    credentials: "include",
+  });
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load autosave.");
@@ -65,10 +67,25 @@ export const putAutosave = async (
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(draft),
   });
 
   if (!response.ok) {
+    let responseBody: string | null = null;
+
+    try {
+      responseBody = await response.text();
+    } catch (error) {
+      console.warn("No se pudo leer el cuerpo del error de autosave.", error);
+    }
+
+    console.warn("Autosave remoto falló.", {
+      status: response.status,
+      statusText: response.statusText,
+      responseBody,
+      draft,
+    });
     throw new Error(options.errorMessage ?? "Unable to save autosave.");
   }
 
@@ -82,6 +99,7 @@ export const deleteAutosave = async (
 ): Promise<void> => {
   const response = await fetch(AUTOSAVE_ENDPOINT, {
     method: "DELETE",
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -95,15 +113,18 @@ type AutosaveScheduler = {
 };
 
 export const createAutosaveScheduler = (
-  options: { debounceMs?: number } = {}
+  options: { debounceMs?: number; persistLocal?: boolean } = {}
 ): AutosaveScheduler => {
   const debounceMs = options.debounceMs ?? DEFAULT_AUTOSAVE_DEBOUNCE_MS;
+  const persistLocal = options.persistLocal ?? true;
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let latestDraft: AutosaveDraftInput | null = null;
 
   const schedule = (draft: AutosaveDraftInput) => {
     latestDraft = draft;
-    saveLocalDraft(draft);
+    if (persistLocal) {
+      saveLocalDraft(draft);
+    }
 
     if (timeoutId) {
       clearTimeout(timeoutId);

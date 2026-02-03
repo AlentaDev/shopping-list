@@ -1,4 +1,5 @@
 import type { ListRepository } from "./ports.js";
+import type { ListStatus } from "../domain/list.js";
 import { ListForbiddenError, ListNotFoundError } from "./errors.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 
@@ -7,6 +8,7 @@ type ListDetail = {
   title: string;
   items: ListItemDto[];
   updatedAt: string;
+  status: ListStatus;
 };
 
 export class GetList {
@@ -27,6 +29,7 @@ export class GetList {
       title: list.title,
       items: list.items.map((item) => toListItemDto(item)),
       updatedAt: list.updatedAt.toISOString(),
+      status: list.status,
     };
   }
 }

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { AutosaveDraftInput } from "./types";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {
   ok: boolean;
@@ -99,6 +100,57 @@ describe("LocalDraftSyncService", () => {
     expect(localStorage.getItem("lists.localDraft")).toBeNull();
   });
 
+  it("envía items de catálogo al endpoint correspondiente", async () => {
+    const catalogDraft: AutosaveDraftInput = {
+      title: "Compra catálogo",
+      items: [
+        {
+          id: "product-1",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          note: null,
+          source: "mercadona",
+          sourceProductId: "product-1",
+          thumbnail: "https://example.com/aceite.png",
+          price: 4.2,
+        },
+      ],
+    };
+    localStorage.setItem("lists.localDraft", JSON.stringify(catalogDraft));
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "list-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "item-remote-1" }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(syncLocalDraftToRemoteList()).resolves.toEqual({
+      listId: "list-1",
+      itemsCreated: 1,
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/lists/list-1/items/from-catalog",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          source: "mercadona",
+          productId: "product-1",
+          qty: 1,
+        }),
+      }),
+    );
+  });
+
   it("mantiene el borrador local si falla la creación de la lista", async () => {
     localStorage.setItem("lists.localDraft", JSON.stringify(SAMPLE_DRAFT));
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
@@ -138,6 +190,48 @@ describe("LocalDraftSyncService", () => {
     );
     expect(localStorage.getItem("lists.localDraft")).toBe(
       JSON.stringify(SAMPLE_DRAFT),
+    );
+  });
+
+  it("usa el título por defecto si el borrador local no tiene título", async () => {
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        ...SAMPLE_DRAFT,
+        title: "   ",
+      }),
+    );
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "list-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "item-remote-1" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "item-remote-2" }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(syncLocalDraftToRemoteList()).resolves.toEqual({
+      listId: "list-1",
+      itemsCreated: 2,
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/api/lists",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+        }),
+      }),
     );
   });
 });

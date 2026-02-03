@@ -5,7 +5,6 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Lists from "./Lists";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { APP_EVENTS } from "@src/shared/constants/appState";
 import { LIST_STATUS } from "./services/listActions";
 
 type FetchResponse = {
@@ -19,6 +18,17 @@ describe("Lists", () => {
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input, init) => {
       const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "created-1",
+            title: "Tu lista",
+            updatedAt: "2024-02-03T10:00:00.000Z",
+          }),
+        };
+      }
 
       if (url === "/api/lists") {
         return {
@@ -55,6 +65,7 @@ describe("Lists", () => {
             id: "draft-1",
             title: "Compra semanal",
             updatedAt: "2024-02-01T10:00:00.000Z",
+            status: LIST_STATUS.DRAFT,
             items: [],
           }),
         };
@@ -133,17 +144,6 @@ describe("Lists", () => {
         };
       }
 
-      if (url === "/api/lists" && init?.method === "POST") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "created-1",
-            title: "Tu lista",
-            updatedAt: "2024-02-03T10:00:00.000Z",
-          }),
-        };
-      }
-
       return {
         ok: false,
         json: async () => ({}),
@@ -151,9 +151,9 @@ describe("Lists", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
-    const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+    const onOpenList = vi.fn();
 
-    render(<Lists />);
+    render(<Lists onOpenList={onOpenList} />);
 
     expect(await screen.findByText("Compra semanal")).toBeInTheDocument();
 
@@ -168,9 +168,13 @@ describe("Lists", () => {
       );
     });
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: APP_EVENTS.OPEN_CART })
-    );
+    expect(onOpenList).toHaveBeenCalledWith({
+      id: "created-1",
+      title: "Tu lista",
+      updatedAt: "2024-02-03T10:00:00.000Z",
+      items: [],
+      status: LIST_STATUS.DRAFT,
+    });
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
@@ -178,6 +182,13 @@ describe("Lists", () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith("/api/lists/draft-1");
+      expect(onOpenList).toHaveBeenCalledWith({
+        id: "draft-1",
+        title: "Compra semanal",
+        updatedAt: "2024-02-01T10:00:00.000Z",
+        items: [],
+        status: LIST_STATUS.DRAFT,
+      });
     });
 
     await userEvent.click(

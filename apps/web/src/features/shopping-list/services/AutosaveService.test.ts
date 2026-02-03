@@ -26,6 +26,9 @@ const SAMPLE_DRAFT: AutosaveDraftInput = {
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
+  status?: number;
+  statusText?: string;
+  text?: () => Promise<string>;
 };
 
 describe("AutosaveService", () => {
@@ -72,7 +75,10 @@ describe("AutosaveService", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(getAutosave()).resolves.toBeNull();
-    expect(fetchMock).toHaveBeenCalledWith("/api/lists/autosave");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ credentials: "include" })
+    );
   });
 
   it("envía el borrador al endpoint de autosave", async () => {
@@ -95,9 +101,41 @@ describe("AutosaveService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
+        credentials: "include",
         body: JSON.stringify(SAMPLE_DRAFT),
       })
     );
+  });
+
+  it("registra el error cuando el autosave remoto falla", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+        json: async () => ({}),
+        text: async () => "invalid payload",
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).rejects.toThrow(
+      "Unable to save autosave."
+    );
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Autosave remoto falló.",
+      expect.objectContaining({
+        status: 400,
+        statusText: "Bad Request",
+        responseBody: "invalid payload",
+        draft: SAMPLE_DRAFT,
+      })
+    );
+
+    warnSpy.mockRestore();
   });
 
   it("elimina el autosave del servidor", async () => {
@@ -113,7 +151,7 @@ describe("AutosaveService", () => {
     await expect(deleteAutosave()).resolves.toBeUndefined();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "DELETE" })
+      expect.objectContaining({ method: "DELETE", credentials: "include" })
     );
   });
 
@@ -145,7 +183,36 @@ describe("AutosaveService", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "PUT" })
+      expect.objectContaining({ method: "PUT", credentials: "include" })
+    );
+  });
+
+  it("omite el guardado local cuando persistLocal es false", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const scheduler = createAutosaveScheduler({ persistLocal: false });
+
+    scheduler.schedule(SAMPLE_DRAFT);
+
+    expect(localStorage.getItem("lists.localDraft")).toBeNull();
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT", credentials: "include" })
     );
   });
 
@@ -188,6 +255,7 @@ describe("AutosaveService", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
       expect.objectContaining({
+        credentials: "include",
         body: JSON.stringify(secondDraft),
       })
     );

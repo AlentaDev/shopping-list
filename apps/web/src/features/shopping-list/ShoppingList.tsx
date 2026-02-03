@@ -24,6 +24,7 @@ type ShoppingListProps = {
   onClose: () => void;
   initialListId?: string | null;
   initialListStatus?: ListStatus;
+  initialListTitle?: string;
 };
 
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
@@ -33,13 +34,14 @@ const ShoppingList = ({
   onClose,
   initialListId,
   initialListStatus,
+  initialListTitle,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
-  const [listName, setListName] = useState("");
+  const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
-    UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+    initialListTitle ?? UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [listId, setListId] = useState<string | null>(initialListId ?? null);
   const [listStatus, setListStatus] = useState<ListStatus>(
@@ -47,7 +49,7 @@ const ShoppingList = ({
   );
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
-  const canReadyToShop = canActivateList(listStatus);
+  const canReadyToShop = Boolean(authUser) && canActivateList(listStatus);
   const draftTitle = listName.trim() || listTitle;
 
   const handleRehydrate = useCallback(
@@ -62,8 +64,8 @@ const ShoppingList = ({
         id: item.id,
         name: item.name,
         category: "",
-        thumbnail: null,
-        price: null,
+        thumbnail: item.thumbnail ?? null,
+        price: item.price ?? null,
         quantity: item.qty,
       }));
 
@@ -76,7 +78,10 @@ const ShoppingList = ({
 
   useAutosaveDraft(
     { title: draftTitle, items },
-    { enabled: items.length > 0, onRehydrate: handleRehydrate },
+    {
+      enabled: items.length > 0 && Boolean(authUser),
+      onRehydrate: handleRehydrate,
+    },
   );
 
   const { draft: autosaveDraft, handleContinue, handleDiscard } =
@@ -154,7 +159,7 @@ const ShoppingList = ({
   };
 
   const handleReadyToShop = useCallback(async () => {
-    if (!canActivateList(listStatus)) {
+    if (!authUser || !canActivateList(listStatus)) {
       return;
     }
 
@@ -168,7 +173,7 @@ const ShoppingList = ({
     } catch (error) {
       console.warn("No se pudo activar la lista.", error);
     }
-  }, [listId, listStatus]);
+  }, [authUser, listId, listStatus]);
 
   return (
     <ListModal
