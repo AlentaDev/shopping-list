@@ -117,6 +117,30 @@ describe("ListsScreen", () => {
     expect(onCreate).toHaveBeenCalledTimes(1);
   });
 
+  it("muestra confirmación antes de borrar una lista", async () => {
+    const onAction = vi.fn();
+
+    render(
+      <ListsScreen lists={sampleLists} onAction={onAction} onCreate={vi.fn()} />
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
+    );
+
+    expect(
+      screen.getByText(UI_TEXT.LISTS.DELETE_CONFIRMATION.TITLE)
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL,
+      })
+    );
+
+    expect(onAction).toHaveBeenCalledWith("active-1", "delete");
+  });
+
   it("dispara onCreate desde el botón principal", async () => {
     const onCreate = vi.fn();
 

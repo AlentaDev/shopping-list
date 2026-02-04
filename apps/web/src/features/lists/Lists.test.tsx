@@ -202,6 +202,18 @@ describe("Lists", () => {
     );
 
     await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.LISTS.DELETE_CONFIRMATION.TITLE)
+      ).toBeInTheDocument();
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL,
+      })
+    );
+
+    await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/completed-1",
         expect.objectContaining({ method: "DELETE" })

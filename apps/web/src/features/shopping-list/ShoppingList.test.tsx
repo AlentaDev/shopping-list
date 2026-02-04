@@ -75,12 +75,14 @@ describe("ShoppingList", () => {
     listId,
     listStatus,
     listTitle,
+    onClose = vi.fn(),
   }: {
     items?: ListItem[];
     authenticated?: boolean;
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
+    onClose?: () => void;
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -92,7 +94,7 @@ describe("ShoppingList", () => {
         <ListProvider initialItems={items}>
           <ShoppingList
             isOpen
-            onClose={vi.fn()}
+            onClose={onClose}
             initialListId={listId}
             initialListStatus={listStatus}
             initialListTitle={listTitle}
@@ -196,6 +198,113 @@ describe("ShoppingList", () => {
       "/api/lists/list-99/items/item-1",
       expect.objectContaining({ method: "DELETE" }),
     );
+  });
+
+  it("muestra acciones de detalle para listas activas", () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-1",
+      listStatus: "ACTIVE",
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
+      }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra acciones de detalle para listas completadas", () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-2",
+      listStatus: "COMPLETED",
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
+      }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("confirma el borrado de la lista desde el detalle", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/reuse")) {
+        return {
+          ok: true,
+          json: async () => ({ id: "reuse-1", title: "Reuso", items: [] }),
+        };
+      }
+
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    const onClose = vi.fn();
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-3",
+      listStatus: "ACTIVE",
+      listTitle: "Mi lista",
+      onClose,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    );
+
+    expect(
+      screen.getByText(UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.TITLE),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.CONFIRM_LABEL,
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-3",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(onClose).toHaveBeenCalled();
   });
 
   it("updates total when incrementing quantity", async () => {

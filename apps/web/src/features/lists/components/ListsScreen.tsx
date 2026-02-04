@@ -42,11 +42,30 @@ const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
 
 const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("ACTIVE");
+  const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
 
   const filteredLists = useMemo(
     () => lists.filter((list) => STATUS_TO_TAB[list.status] === activeTab),
     [lists, activeTab]
   );
+
+  const handleAction = (list: ListSummary, action: ListActionKey) => {
+    if (action === "delete") {
+      setPendingDelete(list);
+      return;
+    }
+
+    onAction(list.id, action);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!pendingDelete) {
+      return;
+    }
+
+    onAction(pendingDelete.id, "delete");
+    setPendingDelete(null);
+  };
 
   return (
     <section className="space-y-6">
@@ -118,7 +137,7 @@ const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
                   <button
                     key={action}
                     type="button"
-                    onClick={() => onAction(list.id, action)}
+                    onClick={() => handleAction(list, action)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                       action === "delete"
                         ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
@@ -133,6 +152,42 @@ const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
           ))}
         </div>
       )}
+      {pendingDelete ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h3 className="text-lg font-semibold text-slate-900">
+              {UI_TEXT.LISTS.DELETE_CONFIRMATION.TITLE}
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              {UI_TEXT.LISTS.DELETE_CONFIRMATION.MESSAGE}{" "}
+              <span className="font-semibold text-slate-800">
+                {pendingDelete.title}
+              </span>
+              .
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              >
+                {UI_TEXT.LISTS.DELETE_CONFIRMATION.CANCEL_LABEL}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+              >
+                {UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 };

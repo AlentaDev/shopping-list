@@ -14,6 +14,11 @@ import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
 import {
+  deleteList,
+  reuseList,
+  startListEditing,
+} from "./services/ListDetailActionsService";
+import {
   LIST_STATUS,
   canActivateList,
   type ListStatus,
@@ -28,6 +33,119 @@ type ShoppingListProps = {
 };
 
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
+
+type DetailActionsProps = {
+  isActive: boolean;
+  onEdit: () => void;
+  onReuse: () => void;
+  onClose: () => void;
+  onDelete: () => void;
+};
+
+const DetailActions = ({
+  isActive,
+  onEdit,
+  onReuse,
+  onClose,
+  onDelete,
+}: DetailActionsProps) => (
+  <div className="flex flex-wrap gap-2">
+    {isActive ? (
+      <>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
+        </button>
+      </>
+    ) : (
+      <>
+        <button
+          type="button"
+          onClick={onReuse}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE}
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
+        </button>
+      </>
+    )}
+    <button
+      type="button"
+      onClick={onDelete}
+      className="rounded-full border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-50"
+    >
+      {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE}
+    </button>
+  </div>
+);
+
+type DeleteListConfirmationProps = {
+  isOpen: boolean;
+  listTitle: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+const DeleteListConfirmation = ({
+  isOpen,
+  listTitle,
+  onCancel,
+  onConfirm,
+}: DeleteListConfirmationProps) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+      >
+        <h3 className="text-lg font-semibold text-slate-900">
+          {UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.TITLE}
+        </h3>
+        <p className="mt-2 text-sm text-slate-600">
+          {UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.MESSAGE}{" "}
+          <span className="font-semibold text-slate-800">{listTitle}</span>.
+        </p>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+          >
+            {UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.CANCEL_LABEL}
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="rounded-full bg-red-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-600"
+          >
+            {UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.CONFIRM_LABEL}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const ShoppingList = ({
   isOpen,
@@ -49,8 +167,13 @@ const ShoppingList = ({
   );
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
+  const [pendingListDeletion, setPendingListDeletion] = useState(false);
   const canReadyToShop = Boolean(authUser) && canActivateList(listStatus);
   const draftTitle = listName.trim() || listTitle;
+  const isActiveList = listStatus === LIST_STATUS.ACTIVE;
+  const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
+  const showDetailActions =
+    Boolean(authUser) && Boolean(listId) && (isActiveList || isCompletedList);
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
@@ -92,6 +215,7 @@ const ShoppingList = ({
 
   const handleClose = () => {
     setPendingRemoval(null);
+    setPendingListDeletion(false);
     onClose();
   };
 
@@ -143,6 +267,65 @@ const ShoppingList = ({
     }
   };
 
+  const handleEditList = async () => {
+    if (!listId) {
+      return;
+    }
+
+    try {
+      await startListEditing(listId);
+    } catch (error) {
+      console.warn("No se pudo activar la edición.", error);
+    }
+  };
+
+  const handleReuseList = async () => {
+    if (!listId) {
+      return;
+    }
+
+    try {
+      const response = await reuseList(listId);
+      const reusedItems = (response.items ?? []).map((item) => ({
+        id: item.id ?? "",
+        name: item.name ?? "",
+        category: "",
+        thumbnail: item.thumbnail ?? null,
+        price: item.price ?? null,
+        quantity: item.qty ?? 0,
+      }));
+
+      setItems(reusedItems);
+      setListId(response.id);
+      setListStatus(LIST_STATUS.DRAFT);
+      setListTitle(
+        response.title?.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+      );
+      setListName(response.title ?? "");
+    } catch (error) {
+      console.warn("No se pudo reusar la lista.", error);
+    }
+  };
+
+  const handleConfirmDeleteList = async () => {
+    if (!listId) {
+      return;
+    }
+
+    try {
+      await deleteList(listId);
+      setItems([]);
+      setListId(null);
+      setListStatus(LIST_STATUS.LOCAL_DRAFT);
+      setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
+      setListName("");
+      setPendingListDeletion(false);
+      onClose();
+    } catch (error) {
+      console.warn("No se pudo borrar la lista.", error);
+    }
+  };
+
   const handleStartSave = () => {
     setViewMode(SHOPPING_LIST_VIEW.SAVE);
   };
@@ -184,6 +367,15 @@ const ShoppingList = ({
     >
       {viewMode === SHOPPING_LIST_VIEW.LIST ? (
         <div className="space-y-6">
+          {showDetailActions ? (
+            <DetailActions
+              isActive={isActiveList}
+              onEdit={handleEditList}
+              onReuse={handleReuseList}
+              onClose={handleClose}
+              onDelete={() => setPendingListDeletion(true)}
+            />
+          ) : null}
           {autosaveDraft ? (
             <AutosaveRecoveryBanner
               onContinue={handleContinue}
@@ -281,6 +473,12 @@ const ShoppingList = ({
           </div>
         </div>
       ) : null}
+      <DeleteListConfirmation
+        isOpen={pendingListDeletion}
+        listTitle={listTitle}
+        onCancel={() => setPendingListDeletion(false)}
+        onConfirm={handleConfirmDeleteList}
+      />
     </ListModal>
   );
 };

@@ -3,6 +3,10 @@
  * Extracted to avoid duplicated strings throughout the application
  */
 /* eslint-disable sonarjs/no-hardcoded-passwords */
+const DELETE_CONFIRM_LABEL = "Sí, eliminar";
+const DELETE_LIST_TITLE = "¿Eliminar lista?";
+const DELETE_LIST_MESSAGE = "Vas a borrar la lista";
+
 export const UI_TEXT = {
   APP: {
     TITLE: "La lista de la compra",
@@ -108,13 +112,25 @@ export const UI_TEXT = {
       TITLE: "¿Eliminar producto de la lista?",
       MESSAGE: "Vas a quitar el producto",
       CANCEL_LABEL: "Cancelar",
-      CONFIRM_LABEL: "Sí, eliminar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos encontrado un borrador guardado",
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",
       CONTINUE_LABEL: "Continuar",
       DISCARD_LABEL: "Descartar",
+    },
+    DETAIL_ACTIONS: {
+      EDIT: "Editar",
+      CLOSE: "Cerrar",
+      DELETE: "Borrar",
+      REUSE: "Reusar",
+    },
+    DELETE_LIST_CONFIRMATION: {
+      TITLE: DELETE_LIST_TITLE,
+      MESSAGE: DELETE_LIST_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
   },
   LIST_MODAL: {
@@ -147,6 +163,12 @@ export const UI_TEXT = {
     EMPTY_STATE: {
       ACTIVE_TITLE: "No hay listas activas",
       COMPLETED_TITLE: "Aún no hay compras completadas",
+    },
+    DELETE_CONFIRMATION: {
+      TITLE: DELETE_LIST_TITLE,
+      MESSAGE: DELETE_LIST_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",
