@@ -46,16 +46,16 @@ export const getListDetail = async (
   return adaptListDetailResponse(payload);
 };
 
-export const duplicateList = async (
+export const reuseList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListDetail> => {
-  const response = await fetch(`/api/lists/${listId}/duplicate`, {
+  const response = await fetch(`/api/lists/${listId}/reuse`, {
     method: "POST",
   });
 
   if (!response.ok) {
-    throw new Error(options.errorMessage ?? "Unable to duplicate list.");
+    throw new Error(options.errorMessage ?? "Unable to reuse list.");
   }
 
   const payload = await response.json();

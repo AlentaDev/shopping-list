@@ -14,7 +14,20 @@ describe("UpdateListStatus", () => {
       title: "Weekly groceries",
       isAutosaveDraft: false,
       status: "DRAFT",
-      items: [],
+      activatedAt: undefined,
+      isEditing: false,
+      items: [
+        {
+          id: "item-1",
+          listId: "list-1",
+          kind: "manual",
+          name: "Milk",
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-01T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+        },
+      ],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     };
@@ -54,6 +67,8 @@ describe("UpdateListStatus", () => {
       title: "Weekly groceries",
       isAutosaveDraft: false,
       status: "ACTIVE",
+      activatedAt: undefined,
+      isEditing: false,
       items: [
         {
           id: "item-1",
@@ -128,6 +143,8 @@ describe("UpdateListStatus", () => {
       title: "Weekly groceries",
       isAutosaveDraft: false,
       status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),
@@ -140,6 +157,33 @@ describe("UpdateListStatus", () => {
         userId: "user-1",
         listId: "list-1",
         status: "COMPLETED",
+      }),
+    ).rejects.toBeInstanceOf(ListStatusTransitionError);
+  });
+
+  it("throws when activating a list without items", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new UpdateListStatus(listRepository);
+    const list: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+
+    await listRepository.save(list);
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        listId: "list-1",
+        status: "ACTIVE",
       }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
   });

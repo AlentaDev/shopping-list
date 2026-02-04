@@ -8,7 +8,7 @@ import {
   completeList,
   createList,
   deleteList,
-  duplicateList,
+  reuseList,
   getListDetail,
   getLists,
 } from "./services/ListsService";
@@ -65,8 +65,8 @@ const Lists = ({ onOpenList }: ListsProps) => {
       return;
     }
 
-    if (action === "duplicate") {
-      await duplicateList(listId);
+    if (action === "reuse") {
+      await reuseList(listId);
       await loadLists();
       return;
     }
@@ -89,6 +89,9 @@ const Lists = ({ onOpenList }: ListsProps) => {
       id: createdList.id,
       title: createdList.title,
       updatedAt: createdList.updatedAt,
+      activatedAt: createdList.activatedAt,
+      itemCount: createdList.itemCount,
+      isEditing: createdList.isEditing,
       items: [],
       status: LIST_STATUS.DRAFT,
     });

@@ -13,6 +13,9 @@ type ListSummaryPayload = {
   id?: string;
   title?: string;
   updatedAt?: string;
+  itemCount?: number;
+  activatedAt?: string | null;
+  isEditing?: boolean;
   status?: string;
 };
 
@@ -43,6 +46,9 @@ type ListDetailPayload = {
   title?: string;
   items?: ListItemPayload[];
   updatedAt?: string;
+  itemCount?: number;
+  activatedAt?: string | null;
+  isEditing?: boolean;
   status?: string;
 };
 
@@ -81,6 +87,9 @@ const adaptListSummary = (list: ListSummaryPayload): ListSummary => ({
   id: list.id ?? "",
   title: list.title ?? "",
   updatedAt: list.updatedAt ?? "",
+  itemCount: list.itemCount ?? 0,
+  activatedAt: list.activatedAt ?? null,
+  isEditing: list.isEditing ?? false,
   status: resolveStatus(list.status),
 });
 
@@ -118,6 +127,9 @@ export const adaptListDetailResponse = (payload: unknown): ListDetail => {
     id: data.id ?? "",
     title: data.title ?? "",
     updatedAt: data.updatedAt ?? "",
+    itemCount: data.itemCount ?? 0,
+    activatedAt: data.activatedAt ?? null,
+    isEditing: data.isEditing ?? false,
     items,
     status: data.status ? resolveStatus(data.status) : undefined,
   };

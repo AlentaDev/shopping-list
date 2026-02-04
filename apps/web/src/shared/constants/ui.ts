@@ -128,7 +128,6 @@ export const UI_TEXT = {
     TITLE: "Mis listas",
     NEW_LIST_LABEL: "Nueva lista",
     TABS: {
-      DRAFT: "Borradores",
       ACTIVE: "Activas",
       COMPLETED: "Historial",
     },
@@ -136,13 +135,16 @@ export const UI_TEXT = {
       EDIT: "Editar",
       ACTIVATE: "Lista lista para comprar",
       COMPLETE: "Completar compra",
-      DUPLICATE: "Duplicar",
+      REUSE: "Reusar",
       DELETE: "Borrar",
       VIEW: "Ver",
     },
+    CARD: {
+      ITEM_COUNT_LABEL: "Productos:",
+      ACTIVATED_AT_LABEL: "Activada:",
+      UPDATED_AT_LABEL: "Actualizada:",
+    },
     EMPTY_STATE: {
-      DRAFT_TITLE: "No hay borradores",
-      DRAFT_CTA: "Crear lista",
       ACTIVE_TITLE: "No hay listas activas",
       COMPLETED_TITLE: "Aún no hay compras completadas",
     },

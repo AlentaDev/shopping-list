@@ -15,6 +15,9 @@ describe("ListAdapter", () => {
           id: "list-1",
           title: "Semanal",
           updatedAt: "2024-02-01T10:00:00.000Z",
+          activatedAt: "2024-02-01T09:00:00.000Z",
+          itemCount: 3,
+          isEditing: false,
           status: LIST_STATUS.ACTIVE,
         },
       ],
@@ -26,6 +29,9 @@ describe("ListAdapter", () => {
           id: "list-1",
           title: "Semanal",
           updatedAt: "2024-02-01T10:00:00.000Z",
+          activatedAt: "2024-02-01T09:00:00.000Z",
+          itemCount: 3,
+          isEditing: false,
           status: LIST_STATUS.ACTIVE,
         },
       ],
@@ -53,6 +59,9 @@ describe("ListAdapter", () => {
           id: "list-1",
           title: "Semanal",
           updatedAt: "2024-02-01T10:00:00.000Z",
+          activatedAt: null,
+          itemCount: 0,
+          isEditing: false,
           status: LIST_STATUS.DRAFT,
         },
       ],
@@ -64,6 +73,9 @@ describe("ListAdapter", () => {
       id: "list-3",
       title: "Caprichos",
       updatedAt: "2024-02-03T10:00:00.000Z",
+      activatedAt: "2024-02-03T09:00:00.000Z",
+      itemCount: 4,
+      isEditing: false,
       status: LIST_STATUS.ACTIVE,
     };
 
@@ -71,6 +83,9 @@ describe("ListAdapter", () => {
       id: "list-3",
       title: "Caprichos",
       updatedAt: "2024-02-03T10:00:00.000Z",
+      activatedAt: "2024-02-03T09:00:00.000Z",
+      itemCount: 4,
+      isEditing: false,
       status: LIST_STATUS.ACTIVE,
     });
   });
@@ -94,6 +109,9 @@ describe("ListAdapter", () => {
       id: "list-2",
       title: "Cena",
       updatedAt: "2024-02-02T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 1,
+      isEditing: true,
       status: LIST_STATUS.COMPLETED,
       items: [
         {
@@ -111,6 +129,9 @@ describe("ListAdapter", () => {
       id: "list-2",
       title: "Cena",
       updatedAt: "2024-02-02T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 1,
+      isEditing: true,
       status: LIST_STATUS.COMPLETED,
       items: [
         {
@@ -139,6 +160,9 @@ describe("ListAdapter", () => {
       id: "",
       title: "",
       updatedAt: "",
+      activatedAt: null,
+      itemCount: 0,
+      isEditing: false,
       items: [],
       status: undefined,
     });

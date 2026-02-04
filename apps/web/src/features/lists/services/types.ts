@@ -3,6 +3,9 @@ import type { ListStatus } from "./listActions";
 export type ListSummary = {
   id: string;
   title: string;
+  itemCount: number;
+  activatedAt: string | null;
+  isEditing: boolean;
   updatedAt: string;
   status: ListStatus;
 };
@@ -28,6 +31,9 @@ export type ListItem = {
 export type ListDetail = {
   id: string;
   title: string;
+  itemCount: number;
+  activatedAt: string | null;
+  isEditing: boolean;
   items: ListItem[];
   updatedAt: string;
   status?: ListStatus;

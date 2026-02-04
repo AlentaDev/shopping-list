@@ -8,7 +8,7 @@ import {
 } from "../services/listActions";
 import type { ListSummary } from "../services/types";
 
-type TabKey = "DRAFT" | "ACTIVE" | "COMPLETED";
+type TabKey = "ACTIVE" | "COMPLETED";
 
 type ListsScreenProps = {
   lists: ListSummary[];
@@ -17,13 +17,11 @@ type ListsScreenProps = {
 };
 
 const TAB_LABELS: Record<TabKey, string> = {
-  DRAFT: UI_TEXT.LISTS.TABS.DRAFT,
   ACTIVE: UI_TEXT.LISTS.TABS.ACTIVE,
   COMPLETED: UI_TEXT.LISTS.TABS.COMPLETED,
 };
 
 const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
-  DRAFT: UI_TEXT.LISTS.EMPTY_STATE.DRAFT_TITLE,
   ACTIVE: UI_TEXT.LISTS.EMPTY_STATE.ACTIVE_TITLE,
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
@@ -32,19 +30,18 @@ const ACTION_LABELS: Record<ListActionKey, string> = {
   edit: UI_TEXT.LISTS.ACTIONS.EDIT,
   activate: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
   complete: UI_TEXT.LISTS.ACTIONS.COMPLETE,
-  duplicate: UI_TEXT.LISTS.ACTIONS.DUPLICATE,
+  reuse: UI_TEXT.LISTS.ACTIONS.REUSE,
   delete: UI_TEXT.LISTS.ACTIONS.DELETE,
   view: UI_TEXT.LISTS.ACTIONS.VIEW,
 };
 
-const STATUS_TO_TAB: Record<ListStatus, TabKey> = {
-  [LIST_STATUS.DRAFT]: "DRAFT",
+const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
   [LIST_STATUS.ACTIVE]: "ACTIVE",
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
 
 const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
-  const [activeTab, setActiveTab] = useState<TabKey>("DRAFT");
+  const [activeTab, setActiveTab] = useState<TabKey>("ACTIVE");
 
   const filteredLists = useMemo(
     () => lists.filter((list) => STATUS_TO_TAB[list.status] === activeTab),
@@ -92,15 +89,6 @@ const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
           <p className="text-sm font-semibold text-slate-700">
             {EMPTY_STATE_BY_TAB[activeTab]}
           </p>
-          {activeTab === "DRAFT" ? (
-            <button
-              type="button"
-              onClick={onCreate}
-              className="mt-4 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
-            >
-              {UI_TEXT.LISTS.EMPTY_STATE.DRAFT_CTA}
-            </button>
-          ) : null}
         </div>
       ) : (
         <div className="grid gap-4">
@@ -114,7 +102,15 @@ const ListsScreen = ({ lists, onAction, onCreate }: ListsScreenProps) => {
                   {list.title}
                 </h2>
                 <p className="text-sm text-slate-500">
-                  {UI_TEXT.LISTS.UPDATED_AT_LABEL} {list.updatedAt}
+                  {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {list.itemCount}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {list.status === LIST_STATUS.ACTIVE
+                    ? UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL
+                    : UI_TEXT.LISTS.CARD.UPDATED_AT_LABEL}{" "}
+                  {list.status === LIST_STATUS.ACTIVE
+                    ? list.activatedAt ?? list.updatedAt
+                    : list.updatedAt}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

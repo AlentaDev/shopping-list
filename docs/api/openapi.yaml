@@ -400,6 +400,7 @@ paths:
           $ref: "#/components/responses/ItemNotFound"
   /api/lists/{id}/duplicate:
     post:
+      deprecated: true
       tags:
         - lists
       summary: Duplicar lista completada
@@ -418,6 +419,70 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DuplicateListResponse"
+        "400":
+          description: Error de transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/reuse:
+    post:
+      tags:
+        - lists
+      summary: Reusar lista completada
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Lista reutilizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateListResponse"
+        "400":
+          description: Error de transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/editing:
+    patch:
+      tags:
+        - lists
+      summary: Marcar lista activa como en edición
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista marcada como en edición
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartListEditingResponse"
         "400":
           description: Error de transición inválida
           content:
@@ -759,6 +824,21 @@ components:
         - status
         - items
         - updatedAt
+    StartListEditingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        isEditing:
+          type: boolean
+          enum: [true]
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - isEditing
+        - updatedAt
     AutosaveDraft:
       type: object
       properties:
@@ -895,6 +975,8 @@ components:
           type: string
           format: date-time
           nullable: true
+        isEditing:
+          type: boolean
         updatedAt:
           type: string
           format: date-time
@@ -903,6 +985,7 @@ components:
         - title
         - status
         - itemCount
+        - isEditing
         - updatedAt
     ListListsResponse:
       type: object
@@ -928,6 +1011,9 @@ components:
           type: string
           format: date-time
           nullable: true
+        itemCount:
+          type: integer
+          minimum: 0
         items:
           type: array
           items:
@@ -940,6 +1026,7 @@ components:
         - title
         - status
         - isEditing
+        - itemCount
         - items
         - updatedAt
     AddManualItemRequest:

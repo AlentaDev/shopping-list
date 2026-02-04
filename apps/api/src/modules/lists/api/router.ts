@@ -17,6 +17,7 @@ import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
 import { DuplicateList } from "../application/DuplicateList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
+import { StartListEditing } from "../application/StartListEditing.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
@@ -42,6 +43,7 @@ type ListsRouterDependencies = {
   updateListStatus: UpdateListStatus;
   completeList: CompleteList;
   duplicateList: DuplicateList;
+  startListEditing: StartListEditing;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   upsertAutosaveDraft: UpsertAutosaveDraft;
@@ -177,6 +179,36 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       });
 
       res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/reuse", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.duplicateList.execute({
+        userId,
+        listId: params.id,
+      });
+
+      res.status(201).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.patch("/:id/editing", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.startListEditing.execute({
+        userId,
+        listId: params.id,
+      });
+
+      res.status(200).json(response);
     } catch (error) {
       next(error);
     }

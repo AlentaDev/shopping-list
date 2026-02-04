@@ -47,6 +47,10 @@ export class UpdateListStatus {
         throw new ListStatusTransitionError();
       }
 
+      if (input.status === "ACTIVE" && list.items.length === 0) {
+        throw new ListStatusTransitionError();
+      }
+
       if (input.status === "COMPLETED") {
         if (!input.checkedItemIds) {
           throw new ListStatusTransitionError();
