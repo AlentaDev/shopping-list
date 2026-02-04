@@ -14,6 +14,8 @@ describe("CompleteList", () => {
       title: "Weekly groceries",
       isAutosaveDraft: false,
       status: "ACTIVE",
+      activatedAt: undefined,
+      isEditing: false,
       items: [
         {
           id: "item-1",
@@ -105,6 +107,8 @@ describe("CompleteList", () => {
       title: "Weekly groceries",
       isAutosaveDraft: false,
       status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),

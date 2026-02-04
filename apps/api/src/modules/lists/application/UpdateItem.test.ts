@@ -14,6 +14,8 @@ describe("UpdateItem", () => {
       title: "Done list",
       isAutosaveDraft: false,
       status: "COMPLETED",
+      activatedAt: undefined,
+      isEditing: false,
       items: [
         {
           id: "item-1",

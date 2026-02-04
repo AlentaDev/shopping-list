@@ -64,6 +64,7 @@ export class UpsertAutosaveDraft {
       isAutosaveDraft: true,
       status: "DRAFT",
       items: input.items.map((item) => toListItem(item, listId, now)),
+      isEditing: false,
       createdAt: latestAutosave?.createdAt ?? now,
       updatedAt: now,
     };

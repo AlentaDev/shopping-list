@@ -42,6 +42,8 @@ export type List = {
   isAutosaveDraft: boolean;
   status: ListStatus;
   items: ListItem[];
+  activatedAt?: Date;
+  isEditing: boolean;
   createdAt: Date;
   updatedAt: Date;
 };
