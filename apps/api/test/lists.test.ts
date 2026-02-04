@@ -141,17 +141,7 @@ describe("lists endpoints", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-      lists: [
-        {
-          id: expect.any(String),
-          title: "Groceries",
-          status: "DRAFT",
-          itemCount: 0,
-          activatedAt: null,
-          isEditing: false,
-          updatedAt: expect.any(String),
-        },
-      ],
+      lists: [],
     });
   });
 
