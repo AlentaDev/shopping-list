@@ -107,6 +107,18 @@ Todas las rutas requieren autenticación.
 - Params: `{ id, itemId }`.
 - Respuesta `200`: `{ ok: true }`.
 
+**POST `/:id/reuse`**
+- Params: `{ id }`.
+- Respuesta `201`: `ListDetail`.
+
+**POST `/:id/duplicate`**
+- Params: `{ id }`.
+- Respuesta `201`: `ListDetail` (deprecated).
+
+**PATCH `/:id/editing`**
+- Params: `{ id }`.
+- Respuesta `200`: `{ id, isEditing, updatedAt }`.
+
 ## DTOs y modelos expuestos
 ### Usuario público (`PublicUser`)
 ```

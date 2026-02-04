@@ -245,6 +245,26 @@ Sin contenido (autosave descartado).
 
 Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
 
+### POST /api/lists/:id/reuse
+
+Reusa una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
+
+> Nota: `/api/lists/:id/duplicate` se mantiene por compatibilidad, pero el endpoint preferido es `/api/lists/:id/reuse`.
+
+### PATCH /api/lists/:id/editing
+
+Marca una lista activa como en edición (`isEditing=true`).
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "isEditing": true,
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
 **Response 201**
 
 ```json

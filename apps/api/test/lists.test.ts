@@ -517,4 +517,91 @@ describe("lists endpoints", () => {
       updatedAt: expect.any(String),
     });
   });
+
+  it("PATCH /api/lists/:id/editing marks an active list as editing", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    const itemResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items`)
+      .set("Cookie", cookie)
+      .send({ name: "Milk" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/status`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    const response = await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      id: listResponse.body.id,
+      isEditing: true,
+      updatedAt: expect.any(String),
+    });
+
+    const detailResponse = await request(app)
+      .get(`/api/lists/${listResponse.body.id}`)
+      .set("Cookie", cookie);
+
+    expect(detailResponse.body).toEqual(
+      expect.objectContaining({
+        isEditing: true,
+        itemCount: 1,
+      }),
+    );
+    expect(itemResponse.body.id).toBeDefined();
+  });
+
+  it("POST /api/lists/:id/reuse duplicates a completed list", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    const itemResponse = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items`)
+      .set("Cookie", cookie)
+      .send({ name: "Milk" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/status`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/complete`)
+      .set("Cookie", cookie)
+      .send({ checkedItemIds: [itemResponse.body.id] });
+
+    const response = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/reuse`)
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      id: expect.any(String),
+      title: "Weekly",
+      status: "DRAFT",
+      items: [
+        expect.objectContaining({
+          kind: "manual",
+          name: "Milk",
+          checked: false,
+        }),
+      ],
+      updatedAt: expect.any(String),
+    });
+  });
 });
