@@ -28,6 +28,7 @@ export class CreateList {
       isAutosaveDraft: false,
       status: "DRAFT",
       items: [],
+      isEditing: false,
       createdAt: now,
       updatedAt: now,
     };

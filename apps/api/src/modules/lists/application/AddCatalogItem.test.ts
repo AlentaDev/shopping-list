@@ -24,6 +24,8 @@ describe("AddCatalogItem", () => {
       title: "Done list",
       isAutosaveDraft: false,
       status: "COMPLETED",
+      activatedAt: undefined,
+      isEditing: false,
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),

@@ -9,6 +9,8 @@ const createList = (overrides: Partial<List> = {}): List => ({
   title: "Groceries",
   isAutosaveDraft: false,
   status: "ACTIVE",
+  activatedAt: undefined,
+  isEditing: false,
   items: [],
   createdAt: new Date("2024-01-01T10:00:00.000Z"),
   updatedAt: new Date("2024-01-02T10:00:00.000Z"),
