@@ -895,6 +895,8 @@ components:
           type: string
           format: date-time
           nullable: true
+        isEditing:
+          type: boolean
         updatedAt:
           type: string
           format: date-time
@@ -903,6 +905,7 @@ components:
         - title
         - status
         - itemCount
+        - isEditing
         - updatedAt
     ListListsResponse:
       type: object
@@ -928,6 +931,9 @@ components:
           type: string
           format: date-time
           nullable: true
+        itemCount:
+          type: integer
+          minimum: 0
         items:
           type: array
           items:
@@ -940,6 +946,7 @@ components:
         - title
         - status
         - isEditing
+        - itemCount
         - items
         - updatedAt
     AddManualItemRequest:

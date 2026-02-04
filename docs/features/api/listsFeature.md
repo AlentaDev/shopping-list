@@ -22,6 +22,10 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 {
   "id": "uuid",
   "title": "Groceries",
+  "status": "DRAFT",
+  "itemCount": 0,
+  "activatedAt": null,
+  "isEditing": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -39,6 +43,7 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
       "status": "ACTIVE",
       "itemCount": 12,
       "activatedAt": "2024-01-01T00:00:00.000Z",
+      "isEditing": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ]
@@ -116,6 +121,7 @@ Si no hay borrador autosave, responde con `null`.
   "status": "ACTIVE",
   "isEditing": false,
   "activatedAt": "2024-01-01T00:00:00.000Z",
+  "itemCount": 1,
   "items": [
     {
       "id": "uuid",

@@ -9,6 +9,8 @@ const createList = (overrides: Partial<List> = {}): List => ({
   title: "Groceries",
   isAutosaveDraft: false,
   status: "ACTIVE",
+  activatedAt: undefined,
+  isEditing: false,
   items: [],
   createdAt: new Date("2024-01-01T10:00:00.000Z"),
   updatedAt: new Date("2024-01-02T10:00:00.000Z"),
@@ -45,8 +47,11 @@ describe("ListLists", () => {
       {
         id: "list-completed",
         title: "Groceries",
-        updatedAt: "2024-02-01T10:00:00.000Z",
         status: "COMPLETED",
+        itemCount: 0,
+        activatedAt: null,
+        isEditing: false,
+        updatedAt: "2024-02-01T10:00:00.000Z",
       },
     ]);
   });
@@ -75,14 +80,20 @@ describe("ListLists", () => {
       {
         id: "list-1",
         title: "Groceries",
-        updatedAt: "2024-01-02T10:00:00.000Z",
         status: "ACTIVE",
+        itemCount: 0,
+        activatedAt: null,
+        isEditing: false,
+        updatedAt: "2024-01-02T10:00:00.000Z",
       },
       {
         id: "list-2",
         title: "Groceries",
-        updatedAt: "2024-01-02T10:00:00.000Z",
         status: "COMPLETED",
+        itemCount: 0,
+        activatedAt: null,
+        isEditing: false,
+        updatedAt: "2024-01-02T10:00:00.000Z",
       },
     ]);
   });

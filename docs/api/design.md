@@ -79,14 +79,14 @@ Todas las rutas requieren autenticación.
 
 **POST `/`**
 - Body: `{ title }`.
-- Respuesta `201`: `ListSummary` `{ id, title, updatedAt }`.
+- Respuesta `201`: `ListSummary`.
 
 **GET `/`**
 - Respuesta `200`: `{ lists: ListSummary[] }`.
 
 **GET `/:id`**
 - Params: `{ id }`.
-- Respuesta `200`: `ListDetail` `{ id, title, items: ListItemDto[], updatedAt }`.
+- Respuesta `200`: `ListDetail`.
 
 **POST `/:id/items`**
 - Params: `{ id }`.
@@ -123,6 +123,10 @@ Todas las rutas requieren autenticación.
 {
   "id": string,
   "title": string,
+  "status": "DRAFT" | "ACTIVE" | "COMPLETED",
+  "itemCount": number,
+  "activatedAt": string (ISO) | null,
+  "isEditing": boolean,
   "updatedAt": string (ISO)
 }
 ```
@@ -132,6 +136,10 @@ Todas las rutas requieren autenticación.
 {
   "id": string,
   "title": string,
+  "status": "DRAFT" | "ACTIVE" | "COMPLETED",
+  "itemCount": number,
+  "activatedAt": string (ISO) | null,
+  "isEditing": boolean,
   "items": ListItemDto[],
   "updatedAt": string (ISO)
 }

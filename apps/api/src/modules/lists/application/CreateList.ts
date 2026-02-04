@@ -9,6 +9,9 @@ type CreateListInput = {
 type ListSummary = {
   id: string;
   title: string;
+  itemCount: number;
+  activatedAt: string | null;
+  isEditing: boolean;
   updatedAt: string;
   status: List["status"];
 };
@@ -28,6 +31,7 @@ export class CreateList {
       isAutosaveDraft: false,
       status: "DRAFT",
       items: [],
+      isEditing: false,
       createdAt: now,
       updatedAt: now,
     };
@@ -37,6 +41,9 @@ export class CreateList {
     return {
       id: list.id,
       title: list.title,
+      itemCount: list.items.length,
+      activatedAt: list.activatedAt ? list.activatedAt.toISOString() : null,
+      isEditing: list.isEditing,
       updatedAt: list.updatedAt.toISOString(),
       status: list.status,
     };

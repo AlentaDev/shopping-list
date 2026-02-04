@@ -4,6 +4,9 @@ import type { ListStatus } from "../domain/list.js";
 type ListSummary = {
   id: string;
   title: string;
+  itemCount: number;
+  activatedAt: string | null;
+  isEditing: boolean;
   updatedAt: string;
   status: ListStatus;
 };
@@ -32,6 +35,11 @@ export class ListLists {
       lists: filteredLists.map((list) => ({
         id: list.id,
         title: list.title,
+        itemCount: list.items.length,
+        activatedAt: list.activatedAt
+          ? list.activatedAt.toISOString()
+          : null,
+        isEditing: list.isEditing,
         updatedAt: list.updatedAt.toISOString(),
         status: list.status,
       })),

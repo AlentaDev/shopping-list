@@ -52,6 +52,7 @@ export class DuplicateList {
       isAutosaveDraft: false,
       status: "DRAFT",
       items: clonedItems,
+      isEditing: false,
       createdAt: now,
       updatedAt: now,
     };

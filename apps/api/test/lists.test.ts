@@ -120,8 +120,11 @@ describe("lists endpoints", () => {
     expect(response.body).toEqual({
       id: expect.any(String),
       title: "Groceries",
-      updatedAt: expect.any(String),
       status: "DRAFT",
+      itemCount: 0,
+      activatedAt: null,
+      isEditing: false,
+      updatedAt: expect.any(String),
     });
   });
 
@@ -142,8 +145,11 @@ describe("lists endpoints", () => {
         {
           id: expect.any(String),
           title: "Groceries",
-          updatedAt: expect.any(String),
           status: "DRAFT",
+          itemCount: 0,
+          activatedAt: null,
+          isEditing: false,
+          updatedAt: expect.any(String),
         },
       ],
     });
@@ -168,6 +174,9 @@ describe("lists endpoints", () => {
       id: listId,
       title: "Weekly",
       items: [],
+      itemCount: 0,
+      activatedAt: null,
+      isEditing: false,
       updatedAt: expect.any(String),
       status: "DRAFT",
     });
@@ -485,6 +494,10 @@ describe("lists endpoints", () => {
     expect(response.body).toEqual({
       id: listResponse.body.id,
       title: "Weekly",
+      status: "DRAFT",
+      itemCount: 2,
+      activatedAt: null,
+      isEditing: false,
       items: [
         {
           id: manualResponse.body.id,
@@ -512,7 +525,6 @@ describe("lists endpoints", () => {
         },
       ],
       updatedAt: expect.any(String),
-      status: "DRAFT",
     });
   });
 });
