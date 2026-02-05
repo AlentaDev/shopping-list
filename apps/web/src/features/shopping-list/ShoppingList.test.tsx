@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
 import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
 import { UI_TEXT } from "@src/shared/constants/ui";
+
+type FetchResponse = {
+  ok: boolean;
+  json: () => Promise<unknown>;
+};
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -76,6 +81,7 @@ describe("ShoppingList", () => {
     listStatus,
     listTitle,
     listIsEditing,
+    isLoading,
     onClose = vi.fn(),
   }: {
     items?: ListItem[];
@@ -84,6 +90,7 @@ describe("ShoppingList", () => {
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
     listIsEditing?: boolean;
+    isLoading?: boolean;
     onClose?: () => void;
   } = {}) =>
     render(
@@ -101,6 +108,7 @@ describe("ShoppingList", () => {
             initialListStatus={listStatus}
             initialListTitle={listTitle}
             initialListIsEditing={listIsEditing}
+            isLoading={isLoading}
           />
         </ListProvider>
       </AuthContext.Provider>,
@@ -180,10 +188,7 @@ describe("ShoppingList", () => {
         ok: boolean;
         json: () => Promise<unknown>;
       }>
-    >(async () => ({
-      ok: true,
-      json: async () => ({}),
-    }));
+    >(() => new Promise<FetchResponse>(() => {}));
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -308,6 +313,48 @@ describe("ShoppingList", () => {
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("muestra placeholders cuando el detalle está cargando", () => {
+    renderShoppingList({ isLoading: true });
+
+    expect(screen.getByTestId("shopping-list-skeleton")).toBeInTheDocument();
+  });
+
+  it("deshabilita acciones mientras se edita", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(() => new Promise<FetchResponse>(() => {}));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-20",
+      listStatus: "ACTIVE",
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
+        }),
+      );
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-20/editing",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT,
+      }),
+    ).toBeDisabled();
   });
 
   it("bloquea la edición en móvil cuando la lista activa está en edición", async () => {

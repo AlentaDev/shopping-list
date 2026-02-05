@@ -188,4 +188,34 @@ describe("ListsScreen", () => {
 
     expect(onCreate).toHaveBeenCalledTimes(1);
   });
+
+  it("muestra skeletons cuando está cargando", () => {
+    render(
+      <ListsScreen
+        lists={[]}
+        onAction={vi.fn()}
+        onCreate={vi.fn()}
+        isLoading
+      />
+    );
+
+    expect(screen.getAllByTestId("lists-skeleton-card")).toHaveLength(3);
+  });
+
+  it("deshabilita la acción activa y muestra loading", () => {
+    render(
+      <ListsScreen
+        lists={sampleLists}
+        onAction={vi.fn()}
+        onCreate={vi.fn()}
+        actionLoading={{ listId: "active-1", action: "complete" }}
+      />
+    );
+
+    const loadingButton = screen.getByRole("button", {
+      name: UI_TEXT.LISTS.ACTIONS_LOADING.complete,
+    });
+
+    expect(loadingButton).toBeDisabled();
+  });
 });

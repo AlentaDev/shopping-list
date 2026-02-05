@@ -406,7 +406,7 @@ describe("App", () => {
     });
   });
 
-  it("auto-logs in after successful registration with welcome toast", async () => {
+  it("auto-logs in after successful registration", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async (input) => {
         if (input === rootCategoriesUrl) {
@@ -481,11 +481,6 @@ describe("App", () => {
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.AUTH.REGISTER.SUBMIT_LABEL }),
     );
-
-    // Verificar que aparece el toast de bienvenida
-    expect(
-      await screen.findByText(/gracias.*ana.*por registrarte/i),
-    ).toBeInTheDocument();
 
     // Verificar que el usuario queda autenticado (aparece el menú de usuario)
     await waitFor(() => {

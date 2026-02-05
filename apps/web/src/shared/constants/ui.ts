@@ -129,6 +129,11 @@ export const UI_TEXT = {
       DELETE: "Borrar",
       REUSE: "Reusar",
     },
+    DETAIL_ACTIONS_LOADING: {
+      EDIT: "Editando...",
+      REUSE: "Reusando...",
+      DELETE: "Borrando...",
+    },
     DELETE_LIST_CONFIRMATION: {
       TITLE: DELETE_LIST_TITLE,
       MESSAGE: DELETE_LIST_MESSAGE,
@@ -146,6 +151,7 @@ export const UI_TEXT = {
   LISTS: {
     TITLE: "Mis listas",
     NEW_LIST_LABEL: "Nueva lista",
+    NEW_LIST_LOADING_LABEL: "Creando...",
     TABS: {
       ACTIVE: "Activas",
       COMPLETED: "Historial",
@@ -157,6 +163,14 @@ export const UI_TEXT = {
       REUSE: "Reusar",
       DELETE: "Borrar",
       VIEW: "Ver",
+    },
+    ACTIONS_LOADING: {
+      edit: "Editando...",
+      activate: "Activando...",
+      complete: "Completando...",
+      reuse: "Reusando...",
+      delete: "Borrando...",
+      view: "Cargando...",
     },
     CARD: {
       ITEM_COUNT_LABEL: "Productos:",

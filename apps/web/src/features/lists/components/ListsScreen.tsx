@@ -15,6 +15,93 @@ type ListsScreenProps = {
   onAction: (listId: string, action: ListActionKey) => void;
   onCreate: () => void;
   hasDraftItems?: boolean;
+  isLoading?: boolean;
+  actionLoading?: { listId: string; action: ListActionKey } | null;
+  isCreating?: boolean;
+};
+
+type ListActionButtonProps = {
+  action: ListActionKey;
+  label: string;
+  isDisabled: boolean;
+  onClick: () => void;
+};
+
+const ListActionButton = ({
+  action,
+  label,
+  isDisabled,
+  onClick,
+}: ListActionButtonProps) => {
+  let buttonStyle =
+    "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900";
+
+  if (isDisabled) {
+    buttonStyle = "cursor-not-allowed border-slate-200 text-slate-300";
+  } else if (action === "delete") {
+    buttonStyle =
+      "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50";
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isDisabled}
+      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${buttonStyle}`}
+    >
+      {label}
+    </button>
+  );
+};
+
+type ListCardProps = {
+  list: ListSummary;
+  actionLoading: { listId: string; action: ListActionKey } | null;
+  onAction: (list: ListSummary, action: ListActionKey) => void;
+};
+
+const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
+  const isListActionLoading = actionLoading?.listId === list.id;
+
+  return (
+    <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold text-slate-900">{list.title}</h2>
+        <p className="text-sm text-slate-500">
+          {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {list.itemCount}
+        </p>
+        <p className="text-sm text-slate-500">
+          {list.status === LIST_STATUS.ACTIVE
+            ? UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL
+            : UI_TEXT.LISTS.CARD.UPDATED_AT_LABEL}{" "}
+          {list.status === LIST_STATUS.ACTIVE
+            ? list.activatedAt ?? list.updatedAt
+            : list.updatedAt}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {getListActions(list.status).map((action) => {
+          const isLoadingAction =
+            isListActionLoading && actionLoading?.action === action;
+          const label = isLoadingAction
+            ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
+            : ACTION_LABELS[action];
+          const isDisabled = isListActionLoading;
+
+          return (
+            <ListActionButton
+              key={action}
+              action={action}
+              label={label}
+              isDisabled={isDisabled}
+              onClick={() => onAction(list, action)}
+            />
+          );
+        })}
+      </div>
+    </article>
+  );
 };
 
 const TAB_LABELS: Record<TabKey, string> = {
@@ -46,6 +133,9 @@ const ListsScreen = ({
   onAction,
   onCreate,
   hasDraftItems = false,
+  isLoading = false,
+  actionLoading = null,
+  isCreating = false,
 }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("ACTIVE");
   const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
@@ -56,7 +146,7 @@ const ListsScreen = ({
 
   const filteredLists = useMemo(
     () => lists.filter((list) => STATUS_TO_TAB[list.status] === activeTab),
-    [lists, activeTab]
+    [lists, activeTab],
   );
 
   const handleAction = (list: ListSummary, action: ListActionKey) => {
@@ -91,6 +181,60 @@ const ListsScreen = ({
     setPendingDraftLoss(null);
   };
 
+  const renderSkeletons = () => (
+    <div className="grid gap-4">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={`lists-skeleton-${index}`}
+          data-testid="lists-skeleton-card"
+          className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <div className="h-5 w-1/3 animate-pulse rounded-full bg-slate-200" />
+          <div className="h-4 w-2/5 animate-pulse rounded-full bg-slate-100" />
+          <div className="h-4 w-1/2 animate-pulse rounded-full bg-slate-100" />
+          <div className="flex gap-2">
+            <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const createButtonLabel = isCreating
+    ? UI_TEXT.LISTS.NEW_LIST_LOADING_LABEL
+    : UI_TEXT.LISTS.NEW_LIST_LABEL;
+
+  const renderListsContent = () => {
+    if (isLoading) {
+      return renderSkeletons();
+    }
+
+    if (filteredLists.length === 0) {
+      return (
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
+          <p className="text-sm font-semibold text-slate-700">
+            {EMPTY_STATE_BY_TAB[activeTab]}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-4">
+        {filteredLists.map((list) => (
+          <ListCard
+            key={list.id}
+            list={list}
+            actionLoading={actionLoading}
+            onAction={handleAction}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <section className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -102,9 +246,14 @@ const ListsScreen = ({
         <button
           type="button"
           onClick={onCreate}
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+          disabled={isCreating}
+          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            isCreating
+              ? "cursor-not-allowed border-slate-200 text-slate-300"
+              : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
+          }`}
         >
-          {UI_TEXT.LISTS.NEW_LIST_LABEL}
+          {createButtonLabel}
         </button>
       </header>
 
@@ -127,55 +276,7 @@ const ListsScreen = ({
         ))}
       </div>
 
-      {filteredLists.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm font-semibold text-slate-700">
-            {EMPTY_STATE_BY_TAB[activeTab]}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {filteredLists.map((list) => (
-            <article
-              key={list.id}
-              className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="space-y-1">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {list.title}
-                </h2>
-                <p className="text-sm text-slate-500">
-                  {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {list.itemCount}
-                </p>
-                <p className="text-sm text-slate-500">
-                  {list.status === LIST_STATUS.ACTIVE
-                    ? UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL
-                    : UI_TEXT.LISTS.CARD.UPDATED_AT_LABEL}{" "}
-                  {list.status === LIST_STATUS.ACTIVE
-                    ? list.activatedAt ?? list.updatedAt
-                    : list.updatedAt}
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {getListActions(list.status).map((action) => (
-                  <button
-                    key={action}
-                    type="button"
-                    onClick={() => handleAction(list, action)}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                      action === "delete"
-                        ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
-                        : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
-                    }`}
-                  >
-                    {ACTION_LABELS[action]}
-                  </button>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+      {renderListsContent()}
       {pendingDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
           <div
