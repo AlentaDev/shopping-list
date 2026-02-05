@@ -300,7 +300,15 @@ const App = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8">{mainContent}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        <div
+          key={`${currentPath}-${authMode ?? "main"}`}
+          className="page-transition"
+          data-testid="page-transition"
+        >
+          {mainContent}
+        </div>
+      </main>
       <ShoppingList
         key={`${currentListId ?? "local"}-${currentListTitle}`}
         isOpen={isCartOpen}

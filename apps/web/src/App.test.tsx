@@ -495,6 +495,47 @@ describe("App", () => {
     });
   });
 
+  it("wraps the main content with a transition container", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({ categories: [] }),
+          };
+        }
+
+        if (input === CURRENT_USER_URL) {
+          return {
+            ok: false,
+            json: async () => ({}),
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
+          };
+        }
+
+        throw new Error(UNEXPECTED_REQUEST_ERROR);
+      },
+    );
+
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AppProviders>
+        <App />
+      </AppProviders>,
+    );
+
+    expect(await screen.findByTestId("page-transition")).toHaveClass(
+      "page-transition",
+    );
+  });
+
   it("closes user menu when clicking outside of it", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async (input) => {
