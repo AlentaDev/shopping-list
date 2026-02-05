@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
@@ -30,9 +30,20 @@ type ShoppingListProps = {
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
+  initialListIsEditing?: boolean;
 };
 
 type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
+
+const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
+
+const getIsMobile = (): boolean => {
+  if (typeof window === "undefined" || !window.matchMedia) {
+    return false;
+  }
+
+  return window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+};
 
 type DetailActionsProps = {
   isActive: boolean;
@@ -153,6 +164,7 @@ const ShoppingList = ({
   initialListId,
   initialListStatus,
   initialListTitle,
+  initialListIsEditing,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
@@ -165,6 +177,10 @@ const ShoppingList = ({
   const [listStatus, setListStatus] = useState<ListStatus>(
     initialListStatus ?? LIST_STATUS.LOCAL_DRAFT,
   );
+  const [listIsEditing, setListIsEditing] = useState<boolean>(
+    initialListIsEditing ?? false,
+  );
+  const [isMobile, setIsMobile] = useState(getIsMobile);
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
@@ -174,6 +190,7 @@ const ShoppingList = ({
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
   const showDetailActions =
     Boolean(authUser) && Boolean(listId) && (isActiveList || isCompletedList);
+  const isReadOnlyMobile = isActiveList && listIsEditing && isMobile;
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
@@ -212,6 +229,23 @@ const ShoppingList = ({
       enabled: Boolean(authUser),
       onRehydrate: handleRehydrate,
     });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT_QUERY);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
 
   const handleClose = () => {
     setPendingRemoval(null);
@@ -274,6 +308,7 @@ const ShoppingList = ({
 
     try {
       await startListEditing(listId);
+      setListIsEditing(true);
     } catch (error) {
       console.warn("No se pudo activar la edición.", error);
     }
@@ -298,6 +333,7 @@ const ShoppingList = ({
       setItems(reusedItems);
       setListId(response.id);
       setListStatus(LIST_STATUS.DRAFT);
+      setListIsEditing(false);
       setListTitle(
         response.title?.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
       );
@@ -317,6 +353,7 @@ const ShoppingList = ({
       setItems([]);
       setListId(null);
       setListStatus(LIST_STATUS.LOCAL_DRAFT);
+      setListIsEditing(false);
       setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
       setListName("");
       setPendingListDeletion(false);
@@ -397,6 +434,7 @@ const ShoppingList = ({
               onIncrement={handleIncrement}
               onDecrement={handleDecrement}
               onRemove={handleRemoveRequest}
+              isReadOnly={isReadOnlyMobile}
             />
           )}
           <Total total={total} onAddMore={handleClose} onSave={handleStartSave} />

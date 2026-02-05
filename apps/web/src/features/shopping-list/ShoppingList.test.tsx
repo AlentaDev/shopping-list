@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
@@ -75,6 +75,7 @@ describe("ShoppingList", () => {
     listId,
     listStatus,
     listTitle,
+    listIsEditing,
     onClose = vi.fn(),
   }: {
     items?: ListItem[];
@@ -82,6 +83,7 @@ describe("ShoppingList", () => {
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
+    listIsEditing?: boolean;
     onClose?: () => void;
   } = {}) =>
     render(
@@ -98,6 +100,7 @@ describe("ShoppingList", () => {
             initialListId={listId}
             initialListStatus={listStatus}
             initialListTitle={listTitle}
+            initialListIsEditing={listIsEditing}
           />
         </ListProvider>
       </AuthContext.Provider>,
@@ -305,6 +308,43 @@ describe("ShoppingList", () => {
       expect.objectContaining({ method: "DELETE" }),
     );
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("bloquea la edición en móvil cuando la lista activa está en edición", async () => {
+    const originalMatchMedia = window.matchMedia;
+
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query.includes("max-width"),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    await act(async () => {
+      renderShoppingList({
+        authenticated: true,
+        listId: "list-10",
+        listStatus: "ACTIVE",
+        listIsEditing: true,
+      });
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: `Incrementar cantidad de ${appleName}`,
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
+    ).toBeDisabled();
+
+    window.matchMedia = originalMatchMedia;
   });
 
   it("updates total when incrementing quantity", async () => {

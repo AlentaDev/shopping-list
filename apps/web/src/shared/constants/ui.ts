@@ -6,6 +6,9 @@
 const DELETE_CONFIRM_LABEL = "Sí, eliminar";
 const DELETE_LIST_TITLE = "¿Eliminar lista?";
 const DELETE_LIST_MESSAGE = "Vas a borrar la lista";
+const DRAFT_LOSS_TITLE = "¿Cambiar de lista?";
+const DRAFT_LOSS_MESSAGE =
+  "El borrador actual se perderá si continúas con esta acción.";
 
 export const UI_TEXT = {
   APP: {
@@ -169,6 +172,12 @@ export const UI_TEXT = {
       MESSAGE: DELETE_LIST_MESSAGE,
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
+    },
+    DRAFT_LOSS: {
+      TITLE: DRAFT_LOSS_TITLE,
+      MESSAGE: DRAFT_LOSS_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: "Continuar",
     },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",

@@ -41,6 +41,8 @@ const App = () => {
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
     useState<ShoppingListStatus>(SHOPPING_LIST_STATUS.LOCAL_DRAFT);
+  const [currentListIsEditing, setCurrentListIsEditing] =
+    useState<boolean>(false);
   const [currentListTitle, setCurrentListTitle] = useState(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
@@ -147,6 +149,7 @@ const App = () => {
     setCurrentListId(list.id);
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
+    setCurrentListIsEditing(list.isEditing);
     setIsCartOpen(true);
   };
 
@@ -167,7 +170,7 @@ const App = () => {
     );
   } else if (currentPath === LISTS_PATH) {
     mainContent = authUser ? (
-      <Lists onOpenList={handleOpenList} />
+      <Lists onOpenList={handleOpenList} hasDraftItems={linesCount > 0} />
     ) : (
       <AuthScreen
         mode="login"
@@ -311,6 +314,7 @@ const App = () => {
         initialListId={currentListId}
         initialListStatus={currentListStatus}
         initialListTitle={currentListTitle}
+        initialListIsEditing={currentListIsEditing}
       />
       <Toast />
     </div>

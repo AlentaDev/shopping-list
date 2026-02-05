@@ -91,7 +91,12 @@ describe("ListsScreen", () => {
     const onCreate = vi.fn();
 
     render(
-      <ListsScreen lists={sampleLists} onAction={onAction} onCreate={onCreate} />
+      <ListsScreen
+        lists={sampleLists}
+        onAction={onAction}
+        onCreate={onCreate}
+        hasDraftItems={false}
+      />
     );
 
     await userEvent.click(
@@ -115,6 +120,35 @@ describe("ListsScreen", () => {
     );
 
     expect(onCreate).toHaveBeenCalledTimes(1);
+  });
+
+  it("muestra aviso de pérdida de borrador al editar con ítems", async () => {
+    const onAction = vi.fn();
+
+    render(
+      <ListsScreen
+        lists={sampleLists}
+        onAction={onAction}
+        onCreate={vi.fn()}
+        hasDraftItems
+      />
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
+    );
+
+    expect(
+      screen.getByText(UI_TEXT.LISTS.DRAFT_LOSS.TITLE)
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LISTS.DRAFT_LOSS.CONFIRM_LABEL,
+      })
+    );
+
+    expect(onAction).toHaveBeenCalledWith("active-1", "edit");
   });
 
   it("muestra confirmación antes de borrar una lista", async () => {

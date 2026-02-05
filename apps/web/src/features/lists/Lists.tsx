@@ -15,9 +15,10 @@ import {
 
 type ListsProps = {
   onOpenList: (list: ListDetail) => void;
+  hasDraftItems?: boolean;
 };
 
-const Lists = ({ onOpenList }: ListsProps) => {
+const Lists = ({ onOpenList, hasDraftItems = false }: ListsProps) => {
   const [lists, setLists] = useState<ListSummary[]>([]);
 
   const loadLists = useCallback(async () => {
@@ -99,7 +100,12 @@ const Lists = ({ onOpenList }: ListsProps) => {
   };
 
   return (
-    <ListsScreen lists={lists} onAction={handleAction} onCreate={handleCreate} />
+    <ListsScreen
+      lists={lists}
+      onAction={handleAction}
+      onCreate={handleCreate}
+      hasDraftItems={hasDraftItems}
+    />
   );
 };
 
