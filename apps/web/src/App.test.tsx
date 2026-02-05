@@ -350,6 +350,10 @@ describe("App", () => {
       name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
     });
 
+    expect(window.location.pathname).toBe("/");
+    expect(
+      screen.queryByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(greetingLabel)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: UI_TEXT.APP.LOGIN_LABEL }),

@@ -46,6 +46,7 @@ const App = () => {
   const [currentListTitle, setCurrentListTitle] = useState(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
+  const [authRedirectPending, setAuthRedirectPending] = useState(false);
   const { linesCount, setItems } = useList();
   const {
     authUser,
@@ -58,6 +59,12 @@ const App = () => {
     logout,
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const navigate = (path: string) => {
+    window.history.pushState({}, "", path);
+    setCurrentPath(path);
+    setAuthMode(resolveAuthMode(path));
+  };
 
   useEffect(() => {
     const handlePopState = () => {
@@ -102,26 +109,26 @@ const App = () => {
     };
   }, [isUserMenuOpen, setIsUserMenuOpen]);
 
-  const navigate = (path: string) => {
-    window.history.pushState({}, "", path);
-    setCurrentPath(path);
-    setAuthMode(resolveAuthMode(path));
-  };
-
   const handleRegister = async (values: RegisterFormValues) => {
     try {
+      setAuthRedirectPending(true);
       await register(values);
       navigate("/");
+      setAuthRedirectPending(false);
     } catch {
+      setAuthRedirectPending(false);
       // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
   const handleLogin = async (values: LoginFormValues) => {
     try {
+      setAuthRedirectPending(true);
       await login(values);
       navigate("/");
+      setAuthRedirectPending(false);
     } catch {
+      setAuthRedirectPending(false);
       // Error is already handled by AuthProvider and displayed via authError
     }
   };
@@ -154,39 +161,21 @@ const App = () => {
     setIsCartOpen(true);
   };
 
-  let mainContent = <Catalog isCategoriesOpen={isCategoriesOpen} />;
-
-  if (authMode) {
-    mainContent = authUser ? (
-      <AuthLoggedInNotice mode={authMode} onBack={() => navigate("/")} />
-    ) : (
-      <AuthScreen
-        mode={authMode}
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authError}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-        onBack={() => navigate("/")}
-      />
-    );
-  } else if (currentPath === LISTS_PATH) {
-    mainContent = authUser ? (
-      <Lists
-        onOpenList={handleOpenList}
-        onStartOpenList={handleStartOpenList}
-        hasDraftItems={linesCount > 0}
-      />
-    ) : (
-      <AuthScreen
-        mode="login"
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authError}
-        onLogin={handleLogin}
-        onRegister={handleRegister}
-        onBack={() => navigate("/")}
-      />
-    );
-  }
+  const mainContent = resolveMainContent({
+    authMode,
+    authUser,
+    authRedirectPending,
+    currentPath,
+    isAuthSubmitting,
+    authError,
+    isCategoriesOpen,
+    linesCount,
+    onLogin: handleLogin,
+    onRegister: handleRegister,
+    onNavigateHome: () => navigate("/"),
+    onOpenList: handleOpenList,
+    onStartOpenList: handleStartOpenList,
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -340,6 +329,78 @@ function resolveAuthMode(pathname: string): AuthMode | null {
   }
 
   return null;
+}
+
+type MainContentParams = {
+  authMode: AuthMode | null;
+  authUser: ReturnType<typeof useAuth>["authUser"];
+  authRedirectPending: boolean;
+  currentPath: string;
+  isAuthSubmitting: boolean;
+  authError: string | null;
+  isCategoriesOpen: boolean;
+  linesCount: number;
+  onLogin: (values: LoginFormValues) => Promise<void>;
+  onRegister: (values: RegisterFormValues) => Promise<void>;
+  onNavigateHome: () => void;
+  onOpenList: (list: ListDetail) => void;
+  onStartOpenList: (list: ListSummary) => void;
+};
+
+function resolveMainContent({
+  authMode,
+  authUser,
+  authRedirectPending,
+  currentPath,
+  isAuthSubmitting,
+  authError,
+  isCategoriesOpen,
+  linesCount,
+  onLogin,
+  onRegister,
+  onNavigateHome,
+  onOpenList,
+  onStartOpenList,
+}: MainContentParams) {
+  if (authMode) {
+    if (authUser && authRedirectPending) {
+      return <Catalog isCategoriesOpen={isCategoriesOpen} />;
+    }
+
+    return authUser ? (
+      <AuthLoggedInNotice mode={authMode} onBack={onNavigateHome} />
+    ) : (
+      <AuthScreen
+        mode={authMode}
+        isSubmitting={isAuthSubmitting}
+        errorMessage={authError}
+        onLogin={onLogin}
+        onRegister={onRegister}
+        onBack={onNavigateHome}
+      />
+    );
+  }
+
+  if (currentPath === LISTS_PATH) {
+    return authUser ? (
+      <Lists
+        onOpenList={onOpenList}
+        onStartOpenList={onStartOpenList}
+        hasDraftItems={linesCount > 0}
+      />
+    ) : (
+      <AuthScreen
+        mode="login"
+        isSubmitting={isAuthSubmitting}
+        errorMessage={authError}
+        onLogin={onLogin}
+        onRegister={onRegister}
+        onBack={onNavigateHome}
+      />
+    );
+  }
+
+  return <Catalog isCategoriesOpen={isCategoriesOpen} />;
 }
 
 const mapListItems = (items: RemoteListItem[]): ShoppingListItem[] =>
