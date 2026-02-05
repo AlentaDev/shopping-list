@@ -16,18 +16,7 @@ describe("UpdateListStatus", () => {
       status: "DRAFT",
       activatedAt: undefined,
       isEditing: false,
-      items: [
-        {
-          id: "item-1",
-          listId: "list-1",
-          kind: "manual",
-          name: "Milk",
-          qty: 1,
-          checked: false,
-          createdAt: new Date("2024-01-01T10:00:00.000Z"),
-          updatedAt: new Date("2024-01-01T10:00:00.000Z"),
-        },
-      ],
+      items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     };
