@@ -350,6 +350,10 @@ describe("App", () => {
       name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
     });
 
+    expect(window.location.pathname).toBe("/");
+    expect(
+      screen.queryByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(greetingLabel)).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: UI_TEXT.APP.LOGIN_LABEL }),
@@ -489,6 +493,47 @@ describe("App", () => {
       });
       expect(userMenuButton).toHaveTextContent(/hola ana/i);
     });
+  });
+
+  it("wraps the main content with a transition container", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({ categories: [] }),
+          };
+        }
+
+        if (input === CURRENT_USER_URL) {
+          return {
+            ok: false,
+            json: async () => ({}),
+          };
+        }
+
+        if (input === AUTOSAVE_URL) {
+          return {
+            ok: true,
+            json: async () => null,
+          };
+        }
+
+        throw new Error(UNEXPECTED_REQUEST_ERROR);
+      },
+    );
+
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <AppProviders>
+        <App />
+      </AppProviders>,
+    );
+
+    expect(await screen.findByTestId("page-transition")).toHaveClass(
+      "page-transition",
+    );
   });
 
   it("closes user menu when clicking outside of it", async () => {
