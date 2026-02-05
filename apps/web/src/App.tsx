@@ -4,7 +4,6 @@ import { Lists } from "@src/features/lists";
 import ShoppingList from "@src/features/shopping-list/ShoppingList";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
-import { useToast } from "@src/context/useToast";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
@@ -17,6 +16,7 @@ import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
   ListDetail,
   ListItem as RemoteListItem,
+  ListSummary,
 } from "@src/features/lists/services/types";
 import {
   LIST_STATUS as SHOPPING_LIST_STATUS,
@@ -25,7 +25,6 @@ import {
 import { LIST_STATUS as LISTS_STATUS } from "@src/features/lists/services/listActions";
 import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
-const DEFAULT_PRODUCT_NAME = "";
 const LOGIN_PATH = "/auth/login";
 const LISTS_PATH = "/lists";
 
@@ -41,6 +40,9 @@ const App = () => {
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
     useState<ShoppingListStatus>(SHOPPING_LIST_STATUS.LOCAL_DRAFT);
+  const [currentListIsEditing, setCurrentListIsEditing] =
+    useState<boolean>(false);
+  const [isListLoading, setIsListLoading] = useState(false);
   const [currentListTitle, setCurrentListTitle] = useState(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
@@ -55,7 +57,6 @@ const App = () => {
     register,
     logout,
   } = useAuth();
-  const { showToast } = useToast();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,15 +110,7 @@ const App = () => {
 
   const handleRegister = async (values: RegisterFormValues) => {
     try {
-      const user = await register(values);
-      // Mostrar toast de bienvenida
-      showToast({
-        message: UI_TEXT.AUTH.REGISTER.WELCOME_MESSAGE.replace(
-          "{name}",
-          user.name,
-        ),
-        productName: DEFAULT_PRODUCT_NAME,
-      });
+      await register(values);
       navigate("/");
     } catch {
       // Error is already handled by AuthProvider and displayed via authError
@@ -147,6 +140,17 @@ const App = () => {
     setCurrentListId(list.id);
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
+    setCurrentListIsEditing(list.isEditing);
+    setIsListLoading(false);
+    setIsCartOpen(true);
+  };
+
+  const handleStartOpenList = (list: ListSummary) => {
+    setCurrentListId(list.id);
+    setCurrentListStatus(resolveShoppingListStatus(list.status));
+    setCurrentListTitle(list.title);
+    setCurrentListIsEditing(list.isEditing);
+    setIsListLoading(true);
     setIsCartOpen(true);
   };
 
@@ -167,7 +171,11 @@ const App = () => {
     );
   } else if (currentPath === LISTS_PATH) {
     mainContent = authUser ? (
-      <Lists onOpenList={handleOpenList} />
+      <Lists
+        onOpenList={handleOpenList}
+        onStartOpenList={handleStartOpenList}
+        hasDraftItems={linesCount > 0}
+      />
     ) : (
       <AuthScreen
         mode="login"
@@ -307,10 +315,15 @@ const App = () => {
       <ShoppingList
         key={`${currentListId ?? "local"}-${currentListTitle}`}
         isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
+        onClose={() => {
+          setIsCartOpen(false);
+          setIsListLoading(false);
+        }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}
         initialListTitle={currentListTitle}
+        initialListIsEditing={currentListIsEditing}
+        isLoading={isListLoading}
       />
       <Toast />
     </div>

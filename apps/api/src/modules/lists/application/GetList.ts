@@ -6,6 +6,9 @@ import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 type ListDetail = {
   id: string;
   title: string;
+  itemCount: number;
+  activatedAt: string | null;
+  isEditing: boolean;
   items: ListItemDto[];
   updatedAt: string;
   status: ListStatus;
@@ -27,6 +30,9 @@ export class GetList {
     return {
       id: list.id,
       title: list.title,
+      itemCount: list.items.length,
+      activatedAt: list.activatedAt ? list.activatedAt.toISOString() : null,
+      isEditing: list.isEditing,
       items: list.items.map((item) => toListItemDto(item)),
       updatedAt: list.updatedAt.toISOString(),
       status: list.status,

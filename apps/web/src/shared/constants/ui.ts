@@ -3,6 +3,13 @@
  * Extracted to avoid duplicated strings throughout the application
  */
 /* eslint-disable sonarjs/no-hardcoded-passwords */
+const DELETE_CONFIRM_LABEL = "Sí, eliminar";
+const DELETE_LIST_TITLE = "¿Eliminar lista?";
+const DELETE_LIST_MESSAGE = "Vas a borrar la lista";
+const DRAFT_LOSS_TITLE = "¿Cambiar de lista?";
+const DRAFT_LOSS_MESSAGE =
+  "El borrador actual se perderá si continúas con esta acción.";
+
 export const UI_TEXT = {
   APP: {
     TITLE: "La lista de la compra",
@@ -108,13 +115,30 @@ export const UI_TEXT = {
       TITLE: "¿Eliminar producto de la lista?",
       MESSAGE: "Vas a quitar el producto",
       CANCEL_LABEL: "Cancelar",
-      CONFIRM_LABEL: "Sí, eliminar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos encontrado un borrador guardado",
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",
       CONTINUE_LABEL: "Continuar",
       DISCARD_LABEL: "Descartar",
+    },
+    DETAIL_ACTIONS: {
+      EDIT: "Editar",
+      CLOSE: "Cerrar",
+      DELETE: "Borrar",
+      REUSE: "Reusar",
+    },
+    DETAIL_ACTIONS_LOADING: {
+      EDIT: "Editando...",
+      REUSE: "Reusando...",
+      DELETE: "Borrando...",
+    },
+    DELETE_LIST_CONFIRMATION: {
+      TITLE: DELETE_LIST_TITLE,
+      MESSAGE: DELETE_LIST_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
   },
   LIST_MODAL: {
@@ -127,8 +151,8 @@ export const UI_TEXT = {
   LISTS: {
     TITLE: "Mis listas",
     NEW_LIST_LABEL: "Nueva lista",
+    NEW_LIST_LOADING_LABEL: "Creando...",
     TABS: {
-      DRAFT: "Borradores",
       ACTIVE: "Activas",
       COMPLETED: "Historial",
     },
@@ -136,15 +160,38 @@ export const UI_TEXT = {
       EDIT: "Editar",
       ACTIVATE: "Lista lista para comprar",
       COMPLETE: "Completar compra",
-      DUPLICATE: "Duplicar",
+      REUSE: "Reusar",
       DELETE: "Borrar",
       VIEW: "Ver",
     },
+    ACTIONS_LOADING: {
+      edit: "Editando...",
+      activate: "Activando...",
+      complete: "Completando...",
+      reuse: "Reusando...",
+      delete: "Borrando...",
+      view: "Cargando...",
+    },
+    CARD: {
+      ITEM_COUNT_LABEL: "Productos:",
+      ACTIVATED_AT_LABEL: "Activada:",
+      UPDATED_AT_LABEL: "Actualizada:",
+    },
     EMPTY_STATE: {
-      DRAFT_TITLE: "No hay borradores",
-      DRAFT_CTA: "Crear lista",
       ACTIVE_TITLE: "No hay listas activas",
       COMPLETED_TITLE: "Aún no hay compras completadas",
+    },
+    DELETE_CONFIRMATION: {
+      TITLE: DELETE_LIST_TITLE,
+      MESSAGE: DELETE_LIST_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
+    },
+    DRAFT_LOSS: {
+      TITLE: DRAFT_LOSS_TITLE,
+      MESSAGE: DRAFT_LOSS_MESSAGE,
+      CANCEL_LABEL: "Cancelar",
+      CONFIRM_LABEL: "Continuar",
     },
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",

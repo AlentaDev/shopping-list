@@ -12,6 +12,7 @@ import { GetAutosaveDraft } from "./application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "./application/DiscardAutosaveDraft.js";
 import { CompleteList } from "./application/CompleteList.js";
 import { DuplicateList } from "./application/DuplicateList.js";
+import { StartListEditing } from "./application/StartListEditing.js";
 import { UpsertAutosaveDraft } from "./application/UpsertAutosaveDraft.js";
 import type { CatalogProvider } from "@src/modules/catalog/public.js";
 import type { IdGenerator, ListRepository } from "./application/ports.js";
@@ -44,6 +45,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const updateListStatus = new UpdateListStatus(listRepository);
   const completeList = new CompleteList(listRepository);
   const duplicateList = new DuplicateList(listRepository, idGenerator);
+  const startListEditing = new StartListEditing(listRepository);
   const getAutosaveDraft = new GetAutosaveDraft(listRepository);
   const discardAutosaveDraft = new DiscardAutosaveDraft(listRepository);
   const upsertAutosaveDraft = new UpsertAutosaveDraft(
@@ -63,6 +65,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     updateListStatus,
     completeList,
     duplicateList,
+    startListEditing,
     getAutosaveDraft,
     discardAutosaveDraft,
     upsertAutosaveDraft,

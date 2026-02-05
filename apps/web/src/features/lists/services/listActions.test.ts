@@ -21,7 +21,7 @@ describe("listActions", () => {
   it("define las acciones para completadas", () => {
     expect(getListActions(LIST_STATUS.COMPLETED)).toEqual([
       "view",
-      "duplicate",
+      "reuse",
       "delete",
     ]);
   });

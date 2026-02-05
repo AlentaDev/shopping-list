@@ -1,13 +1,18 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
 import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
 import { UI_TEXT } from "@src/shared/constants/ui";
+
+type FetchResponse = {
+  ok: boolean;
+  json: () => Promise<unknown>;
+};
 
 describe("ShoppingList", () => {
   const totalTestId = "total-value";
@@ -75,12 +80,18 @@ describe("ShoppingList", () => {
     listId,
     listStatus,
     listTitle,
+    listIsEditing,
+    isLoading,
+    onClose = vi.fn(),
   }: {
     items?: ListItem[];
     authenticated?: boolean;
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
+    listIsEditing?: boolean;
+    isLoading?: boolean;
+    onClose?: () => void;
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -92,10 +103,12 @@ describe("ShoppingList", () => {
         <ListProvider initialItems={items}>
           <ShoppingList
             isOpen
-            onClose={vi.fn()}
+            onClose={onClose}
             initialListId={listId}
             initialListStatus={listStatus}
             initialListTitle={listTitle}
+            initialListIsEditing={listIsEditing}
+            isLoading={isLoading}
           />
         </ListProvider>
       </AuthContext.Provider>,
@@ -175,10 +188,7 @@ describe("ShoppingList", () => {
         ok: boolean;
         json: () => Promise<unknown>;
       }>
-    >(async () => ({
-      ok: true,
-      json: async () => ({}),
-    }));
+    >(() => new Promise<FetchResponse>(() => {}));
 
     vi.stubGlobal("fetch", fetchMock);
 
@@ -196,6 +206,192 @@ describe("ShoppingList", () => {
       "/api/lists/list-99/items/item-1",
       expect.objectContaining({ method: "DELETE" }),
     );
+  });
+
+  it("muestra acciones de detalle para listas activas", () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-1",
+      listStatus: "ACTIVE",
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
+      }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("muestra acciones de detalle para listas completadas", () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-2",
+      listStatus: "COMPLETED",
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
+      }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("confirma el borrado de la lista desde el detalle", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/reuse")) {
+        return {
+          ok: true,
+          json: async () => ({ id: "reuse-1", title: "Reuso", items: [] }),
+        };
+      }
+
+      if (init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    const onClose = vi.fn();
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-3",
+      listStatus: "ACTIVE",
+      listTitle: "Mi lista",
+      onClose,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    );
+
+    expect(
+      screen.getByText(UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.TITLE),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DELETE_LIST_CONFIRMATION.CONFIRM_LABEL,
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-3",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("muestra placeholders cuando el detalle está cargando", () => {
+    renderShoppingList({ isLoading: true });
+
+    expect(screen.getByTestId("shopping-list-skeleton")).toBeInTheDocument();
+  });
+
+  it("deshabilita acciones mientras se edita", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(() => new Promise<FetchResponse>(() => {}));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-20",
+      listStatus: "ACTIVE",
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
+        }),
+      );
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-20/editing",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+
+    expect(
+      await screen.findByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT,
+      }),
+    ).toBeDisabled();
+  });
+
+  it("bloquea la edición en móvil cuando la lista activa está en edición", async () => {
+    const originalMatchMedia = window.matchMedia;
+
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query.includes("max-width"),
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+
+    await act(async () => {
+      renderShoppingList({
+        authenticated: true,
+        listId: "list-10",
+        listStatus: "ACTIVE",
+        listIsEditing: true,
+      });
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: `Incrementar cantidad de ${appleName}`,
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
+    ).toBeDisabled();
+
+    window.matchMedia = originalMatchMedia;
   });
 
   it("updates total when incrementing quantity", async () => {

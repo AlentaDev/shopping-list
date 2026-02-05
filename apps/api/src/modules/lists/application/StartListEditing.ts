@@ -1,25 +1,27 @@
 import type { ListRepository } from "./ports.js";
 import {
-  ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
 } from "./errors.js";
 
-type RemoveItemInput = {
+type StartListEditingInput = {
   userId: string;
   listId: string;
-  itemId: string;
 };
 
-type RemoveItemResult = {
-  ok: true;
+type StartListEditingResult = {
+  id: string;
+  isEditing: true;
+  updatedAt: string;
 };
 
-export class RemoveItem {
+export class StartListEditing {
   constructor(private readonly listRepository: ListRepository) {}
 
-  async execute(input: RemoveItemInput): Promise<RemoveItemResult> {
+  async execute(
+    input: StartListEditingInput,
+  ): Promise<StartListEditingResult> {
     const list = await this.listRepository.findById(input.listId);
     if (!list) {
       throw new ListNotFoundError();
@@ -29,26 +31,19 @@ export class RemoveItem {
       throw new ListForbiddenError();
     }
 
-    if (list.status === "COMPLETED") {
+    if (list.status !== "ACTIVE") {
       throw new ListStatusTransitionError();
     }
 
-    const itemIndex = list.items.findIndex(
-      (entry) => entry.id === input.itemId,
-    );
-    if (itemIndex === -1) {
-      throw new ItemNotFoundError();
-    }
-
-    if (list.status === "ACTIVE" && list.items.length === 1) {
-      throw new ListStatusTransitionError();
-    }
-
-    list.items.splice(itemIndex, 1);
+    list.isEditing = true;
     list.updatedAt = new Date();
 
     await this.listRepository.save(list);
 
-    return { ok: true };
+    return {
+      id: list.id,
+      isEditing: true,
+      updatedAt: list.updatedAt.toISOString(),
+    };
   }
 }

@@ -26,6 +26,10 @@ describe("Lists", () => {
             id: "created-1",
             title: "Tu lista",
             updatedAt: "2024-02-03T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 0,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
           }),
         };
       }
@@ -36,48 +40,24 @@ describe("Lists", () => {
           json: async () => ({
             lists: [
               {
-                id: "draft-1",
-                title: "Compra semanal",
-                updatedAt: "2024-02-01T10:00:00.000Z",
-                status: LIST_STATUS.DRAFT,
-              },
-              {
                 id: "active-1",
                 title: "Despensa",
                 updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: "2024-02-01T10:30:00.000Z",
+                itemCount: 2,
+                isEditing: false,
                 status: LIST_STATUS.ACTIVE,
               },
               {
                 id: "completed-1",
                 title: "Navidad",
                 updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 4,
+                isEditing: false,
                 status: LIST_STATUS.COMPLETED,
               },
             ],
-          }),
-        };
-      }
-
-      if (url === "/api/lists/draft-1") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "draft-1",
-            title: "Compra semanal",
-            updatedAt: "2024-02-01T10:00:00.000Z",
-            status: LIST_STATUS.DRAFT,
-            items: [],
-          }),
-        };
-      }
-
-      if (url === "/api/lists/draft-1/status" && init?.method === "PATCH") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "draft-1",
-            status: LIST_STATUS.ACTIVE,
-            updatedAt: "2024-02-01T12:00:00.000Z",
           }),
         };
       }
@@ -89,6 +69,9 @@ describe("Lists", () => {
             id: "active-1",
             title: "Despensa",
             updatedAt: "2024-02-01T11:00:00.000Z",
+            activatedAt: "2024-02-01T10:30:00.000Z",
+            itemCount: 2,
+            isEditing: false,
             status: LIST_STATUS.ACTIVE,
             items: [
               {
@@ -124,13 +107,16 @@ describe("Lists", () => {
         };
       }
 
-      if (url === "/api/lists/completed-1/duplicate") {
+      if (url === "/api/lists/completed-1/reuse") {
         return {
           ok: true,
           json: async () => ({
             id: "duplicated-1",
             title: "Navidad",
             updatedAt: "2024-02-03T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 0,
+            isEditing: false,
             items: [],
             status: LIST_STATUS.DRAFT,
           }),
@@ -155,7 +141,7 @@ describe("Lists", () => {
 
     render(<Lists onOpenList={onOpenList} />);
 
-    expect(await screen.findByText("Compra semanal")).toBeInTheDocument();
+    expect(await screen.findByText("Despensa")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
@@ -172,41 +158,12 @@ describe("Lists", () => {
       id: "created-1",
       title: "Tu lista",
       updatedAt: "2024-02-03T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 0,
+      isEditing: false,
       items: [],
       status: LIST_STATUS.DRAFT,
     });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/lists/draft-1");
-      expect(onOpenList).toHaveBeenCalledWith({
-        id: "draft-1",
-        title: "Compra semanal",
-        updatedAt: "2024-02-01T10:00:00.000Z",
-        items: [],
-        status: LIST_STATUS.DRAFT,
-      });
-    });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE })
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists/draft-1/status",
-        expect.objectContaining({ method: "PATCH" })
-      );
-    });
-
-    await userEvent.click(
-      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.ACTIVE })
-    );
-
-    expect(await screen.findByText("Despensa")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
@@ -230,18 +187,30 @@ describe("Lists", () => {
     expect(await screen.findByText("Navidad")).toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DUPLICATE })
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE })
     );
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists/completed-1/duplicate",
+        "/api/lists/completed-1/reuse",
         expect.objectContaining({ method: "POST" })
       );
     });
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.LISTS.DELETE_CONFIRMATION.TITLE)
+      ).toBeInTheDocument();
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL,
+      })
     );
 
     await waitFor(() => {

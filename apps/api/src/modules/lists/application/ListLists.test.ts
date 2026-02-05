@@ -27,6 +27,7 @@ describe("ListLists", () => {
     const activeList = createList({
       id: "list-active",
       status: "ACTIVE",
+      activatedAt: new Date("2024-02-02T10:00:00.000Z"),
       updatedAt: new Date("2024-02-02T10:00:00.000Z"),
     });
     const listRepository: ListRepository = {
@@ -47,23 +48,42 @@ describe("ListLists", () => {
       {
         id: "list-completed",
         title: "Groceries",
-        updatedAt: "2024-02-01T10:00:00.000Z",
         status: "COMPLETED",
+        itemCount: 0,
+        activatedAt: null,
+        isEditing: false,
+        updatedAt: "2024-02-01T10:00:00.000Z",
       },
     ]);
   });
 
-  it("returns all lists when no status filter is provided", async () => {
-    const firstList = createList({
-      id: "list-1",
-      status: "ACTIVE",
+  it("excludes drafts and autosave drafts when no status filter is provided", async () => {
+    const draftList = createList({
+      id: "list-draft",
+      status: "DRAFT",
+      updatedAt: new Date("2024-02-01T10:00:00.000Z"),
     });
-    const secondList = createList({
-      id: "list-2",
+    const autosaveDraft = createList({
+      id: "list-autosave",
+      status: "DRAFT",
+      isAutosaveDraft: true,
+      updatedAt: new Date("2024-02-02T10:00:00.000Z"),
+    });
+    const activeList = createList({
+      id: "list-active",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-03T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-03T11:00:00.000Z"),
+    });
+    const completedList = createList({
+      id: "list-completed",
       status: "COMPLETED",
+      updatedAt: new Date("2024-02-04T10:00:00.000Z"),
     });
     const listRepository: ListRepository = {
-      listByOwner: vi.fn(async () => [firstList, secondList] as List[]),
+      listByOwner: vi.fn(
+        async () => [draftList, autosaveDraft, activeList, completedList] as List[],
+      ),
       findById: vi.fn(async () => null),
       save: vi.fn(async () => undefined),
       deleteById: vi.fn(async () => undefined),
@@ -75,17 +95,67 @@ describe("ListLists", () => {
     expect(listRepository.listByOwner).toHaveBeenCalledWith("user-1");
     expect(result.lists).toEqual([
       {
-        id: "list-1",
+        id: "list-active",
         title: "Groceries",
-        updatedAt: "2024-01-02T10:00:00.000Z",
         status: "ACTIVE",
+        itemCount: 0,
+        activatedAt: "2024-02-03T10:00:00.000Z",
+        isEditing: false,
+        updatedAt: "2024-02-03T11:00:00.000Z",
       },
       {
-        id: "list-2",
+        id: "list-completed",
         title: "Groceries",
-        updatedAt: "2024-01-02T10:00:00.000Z",
         status: "COMPLETED",
+        itemCount: 0,
+        activatedAt: null,
+        isEditing: false,
+        updatedAt: "2024-02-04T10:00:00.000Z",
       },
+    ]);
+  });
+
+  it("orders actives by activatedAt and completed by updatedAt", async () => {
+    const activeOlder = createList({
+      id: "list-active-older",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-05T10:00:00.000Z"),
+    });
+    const activeNewer = createList({
+      id: "list-active-newer",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-03T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-04T10:00:00.000Z"),
+    });
+    const completedOlder = createList({
+      id: "list-completed-older",
+      status: "COMPLETED",
+      updatedAt: new Date("2024-02-01T10:00:00.000Z"),
+    });
+    const completedNewer = createList({
+      id: "list-completed-newer",
+      status: "COMPLETED",
+      updatedAt: new Date("2024-02-06T10:00:00.000Z"),
+    });
+    const listRepository: ListRepository = {
+      listByOwner: vi.fn(
+        async () =>
+          [completedOlder, activeOlder, completedNewer, activeNewer] as List[],
+      ),
+      findById: vi.fn(async () => null),
+      save: vi.fn(async () => undefined),
+      deleteById: vi.fn(async () => undefined),
+    };
+    const listLists = new ListLists(listRepository);
+
+    const result = await listLists.execute("user-1");
+
+    expect(result.lists.map((list) => list.id)).toEqual([
+      "list-active-newer",
+      "list-active-older",
+      "list-completed-newer",
+      "list-completed-older",
     ]);
   });
 });

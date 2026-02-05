@@ -8,21 +8,38 @@ import {
   completeList,
   createList,
   deleteList,
-  duplicateList,
+  reuseList,
   getListDetail,
   getLists,
 } from "./services/ListsService";
 
 type ListsProps = {
   onOpenList: (list: ListDetail) => void;
+  hasDraftItems?: boolean;
+  onStartOpenList?: (list: ListSummary) => void;
 };
 
-const Lists = ({ onOpenList }: ListsProps) => {
+const Lists = ({
+  onOpenList,
+  hasDraftItems = false,
+  onStartOpenList,
+}: ListsProps) => {
   const [lists, setLists] = useState<ListSummary[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<{
+    listId: string;
+    action: ListActionKey;
+  } | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const loadLists = useCallback(async () => {
-    const response = await getLists();
-    setLists(response.lists);
+    setIsLoading(true);
+    try {
+      const response = await getLists();
+      setLists(response.lists);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -30,6 +47,7 @@ const Lists = ({ onOpenList }: ListsProps) => {
 
     const fetchLists = async () => {
       try {
+        setIsLoading(true);
         const response = await getLists();
         if (isActive) {
           setLists(response.lists);
@@ -37,6 +55,10 @@ const Lists = ({ onOpenList }: ListsProps) => {
       } catch {
         if (isActive) {
           setLists([]);
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
         }
       }
     };
@@ -49,54 +71,96 @@ const Lists = ({ onOpenList }: ListsProps) => {
   }, []);
 
   const handleAction = async (listId: string, action: ListActionKey) => {
+    const targetList = lists.find((list) => list.id === listId);
+    setActionLoading({ listId, action });
+
     if (action === "activate") {
-      await activateList(listId);
-      await loadLists();
-      return;
+      try {
+        await activateList(listId);
+        await loadLists();
+        return;
+      } finally {
+        setActionLoading(null);
+      }
     }
 
     if (action === "complete") {
-      const listDetail = await getListDetail(listId);
-      const checkedItemIds = listDetail.items
-        .filter((item) => item.checked)
-        .map((item) => item.id);
-      await completeList(listId, { checkedItemIds });
-      await loadLists();
-      return;
+      try {
+        const listDetail = await getListDetail(listId);
+        const checkedItemIds = listDetail.items
+          .filter((item) => item.checked)
+          .map((item) => item.id);
+        await completeList(listId, { checkedItemIds });
+        await loadLists();
+        return;
+      } finally {
+        setActionLoading(null);
+      }
     }
 
-    if (action === "duplicate") {
-      await duplicateList(listId);
-      await loadLists();
-      return;
+    if (action === "reuse") {
+      try {
+        await reuseList(listId);
+        await loadLists();
+        return;
+      } finally {
+        setActionLoading(null);
+      }
     }
 
     if (action === "delete") {
-      await deleteList(listId);
-      await loadLists();
-      return;
+      try {
+        await deleteList(listId);
+        await loadLists();
+        return;
+      } finally {
+        setActionLoading(null);
+      }
     }
 
     if (action === "view" || action === "edit") {
-      const listDetail = await getListDetail(listId);
-      onOpenList(listDetail);
+      try {
+        if (targetList) {
+          onStartOpenList?.(targetList);
+        }
+        const listDetail = await getListDetail(listId);
+        onOpenList(listDetail);
+      } finally {
+        setActionLoading(null);
+      }
     }
   };
 
   const handleCreate = async () => {
-    const createdList = await createList();
-    onOpenList({
-      id: createdList.id,
-      title: createdList.title,
-      updatedAt: createdList.updatedAt,
-      items: [],
-      status: LIST_STATUS.DRAFT,
-    });
-    await loadLists();
+    setIsCreating(true);
+    try {
+      const createdList = await createList();
+      onOpenList({
+        id: createdList.id,
+        title: createdList.title,
+        updatedAt: createdList.updatedAt,
+        activatedAt: createdList.activatedAt,
+        itemCount: createdList.itemCount,
+        isEditing: createdList.isEditing,
+        items: [],
+        status: LIST_STATUS.DRAFT,
+      });
+      await loadLists();
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
-    <ListsScreen lists={lists} onAction={handleAction} onCreate={handleCreate} />
+    <ListsScreen
+      lists={lists}
+      onAction={handleAction}
+      onCreate={handleCreate}
+      hasDraftItems={hasDraftItems}
+      isLoading={isLoading}
+      actionLoading={actionLoading}
+      isCreating={isCreating}
+    />
   );
 };
 

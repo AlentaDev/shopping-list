@@ -4,7 +4,7 @@ import {
   completeList,
   createList,
   deleteList,
-  duplicateList,
+  reuseList,
   getListDetail,
   getLists,
 } from "./ListsService";
@@ -32,6 +32,9 @@ describe("ListsService", () => {
             id: "list-1",
             title: "Semanal",
             updatedAt: "2024-02-01T10:00:00.000Z",
+            activatedAt: "2024-02-01T09:00:00.000Z",
+            itemCount: 3,
+            isEditing: false,
             status: LIST_STATUS.ACTIVE,
           },
         ],
@@ -46,6 +49,9 @@ describe("ListsService", () => {
           id: "list-1",
           title: "Semanal",
           updatedAt: "2024-02-01T10:00:00.000Z",
+          activatedAt: "2024-02-01T09:00:00.000Z",
+          itemCount: 3,
+          isEditing: false,
           status: LIST_STATUS.ACTIVE,
         },
       ],
@@ -76,6 +82,9 @@ describe("ListsService", () => {
         id: "list-2",
         title: "Cena",
         updatedAt: "2024-02-02T10:00:00.000Z",
+        activatedAt: null,
+        itemCount: 0,
+        isEditing: false,
         items: [],
       }),
     }));
@@ -86,6 +95,9 @@ describe("ListsService", () => {
       id: "list-2",
       title: "Cena",
       updatedAt: "2024-02-02T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 0,
+      isEditing: false,
       items: [],
       status: undefined,
     });
@@ -93,7 +105,7 @@ describe("ListsService", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/lists/list-2");
   });
 
-  it("duplicates lists with POST", async () => {
+  it("reuses lists with POST", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async () => ({
@@ -102,6 +114,9 @@ describe("ListsService", () => {
         id: "list-3",
         title: "Duplicada",
         updatedAt: "2024-02-03T10:00:00.000Z",
+        activatedAt: null,
+        itemCount: 0,
+        isEditing: false,
         items: [],
         status: LIST_STATUS.DRAFT,
       }),
@@ -109,16 +124,19 @@ describe("ListsService", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(duplicateList("list-3")).resolves.toEqual({
+    await expect(reuseList("list-3")).resolves.toEqual({
       id: "list-3",
       title: "Duplicada",
       updatedAt: "2024-02-03T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 0,
+      isEditing: false,
       items: [],
       status: LIST_STATUS.DRAFT,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-3/duplicate",
+      "/api/lists/list-3/reuse",
       expect.objectContaining({ method: "POST" })
     );
   });
@@ -209,6 +227,10 @@ describe("ListsService", () => {
         id: "list-7",
         title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
         updatedAt: "2024-02-06T10:00:00.000Z",
+        activatedAt: null,
+        itemCount: 0,
+        isEditing: false,
+        status: LIST_STATUS.DRAFT,
       }),
     }));
 
@@ -218,6 +240,9 @@ describe("ListsService", () => {
       id: "list-7",
       title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
       updatedAt: "2024-02-06T10:00:00.000Z",
+      activatedAt: null,
+      itemCount: 0,
+      isEditing: false,
       status: LIST_STATUS.DRAFT,
     });
 

@@ -7,6 +7,7 @@ type ItemListProps = {
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
   onRemove: (item: ShoppingListItem) => void;
+  isReadOnly?: boolean;
 };
 
 const ItemList = ({
@@ -14,6 +15,7 @@ const ItemList = ({
   onIncrement,
   onDecrement,
   onRemove,
+  isReadOnly = false,
 }: ItemListProps) => (
   <div className="max-h-[60vh] overflow-auto pr-1">
     <ul className="space-y-4">
@@ -47,9 +49,9 @@ const ItemList = ({
             <button
               type="button"
               onClick={() => onDecrement(item.id)}
-              disabled={item.quantity === 1}
+              disabled={isReadOnly || item.quantity === 1}
               className={`flex h-7 w-7 items-center justify-center rounded-full border text-sm font-semibold transition ${
-                item.quantity === 1
+                isReadOnly || item.quantity === 1
                   ? "cursor-not-allowed border-slate-200 text-slate-300"
                   : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
               }`}
@@ -66,7 +68,12 @@ const ItemList = ({
             <button
               type="button"
               onClick={() => onIncrement(item.id)}
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              disabled={isReadOnly}
+              className={`flex h-7 w-7 items-center justify-center rounded-full border text-sm font-semibold transition ${
+                isReadOnly
+                  ? "cursor-not-allowed border-slate-200 text-slate-300"
+                  : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
+              }`}
               aria-label={`${UI_TEXT.ITEM_LIST.INCREASE_QUANTITY_LABEL} ${item.name}`}
             >
               +
@@ -75,8 +82,13 @@ const ItemList = ({
           <button
             type="button"
             onClick={() => onRemove(item)}
+            disabled={isReadOnly}
             aria-label={`${UI_TEXT.ITEM_LIST.REMOVE_ITEM_LABEL} ${item.name}`}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-slate-400 transition hover:border-slate-200 hover:text-slate-600"
+            className={`flex h-8 w-8 items-center justify-center rounded-full border border-transparent text-slate-400 transition ${
+              isReadOnly
+                ? "cursor-not-allowed opacity-50"
+                : "hover:border-slate-200 hover:text-slate-600"
+            }`}
           >
             <svg
               aria-hidden="true"

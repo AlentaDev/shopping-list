@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "@src/context/useList";
-import { useToast } from "@src/context/useToast";
 import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
@@ -53,7 +52,6 @@ const Catalog = ({
   onItemsCountChange,
 }: CatalogProps) => {
   const { addItem } = useList();
-  const { showToast } = useToast();
   const {
     categoriesStatus,
     categoriesError,
@@ -170,11 +168,6 @@ const Catalog = ({
                         thumbnail: product.thumbnail,
                         price: product.price,
                         quantity: 1,
-                      });
-                      showToast({
-                        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
-                        productName: product.name,
-                        thumbnail: product.thumbnail,
                       });
                     }}
                   />

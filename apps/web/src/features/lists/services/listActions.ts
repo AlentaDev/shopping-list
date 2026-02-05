@@ -11,13 +11,13 @@ export type ListActionKey =
   | "activate"
   | "complete"
   | "view"
-  | "duplicate"
+  | "reuse"
   | "delete";
 
 const ACTIONS_BY_STATUS: Record<ListStatus, ListActionKey[]> = {
   [LIST_STATUS.DRAFT]: ["edit", "activate", "delete"],
   [LIST_STATUS.ACTIVE]: ["edit", "complete", "delete"],
-  [LIST_STATUS.COMPLETED]: ["view", "duplicate", "delete"],
+  [LIST_STATUS.COMPLETED]: ["view", "reuse", "delete"],
 };
 
 export const getListActions = (status: ListStatus): ListActionKey[] =>

@@ -22,6 +22,10 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 {
   "id": "uuid",
   "title": "Groceries",
+  "status": "DRAFT",
+  "itemCount": 0,
+  "activatedAt": null,
+  "isEditing": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -39,6 +43,7 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
       "status": "ACTIVE",
       "itemCount": 12,
       "activatedAt": "2024-01-01T00:00:00.000Z",
+      "isEditing": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ]
@@ -116,6 +121,7 @@ Si no hay borrador autosave, responde con `null`.
   "status": "ACTIVE",
   "isEditing": false,
   "activatedAt": "2024-01-01T00:00:00.000Z",
+  "itemCount": 1,
   "items": [
     {
       "id": "uuid",
@@ -238,6 +244,26 @@ Sin contenido (autosave descartado).
 ### POST /api/lists/:id/duplicate
 
 Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
+
+### POST /api/lists/:id/reuse
+
+Reusa una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
+
+> Nota: `/api/lists/:id/duplicate` se mantiene por compatibilidad, pero el endpoint preferido es `/api/lists/:id/reuse`.
+
+### PATCH /api/lists/:id/editing
+
+Marca una lista activa como en edición (`isEditing=true`).
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "isEditing": true,
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
 
 **Response 201**
 
