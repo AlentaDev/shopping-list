@@ -146,7 +146,7 @@ export const UI_TEXT = {
     CLOSE_LABEL: "Cerrar",
     CLOSE_MODAL_LABEL: "Cerrar modal",
     SAVE_DRAFT_LABEL: "Guardar borrador",
-    READY_TO_SHOP_LABEL: "Lista lista para comprar",
+    READY_TO_SHOP_LABEL: "Finalizar lista",
   },
   LISTS: {
     TITLE: "Mis listas",
@@ -158,7 +158,7 @@ export const UI_TEXT = {
     },
     ACTIONS: {
       EDIT: "Editar",
-      ACTIVATE: "Lista lista para comprar",
+      ACTIVATE: "Finalizar lista",
       COMPLETE: "Completar compra",
       REUSE: "Reusar",
       DELETE: "Borrar",

@@ -76,8 +76,14 @@ export class UpdateListStatus {
         list.updatedAt = now;
         await this.listRepository.save(list);
       } else {
+        const now = new Date();
         list.status = input.status;
-        list.updatedAt = new Date();
+        list.updatedAt = now;
+
+        if (input.status === "ACTIVE") {
+          list.isAutosaveDraft = false;
+          list.activatedAt = now;
+        }
         await this.listRepository.save(list);
       }
     }

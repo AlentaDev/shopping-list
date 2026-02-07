@@ -83,6 +83,7 @@ describe("ShoppingList", () => {
     listIsEditing,
     isLoading,
     onClose = vi.fn(),
+    onAddMoreProducts = vi.fn(),
   }: {
     items?: ListItem[];
     authenticated?: boolean;
@@ -92,6 +93,7 @@ describe("ShoppingList", () => {
     listIsEditing?: boolean;
     isLoading?: boolean;
     onClose?: () => void;
+    onAddMoreProducts?: () => void;
   } = {}) =>
     render(
       <AuthContext.Provider
@@ -104,6 +106,7 @@ describe("ShoppingList", () => {
           <ShoppingList
             isOpen
             onClose={onClose}
+            onAddMoreProducts={onAddMoreProducts}
             initialListId={listId}
             initialListStatus={listStatus}
             initialListTitle={listTitle}
@@ -226,7 +229,7 @@ describe("ShoppingList", () => {
       screen.getAllByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
       }),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       screen.getByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
@@ -252,7 +255,7 @@ describe("ShoppingList", () => {
       screen.getAllByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
       }),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       screen.getByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
@@ -406,39 +409,18 @@ describe("ShoppingList", () => {
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/5,80\s?€/);
   });
 
-  it("shows the save step and allows canceling", async () => {
-    renderShoppingList();
+  it("closes and notifies when adding more products", async () => {
+    const onClose = vi.fn();
+    const onAddMoreProducts = vi.fn();
+
+    renderShoppingList({ onClose, onAddMoreProducts });
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Guardar lista" }),
+      screen.getByRole("button", { name: "Añadir más productos" }),
     );
 
-    expect(
-      screen.getByRole("textbox", { name: "Nombre de la lista" }),
-    ).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
-
-    expect(screen.queryByRole("textbox")).toBeNull();
-  });
-
-  it("shows the list name in the modal title after saving", async () => {
-    renderShoppingList();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Guardar lista" }),
-    );
-
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Nombre de la lista" }),
-      "Compra semanal",
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: "Guardar" }));
-
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Compra semanal" }),
-    ).toBeInTheDocument();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
   });
 
   it("shows an empty state message when there are no items", () => {

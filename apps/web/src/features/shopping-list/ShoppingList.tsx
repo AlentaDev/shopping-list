@@ -7,7 +7,6 @@ import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraft, AutosaveDraftInput } from "./services/types";
@@ -27,14 +26,13 @@ import {
 type ShoppingListProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAddMoreProducts?: () => void;
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
   initialListIsEditing?: boolean;
   isLoading?: boolean;
 };
-
-type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
 const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
 const DETAIL_ACTION_BASE_CLASS =
@@ -250,7 +248,6 @@ type ShoppingListListViewProps = {
   onRemove: (item: ShoppingListItem) => void;
   total: number;
   onAddMore: () => void;
-  onSave: () => void;
 };
 
 const ShoppingListListView = ({
@@ -273,7 +270,6 @@ const ShoppingListListView = ({
   onRemove,
   total,
   onAddMore,
-  onSave,
 }: ShoppingListListViewProps) => {
   const renderListContent = () => {
     if (isLoading) {
@@ -327,60 +323,11 @@ const ShoppingListListView = ({
       {isLoading ? (
         <ShoppingListTotalSkeleton />
       ) : (
-        <Total total={total} onAddMore={onAddMore} onSave={onSave} />
+        <Total total={total} onAddMore={onAddMore} />
       )}
     </div>
   );
 };
-
-type ShoppingListSaveViewProps = {
-  listName: string;
-  onListNameChange: (value: string) => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-};
-
-const ShoppingListSaveView = ({
-  listName,
-  onListNameChange,
-  onCancel,
-  onConfirm,
-}: ShoppingListSaveViewProps) => (
-  <div className="space-y-4">
-    <div className="space-y-2">
-      <label
-        htmlFor="shopping-list-name"
-        className="text-sm font-semibold text-slate-700"
-      >
-        {UI_TEXT.SHOPPING_LIST.LIST_NAME_LABEL}
-      </label>
-      <input
-        id="shopping-list-name"
-        type="text"
-        value={listName}
-        onChange={(event) => onListNameChange(event.target.value)}
-        placeholder={UI_TEXT.SHOPPING_LIST.LIST_NAME_PLACEHOLDER}
-        className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-      />
-    </div>
-    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-      >
-        {UI_TEXT.SHOPPING_LIST.CANCEL_LABEL}
-      </button>
-      <button
-        type="button"
-        onClick={onConfirm}
-        className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
-      >
-        {UI_TEXT.SHOPPING_LIST.SAVE_LABEL}
-      </button>
-    </div>
-  </div>
-);
 
 const ShoppingList = ({
   isOpen,
@@ -390,10 +337,10 @@ const ShoppingList = ({
   initialListTitle,
   initialListIsEditing,
   isLoading = false,
+  onAddMoreProducts,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
-  const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
     initialListTitle ?? UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
@@ -480,6 +427,11 @@ const ShoppingList = ({
     setPendingRemoval(null);
     setPendingListDeletion(false);
     onClose();
+  };
+
+  const handleAddMore = () => {
+    handleClose();
+    onAddMoreProducts?.();
   };
 
   const sortedItems = useMemo<ShoppingListItem[]>(
@@ -607,21 +559,6 @@ const ShoppingList = ({
       });
   };
 
-  const handleStartSave = () => {
-    setViewMode(SHOPPING_LIST_VIEW.SAVE);
-  };
-
-  const handleCancelSave = () => {
-    setViewMode(SHOPPING_LIST_VIEW.LIST);
-  };
-
-  const handleConfirmSave = () => {
-    const trimmedName = listName.trim();
-
-    setListTitle(trimmedName || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
-    setViewMode(SHOPPING_LIST_VIEW.LIST);
-  };
-
   const handleReadyToShop = useCallback(async () => {
     if (!authUser || !canActivateList(listStatus)) {
       return;
@@ -648,37 +585,27 @@ const ShoppingList = ({
         canReadyToShop && !isLoading ? handleReadyToShop : undefined
       }
     >
-      {viewMode === SHOPPING_LIST_VIEW.LIST ? (
-        <ShoppingListListView
-          showDetailActions={showDetailActions}
-          isActiveList={isActiveList}
-          onEdit={handleEditList}
-          onReuse={handleReuseList}
-          onClose={handleClose}
-          onDelete={() => setPendingListDeletion(true)}
-          isActionsDisabled={isActionsDisabled}
-          detailActionLoading={detailActionLoading}
-          autosaveDraft={autosaveDraft}
-          onAutosaveContinue={handleContinue}
-          onAutosaveDiscard={handleDiscard}
-          isLoading={isLoading}
-          sortedItems={sortedItems}
-          isReadOnlyMobile={isReadOnlyMobile}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-          onRemove={handleRemoveRequest}
-          total={total}
-          onAddMore={handleClose}
-          onSave={handleStartSave}
-        />
-      ) : (
-        <ShoppingListSaveView
-          listName={listName}
-          onListNameChange={setListName}
-          onCancel={handleCancelSave}
-          onConfirm={handleConfirmSave}
-        />
-      )}
+      <ShoppingListListView
+        showDetailActions={showDetailActions}
+        isActiveList={isActiveList}
+        onEdit={handleEditList}
+        onReuse={handleReuseList}
+        onClose={handleClose}
+        onDelete={() => setPendingListDeletion(true)}
+        isActionsDisabled={isActionsDisabled}
+        detailActionLoading={detailActionLoading}
+        autosaveDraft={autosaveDraft}
+        onAutosaveContinue={handleContinue}
+        onAutosaveDiscard={handleDiscard}
+        isLoading={isLoading}
+        sortedItems={sortedItems}
+        isReadOnlyMobile={isReadOnlyMobile}
+        onIncrement={handleIncrement}
+        onDecrement={handleDecrement}
+        onRemove={handleRemoveRequest}
+        total={total}
+        onAddMore={handleAddMore}
+      />
       {pendingRemoval ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
           <div
