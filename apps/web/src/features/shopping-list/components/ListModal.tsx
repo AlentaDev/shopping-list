@@ -86,13 +86,6 @@ const ListModal = ({
                 {UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL}
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
-              {UI_TEXT.LIST_MODAL.CLOSE_LABEL}
-            </button>
           </div>
         </div>
       </div>

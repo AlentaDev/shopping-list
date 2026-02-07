@@ -27,6 +27,7 @@ import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
 const LOGIN_PATH = "/auth/login";
 const LISTS_PATH = "/lists";
+const CATALOG_PATH = "/";
 
 const App = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -315,6 +316,11 @@ const App = () => {
         onClose={() => {
           setIsCartOpen(false);
           setIsListLoading(false);
+        }}
+        onAddMoreProducts={() => {
+          if (currentPath !== CATALOG_PATH) {
+            navigate(CATALOG_PATH);
+          }
         }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}

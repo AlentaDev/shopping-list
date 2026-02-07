@@ -131,7 +131,7 @@ describe("ListModal", () => {
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: "Lista lista para comprar" }),
+      screen.getByRole("button", { name: "Finalizar lista" }),
     );
 
     expect(onReadyToShop).toHaveBeenCalledTimes(1);
