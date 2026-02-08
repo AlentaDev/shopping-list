@@ -82,10 +82,12 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
         {getListActions(list.status).map((action) => {
           const isLoadingAction =
             isListActionLoading && actionLoading?.action === action;
+          const isActivateDisabled =
+            action === "activate" && list.itemCount === 0;
           const label = isLoadingAction
             ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
             : ACTION_LABELS[action];
-          const isDisabled = isListActionLoading;
+          const isDisabled = isListActionLoading || isActivateDisabled;
 
           return (
             <ListActionButton
@@ -98,6 +100,11 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
           );
         })}
       </div>
+      {list.status === LIST_STATUS.DRAFT && list.itemCount === 0 ? (
+        <p className="text-xs text-slate-400">
+          {UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE}
+        </p>
+      ) : null}
     </article>
   );
 };
@@ -122,6 +129,7 @@ const ACTION_LABELS: Record<ListActionKey, string> = {
 };
 
 const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
+  [LIST_STATUS.DRAFT]: "ACTIVE",
   [LIST_STATUS.ACTIVE]: "ACTIVE",
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };

@@ -578,17 +578,20 @@ describe("ShoppingList", () => {
     ).toBeNull();
   });
 
-  it("oculta la acción de activar lista si no hay items", () => {
+  it("deshabilita la acción de activar lista si no hay items", () => {
     renderShoppingList({
       authenticated: true,
       listStatus: "LOCAL_DRAFT",
       items: [],
     });
 
+    const readyToShopButton = screen.getByRole("button", {
+      name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+    });
+
+    expect(readyToShopButton).toBeDisabled();
     expect(
-      screen.queryByRole("button", {
-        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
-      }),
-    ).toBeNull();
+      screen.getByText(UI_TEXT.LIST_MODAL.READY_TO_SHOP_EMPTY_MESSAGE),
+    ).toBeInTheDocument();
   });
 });

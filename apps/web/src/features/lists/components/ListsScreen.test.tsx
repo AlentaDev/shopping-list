@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import ListsScreen from "./ListsScreen";
@@ -17,6 +17,15 @@ const sampleLists: ListSummary[] = [
     itemCount: 3,
     isEditing: false,
     status: LIST_STATUS.ACTIVE,
+  },
+  {
+    id: "draft-1",
+    title: "Vacía",
+    updatedAt: "2024-01-10",
+    activatedAt: null,
+    itemCount: 0,
+    isEditing: false,
+    status: LIST_STATUS.DRAFT,
   },
   {
     id: "completed-1",
@@ -115,8 +124,13 @@ describe("ListsScreen", () => {
       />
     );
 
+    const activeCard = screen.getByText("Cena").closest("article");
+    expect(activeCard).not.toBeNull();
+
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
+      within(activeCard as HTMLElement).getByRole("button", {
+        name: UI_TEXT.LISTS.ACTIONS.EDIT,
+      })
     );
 
     expect(
@@ -137,8 +151,13 @@ describe("ListsScreen", () => {
 
     render(<ListsScreen lists={sampleLists} onAction={onAction} />);
 
+    const activeCard = screen.getByText("Cena").closest("article");
+    expect(activeCard).not.toBeNull();
+
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
+      within(activeCard as HTMLElement).getByRole("button", {
+        name: UI_TEXT.LISTS.ACTIONS.DELETE,
+      })
     );
 
     expect(
@@ -180,5 +199,20 @@ describe("ListsScreen", () => {
     });
 
     expect(loadingButton).toBeDisabled();
+  });
+
+  it("deshabilita activar cuando la lista no tiene productos", () => {
+    const onAction = vi.fn();
+
+    render(<ListsScreen lists={sampleLists} onAction={onAction} />);
+
+    const activateButton = screen.getByRole("button", {
+      name: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
+    });
+
+    expect(activateButton).toBeDisabled();
+    expect(
+      screen.getByText(UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE),
+    ).toBeInTheDocument();
   });
 });

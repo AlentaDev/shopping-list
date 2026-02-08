@@ -148,6 +148,7 @@ export const UI_TEXT = {
     CLOSE_MODAL_LABEL: "Cerrar modal",
     SAVE_DRAFT_LABEL: "Guardar borrador",
     READY_TO_SHOP_LABEL: "Finalizar lista",
+    READY_TO_SHOP_EMPTY_MESSAGE: "Añade al menos un producto para finalizar.",
   },
   LISTS: {
     TITLE: "Mis listas",
@@ -192,6 +193,7 @@ export const UI_TEXT = {
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: "Continuar",
     },
+    ACTIVATE_DISABLED_MESSAGE: "Añade productos para poder finalizarla.",
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",
       MESSAGE: "Puedes continuar o descartarlo si ya no lo necesitas.",

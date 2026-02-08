@@ -334,8 +334,9 @@ const ShoppingList = ({
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
-  const canReadyToShop =
-    Boolean(authUser) && canActivateList(listStatus) && items.length > 0;
+  const canShowReadyToShop =
+    Boolean(authUser) && canActivateList(listStatus);
+  const isReadyToShopDisabled = items.length === 0 || isLoading;
   const draftTitle = listName.trim() || listTitle;
   const isActiveList = listStatus === LIST_STATUS.ACTIVE;
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
@@ -562,9 +563,9 @@ const ShoppingList = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={listTitle}
-      onReadyToShop={
-        canReadyToShop && !isLoading ? handleReadyToShop : undefined
-      }
+      onReadyToShop={canShowReadyToShop ? handleReadyToShop : undefined}
+      itemCount={sortedItems.length}
+      isReadyToShopDisabled={isReadyToShopDisabled}
     >
       <ShoppingListListView
         showDetailActions={showDetailActions}
