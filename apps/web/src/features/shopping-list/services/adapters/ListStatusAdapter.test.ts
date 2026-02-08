@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { adaptListStatusResponse } from "./ListStatusAdapter";
-import { LIST_STATUS } from "../listStatus";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
 describe("ListStatusAdapter", () => {
   it("normaliza la respuesta del status de lista", () => {

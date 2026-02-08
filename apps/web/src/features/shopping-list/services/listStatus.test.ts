@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import {
-  LIST_STATUS,
   canActivateList,
   canCompleteList,
   canDuplicateList,

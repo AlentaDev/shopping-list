@@ -1,4 +1,4 @@
-import { LIST_STATUS, type ListStatus } from "../listStatus";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import type { ListStatusSummary } from "../types";
 
 type ListStatusPayload = {

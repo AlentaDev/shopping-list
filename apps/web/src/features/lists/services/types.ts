@@ -1,4 +1,4 @@
-import type { ListStatus } from "./listActions";
+import type { ListStatus } from "@src/shared/domain/listStatus";
 
 export type ListSummary = {
   id: string;

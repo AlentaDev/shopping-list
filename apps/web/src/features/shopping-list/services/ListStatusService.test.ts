@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { activateList } from "./ListStatusService";
-import { LIST_STATUS } from "./listStatus";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 
 vi.mock("./LocalDraftSyncService", () => ({

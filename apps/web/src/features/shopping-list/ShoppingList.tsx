@@ -18,11 +18,8 @@ import {
   reuseList,
   startListEditing,
 } from "./services/ListDetailActionsService";
-import {
-  LIST_STATUS,
-  canActivateList,
-  type ListStatus,
-} from "./services/listStatus";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
+import { canActivateList } from "./services/listStatus";
 
 type ShoppingListProps = {
   isOpen: boolean;

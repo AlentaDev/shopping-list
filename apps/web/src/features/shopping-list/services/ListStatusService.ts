@@ -1,9 +1,6 @@
 import { adaptListStatusResponse } from "./adapters/ListStatusAdapter";
-import {
-  LIST_STATUS,
-  canActivateList,
-  type ListStatus,
-} from "./listStatus";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
+import { canActivateList } from "./listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
 
