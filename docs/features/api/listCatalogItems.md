@@ -3,6 +3,8 @@
 ## Summary
 Allows authenticated users to add list items from the Mercadona catalog by productId while storing a snapshot of pricing and presentation data.
 
+> **Deprecated:** manual items and free-form notes are being removed from the API, database, and web. All future changes must assume catalog-only items with no manual notes.
+
 ## Endpoints
 ### POST `/api/lists/:id/items/from-catalog`
 Adds a catalog item snapshot to a list owned by the authenticated user.

@@ -4,6 +4,8 @@
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
 
+> **Deprecado:** los items manuales y las notas están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
+
 ## Endpoints
 
 ### POST /api/lists

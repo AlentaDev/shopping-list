@@ -175,6 +175,7 @@ Todas las rutas requieren autenticación.
 ```
 
 ### ListItemDto
+- **Deprecado:** los items manuales y las notas están en proceso de eliminación de API/DB/web. Todo cambio nuevo debe asumir **solo catálogo** y sin notas libres.
 - **Manual**
 ```
 {

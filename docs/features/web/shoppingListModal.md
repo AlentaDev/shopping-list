@@ -15,6 +15,7 @@ cantidades, eliminar líneas y ver el total.
 - El modal se cierra con ESC o clic fuera (sin botón "Cerrar").
 - El botón "Añadir productos" navega al catálogo.
 - Los items solo se añaden desde el catálogo (no hay alta manual).
+- **Deprecado:** los items manuales y las notas están en retirada; cualquier cambio futuro debe respetar el flujo solo catálogo.
 - Añadir el mismo producto desde el catálogo incrementa la cantidad y muestra toast con foto + nombre.
 - Los items se ordenan por categoría independientemente del orden de alta.
 - El nombre se edita en línea con un icono de lápiz.
