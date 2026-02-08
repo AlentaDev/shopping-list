@@ -501,40 +501,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ListNotFound"
-  /api/lists/{id}/items:
-    post:
-      tags:
-        - lists
-      summary: Añadir item manual a la lista
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddManualItemRequest"
-      responses:
-        "201":
-          description: Item creado
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ListItemDto"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "401":
-          $ref: "#/components/responses/NotAuthenticated"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/ListNotFound"
   /api/lists/{id}/items/from-catalog:
     post:
       tags:
@@ -1049,21 +1015,6 @@ components:
         - itemCount
         - items
         - updatedAt
-    AddManualItemRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        qty:
-          type: integer
-          minimum: 1
-          maximum: 99
-        note:
-          type: string
-          maxLength: 240
-      required:
-        - name
     AddCatalogItemRequest:
       type: object
       properties:

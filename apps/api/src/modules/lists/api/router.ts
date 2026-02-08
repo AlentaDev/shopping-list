@@ -4,7 +4,6 @@ import { AppError } from "@src/shared/errors/appError.js";
 import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 import type { AuthenticatedRequest } from "@src/shared/web/requireAuth.js";
 import { AddCatalogItem } from "../application/AddCatalogItem.js";
-import { AddManualItem } from "../application/AddManualItem.js";
 import { CreateList } from "../application/CreateList.js";
 import { GetList } from "../application/GetList.js";
 import { ListLists } from "../application/ListLists.js";
@@ -21,7 +20,6 @@ import { StartListEditing } from "../application/StartListEditing.js";
 import { FinishListEdit } from "../application/FinishListEdit.js";
 import {
   addCatalogItemSchema,
-  addItemSchema,
   activateListSchema,
   completeListSchema,
   createListSchema,
@@ -38,7 +36,6 @@ type ListsRouterDependencies = {
   listLists: ListLists;
   getList: GetList;
   deleteList: DeleteList;
-  addManualItem: AddManualItem;
   addCatalogItem: AddCatalogItem;
   updateItem: UpdateItem;
   removeItem: RemoveItem;
@@ -232,25 +229,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       });
 
       res.status(200).json(response);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  router.post("/:id/items", async (req, res, next) => {
-    try {
-      const params = listParamsSchema.parse(req.params);
-      const input = addItemSchema.parse(req.body);
-      const userId = getUserId(req);
-      const response = await deps.addManualItem.execute({
-        userId,
-        listId: params.id,
-        name: input.name,
-        qty: input.qty,
-        note: input.note,
-      });
-
-      res.status(201).json(response);
     } catch (error) {
       next(error);
     }

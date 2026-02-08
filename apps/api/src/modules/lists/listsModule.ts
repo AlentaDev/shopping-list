@@ -1,5 +1,4 @@
 import { requireAuth } from "@src/shared/web/requireAuth.js";
-import { AddManualItem } from "./application/AddManualItem.js";
 import { AddCatalogItem } from "./application/AddCatalogItem.js";
 import { CreateList } from "./application/CreateList.js";
 import { GetList } from "./application/GetList.js";
@@ -35,7 +34,6 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const listLists = new ListLists(listRepository);
   const getList = new GetList(listRepository);
   const deleteList = new DeleteList(listRepository);
-  const addManualItem = new AddManualItem(listRepository, idGenerator);
   const addCatalogItem = new AddCatalogItem(
     listRepository,
     idGenerator,
@@ -60,7 +58,6 @@ export function createListsModule(deps: ListsModuleDependencies) {
     listLists,
     getList,
     deleteList,
-    addManualItem,
     addCatalogItem,
     updateItem,
     removeItem,
