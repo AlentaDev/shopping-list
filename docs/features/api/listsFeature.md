@@ -4,7 +4,7 @@
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
 
-> **Deprecado:** los items manuales y las notas están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
+> **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
 ## Endpoints
 
@@ -68,11 +68,9 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
   "items": [
     {
       "id": "uuid",
-      "kind": "manual",
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note",
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -92,11 +90,9 @@ Si no hay borrador autosave, responde con `204`.
   "items": [
     {
       "id": "uuid",
-      "kind": "manual",
       "name": "Milk",
       "qty": 1,
-      "checked": false,
-      "note": "Optional note"
+      "checked": false
     }
   ]
 }
@@ -130,7 +126,6 @@ Si no hay borrador autosave, responde con `204`.
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note",
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -193,8 +188,7 @@ Sin contenido (autosave descartado).
 ```json
 {
   "name": "Milk",
-  "qty": 2,
-  "note": "Optional note"
+  "qty": 2
 }
 ```
 
@@ -206,7 +200,6 @@ Sin contenido (autosave descartado).
   "name": "Milk",
   "qty": 2,
   "checked": false,
-  "note": "Optional note",
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -218,8 +211,7 @@ Sin contenido (autosave descartado).
 ```json
 {
   "checked": true,
-  "qty": 3,
-  "note": "Updated note"
+  "qty": 3
 }
 ```
 
@@ -231,7 +223,6 @@ Sin contenido (autosave descartado).
   "name": "Milk",
   "qty": 3,
   "checked": true,
-  "note": "Updated note",
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```

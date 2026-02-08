@@ -3,7 +3,7 @@
 ## Summary
 Allows authenticated users to add list items from the Mercadona catalog by productId while storing a snapshot of pricing and presentation data.
 
-> **Deprecated:** manual items and free-form notes are being removed from the API, database, and web. All future changes must assume catalog-only items with no manual notes.
+> **Deprecated:** manual items are being removed from the API, database, and web. All future changes must assume catalog-only items.
 
 ## Endpoints
 ### POST `/api/lists/:id/items/from-catalog`
@@ -14,8 +14,7 @@ Adds a catalog item snapshot to a list owned by the authenticated user.
 {
   "source": "mercadona",
   "productId": "123",
-  "qty": 2,
-  "note": "Promo"
+  "qty": 2
 }
 ```
 
@@ -27,7 +26,6 @@ Adds a catalog item snapshot to a list owned by the authenticated user.
   "name": "Whole Milk",
   "qty": 2,
   "checked": false,
-  "note": "Promo",
   "updatedAt": "2024-01-01T10:00:00.000Z",
   "thumbnail": "https://cdn.example.com/milk-thumb.jpg",
   "price": 1.35,
@@ -49,4 +47,4 @@ Adds a catalog item snapshot to a list owned by the authenticated user.
 
 ## Notes
 - The list item stores a snapshot of Mercadona product data (`display_name`, `thumbnail`, and `price_instructions`) to keep lists stable if catalog data changes.
-- Responses normalize both manual and catalog items into a `kind` + `name` shape with optional catalog fields.
+- Responses normalize catalog items into a `kind` + `name` shape with optional catalog fields.
