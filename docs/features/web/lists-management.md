@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El borrador en progreso se gestiona en el modal de lista y no aparece en este listado.
+Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El borrador único se gestiona en el modal de lista (puede estar vacío) y no aparece en este listado.
 
 ## Endpoints
 
@@ -19,6 +19,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - Tabs por estado: **Activas**, **Historial**.
 - Orden: fecha más nueva primero.
 - No se muestran listas sin items.
+- El `DRAFT` único no se lista nunca (aunque exista vacío o con items).
 - Nombre de la lista: máximo 35 caracteres, truncado con `…`.
 - Estados vacíos: mostrar mensaje informativo.
 
@@ -43,10 +44,10 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
   - Si hay draft con items: “Perderás la lista que estás confeccionando”.
 - Al confirmar, la lista activa queda con `isEditing=true`.
 - Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
-- Si ya existía DRAFT, se reemplaza (tras el aviso).
+- Si ya existía DRAFT, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
-- Si el usuario cancela la edición, se descarta el DRAFT y se vuelve a `isEditing=false`.
-- Si el usuario termina la edición, se aplica el DRAFT a la lista activa y se limpia el autosave.
+- Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false`.
+- Si el usuario termina la edición, se aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío.
 
 ### Historial (listado)
 
@@ -58,7 +59,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 
 - Se muestran productos + total.
 - Botones: **Reusar**, **Borrar**.
-- Reusar abre el modal y convierte la lista en DRAFT.
+- Reusar abre el modal y sobrescribe el `DRAFT` único con los items del historial.
 - Si existe un DRAFT con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
 
