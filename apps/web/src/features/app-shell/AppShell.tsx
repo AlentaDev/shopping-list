@@ -1,6 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import Catalog from "@src/features/catalog/Catalog";
-import { Lists } from "@src/features/lists";
 import ShoppingList from "@src/features/shopping-list/ShoppingList";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
@@ -8,11 +6,7 @@ import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
 import { AppHeader } from "@src/features/app-shell/components/AppHeader";
-import {
-  AuthLoggedInNotice,
-  AuthScreen,
-  type AuthMode,
-} from "@src/features/auth";
+import { useAppShellNavigation } from "@src/features/app-shell/useAppShellNavigation";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
   ListDetail,
@@ -25,19 +19,11 @@ import {
 } from "@src/shared/domain/listStatus";
 import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
-const LOGIN_PATH = "/auth/login";
-const LISTS_PATH = "/lists";
 const CATALOG_PATH = "/";
 
 export const AppShell = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [currentPath, setCurrentPath] = useState(() =>
-    window.location.pathname,
-  );
-  const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
-    resolveAuthMode(window.location.pathname),
-  );
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
     useState<ShoppingListStatus>(LIST_STATUS.LOCAL_DRAFT);
@@ -60,25 +46,6 @@ export const AppShell = () => {
     logout,
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  const navigate = (path: string) => {
-    window.history.pushState({}, "", path);
-    setCurrentPath(path);
-    setAuthMode(resolveAuthMode(path));
-  };
-
-  useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      setCurrentPath(path);
-      setAuthMode(resolveAuthMode(path));
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, []);
 
   useEffect(() => {
     const handleOpenCart = () => {
@@ -162,21 +129,19 @@ export const AppShell = () => {
     setIsCartOpen(true);
   };
 
-  const mainContent = resolveMainContent({
-    authMode,
-    authUser,
-    authRedirectPending,
-    currentPath,
-    isAuthSubmitting,
-    authError,
-    isCategoriesOpen,
-    linesCount,
-    onLogin: handleLogin,
-    onRegister: handleRegister,
-    onNavigateHome: () => navigate("/"),
-    onOpenList: handleOpenList,
-    onStartOpenList: handleStartOpenList,
-  });
+  const { authMode, currentPath, navigate, mainContent } =
+    useAppShellNavigation({
+      authUser,
+      authRedirectPending,
+      isAuthSubmitting,
+      authError,
+      isCategoriesOpen,
+      linesCount,
+      onLogin: handleLogin,
+      onRegister: handleRegister,
+      onOpenList: handleOpenList,
+      onStartOpenList: handleStartOpenList,
+    });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -188,10 +153,10 @@ export const AppShell = () => {
         onNavigateHome={() => navigate("/")}
         onOpenCart={() => setIsCartOpen(true)}
         onToggleCategories={() => setIsCategoriesOpen((prev) => !prev)}
-        onNavigateLogin={() => navigate(LOGIN_PATH)}
+        onNavigateLogin={() => navigate("/auth/login")}
         onNavigateRegister={() => navigate("/auth/register")}
         onToggleUserMenu={() => setIsUserMenuOpen(!isUserMenuOpen)}
-        onNavigateLists={() => navigate(LISTS_PATH)}
+        onNavigateLists={() => navigate("/lists")}
         onCloseUserMenu={() => setIsUserMenuOpen(false)}
         onLogout={handleLogout}
         userMenuRef={userMenuRef}
@@ -229,89 +194,6 @@ export const AppShell = () => {
   );
 };
 
-function resolveAuthMode(pathname: string): AuthMode | null {
-  if (pathname === LOGIN_PATH) {
-    return "login";
-  }
-
-  if (pathname === "/auth/register") {
-    return "register";
-  }
-
-  return null;
-}
-
-type MainContentParams = {
-  authMode: AuthMode | null;
-  authUser: ReturnType<typeof useAuth>["authUser"];
-  authRedirectPending: boolean;
-  currentPath: string;
-  isAuthSubmitting: boolean;
-  authError: string | null;
-  isCategoriesOpen: boolean;
-  linesCount: number;
-  onLogin: (values: LoginFormValues) => Promise<void>;
-  onRegister: (values: RegisterFormValues) => Promise<void>;
-  onNavigateHome: () => void;
-  onOpenList: (list: ListDetail) => void;
-  onStartOpenList: (list: ListSummary) => void;
-};
-
-function resolveMainContent({
-  authMode,
-  authUser,
-  authRedirectPending,
-  currentPath,
-  isAuthSubmitting,
-  authError,
-  isCategoriesOpen,
-  linesCount,
-  onLogin,
-  onRegister,
-  onNavigateHome,
-  onOpenList,
-  onStartOpenList,
-}: MainContentParams) {
-  if (authMode) {
-    if (authUser && authRedirectPending) {
-      return <Catalog isCategoriesOpen={isCategoriesOpen} />;
-    }
-
-    return authUser ? (
-      <AuthLoggedInNotice mode={authMode} onBack={onNavigateHome} />
-    ) : (
-      <AuthScreen
-        mode={authMode}
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authError}
-        onLogin={onLogin}
-        onRegister={onRegister}
-        onBack={onNavigateHome}
-      />
-    );
-  }
-
-  if (currentPath === LISTS_PATH) {
-    return authUser ? (
-      <Lists
-        onOpenList={onOpenList}
-        onStartOpenList={onStartOpenList}
-        hasDraftItems={linesCount > 0}
-      />
-    ) : (
-      <AuthScreen
-        mode="login"
-        isSubmitting={isAuthSubmitting}
-        errorMessage={authError}
-        onLogin={onLogin}
-        onRegister={onRegister}
-        onBack={onNavigateHome}
-      />
-    );
-  }
-
-  return <Catalog isCategoriesOpen={isCategoriesOpen} />;
-}
 
 const mapListItems = (items: RemoteListItem[]): ShoppingListItem[] =>
   items.map((item) => ({
