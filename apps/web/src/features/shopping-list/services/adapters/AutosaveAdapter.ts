@@ -2,7 +2,6 @@ import type { AutosaveDraft, AutosaveItem, AutosaveSummary } from "../types";
 
 type AutosaveItemPayload = {
   id?: string;
-  kind?: "catalog";
   name?: string;
   qty?: number;
   checked?: boolean;
@@ -32,7 +31,6 @@ type AutosaveSummaryPayload = {
 
 const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   id: item.id ?? "",
-  kind: "catalog",
   name: item.name ?? "",
   qty: item.qty ?? 0,
   checked: item.checked ?? false,

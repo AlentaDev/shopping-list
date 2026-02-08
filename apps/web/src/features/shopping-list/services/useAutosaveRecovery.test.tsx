@@ -12,7 +12,6 @@ const SAMPLE_DRAFT = {
   items: [
     {
       id: "item-1",
-      kind: "catalog" as const,
       name: "Leche",
       qty: 2,
       checked: false,
@@ -34,7 +33,6 @@ type HarnessProps = {
     title: string;
     items: {
       id: string;
-      kind: "catalog";
       name: string;
       qty: number;
       checked: boolean;
@@ -126,7 +124,6 @@ describe("useAutosaveRecovery", () => {
         items: [
           {
             id: "item-1",
-            kind: "catalog",
             name: "Leche",
             qty: 2,
             checked: false,
