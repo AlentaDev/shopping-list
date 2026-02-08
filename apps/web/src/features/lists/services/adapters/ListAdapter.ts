@@ -1,4 +1,4 @@
-import { LIST_STATUS } from "../listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type {
   ListCollection,
   ListDetail,

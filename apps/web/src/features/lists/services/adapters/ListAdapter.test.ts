@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LIST_STATUS } from "../listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import {
   adaptListCollectionResponse,
   adaptListDetailResponse,

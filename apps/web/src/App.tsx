@@ -19,10 +19,9 @@ import type {
   ListSummary,
 } from "@src/features/lists/services/types";
 import {
-  LIST_STATUS as SHOPPING_LIST_STATUS,
+  LIST_STATUS,
   type ListStatus as ShoppingListStatus,
-} from "@src/features/shopping-list/services/listStatus";
-import { LIST_STATUS as LISTS_STATUS } from "@src/features/lists/services/listActions";
+} from "@src/shared/domain/listStatus";
 import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
 const LOGIN_PATH = "/auth/login";
@@ -40,7 +39,7 @@ const App = () => {
   );
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
-    useState<ShoppingListStatus>(SHOPPING_LIST_STATUS.LOCAL_DRAFT);
+    useState<ShoppingListStatus>(LIST_STATUS.LOCAL_DRAFT);
   const [currentListIsEditing, setCurrentListIsEditing] =
     useState<boolean>(false);
   const [isListLoading, setIsListLoading] = useState(false);
@@ -431,14 +430,14 @@ const resolveShoppingListStatus = (
   status?: string,
 ): ShoppingListStatus => {
   switch (status) {
-    case LISTS_STATUS.ACTIVE:
-      return SHOPPING_LIST_STATUS.ACTIVE;
-    case LISTS_STATUS.COMPLETED:
-      return SHOPPING_LIST_STATUS.COMPLETED;
-    case LISTS_STATUS.DRAFT:
-      return SHOPPING_LIST_STATUS.DRAFT;
+    case LIST_STATUS.ACTIVE:
+      return LIST_STATUS.ACTIVE;
+    case LIST_STATUS.COMPLETED:
+      return LIST_STATUS.COMPLETED;
+    case LIST_STATUS.DRAFT:
+      return LIST_STATUS.DRAFT;
     default:
-      return SHOPPING_LIST_STATUS.DRAFT;
+      return LIST_STATUS.DRAFT;
   }
 };
 
