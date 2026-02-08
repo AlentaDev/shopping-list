@@ -12,12 +12,13 @@ const SAMPLE_DRAFT = {
   items: [
     {
       id: "item-1",
-      kind: "manual" as const,
+      kind: "catalog" as const,
       name: "Leche",
       qty: 2,
       checked: false,
-      note: null,
       updatedAt: "2024-01-01T10:00:00.000Z",
+      source: "mercadona",
+      sourceProductId: "item-1",
     },
   ],
 };
@@ -33,11 +34,18 @@ type HarnessProps = {
     title: string;
     items: {
       id: string;
-      kind: "manual";
+      kind: "catalog";
       name: string;
       qty: number;
       checked: boolean;
-      note?: string | null;
+      source: "mercadona";
+      sourceProductId: string;
+      thumbnail?: string | null;
+      price?: number | null;
+      unitSize?: number | null;
+      unitFormat?: string | null;
+      unitPrice?: number | null;
+      isApproxSize?: boolean;
     }[];
   }) => void;
 };
@@ -118,11 +126,18 @@ describe("useAutosaveRecovery", () => {
         items: [
           {
             id: "item-1",
-            kind: "manual",
+            kind: "catalog",
             name: "Leche",
             qty: 2,
             checked: false,
-            note: null,
+            source: "mercadona",
+            sourceProductId: "item-1",
+            thumbnail: null,
+            price: null,
+            unitSize: null,
+            unitFormat: null,
+            unitPrice: null,
+            isApproxSize: false,
           },
         ],
       });

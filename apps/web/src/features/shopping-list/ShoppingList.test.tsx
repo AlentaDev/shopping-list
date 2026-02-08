@@ -483,12 +483,13 @@ describe("ShoppingList", () => {
           items: [
             {
               id: "item-1",
-              kind: "manual",
+              kind: "catalog",
               name: "Leche",
               qty: 2,
               checked: false,
-              note: null,
               updatedAt: "2024-01-01T00:00:00.000Z",
+              source: "mercadona",
+              sourceProductId: "item-1",
             },
           ],
         }),

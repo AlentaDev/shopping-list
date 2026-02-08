@@ -76,7 +76,7 @@ describe("Lists", () => {
             items: [
               {
                 id: "item-1",
-                kind: "manual",
+                kind: "catalog",
                 name: "Leche",
                 qty: 1,
                 checked: true,
@@ -84,7 +84,7 @@ describe("Lists", () => {
               },
               {
                 id: "item-2",
-                kind: "manual",
+                kind: "catalog",
                 name: "Pan",
                 qty: 1,
                 checked: false,

@@ -116,7 +116,7 @@ describe("ListAdapter", () => {
       items: [
         {
           id: "item-1",
-          kind: "manual",
+          kind: "catalog",
           name: "Pan",
           qty: 2,
           checked: true,
@@ -136,12 +136,11 @@ describe("ListAdapter", () => {
       items: [
         {
           id: "item-1",
-          kind: "manual",
+          kind: "catalog",
           name: "Pan",
           qty: 2,
           checked: true,
           updatedAt: "2024-02-02T10:00:00.000Z",
-          note: undefined,
           thumbnail: null,
           price: null,
           unitSize: null,
