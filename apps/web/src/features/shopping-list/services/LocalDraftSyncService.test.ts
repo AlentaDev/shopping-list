@@ -34,6 +34,11 @@ describe("LocalDraftSyncService", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     localStorage.clear();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("devuelve null si no hay borrador local", async () => {

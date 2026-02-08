@@ -69,6 +69,16 @@ describe("ShoppingList", () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<
+        (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+      >(async () => ({
+        ok: true,
+        json: async () => null,
+      })),
+    );
   });
 
   const baseAuthContext: AuthContextType = {
@@ -449,6 +459,7 @@ describe("ShoppingList", () => {
   });
 
   it("muestra el banner de recuperación y permite continuar", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "false");
     const user = userEvent.setup();
     const fetchMock = vi.fn<
       (
@@ -501,6 +512,7 @@ describe("ShoppingList", () => {
   });
 
   it("descarta el autosave remoto desde el banner", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "false");
     const user = userEvent.setup();
     const fetchMock = vi.fn<
       (

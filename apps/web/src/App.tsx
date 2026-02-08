@@ -44,7 +44,7 @@ const App = () => {
   const [currentListIsEditing, setCurrentListIsEditing] =
     useState<boolean>(false);
   const [isListLoading, setIsListLoading] = useState(false);
-  const [currentListTitle, setCurrentListTitle] = useState(
+  const [currentListTitle, setCurrentListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
