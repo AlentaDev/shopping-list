@@ -43,7 +43,7 @@ export const activateList = async ({
   }
 
   const targetListId = await resolveListIdForActivation(status, listId);
-  const response = await fetch(`${LISTS_ENDPOINT}/${targetListId}/status`, {
+  const response = await fetch(`${LISTS_ENDPOINT}/${targetListId}/activate`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

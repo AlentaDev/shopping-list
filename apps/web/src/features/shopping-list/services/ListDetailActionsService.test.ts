@@ -29,7 +29,11 @@ describe("ListDetailActionsService", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-1/editing",
-      expect.objectContaining({ method: "PATCH" }),
+      expect.objectContaining({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isEditing: true }),
+      }),
     );
   });
 

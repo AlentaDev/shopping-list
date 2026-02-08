@@ -5,6 +5,7 @@ import Total from "./components/Total";
 import AutosaveRecoveryBanner from "./components/AutosaveRecoveryBanner";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
+import { useToast } from "@src/context/useToast";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
@@ -64,7 +65,6 @@ type DetailActionsProps = {
   isActive: boolean;
   onEdit: () => void;
   onReuse: () => void;
-  onClose: () => void;
   onDelete: () => void;
   isDisabled?: boolean;
   loadingAction?: "edit" | "reuse" | "delete" | null;
@@ -74,7 +74,6 @@ const DetailActions = ({
   isActive,
   onEdit,
   onReuse,
-  onClose,
   onDelete,
   isDisabled = false,
   loadingAction = null,
@@ -95,17 +94,6 @@ const DetailActions = ({
             ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT
             : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT}
         </button>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
-        </button>
       </>
     ) : (
       <>
@@ -121,17 +109,6 @@ const DetailActions = ({
           {loadingAction === "reuse"
             ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.REUSE
             : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
         </button>
       </>
     )}
@@ -233,7 +210,6 @@ type ShoppingListListViewProps = {
   isActiveList: boolean;
   onEdit: () => void;
   onReuse: () => void;
-  onClose: () => void;
   onDelete: () => void;
   isActionsDisabled: boolean;
   detailActionLoading: "edit" | "reuse" | "delete" | null;
@@ -255,7 +231,6 @@ const ShoppingListListView = ({
   isActiveList,
   onEdit,
   onReuse,
-  onClose,
   onDelete,
   isActionsDisabled,
   detailActionLoading,
@@ -307,7 +282,6 @@ const ShoppingListListView = ({
           isActive={isActiveList}
           onEdit={onEdit}
           onReuse={onReuse}
-          onClose={onClose}
           onDelete={onDelete}
           isDisabled={isActionsDisabled}
           loadingAction={detailActionLoading}
@@ -340,6 +314,7 @@ const ShoppingList = ({
   onAddMoreProducts,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
+  const { showToast } = useToast();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
@@ -359,7 +334,8 @@ const ShoppingList = ({
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
-  const canReadyToShop = Boolean(authUser) && canActivateList(listStatus);
+  const canReadyToShop =
+    Boolean(authUser) && canActivateList(listStatus) && items.length > 0;
   const draftTitle = listName.trim() || listTitle;
   const isActiveList = listStatus === LIST_STATUS.ACTIVE;
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
@@ -476,6 +452,11 @@ const ShoppingList = ({
       }
 
       removeItem(pendingRemoval.id);
+      showToast({
+        message: UI_TEXT.SHOPPING_LIST.TOAST_REMOVED_MESSAGE,
+        productName: pendingRemoval.name,
+        thumbnail: pendingRemoval.thumbnail ?? null,
+      });
       setPendingRemoval(null);
     } catch (error) {
       console.warn("No se pudo eliminar el item.", error);
@@ -590,7 +571,6 @@ const ShoppingList = ({
         isActiveList={isActiveList}
         onEdit={handleEditList}
         onReuse={handleReuseList}
-        onClose={handleClose}
         onDelete={() => setPendingListDeletion(true)}
         isActionsDisabled={isActionsDisabled}
         detailActionLoading={detailActionLoading}

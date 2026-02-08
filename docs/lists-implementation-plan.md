@@ -123,3 +123,16 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 - Evitar refactors masivos: cambios pequeños y reversibles.
 - Mantener reutilización de componentes de confirmación y mensajes.
 - Usar `UI_TEXT` para todos los textos de UI.
+
+## Checklist (decisiones recientes)
+
+- [x] [API] Cambiar `GET /api/lists/autosave` a `204` cuando no exista borrador.
+- [x] [API] Renombrar `PATCH /api/lists/:id/status` a `PATCH /api/lists/:id/activate`.
+- [x] [API] Eliminar `POST /api/lists/:id/duplicate` (mantener solo `reuse`).
+- [x] [API] Implementar `POST /api/lists/:id/finish-edit`.
+- [x] [API] Aceptar `{ isEditing: boolean }` en `PATCH /api/lists/:id/editing`.
+- [x] [API] Alinear validaciones de cantidad a **1–99**.
+- [x] [Web] Consumir `204` en autosave y tratarlo como “sin borrador”.
+- [x] [Web] Usar `/activate` en lugar de `/status`.
+- [x] [Web] Enviar `{ isEditing: true/false }` al editar.
+- [x] [Web] Ajustar límites de cantidad a **1–99**.

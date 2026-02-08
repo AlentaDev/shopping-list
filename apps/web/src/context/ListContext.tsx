@@ -12,6 +12,7 @@ type ListAction =
   | { type: "REMOVE_ITEM"; itemId: string };
 
 const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 99;
 
 const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
   switch (action.type) {
@@ -21,7 +22,10 @@ const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
       if (existingItem) {
         return state.map((item) =>
           item.id === action.item.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? {
+                ...item,
+                quantity: Math.min(MAX_QUANTITY, item.quantity + 1),
+              }
             : item
         );
       }
@@ -33,7 +37,13 @@ const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
     case "UPDATE_QUANTITY":
       return state.map((item) =>
         item.id === action.itemId
-          ? { ...item, quantity: Math.max(MIN_QUANTITY, action.quantity) }
+          ? {
+              ...item,
+              quantity: Math.min(
+                MAX_QUANTITY,
+                Math.max(MIN_QUANTITY, action.quantity),
+              ),
+            }
           : item
       );
     case "REMOVE_ITEM":

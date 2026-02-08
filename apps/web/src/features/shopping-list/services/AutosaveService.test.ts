@@ -68,6 +68,7 @@ describe("AutosaveService", () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
+        status: 204,
         json: async () => null,
       })
     );

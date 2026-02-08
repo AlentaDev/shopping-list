@@ -225,12 +225,13 @@ paths:
         - cookieAuth: []
       responses:
         "200":
-          description: Borrador de autosave o null si no existe
+          description: Borrador de autosave
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AutosaveDraft"
-                nullable: true
+        "204":
+          description: No hay borrador de autosave
         "401":
           $ref: "#/components/responses/NotAuthenticated"
     put:
@@ -318,11 +319,11 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ListNotFound"
-  /api/lists/{id}/status:
+  /api/lists/{id}/activate:
     patch:
       tags:
         - lists
-      summary: Actualizar estado de lista
+      summary: Activar lista
       security:
         - cookieAuth: []
       parameters:
@@ -336,7 +337,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateListStatusRequest"
+              $ref: "#/components/schemas/ActivateListRequest"
       responses:
         "200":
           description: Estado actualizado
@@ -398,39 +399,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ItemNotFound"
-  /api/lists/{id}/duplicate:
-    post:
-      deprecated: true
-      tags:
-        - lists
-      summary: Duplicar lista completada
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: Lista duplicada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DuplicateListResponse"
-        "400":
-          description: Error de transición inválida
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "401":
-          $ref: "#/components/responses/NotAuthenticated"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/ListNotFound"
   /api/lists/{id}/reuse:
     post:
       tags:
@@ -476,6 +444,12 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListEditingRequest"
       responses:
         "200":
           description: Lista marcada como en edición
@@ -483,6 +457,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StartListEditingResponse"
+        "400":
+          description: Error de transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
+        "401":
+          $ref: "#/components/responses/NotAuthenticated"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/ListNotFound"
+  /api/lists/{id}/finish-edit:
+    post:
+      tags:
+        - lists
+      summary: Finalizar edición de lista activa
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lista activa actualizada con el borrador
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDetail"
         "400":
           description: Error de transición inválida
           content:
@@ -758,6 +764,21 @@ components:
             type: string
       required:
         - status
+    ActivateListRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE]
+      required:
+        - status
+    UpdateListEditingRequest:
+      type: object
+      properties:
+        isEditing:
+          type: boolean
+      required:
+        - isEditing
     UpdateListStatusResponse:
       type: object
       properties:
@@ -831,7 +852,6 @@ components:
           type: string
         isEditing:
           type: boolean
-          enum: [true]
         updatedAt:
           type: string
           format: date-time
@@ -1038,7 +1058,7 @@ components:
         qty:
           type: integer
           minimum: 1
-          maximum: 999
+          maximum: 99
         note:
           type: string
           maxLength: 240
@@ -1055,7 +1075,7 @@ components:
         qty:
           type: integer
           minimum: 1
-          maximum: 999
+          maximum: 99
         note:
           type: string
           maxLength: 240
@@ -1071,7 +1091,7 @@ components:
         qty:
           type: integer
           minimum: 1
-          maximum: 999
+          maximum: 99
         checked:
           type: boolean
         note:

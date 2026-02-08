@@ -117,6 +117,7 @@ export const UI_TEXT = {
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
+    TOAST_REMOVED_MESSAGE: "Eliminado de la lista",
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos encontrado un borrador guardado",
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",

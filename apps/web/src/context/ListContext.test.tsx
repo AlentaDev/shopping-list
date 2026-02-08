@@ -65,6 +65,9 @@ const TestConsumer = () => {
       <button type="button" onClick={() => updateQuantity("item-1", 0)}>
         Decrement below min
       </button>
+      <button type="button" onClick={() => updateQuantity("item-1", 120)}>
+        Increment above max
+      </button>
       <button type="button" onClick={() => removeItem("item-2")}>
         Remove
       </button>
@@ -156,6 +159,22 @@ describe("ListContext", () => {
     await userEvent.click(screen.getByRole("button", { name: "Remove" }));
 
     expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("2");
+  });
+
+  it("clamps quantity to the max limit", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Increment above max" })
+    );
+
+    expect(screen.getByTestId(FIRST_ITEM_QUANTITY_TEST_ID)).toHaveTextContent(
+      "99"
+    );
   });
 
   it("increments quantity when adding the same product again", async () => {

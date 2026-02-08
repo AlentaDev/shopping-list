@@ -4,6 +4,7 @@ import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "@src/context/useList";
 import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { useToast } from "@src/context/useToast";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
@@ -52,6 +53,7 @@ const Catalog = ({
   onItemsCountChange,
 }: CatalogProps) => {
   const { addItem } = useList();
+  const { showToast } = useToast();
   const {
     categoriesStatus,
     categoriesError,
@@ -168,6 +170,11 @@ const Catalog = ({
                         thumbnail: product.thumbnail,
                         price: product.price,
                         quantity: 1,
+                      });
+                      showToast({
+                        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
+                        productName: product.name,
+                        thumbnail: product.thumbnail ?? null,
                       });
                     }}
                   />

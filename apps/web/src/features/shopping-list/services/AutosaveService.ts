@@ -49,6 +49,10 @@ export const getAutosave = async (
     credentials: "include",
   });
 
+  if (response.status === 204) {
+    return null;
+  }
+
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load autosave.");
   }

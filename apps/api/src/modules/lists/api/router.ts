@@ -18,17 +18,19 @@ import { CompleteList } from "../application/CompleteList.js";
 import { DuplicateList } from "../application/DuplicateList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
 import { StartListEditing } from "../application/StartListEditing.js";
+import { FinishListEdit } from "../application/FinishListEdit.js";
 import {
   addCatalogItemSchema,
   addItemSchema,
+  activateListSchema,
   completeListSchema,
   createListSchema,
+  editingSchema,
   itemParamsSchema,
   listParamsSchema,
   listQuerySchema,
   patchItemSchema,
   upsertAutosaveSchema,
-  updateListStatusSchema,
 } from "./validation.js";
 
 type ListsRouterDependencies = {
@@ -44,6 +46,7 @@ type ListsRouterDependencies = {
   completeList: CompleteList;
   duplicateList: DuplicateList;
   startListEditing: StartListEditing;
+  finishListEdit: FinishListEdit;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   upsertAutosaveDraft: UpsertAutosaveDraft;
@@ -88,6 +91,10 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     try {
       const userId = getUserId(req);
       const response = await deps.getAutosaveDraft.execute(userId);
+      if (!response) {
+        res.status(204).end();
+        return;
+      }
 
       res.status(200).json(response);
     } catch (error) {
@@ -134,16 +141,15 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     }
   });
 
-  router.patch("/:id/status", async (req, res, next) => {
+  router.patch("/:id/activate", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
-      const input = updateListStatusSchema.parse(req.body);
+      const input = activateListSchema.parse(req.body);
       const userId = getUserId(req);
       const response = await deps.updateListStatus.execute({
         userId,
         listId: params.id,
         status: input.status,
-        checkedItemIds: input.checkedItemIds,
       });
 
       res.status(200).json(response);
@@ -169,21 +175,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     }
   });
 
-  router.post("/:id/duplicate", async (req, res, next) => {
-    try {
-      const params = listParamsSchema.parse(req.params);
-      const userId = getUserId(req);
-      const response = await deps.duplicateList.execute({
-        userId,
-        listId: params.id,
-      });
-
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  });
-
   router.post("/:id/reuse", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
@@ -202,8 +193,25 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.patch("/:id/editing", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
+      const input = editingSchema.parse(req.body);
       const userId = getUserId(req);
       const response = await deps.startListEditing.execute({
+        userId,
+        listId: params.id,
+        isEditing: input.isEditing,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/finish-edit", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.finishListEdit.execute({
         userId,
         listId: params.id,
       });

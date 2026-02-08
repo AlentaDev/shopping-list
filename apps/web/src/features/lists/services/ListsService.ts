@@ -80,7 +80,7 @@ export const activateList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListStatusSummary> => {
-  const response = await fetch(`/api/lists/${listId}/status`, {
+  const response = await fetch(`/api/lists/${listId}/activate`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

@@ -1,13 +1,21 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
 import type { ListItem } from "@src/context/ListContextValue";
 import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
+import { ToastProvider } from "@src/context/ToastContext";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import Toast from "@src/shared/components/toast/Toast";
 
 type FetchResponse = {
   ok: boolean;
@@ -102,18 +110,21 @@ describe("ShoppingList", () => {
           authUser: authenticated ? authUser : null,
         }}
       >
-        <ListProvider initialItems={items}>
-          <ShoppingList
-            isOpen
-            onClose={onClose}
-            onAddMoreProducts={onAddMoreProducts}
-            initialListId={listId}
-            initialListStatus={listStatus}
-            initialListTitle={listTitle}
-            initialListIsEditing={listIsEditing}
-            isLoading={isLoading}
-          />
-        </ListProvider>
+        <ToastProvider>
+          <ListProvider initialItems={items}>
+            <ShoppingList
+              isOpen
+              onClose={onClose}
+              onAddMoreProducts={onAddMoreProducts}
+              initialListId={listId}
+              initialListStatus={listStatus}
+              initialListTitle={listTitle}
+              initialListIsEditing={listIsEditing}
+              isLoading={isLoading}
+            />
+            <Toast />
+          </ListProvider>
+        </ToastProvider>
       </AuthContext.Provider>,
     );
 
@@ -158,12 +169,14 @@ describe("ShoppingList", () => {
       screen.getByText("¿Eliminar producto de la lista?"),
     ).toBeInTheDocument();
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Sí, eliminar" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Sí, eliminar" }));
 
     expect(screen.getByTestId(totalTestId)).toHaveTextContent(/2,70\s?€/);
-    expect(screen.queryByText(milkName)).toBeNull();
+    expect(screen.getAllByTestId("shopping-list-item")).toHaveLength(2);
+    expect(
+      screen.getByText(UI_TEXT.SHOPPING_LIST.TOAST_REMOVED_MESSAGE),
+    ).toBeInTheDocument();
+    expect(screen.getByText(milkName)).toBeInTheDocument();
   });
 
   it("permite cancelar el borrado desde la confirmación", async () => {
@@ -179,15 +192,16 @@ describe("ShoppingList", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
-    expect(
-      screen.queryByText("¿Eliminar producto de la lista?"),
-    ).toBeNull();
+    expect(screen.queryByText("¿Eliminar producto de la lista?")).toBeNull();
     expect(screen.getByText(appleName)).toBeInTheDocument();
   });
 
   it("confirma el borrado remoto cuando hay listId", async () => {
     const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<{
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
         ok: boolean;
         json: () => Promise<unknown>;
       }>
@@ -201,9 +215,7 @@ describe("ShoppingList", () => {
       screen.getByRole("button", { name: `Eliminar ${appleName}` }),
     );
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Sí, eliminar" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Sí, eliminar" }));
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-99/items/item-1",
@@ -226,11 +238,6 @@ describe("ShoppingList", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("button", {
-        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
-      }),
-    ).toHaveLength(1);
-    expect(
       screen.getByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
       }),
@@ -252,11 +259,6 @@ describe("ShoppingList", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getAllByRole("button", {
-        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE,
-      }),
-    ).toHaveLength(1);
-    expect(
       screen.getByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
       }),
@@ -265,7 +267,10 @@ describe("ShoppingList", () => {
 
   it("confirma el borrado de la lista desde el detalle", async () => {
     const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<{
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
         ok: boolean;
         json: () => Promise<unknown>;
       }>
@@ -326,7 +331,10 @@ describe("ShoppingList", () => {
 
   it("deshabilita acciones mientras se edita", async () => {
     const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<{
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
         ok: boolean;
         json: () => Promise<unknown>;
       }>
@@ -350,7 +358,11 @@ describe("ShoppingList", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-20/editing",
-      expect.objectContaining({ method: "PATCH" }),
+      expect.objectContaining({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isEditing: true }),
+      }),
     );
 
     expect(
@@ -439,7 +451,10 @@ describe("ShoppingList", () => {
   it("muestra el banner de recuperación y permite continuar", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<{
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
         ok: boolean;
         json: () => Promise<unknown>;
       }>
@@ -488,7 +503,10 @@ describe("ShoppingList", () => {
   it("descarta el autosave remoto desde el banner", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<{
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
         ok: boolean;
         json: () => Promise<unknown>;
       }>
@@ -540,6 +558,20 @@ describe("ShoppingList", () => {
 
   it("oculta la acción de activar lista si no hay sesión", () => {
     renderShoppingList({ authenticated: false, listStatus: "LOCAL_DRAFT" });
+
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
+    ).toBeNull();
+  });
+
+  it("oculta la acción de activar lista si no hay items", () => {
+    renderShoppingList({
+      authenticated: true,
+      listStatus: "LOCAL_DRAFT",
+      items: [],
+    });
 
     expect(
       screen.queryByRole("button", {

@@ -46,7 +46,7 @@ describe("ListStatusService", () => {
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-1/status",
+      "/api/lists/list-1/activate",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
@@ -78,7 +78,7 @@ describe("ListStatusService", () => {
 
     expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-2/status",
+      "/api/lists/list-2/activate",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),

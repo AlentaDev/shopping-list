@@ -13,6 +13,7 @@ vi.mock("@src/features/shopping-list/services/LocalDraftSyncService", () => ({
 
 type FetchResponse = {
   ok: boolean;
+  status?: number;
   json: () => Promise<unknown>;
 };
 
@@ -95,20 +96,7 @@ describe("App", () => {
         if (input === AUTOSAVE_URL) {
           return {
             ok: true,
-            json: async () => null,
-          };
-        }
-
-        if (input === AUTOSAVE_URL) {
-          return {
-            ok: true,
-            json: async () => null,
-          };
-        }
-
-        if (input === AUTOSAVE_URL) {
-          return {
-            ok: true,
+            status: 204,
             json: async () => null,
           };
         }
@@ -246,6 +234,7 @@ describe("App", () => {
   });
 
   it("shows the user menu and blocks auth screens when logged in", async () => {
+    let currentUserCalls = 0;
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input) => {
@@ -268,15 +257,30 @@ describe("App", () => {
       }
 
       if (input === CURRENT_USER_URL) {
+        currentUserCalls += 1;
+
+        if (currentUserCalls === 1) {
+          return {
+            ok: false,
+            json: async () => ({}),
+          };
+        }
+
         return {
-          ok: false,
-          json: async () => ({}),
+          ok: true,
+          json: async () => ({
+            id: "user-1",
+            name: "Ada",
+            email: "ada@example.com",
+            postalCode: TEST_POSTAL_CODE,
+          }),
         };
       }
 
       if (input === AUTOSAVE_URL) {
         return {
           ok: true,
+          status: 204,
           json: async () => null,
         };
       }
@@ -442,6 +446,7 @@ describe("App", () => {
         if (input === AUTOSAVE_URL) {
           return {
             ok: true,
+            status: 204,
             json: async () => null,
           };
         }
@@ -515,6 +520,7 @@ describe("App", () => {
         if (input === AUTOSAVE_URL) {
           return {
             ok: true,
+            status: 204,
             json: async () => null,
           };
         }
@@ -561,6 +567,7 @@ describe("App", () => {
         if (input === AUTOSAVE_URL) {
           return {
             ok: true,
+            status: 204,
             json: async () => null,
           };
         }

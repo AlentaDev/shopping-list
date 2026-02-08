@@ -78,7 +78,7 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 }
 ```
 
-Si no hay borrador autosave, responde con `null`.
+Si no hay borrador autosave, responde con `204`.
 
 ### PUT /api/lists/autosave
 
@@ -136,22 +136,13 @@ Si no hay borrador autosave, responde con `null`.
 }
 ```
 
-### PATCH /api/lists/:id/status
+### PATCH /api/lists/:id/activate
 
 **Request**
 
 ```json
 {
   "status": "ACTIVE"
-}
-```
-
-Para completar la lista y sincronizar items marcados:
-
-```json
-{
-  "status": "COMPLETED",
-  "checkedItemIds": ["uuid"]
 }
 ```
 
@@ -162,6 +153,18 @@ Para completar la lista y sincronizar items marcados:
   "id": "uuid",
   "status": "ACTIVE",
   "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### POST /api/lists/:id/complete
+
+Completa una lista activa y sincroniza items marcados.
+
+**Request**
+
+```json
+{
+  "checkedItemIds": ["uuid"]
 }
 ```
 
@@ -241,19 +244,33 @@ Sin contenido (autosave descartado).
 }
 ```
 
-### POST /api/lists/:id/duplicate
-
-Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
-
 ### POST /api/lists/:id/reuse
 
 Reusa una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
 
-> Nota: `/api/lists/:id/duplicate` se mantiene por compatibilidad, pero el endpoint preferido es `/api/lists/:id/reuse`.
+### PATCH /api/lists/:id/activate
+
+Activa una lista en `DRAFT` y pasa a `ACTIVE`.
+
+**Request**
+
+```json
+{
+  "status": "ACTIVE"
+}
+```
 
 ### PATCH /api/lists/:id/editing
 
-Marca una lista activa como en edición (`isEditing=true`).
+Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEditing=false`).
+
+**Request**
+
+```json
+{
+  "isEditing": true
+}
+```
 
 **Response 200**
 
@@ -265,26 +282,9 @@ Marca una lista activa como en edición (`isEditing=true`).
 }
 ```
 
-**Response 201**
+### POST /api/lists/:id/finish-edit
 
-```json
-{
-  "id": "uuid",
-  "title": "Groceries",
-  "status": "DRAFT",
-  "items": [
-    {
-      "id": "uuid",
-      "name": "Milk",
-      "qty": 1,
-      "checked": false,
-      "note": "Optional note",
-      "updatedAt": "2024-01-01T00:00:00.000Z"
-    }
-  ],
-  "updatedAt": "2024-01-01T00:00:00.000Z"
-}
-```
+Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y elimina el autosave.
 
 ## Notas de implementación
 
@@ -296,7 +296,4 @@ Marca una lista activa como en edición (`isEditing=true`).
 
 ## Cambios previstos (API)
 
-- Añadir soporte de `isEditing` para marcar listas activas en edición (y bloquear edición en móvil).
-- Persistir `activatedAt` cuando una lista pasa a `ACTIVE`.
-- Ajustar `GET /api/lists` para incluir `status`, `itemCount`, `activatedAt` y excluir autosave/draft.
-- Renombrar el concepto `duplicate` como `reusar` en documentación y UI (el endpoint puede mantenerse con el mismo path).
+- Sin cambios pendientes relevantes.

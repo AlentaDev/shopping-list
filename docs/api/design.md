@@ -88,6 +88,17 @@ Todas las rutas requieren autenticación.
 - Params: `{ id }`.
 - Respuesta `200`: `ListDetail`.
 
+**GET `/autosave`**
+- Respuesta `200`: `AutosaveDraft`.
+- Respuesta `204`: sin contenido cuando no hay autosave.
+
+**PUT `/autosave`**
+- Body: `{ title, items }`.
+- Respuesta `200`: `AutosaveDraftSummary`.
+
+**DELETE `/autosave`**
+- Respuesta `204`: sin contenido.
+
 **POST `/:id/items`**
 - Params: `{ id }`.
 - Body: `{ name, qty?, note? }`.
@@ -107,16 +118,22 @@ Todas las rutas requieren autenticación.
 - Params: `{ id, itemId }`.
 - Respuesta `200`: `{ ok: true }`.
 
+**PATCH `/:id/activate`**
+- Params: `{ id }`.
+- Body: `{ status: "ACTIVE" }`.
+- Respuesta `200`: `{ id, status, updatedAt }`.
+
 **POST `/:id/reuse`**
 - Params: `{ id }`.
 - Respuesta `201`: `ListDetail`.
 
-**POST `/:id/duplicate`**
+**POST `/:id/finish-edit`**
 - Params: `{ id }`.
-- Respuesta `201`: `ListDetail` (deprecated).
+- Respuesta `200`: `ListDetail`.
 
 **PATCH `/:id/editing`**
 - Params: `{ id }`.
+- Body: `{ isEditing }`.
 - Respuesta `200`: `{ id, isEditing, updatedAt }`.
 
 ## DTOs y modelos expuestos

@@ -23,6 +23,10 @@ export const startListEditing = async (
 ): Promise<void> => {
   const response = await fetch(`/api/lists/${listId}/editing`, {
     method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ isEditing: true }),
   });
 
   if (!response.ok) {

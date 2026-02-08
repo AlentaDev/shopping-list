@@ -107,7 +107,7 @@ No se acepta código nuevo sin tests asociados.
    - **API**: usa el archivo de ejemplo `apps/api/.env.example` y crea `apps/api/.env` con las variables mínimas:
      - `PORT`
      - `CORS_ORIGIN`
-     - `DB_PROVIDER` (opcional; si no se define, la API usa **Postgres** por defecto)
+   - `DB_PROVIDER` (opcional; si no se define, la API usa **in-memory** por defecto)
      - `DB_HOST`
      - `DB_PORT`
      - `DB_NAME`
@@ -115,26 +115,29 @@ No se acepta código nuevo sin tests asociados.
      - `DB_PASSWORD`
      - `DB_SSL`
    - **Web**: actualmente no requiere variables de entorno. Si en el futuro se añadieran, coloca el archivo en `apps/web/.env`.
-3. Inicia Postgres localmente (ejemplo con Docker Compose):
+3. (Opcional) Inicia Postgres localmente (ejemplo con Docker Compose):
    ```bash
    docker compose up -d
    ```
-4. Ejecuta migraciones locales:
+4. (Opcional) Ejecuta migraciones locales:
    ```bash
    pnpm -C apps/api database:migrate
    ```
+
    - Ejecuta este comando **después** de levantar la base de datos y **antes** de iniciar la API.
 5. Levanta los servicios:
    ```bash
    pnpm dev
    ```
-   
-**Alternativa rápida (sin Postgres ni migraciones)**:
-1. Levanta los servicios usando persistencia en memoria:
+
+**Alternativa con Postgres**:
+
+1. Levanta los servicios usando Postgres:
    ```bash
-   DB_PROVIDER=inmemory pnpm dev
+   DB_PROVIDER=postgres pnpm dev
    ```
-   - En este modo **no** necesitas ejecutar migraciones.
+
+   - En este modo necesitas migraciones.
 
 ---
 

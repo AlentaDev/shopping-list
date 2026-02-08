@@ -418,7 +418,7 @@ describe("lists endpoints", () => {
     const invalidMaxResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 1000 });
+      .send({ source: "mercadona", productId: "123", qty: 100 });
 
     expect(invalidMaxResponse.status).toBe(400);
     expect(invalidMaxResponse.body).toEqual({
@@ -533,13 +533,14 @@ describe("lists endpoints", () => {
       .send({ name: "Milk" });
 
     await request(app)
-      .patch(`/api/lists/${listResponse.body.id}/status`)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
       .set("Cookie", cookie)
       .send({ status: "ACTIVE" });
 
     const response = await request(app)
       .patch(`/api/lists/${listResponse.body.id}/editing`)
-      .set("Cookie", cookie);
+      .set("Cookie", cookie)
+      .send({ isEditing: true });
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -561,6 +562,85 @@ describe("lists endpoints", () => {
     expect(itemResponse.body.id).toBeDefined();
   });
 
+  it("POST /api/lists/:id/finish-edit applies autosave draft to active list", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items`)
+      .set("Cookie", cookie)
+      .send({ name: "Milk" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", cookie)
+      .send({ isEditing: true });
+
+    await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly updated",
+        items: [
+          {
+            id: "autosave-item-1",
+            kind: "manual",
+            name: "Bread",
+            qty: 2,
+            checked: false,
+          },
+        ],
+      });
+
+    const response = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/finish-edit`)
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        id: listResponse.body.id,
+        title: "Weekly updated",
+        status: "ACTIVE",
+        isEditing: false,
+        itemCount: 1,
+      }),
+    );
+
+    const detailResponse = await request(app)
+      .get(`/api/lists/${listResponse.body.id}`)
+      .set("Cookie", cookie);
+
+    expect(detailResponse.body.items).toEqual([
+      expect.objectContaining({
+        id: "autosave-item-1",
+        name: "Bread",
+        checked: false,
+      }),
+    ]);
+  });
+
+  it("GET /api/lists/autosave returns 204 when there is no autosave", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const response = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(response.status).toBe(204);
+  });
+
   it("POST /api/lists/:id/reuse duplicates a completed list", async () => {
     const app = createApp();
     const cookie = await loginUser(app, defaultUser);
@@ -576,7 +656,7 @@ describe("lists endpoints", () => {
       .send({ name: "Milk" });
 
     await request(app)
-      .patch(`/api/lists/${listResponse.body.id}/status`)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
       .set("Cookie", cookie)
       .send({ status: "ACTIVE" });
 

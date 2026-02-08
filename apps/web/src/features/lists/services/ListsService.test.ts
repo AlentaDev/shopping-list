@@ -180,7 +180,7 @@ describe("ListsService", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-5/status",
+      "/api/lists/list-5/activate",
       expect.objectContaining({
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

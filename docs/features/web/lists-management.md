@@ -7,9 +7,10 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ## Endpoints
 
 - `GET /api/lists` (carga de listas)
-- `POST /api/lists/:id/duplicate` (reusar listas del historial)
+- `POST /api/lists/:id/reuse` (reusar listas del historial)
 - `DELETE /api/lists/:id` (borrar listas)
-- Cambios de estado (pendiente de endpoint documentado)
+- `PATCH /api/lists/:id/editing` (activar/desactivar edición)
+- `POST /api/lists/:id/finish-edit` (finalizar edición)
 
 ## Reglas importantes
 
@@ -31,16 +32,21 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ### Activas (detalle)
 
 - Se muestran productos + total.
-- Botones: **Editar**, **Cerrar**, **Borrar**.
+- Botones: **Editar**, **Borrar**.
 - Borrar reutiliza el modal de confirmación del listado.
 
 #### Editar lista activa
 
-- Siempre se avisa: “No se podrá usar en móvil mientras se edita”.
-- Si hay draft con items, se añade aviso: “Perderás la lista que estás confeccionando”.
-- Si el draft está vacío, no se muestra esa parte del mensaje.
-- Al editar, se marca `isEditing=true` en la lista activa.
+- La edición solo se inicia desde el modal de visualización.
+- Antes de editar, se muestra un modal de confirmación con:
+  - “No se podrá usar en móvil mientras se edita”.
+  - Si hay draft con items: “Perderás la lista que estás confeccionando”.
+- Al confirmar, la lista activa queda con `isEditing=true`.
+- Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
+- Si ya existía DRAFT, se reemplaza (tras el aviso).
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
+- Si el usuario cancela la edición, se descarta el DRAFT y se vuelve a `isEditing=false`.
+- Si el usuario termina la edición, se aplica el DRAFT a la lista activa y se limpia el autosave.
 
 ### Historial (listado)
 
@@ -51,9 +57,9 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ### Historial (detalle)
 
 - Se muestran productos + total.
-- Botones: **Cerrar**, **Reusar**, **Borrar**.
-- Reusar convierte la lista en draft.
-- Solo se avisa de pérdida de draft si el draft tiene items.
+- Botones: **Reusar**, **Borrar**.
+- Reusar abre el modal y convierte la lista en DRAFT.
+- Si existe un DRAFT con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
 
 ### Estado en móvil
