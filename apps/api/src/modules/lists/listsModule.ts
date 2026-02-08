@@ -10,7 +10,7 @@ import { UpdateListStatus } from "./application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "./application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "./application/DiscardAutosaveDraft.js";
 import { CompleteList } from "./application/CompleteList.js";
-import { DuplicateList } from "./application/DuplicateList.js";
+import { ReuseList } from "./application/ReuseList.js";
 import { StartListEditing } from "./application/StartListEditing.js";
 import { UpsertAutosaveDraft } from "./application/UpsertAutosaveDraft.js";
 import { FinishListEdit } from "./application/FinishListEdit.js";
@@ -43,7 +43,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const removeItem = new RemoveItem(listRepository);
   const updateListStatus = new UpdateListStatus(listRepository);
   const completeList = new CompleteList(listRepository);
-  const duplicateList = new DuplicateList(listRepository, idGenerator);
+  const reuseList = new ReuseList(listRepository, idGenerator);
   const startListEditing = new StartListEditing(listRepository);
   const finishListEdit = new FinishListEdit(listRepository);
   const getAutosaveDraft = new GetAutosaveDraft(listRepository);
@@ -63,7 +63,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
     removeItem,
     updateListStatus,
     completeList,
-    duplicateList,
+    reuseList,
     startListEditing,
     finishListEdit,
     getAutosaveDraft,

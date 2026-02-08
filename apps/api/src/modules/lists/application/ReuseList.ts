@@ -7,12 +7,12 @@ import {
   ListStatusTransitionError,
 } from "./errors.js";
 
-type DuplicateListInput = {
+type ReuseListInput = {
   userId: string;
   listId: string;
 };
 
-type DuplicateListResult = {
+type ReuseListResult = {
   id: string;
   title: string;
   status: "DRAFT";
@@ -20,13 +20,13 @@ type DuplicateListResult = {
   updatedAt: string;
 };
 
-export class DuplicateList {
+export class ReuseList {
   constructor(
     private readonly listRepository: ListRepository,
     private readonly idGenerator: IdGenerator,
   ) {}
 
-  async execute(input: DuplicateListInput): Promise<DuplicateListResult> {
+  async execute(input: ReuseListInput): Promise<ReuseListResult> {
     const list = await this.listRepository.findById(input.listId);
     if (!list) {
       throw new ListNotFoundError();
@@ -42,8 +42,8 @@ export class DuplicateList {
 
     const now = new Date();
     const newListId = this.idGenerator.generate();
-    const clonedItems = list.items.map((item) =>
-      duplicateItem(item, newListId, now, this.idGenerator),
+    const reusedItems = list.items.map((item) =>
+      reuseItem(item, newListId, now, this.idGenerator),
     );
     const newList: List = {
       id: newListId,
@@ -51,7 +51,7 @@ export class DuplicateList {
       title: list.title,
       isAutosaveDraft: false,
       status: "DRAFT",
-      items: clonedItems,
+      items: reusedItems,
       isEditing: false,
       createdAt: now,
       updatedAt: now,
@@ -69,7 +69,7 @@ export class DuplicateList {
   }
 }
 
-function duplicateItem(
+function reuseItem(
   item: ListItem,
   listId: string,
   now: Date,

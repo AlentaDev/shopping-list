@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { List } from "../domain/list.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
-import { DuplicateList } from "./DuplicateList.js";
+import { ReuseList } from "./ReuseList.js";
 import { ListStatusTransitionError } from "./errors.js";
 
 const fixedDate = new Date("2024-01-03T10:00:00.000Z");
 
-describe("DuplicateList", () => {
-  it("duplicates a completed list into a draft with unchecked items", async () => {
+describe("ReuseList", () => {
+  it("reuses a completed list into a draft with unchecked items", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = {
       generate: vi
@@ -16,7 +16,7 @@ describe("DuplicateList", () => {
         .mockReturnValueOnce("item-3")
         .mockReturnValueOnce("item-4"),
     };
-    const useCase = new DuplicateList(listRepository, idGenerator);
+    const useCase = new ReuseList(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
@@ -150,7 +150,7 @@ describe("DuplicateList", () => {
   it("throws when the list is not completed", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: vi.fn() };
-    const useCase = new DuplicateList(listRepository, idGenerator);
+    const useCase = new ReuseList(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
