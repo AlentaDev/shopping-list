@@ -11,7 +11,7 @@ type TabKey = "ACTIVE" | "COMPLETED";
 
 type ListsScreenProps = {
   lists: ListSummary[];
-  onAction: (listId: string, action: ListActionKey) => void;
+  onAction: (list: ListSummary, action: ListActionKey) => void;
   hasDraftItems?: boolean;
   isLoading?: boolean;
   actionLoading?: { listId: string; action: ListActionKey } | null;
@@ -163,7 +163,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(list.id, action);
+    onAction(list, action);
   };
 
   const handleConfirmDelete = () => {
@@ -171,7 +171,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(pendingDelete.id, "delete");
+    onAction(pendingDelete, "delete");
     setPendingDelete(null);
   };
 
@@ -180,7 +180,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(pendingDraftLoss.list.id, pendingDraftLoss.action);
+    onAction(pendingDraftLoss.list, pendingDraftLoss.action);
     setPendingDraftLoss(null);
   };
 

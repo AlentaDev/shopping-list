@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Catalog from "@src/features/catalog/Catalog";
-import { Lists } from "@src/features/lists";
+import { ListsContainer } from "@src/features/lists";
 import {
   AuthLoggedInNotice,
   AuthScreen,
@@ -171,7 +171,7 @@ function resolveMainContent({
 
   if (currentPath === LISTS_PATH) {
     return authUser ? (
-      <Lists
+      <ListsContainer
         onOpenList={onOpenList}
         onStartOpenList={onStartOpenList}
         hasDraftItems={linesCount > 0}
