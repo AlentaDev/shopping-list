@@ -483,7 +483,6 @@ describe("ShoppingList", () => {
           items: [
             {
               id: "item-1",
-              kind: "catalog",
               name: "Leche",
               qty: 2,
               checked: false,

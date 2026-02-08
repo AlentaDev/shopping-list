@@ -81,7 +81,6 @@ describe("useAutosaveDraft", () => {
       items: [
         {
           id: "item-1",
-          kind: "catalog",
           name: "Leche",
           qty: 2,
           checked: false,
@@ -108,7 +107,6 @@ describe("useAutosaveDraft", () => {
       items: [
         {
           id: "item-1",
-          kind: "catalog",
           name: "Leche",
           qty: 2,
           checked: false,

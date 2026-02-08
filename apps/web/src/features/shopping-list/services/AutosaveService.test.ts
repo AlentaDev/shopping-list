@@ -14,7 +14,6 @@ const SAMPLE_DRAFT: AutosaveDraftInput = {
   items: [
     {
       id: "item-1",
-      kind: "catalog",
       name: "Leche",
       qty: 2,
       checked: false,
@@ -239,7 +238,6 @@ describe("AutosaveService", () => {
       items: [
         {
           id: "item-2",
-          kind: "catalog",
           name: "Pan",
           qty: 1,
           checked: false,
