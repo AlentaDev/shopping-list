@@ -8,7 +8,7 @@ type ReuseListResponse = {
   status?: string;
   items?: Array<{
     id?: string;
-    kind?: "manual" | "catalog";
+    kind?: "catalog";
     name?: string;
     qty?: number;
     checked?: boolean;

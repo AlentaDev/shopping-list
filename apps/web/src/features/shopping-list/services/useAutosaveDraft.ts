@@ -5,7 +5,7 @@ import {
   loadLocalDraft,
   saveLocalDraft,
 } from "./AutosaveService";
-import type { AutosaveDraftInput, AutosaveItemInput } from "./types";
+import type { AutosaveCatalogItemInput, AutosaveDraftInput } from "./types";
 
 type UseAutosaveDraftOptions = {
   enabled?: boolean;
@@ -21,13 +21,14 @@ type UseAutosaveDraftParams = {
 
 type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
 
-const mapListItemToAutosave = (item: ListItem): AutosaveItemInput => ({
+const mapListItemToAutosave = (
+  item: ListItem,
+): AutosaveCatalogItemInput => ({
   id: item.id,
   kind: "catalog",
   name: item.name,
   qty: item.quantity,
   checked: false,
-  note: "",
   source: "mercadona",
   sourceProductId: item.id,
   thumbnail: item.thumbnail ?? null,

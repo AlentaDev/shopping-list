@@ -2,11 +2,10 @@ import type { AutosaveDraft, AutosaveItem, AutosaveSummary } from "../types";
 
 type AutosaveItemPayload = {
   id?: string;
-  kind?: "manual" | "catalog";
+  kind?: "catalog";
   name?: string;
   qty?: number;
   checked?: boolean;
-  note?: string | null;
   updatedAt?: string;
   thumbnail?: string | null;
   price?: number | null;
@@ -31,39 +30,22 @@ type AutosaveSummaryPayload = {
   updatedAt?: string;
 };
 
-const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => {
-  const kind = item.kind ?? "manual";
-
-  if (kind === "catalog") {
-    return {
-      id: item.id ?? "",
-      kind,
-      name: item.name ?? "",
-      qty: item.qty ?? 0,
-      checked: item.checked ?? false,
-      note: item.note ?? null,
-      updatedAt: item.updatedAt ?? "",
-      source: item.source ?? "mercadona",
-      sourceProductId: item.sourceProductId ?? item.id ?? "",
-      thumbnail: item.thumbnail ?? null,
-      price: item.price ?? null,
-      unitSize: item.unitSize ?? null,
-      unitFormat: item.unitFormat ?? null,
-      unitPrice: item.unitPrice ?? null,
-      isApproxSize: item.isApproxSize ?? false,
-    };
-  }
-
-  return {
-    id: item.id ?? "",
-    kind,
-    name: item.name ?? "",
-    qty: item.qty ?? 0,
-    checked: item.checked ?? false,
-    note: item.note ?? null,
-    updatedAt: item.updatedAt ?? "",
-  };
-};
+const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
+  id: item.id ?? "",
+  kind: "catalog",
+  name: item.name ?? "",
+  qty: item.qty ?? 0,
+  checked: item.checked ?? false,
+  updatedAt: item.updatedAt ?? "",
+  source: item.source ?? "mercadona",
+  sourceProductId: item.sourceProductId ?? item.id ?? "",
+  thumbnail: item.thumbnail ?? null,
+  price: item.price ?? null,
+  unitSize: item.unitSize ?? null,
+  unitFormat: item.unitFormat ?? null,
+  unitPrice: item.unitPrice ?? null,
+  isApproxSize: item.isApproxSize ?? false,
+});
 
 export const adaptAutosaveResponse = (
   payload: unknown,

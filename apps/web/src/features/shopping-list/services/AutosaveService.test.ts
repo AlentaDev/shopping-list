@@ -14,11 +14,12 @@ const SAMPLE_DRAFT: AutosaveDraftInput = {
   items: [
     {
       id: "item-1",
-      kind: "manual",
+      kind: "catalog",
       name: "Leche",
       qty: 2,
       checked: false,
-      note: "Sin lactosa",
+      source: "mercadona",
+      sourceProductId: "item-1",
     },
   ],
 };
@@ -238,11 +239,12 @@ describe("AutosaveService", () => {
       items: [
         {
           id: "item-2",
-          kind: "manual",
+          kind: "catalog",
           name: "Pan",
           qty: 1,
           checked: false,
-          note: null,
+          source: "mercadona",
+          sourceProductId: "item-2",
         },
       ],
     };
