@@ -14,19 +14,8 @@ const baseList = {
   updatedAt: new Date("2024-01-02T10:00:00.000Z"),
 } as const;
 
-const manualItem = {
-  id: "item-1",
-  listId: "list-1",
-  kind: "manual",
-  name: "Milk",
-  qty: 2,
-  checked: false,
-  createdAt: new Date("2024-01-01T10:10:00.000Z"),
-  updatedAt: new Date("2024-01-01T10:12:00.000Z"),
-} as const;
-
 const catalogItem = {
-  id: "item-2",
+  id: "item-1",
   listId: "list-1",
   kind: "catalog",
   source: "mercadona",
@@ -44,9 +33,28 @@ const catalogItem = {
   updatedAt: new Date("2024-01-01T10:22:00.000Z"),
 } as const;
 
+const catalogItemTwo = {
+  id: "item-2",
+  listId: "list-2",
+  kind: "catalog",
+  source: "mercadona",
+  sourceProductId: "sku-999",
+  nameSnapshot: "Bread",
+  thumbnailSnapshot: null,
+  priceSnapshot: null,
+  unitSizeSnapshot: null,
+  unitFormatSnapshot: null,
+  unitPricePerUnitSnapshot: null,
+  isApproxSizeSnapshot: false,
+  qty: 1,
+  checked: false,
+  createdAt: baseList.createdAt,
+  updatedAt: baseList.updatedAt,
+} as const;
+
 const list: List = {
   ...baseList,
-  items: [manualItem, catalogItem],
+  items: [catalogItem],
 };
 
 describe("PostgresListRepository", () => {
@@ -72,19 +80,8 @@ describe("PostgresListRepository", () => {
         .mockResolvedValueOnce({
           rows: [
             {
-              id: manualItem.id,
-              list_id: manualItem.listId,
-              kind: manualItem.kind,
-              name: manualItem.name,
-              qty: manualItem.qty,
-              checked: manualItem.checked,
-              created_at: manualItem.createdAt,
-              updated_at: manualItem.updatedAt,
-            },
-            {
               id: catalogItem.id,
               list_id: catalogItem.listId,
-              kind: catalogItem.kind,
               source: catalogItem.source,
               source_product_id: catalogItem.sourceProductId,
               name_snapshot: catalogItem.nameSnapshot,
@@ -152,19 +149,8 @@ describe("PostgresListRepository", () => {
         .mockResolvedValueOnce({
           rows: [
             {
-              id: manualItem.id,
-              list_id: manualItem.listId,
-              kind: manualItem.kind,
-              name: manualItem.name,
-              qty: manualItem.qty,
-              checked: manualItem.checked,
-              created_at: manualItem.createdAt,
-              updated_at: manualItem.updatedAt,
-            },
-            {
               id: catalogItem.id,
               list_id: catalogItem.listId,
-              kind: catalogItem.kind,
               source: catalogItem.source,
               source_product_id: catalogItem.sourceProductId,
               name_snapshot: catalogItem.nameSnapshot,
@@ -181,14 +167,22 @@ describe("PostgresListRepository", () => {
               updated_at: catalogItem.updatedAt,
             },
             {
-              id: "item-3",
-              list_id: "list-2",
-              kind: "manual",
-              name: "Bread",
-              qty: 1,
-              checked: false,
-              created_at: baseList.createdAt,
-              updated_at: baseList.updatedAt,
+              id: catalogItemTwo.id,
+              list_id: catalogItemTwo.listId,
+              source: catalogItemTwo.source,
+              source_product_id: catalogItemTwo.sourceProductId,
+              name_snapshot: catalogItemTwo.nameSnapshot,
+              thumbnail_snapshot: catalogItemTwo.thumbnailSnapshot,
+              price_snapshot: catalogItemTwo.priceSnapshot,
+              unit_size_snapshot: catalogItemTwo.unitSizeSnapshot,
+              unit_format_snapshot: catalogItemTwo.unitFormatSnapshot,
+              unit_price_per_unit_snapshot:
+                catalogItemTwo.unitPricePerUnitSnapshot,
+              is_approx_size_snapshot: catalogItemTwo.isApproxSizeSnapshot,
+              qty: catalogItemTwo.qty,
+              checked: catalogItemTwo.checked,
+              created_at: catalogItemTwo.createdAt,
+              updated_at: catalogItemTwo.updatedAt,
             },
           ],
         }),
@@ -210,14 +204,22 @@ describe("PostgresListRepository", () => {
         updatedAt: baseList.updatedAt,
         items: [
           {
-            id: "item-3",
-            listId: "list-2",
-            kind: "manual",
-            name: "Bread",
-            qty: 1,
-            checked: false,
-            createdAt: baseList.createdAt,
-            updatedAt: baseList.updatedAt,
+            id: catalogItemTwo.id,
+            listId: catalogItemTwo.listId,
+            kind: "catalog",
+            source: catalogItemTwo.source,
+            sourceProductId: catalogItemTwo.sourceProductId,
+            nameSnapshot: catalogItemTwo.nameSnapshot,
+            thumbnailSnapshot: catalogItemTwo.thumbnailSnapshot,
+            priceSnapshot: catalogItemTwo.priceSnapshot,
+            unitSizeSnapshot: catalogItemTwo.unitSizeSnapshot,
+            unitFormatSnapshot: catalogItemTwo.unitFormatSnapshot,
+            unitPricePerUnitSnapshot: catalogItemTwo.unitPricePerUnitSnapshot,
+            isApproxSizeSnapshot: catalogItemTwo.isApproxSizeSnapshot,
+            qty: catalogItemTwo.qty,
+            checked: catalogItemTwo.checked,
+            createdAt: catalogItemTwo.createdAt,
+            updatedAt: catalogItemTwo.updatedAt,
           },
         ],
       },
@@ -255,33 +257,10 @@ describe("PostgresListRepository", () => {
       [list.id],
     );
     expect(pool.query).toHaveBeenCalledWith(
-      "INSERT INTO list_items (id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
-      [
-        manualItem.id,
-        manualItem.listId,
-        manualItem.kind,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        manualItem.name,
-        manualItem.qty,
-        manualItem.checked,
-        manualItem.createdAt,
-        manualItem.updatedAt,
-      ],
-    );
-    expect(pool.query).toHaveBeenCalledWith(
-      "INSERT INTO list_items (id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+      "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
       [
         catalogItem.id,
         catalogItem.listId,
-        catalogItem.kind,
         catalogItem.source,
         catalogItem.sourceProductId,
         catalogItem.nameSnapshot,
@@ -291,7 +270,6 @@ describe("PostgresListRepository", () => {
         catalogItem.unitFormatSnapshot,
         catalogItem.unitPricePerUnitSnapshot,
         catalogItem.isApproxSizeSnapshot,
-        null,
         catalogItem.qty,
         catalogItem.checked,
         catalogItem.createdAt,

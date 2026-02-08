@@ -12,7 +12,7 @@ type PgPool = {
 const LIST_COLUMNS =
   "id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, created_at, updated_at" as const;
 const ITEM_COLUMNS =
-  "id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, created_at, updated_at" as const;
+  "id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at" as const;
 
 export class PostgresListRepository implements ListRepository {
   constructor(private readonly pool: PgPool) {}
@@ -82,7 +82,7 @@ export class PostgresListRepository implements ListRepository {
 
       for (const item of list.items) {
         await this.pool.query(
-          "INSERT INTO list_items (id, list_id, kind, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, name, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+          "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
           buildItemValues(item),
         );
       }
@@ -148,21 +148,6 @@ function groupItemsByListId(
 }
 
 function mapItemRow(row: Record<string, unknown>): ListItem {
-  const kind = String(row.kind);
-
-  if (kind === "manual") {
-    return {
-      id: String(row.id),
-      listId: String(row.list_id),
-      kind: "manual",
-      name: String(row.name),
-      qty: Number(row.qty),
-      checked: Boolean(row.checked),
-      createdAt: new Date(String(row.created_at)),
-      updatedAt: new Date(String(row.updated_at)),
-    };
-  }
-
   return {
     id: String(row.id),
     listId: String(row.list_id),
@@ -198,32 +183,15 @@ function mapItemRow(row: Record<string, unknown>): ListItem {
 }
 
 function buildItemValues(item: ListItem): Array<unknown> {
-  if (item.kind === "manual") {
-    return [
-      item.id,
-      item.listId,
-      item.kind,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      item.name,
-      item.qty,
-      item.checked,
-      item.createdAt,
-      item.updatedAt,
-    ];
+  if (item.kind !== "catalog") {
+    throw new Error(
+      `Unsupported list item kind in Postgres repository: ${item.kind}`,
+    );
   }
 
   return [
     item.id,
     item.listId,
-    item.kind,
     item.source,
     item.sourceProductId,
     item.nameSnapshot,
@@ -233,7 +201,6 @@ function buildItemValues(item: ListItem): Array<unknown> {
     item.unitFormatSnapshot,
     item.unitPricePerUnitSnapshot,
     item.isApproxSizeSnapshot,
-    null,
     item.qty,
     item.checked,
     item.createdAt,
