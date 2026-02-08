@@ -41,7 +41,16 @@ describe("ListDetailActionsService", () => {
     const response = {
       id: "list-2",
       title: "Reuso",
-      items: [],
+      items: [
+        {
+          id: "item-1",
+          name: "Pan",
+          qty: 2,
+          thumbnail: "https://example.com/pan.png",
+          price: 1.2,
+        },
+        {},
+      ],
     };
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -52,7 +61,29 @@ describe("ListDetailActionsService", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(reuseList("list-2")).resolves.toEqual(response);
+    await expect(reuseList("list-2")).resolves.toEqual({
+      id: "list-2",
+      title: "Reuso",
+      status: undefined,
+      items: [
+        {
+          id: "item-1",
+          name: "Pan",
+          category: "",
+          thumbnail: "https://example.com/pan.png",
+          price: 1.2,
+          quantity: 2,
+        },
+        {
+          id: "",
+          name: "",
+          category: "",
+          thumbnail: null,
+          price: null,
+          quantity: 0,
+        },
+      ],
+    });
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-2/reuse",
