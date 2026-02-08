@@ -31,9 +31,7 @@ const sampleLists: ListSummary[] = [
 
 describe("ListsScreen", () => {
   it("muestra las tabs y el estado vacío por defecto", () => {
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={[]} onAction={vi.fn()} />);
 
     expect(
       screen.getByRole("heading", { name: UI_TEXT.LISTS.TITLE })
@@ -47,9 +45,7 @@ describe("ListsScreen", () => {
   });
 
   it("cambia entre tabs y muestra el texto vacío correspondiente", async () => {
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={[]} onAction={vi.fn()} />);
 
     await userEvent.click(
       screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
@@ -61,9 +57,7 @@ describe("ListsScreen", () => {
   });
 
   it("muestra acciones según el estado", async () => {
-    render(
-      <ListsScreen lists={sampleLists} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={sampleLists} onAction={vi.fn()} />);
 
     expect(screen.getByText("Cena")).toBeInTheDocument();
     expect(
@@ -88,15 +82,8 @@ describe("ListsScreen", () => {
 
   it("dispara callbacks de acción y creación", async () => {
     const onAction = vi.fn();
-    const onCreate = vi.fn();
-
     render(
-      <ListsScreen
-        lists={sampleLists}
-        onAction={onAction}
-        onCreate={onCreate}
-        hasDraftItems={false}
-      />
+      <ListsScreen lists={sampleLists} onAction={onAction} hasDraftItems={false} />
     );
 
     await userEvent.click(
@@ -115,11 +102,6 @@ describe("ListsScreen", () => {
 
     expect(onAction).toHaveBeenCalledWith("completed-1", "reuse");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    expect(onCreate).toHaveBeenCalledTimes(1);
   });
 
   it("muestra aviso de pérdida de borrador al editar con ítems", async () => {
@@ -129,7 +111,6 @@ describe("ListsScreen", () => {
       <ListsScreen
         lists={sampleLists}
         onAction={onAction}
-        onCreate={vi.fn()}
         hasDraftItems
       />
     );
@@ -154,9 +135,7 @@ describe("ListsScreen", () => {
   it("muestra confirmación antes de borrar una lista", async () => {
     const onAction = vi.fn();
 
-    render(
-      <ListsScreen lists={sampleLists} onAction={onAction} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={sampleLists} onAction={onAction} />);
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
@@ -175,26 +154,11 @@ describe("ListsScreen", () => {
     expect(onAction).toHaveBeenCalledWith("active-1", "delete");
   });
 
-  it("dispara onCreate desde el botón principal", async () => {
-    const onCreate = vi.fn();
-
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={onCreate} />
-    );
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    expect(onCreate).toHaveBeenCalledTimes(1);
-  });
-
   it("muestra skeletons cuando está cargando", () => {
     render(
       <ListsScreen
         lists={[]}
         onAction={vi.fn()}
-        onCreate={vi.fn()}
         isLoading
       />
     );
@@ -207,7 +171,6 @@ describe("ListsScreen", () => {
       <ListsScreen
         lists={sampleLists}
         onAction={vi.fn()}
-        onCreate={vi.fn()}
         actionLoading={{ listId: "active-1", action: "complete" }}
       />
     );

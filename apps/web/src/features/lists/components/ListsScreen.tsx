@@ -13,11 +13,9 @@ type TabKey = "ACTIVE" | "COMPLETED";
 type ListsScreenProps = {
   lists: ListSummary[];
   onAction: (listId: string, action: ListActionKey) => void;
-  onCreate: () => void;
   hasDraftItems?: boolean;
   isLoading?: boolean;
   actionLoading?: { listId: string; action: ListActionKey } | null;
-  isCreating?: boolean;
 };
 
 type ListActionButtonProps = {
@@ -131,11 +129,9 @@ const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
 const ListsScreen = ({
   lists,
   onAction,
-  onCreate,
   hasDraftItems = false,
   isLoading = false,
   actionLoading = null,
-  isCreating = false,
 }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("ACTIVE");
   const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
@@ -202,10 +198,6 @@ const ListsScreen = ({
     </div>
   );
 
-  const createButtonLabel = isCreating
-    ? UI_TEXT.LISTS.NEW_LIST_LOADING_LABEL
-    : UI_TEXT.LISTS.NEW_LIST_LABEL;
-
   const renderListsContent = () => {
     if (isLoading) {
       return renderSkeletons();
@@ -243,18 +235,6 @@ const ListsScreen = ({
             {UI_TEXT.LISTS.TITLE}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          disabled={isCreating}
-          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-            isCreating
-              ? "cursor-not-allowed border-slate-200 text-slate-300"
-              : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
-          }`}
-        >
-          {createButtonLabel}
-        </button>
       </header>
 
       <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 text-sm">

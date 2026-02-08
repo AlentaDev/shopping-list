@@ -19,21 +19,6 @@ describe("Lists", () => {
     >(async (input, init) => {
       const url = typeof input === "string" ? input : input.url;
 
-      if (url === "/api/lists" && init?.method === "POST") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "created-1",
-            title: "Tu lista",
-            updatedAt: "2024-02-03T10:00:00.000Z",
-            activatedAt: null,
-            itemCount: 0,
-            isEditing: false,
-            status: LIST_STATUS.DRAFT,
-          }),
-        };
-      }
-
       if (url === "/api/lists") {
         return {
           ok: true,
@@ -142,28 +127,6 @@ describe("Lists", () => {
     render(<Lists onOpenList={onOpenList} />);
 
     expect(await screen.findByText("Despensa")).toBeInTheDocument();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists",
-        expect.objectContaining({ method: "POST" })
-      );
-    });
-
-    expect(onOpenList).toHaveBeenCalledWith({
-      id: "created-1",
-      title: "Tu lista",
-      updatedAt: "2024-02-03T10:00:00.000Z",
-      activatedAt: null,
-      itemCount: 0,
-      isEditing: false,
-      items: [],
-      status: LIST_STATUS.DRAFT,
-    });
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
