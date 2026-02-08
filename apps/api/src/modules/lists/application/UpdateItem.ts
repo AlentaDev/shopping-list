@@ -14,7 +14,6 @@ type UpdateItemInput = {
   name?: string;
   qty?: number;
   checked?: boolean;
-  note?: string;
 };
 
 export class UpdateItem {
@@ -50,10 +49,6 @@ export class UpdateItem {
     if (input.checked !== undefined) {
       item.checked = input.checked;
     }
-    if (input.note !== undefined) {
-      item.note = input.note;
-    }
-
     const now = new Date();
     item.updatedAt = now;
     list.updatedAt = now;

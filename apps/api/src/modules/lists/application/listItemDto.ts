@@ -6,7 +6,6 @@ export type ListItemDto = {
   name: string;
   qty: number;
   checked: boolean;
-  note?: string;
   updatedAt: string;
   thumbnail?: string | null;
   price?: number | null;
@@ -26,7 +25,6 @@ export function toListItemDto(item: ListItem): ListItemDto {
       name: item.name,
       qty: item.qty,
       checked: item.checked,
-      note: item.note,
       updatedAt: item.updatedAt.toISOString(),
     };
   }
@@ -37,7 +35,6 @@ export function toListItemDto(item: ListItem): ListItemDto {
     name: item.nameSnapshot,
     qty: item.qty,
     checked: item.checked,
-    note: item.note,
     updatedAt: item.updatedAt.toISOString(),
     thumbnail: item.thumbnailSnapshot,
     price: item.priceSnapshot,

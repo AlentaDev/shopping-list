@@ -17,7 +17,6 @@ type AddCatalogItemInput = {
   listId: string;
   productId: string;
   qty?: number;
-  note?: string;
 };
 
 export class AddCatalogItem {
@@ -69,7 +68,6 @@ export class AddCatalogItem {
       isApproxSizeSnapshot: Boolean(product.price_instructions.approx_size),
       qty: input.qty ?? 1,
       checked: false,
-      note: input.note,
       createdAt: now,
       updatedAt: now,
     };

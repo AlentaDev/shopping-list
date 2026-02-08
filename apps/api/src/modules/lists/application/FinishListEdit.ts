@@ -91,7 +91,6 @@ const cloneItemForList = (
       name: item.name,
       qty: item.qty,
       checked: false,
-      note: item.note,
       createdAt: now,
       updatedAt: now,
     };
@@ -112,7 +111,6 @@ const cloneItemForList = (
     isApproxSizeSnapshot: item.isApproxSizeSnapshot,
     qty: item.qty,
     checked: false,
-    note: item.note,
     createdAt: now,
     updatedAt: now,
   };

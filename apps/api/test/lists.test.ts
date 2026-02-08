@@ -337,7 +337,7 @@ describe("lists endpoints", () => {
     const response = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 2, note: "Promo" });
+      .send({ source: "mercadona", productId: "123", qty: 2 });
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
@@ -346,7 +346,6 @@ describe("lists endpoints", () => {
       name: "Whole Milk",
       qty: 2,
       checked: false,
-      note: "Promo",
       updatedAt: expect.any(String),
       thumbnail: "https://cdn.example.com/milk-thumb.jpg",
       price: 1.35,
