@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import Catalog from "@src/features/catalog/Catalog";
-import { Lists } from "@src/features/lists";
+import { ListsContainer } from "@src/features/lists";
 import { AuthLoggedInNotice, AuthScreen } from "@src/features/auth";
 import { useAppShellNavigation } from "@src/features/app-shell/useAppShellNavigation";
 
@@ -74,7 +74,7 @@ describe("useAppShellNavigation", () => {
       }),
     );
 
-    expect(result.current.mainContent.type).toBe(Lists);
+    expect(result.current.mainContent.type).toBe(ListsContainer);
   });
 
   it("fuerza login en /lists si no hay usuario", () => {

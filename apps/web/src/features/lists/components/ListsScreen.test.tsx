@@ -92,14 +92,18 @@ describe("ListsScreen", () => {
   it("dispara callbacks de acción y creación", async () => {
     const onAction = vi.fn();
     render(
-      <ListsScreen lists={sampleLists} onAction={onAction} hasDraftItems={false} />
+      <ListsScreen
+        lists={sampleLists}
+        onAction={onAction}
+        hasDraftItems={false}
+      />
     );
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "complete");
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "complete");
 
     await userEvent.click(
       screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
@@ -109,8 +113,7 @@ describe("ListsScreen", () => {
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE })
     );
 
-    expect(onAction).toHaveBeenCalledWith("completed-1", "reuse");
-
+    expect(onAction).toHaveBeenCalledWith(sampleLists[2], "reuse");
   });
 
   it("muestra aviso de pérdida de borrador al editar con ítems", async () => {
@@ -143,7 +146,7 @@ describe("ListsScreen", () => {
       })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "edit");
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "edit");
   });
 
   it("muestra confirmación antes de borrar una lista", async () => {
@@ -170,7 +173,7 @@ describe("ListsScreen", () => {
       })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "delete");
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "delete");
   });
 
   it("muestra skeletons cuando está cargando", () => {

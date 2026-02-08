@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Lists from "./Lists";
+import ListsContainer from "./ListsContainer";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
@@ -124,7 +124,7 @@ describe("Lists", () => {
     vi.stubGlobal("fetch", fetchMock);
     const onOpenList = vi.fn();
 
-    render(<Lists onOpenList={onOpenList} />);
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     expect(await screen.findByText("Despensa")).toBeInTheDocument();
 
