@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import ListsScreen from "./components/ListsScreen";
 import type { ListActionKey } from "./services/listActions";
-import { LIST_STATUS } from "./services/listActions";
 import type { ListDetail, ListSummary } from "./services/types";
 import {
   activateList,
   completeList,
-  createList,
   deleteList,
   reuseList,
   getListDetail,
@@ -30,7 +28,6 @@ const Lists = ({
     listId: string;
     action: ListActionKey;
   } | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
 
   const loadLists = useCallback(async () => {
     setIsLoading(true);
@@ -131,35 +128,13 @@ const Lists = ({
     }
   };
 
-  const handleCreate = async () => {
-    setIsCreating(true);
-    try {
-      const createdList = await createList();
-      onOpenList({
-        id: createdList.id,
-        title: createdList.title,
-        updatedAt: createdList.updatedAt,
-        activatedAt: createdList.activatedAt,
-        itemCount: createdList.itemCount,
-        isEditing: createdList.isEditing,
-        items: [],
-        status: LIST_STATUS.DRAFT,
-      });
-      await loadLists();
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   return (
     <ListsScreen
       lists={lists}
       onAction={handleAction}
-      onCreate={handleCreate}
       hasDraftItems={hasDraftItems}
       isLoading={isLoading}
       actionLoading={actionLoading}
-      isCreating={isCreating}
     />
   );
 };
