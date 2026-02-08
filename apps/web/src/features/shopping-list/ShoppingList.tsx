@@ -13,6 +13,7 @@ import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraft, AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
+import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdapter";
 import {
   deleteList,
   reuseList,
@@ -350,14 +351,7 @@ const ShoppingList = ({
 
       const restoredTitle =
         draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
-      const restoredItems = draft.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        category: "",
-        thumbnail: item.thumbnail ?? null,
-        price: item.price ?? null,
-        quantity: item.qty,
-      }));
+      const restoredItems = adaptShoppingListItems(draft.items);
 
       setItems(restoredItems);
       setListName(draft.title);
@@ -487,23 +481,14 @@ const ShoppingList = ({
     setDetailActionLoading("reuse");
     reuseList(listId)
       .then((response) => {
-        const reusedItems = (response.items ?? []).map((item) => ({
-          id: item.id ?? "",
-          name: item.name ?? "",
-          category: "",
-          thumbnail: item.thumbnail ?? null,
-          price: item.price ?? null,
-          quantity: item.qty ?? 0,
-        }));
-
-        setItems(reusedItems);
+        setItems(response.items);
         setListId(response.id);
         setListStatus(LIST_STATUS.DRAFT);
         setListIsEditing(false);
         setListTitle(
-          response.title?.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+          response.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
         );
-        setListName(response.title ?? "");
+        setListName(response.title);
       })
       .catch((error) => {
         console.warn("No se pudo reusar la lista.", error);

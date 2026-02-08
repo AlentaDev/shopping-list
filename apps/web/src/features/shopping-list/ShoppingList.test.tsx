@@ -275,6 +275,60 @@ describe("ShoppingList", () => {
     ).toBeInTheDocument();
   });
 
+  it("reusa la lista y adapta los items del payload", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(async (input) => {
+      if (typeof input === "string" && input.endsWith("/reuse")) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "reuse-1",
+            title: "Lista reusada",
+            items: [
+              {
+                id: "item-9",
+                name: "Café",
+                qty: 3,
+                price: 2.5,
+              },
+            ],
+          }),
+        };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-9",
+      listStatus: "COMPLETED",
+      items: [],
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE,
+      }),
+    );
+
+    expect(await screen.findByText("Café")).toBeInTheDocument();
+    expect(screen.getByTestId("quantity-item-9")).toHaveTextContent("3");
+    expect(
+      screen.getByRole("heading", { name: "Lista reusada" }),
+    ).toBeInTheDocument();
+  });
+
   it("confirma el borrado de la lista desde el detalle", async () => {
     const fetchMock = vi.fn<
       (
@@ -506,6 +560,7 @@ describe("ShoppingList", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }));
 
     expect(screen.getByText("Leche")).toBeInTheDocument();
+    expect(screen.getByTestId("quantity-item-1")).toHaveTextContent("2");
     expect(
       screen.queryByText("Hemos encontrado un borrador guardado"),
     ).toBeNull();
