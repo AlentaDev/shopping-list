@@ -5,7 +5,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Lists from "./Lists";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { LIST_STATUS } from "./services/listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
 type FetchResponse = {
   ok: boolean;

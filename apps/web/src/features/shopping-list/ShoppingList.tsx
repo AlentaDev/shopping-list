@@ -21,7 +21,7 @@ import {
   LIST_STATUS,
   canActivateList,
   type ListStatus,
-} from "./services/listStatus";
+} from "@src/shared/domain/listStatus";
 
 type ShoppingListProps = {
   isOpen: boolean;

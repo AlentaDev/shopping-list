@@ -1,4 +1,4 @@
-import type { ListStatus } from "./listStatus";
+import type { ListStatus } from "@src/shared/domain/listStatus";
 
 export type AutosaveManualItemInput = {
   id: string;

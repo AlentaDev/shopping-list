@@ -3,7 +3,7 @@ import {
   LIST_STATUS,
   canActivateList,
   type ListStatus,
-} from "./listStatus";
+} from "@src/shared/domain/listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
 

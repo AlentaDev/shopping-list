@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import ListsScreen from "./components/ListsScreen";
 import type { ListActionKey } from "./services/listActions";
-import { LIST_STATUS } from "./services/listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type { ListDetail, ListSummary } from "./services/types";
 import {
   activateList,

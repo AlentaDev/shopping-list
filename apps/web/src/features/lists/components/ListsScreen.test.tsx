@@ -5,7 +5,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import ListsScreen from "./ListsScreen";
-import { LIST_STATUS } from "../services/listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type { ListSummary } from "../services/types";
 
 const sampleLists: ListSummary[] = [

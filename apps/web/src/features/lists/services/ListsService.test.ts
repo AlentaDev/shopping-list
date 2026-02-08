@@ -8,7 +8,7 @@ import {
   getListDetail,
   getLists,
 } from "./ListsService";
-import { LIST_STATUS } from "./listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {

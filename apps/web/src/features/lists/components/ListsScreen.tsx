@@ -1,11 +1,7 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import {
-  LIST_STATUS,
-  getListActions,
-  type ListActionKey,
-  type ListStatus,
-} from "../services/listActions";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
+import { getListActions, type ListActionKey } from "../services/listActions";
 import type { ListSummary } from "../services/types";
 
 type TabKey = "ACTIVE" | "COMPLETED";

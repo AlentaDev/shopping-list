@@ -19,10 +19,10 @@ import type {
   ListSummary,
 } from "@src/features/lists/services/types";
 import {
+  LIST_STATUS as LISTS_STATUS,
   LIST_STATUS as SHOPPING_LIST_STATUS,
   type ListStatus as ShoppingListStatus,
-} from "@src/features/shopping-list/services/listStatus";
-import { LIST_STATUS as LISTS_STATUS } from "@src/features/lists/services/listActions";
+} from "@src/shared/domain/listStatus";
 import type { ShoppingListItem } from "@src/features/shopping-list/types";
 
 const LOGIN_PATH = "/auth/login";
