@@ -79,11 +79,6 @@ describe("lists endpoints", () => {
     { method: "get", path: "/api/lists" },
     { method: "get", path: "/api/lists/any-list" },
     {
-      method: "post",
-      path: "/api/lists/any-list/items",
-      body: { name: "Milk" },
-    },
-    {
       method: "patch",
       path: "/api/lists/any-list/items/any-item",
       body: { checked: true },
@@ -196,33 +191,8 @@ describe("lists endpoints", () => {
     expect(response.body).toEqual({ error: "forbidden" });
   });
 
-  it("POST /api/lists/:id/items adds a manual item", async () => {
-    const app = createApp();
-    const cookie = await loginUser(app, defaultUser);
-
-    const listResponse = await request(app)
-      .post("/api/lists")
-      .set("Cookie", cookie)
-      .send({ title: "Groceries" });
-
-    const response = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
-      .set("Cookie", cookie)
-      .send({ name: "Milk" });
-
-    expect(response.status).toBe(201);
-    expect(response.body).toEqual({
-      id: expect.any(String),
-      kind: "manual",
-      name: "Milk",
-      qty: 1,
-      checked: false,
-      updatedAt: expect.any(String),
-    });
-  });
-
   it("PATCH /api/lists/:id/items/:itemId updates item fields", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const listResponse = await request(app)
@@ -231,9 +201,9 @@ describe("lists endpoints", () => {
       .send({ title: "Groceries" });
 
     const itemResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Eggs" });
+      .send({ source: "mercadona", productId: "123" });
 
     const response = await request(app)
       .patch(`/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`)
@@ -241,18 +211,22 @@ describe("lists endpoints", () => {
       .send({ checked: true, qty: 2 });
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({
-      id: itemResponse.body.id,
-      kind: "manual",
-      name: "Eggs",
-      qty: 2,
-      checked: true,
-      updatedAt: expect.any(String),
-    });
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        id: itemResponse.body.id,
+        kind: "catalog",
+        name: "Whole Milk",
+        qty: 2,
+        checked: true,
+        updatedAt: expect.any(String),
+        source: "mercadona",
+        sourceProductId: "123",
+      }),
+    );
   });
 
   it("DELETE /api/lists/:id/items/:itemId removes item", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const listResponse = await request(app)
@@ -261,9 +235,9 @@ describe("lists endpoints", () => {
       .send({ title: "Groceries" });
 
     const itemResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Bread" });
+      .send({ source: "mercadona", productId: "123" });
 
     const deleteResponse = await request(app)
       .delete(
@@ -282,7 +256,7 @@ describe("lists endpoints", () => {
   });
 
   it("returns 400 for validation errors", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const invalidListResponse = await request(app)
@@ -302,9 +276,9 @@ describe("lists endpoints", () => {
       .send({ title: "Groceries" });
 
     const invalidItemResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Milk", qty: 0 });
+      .send({ source: "mercadona", productId: "", qty: 0 });
 
     expect(invalidItemResponse.status).toBe(400);
     expect(invalidItemResponse.body).toEqual({
@@ -457,7 +431,7 @@ describe("lists endpoints", () => {
     expect(response.body).toEqual({ error: "catalog_provider_failed" });
   });
 
-  it("GET /api/lists/:id returns manual and catalog items normalized", async () => {
+  it("GET /api/lists/:id returns catalog items normalized", async () => {
     const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
@@ -466,15 +440,15 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({ title: "Weekly" });
 
-    const manualResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
-      .set("Cookie", cookie)
-      .send({ name: "Bananas" });
-
     const catalogResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
       .send({ source: "mercadona", productId: "123" });
+
+    const catalogResponseTwo = await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123", qty: 2 });
 
     const response = await request(app)
       .get(`/api/lists/${listResponse.body.id}`)
@@ -490,18 +464,26 @@ describe("lists endpoints", () => {
       isEditing: false,
       items: [
         {
-          id: manualResponse.body.id,
-          kind: "manual",
-          name: "Bananas",
-          qty: 1,
-          checked: false,
-          updatedAt: expect.any(String),
-        },
-        {
           id: catalogResponse.body.id,
           kind: "catalog",
           name: "Whole Milk",
           qty: 1,
+          checked: false,
+          updatedAt: expect.any(String),
+          thumbnail: "https://cdn.example.com/milk-thumb.jpg",
+          price: 1.35,
+          unitSize: 1,
+          unitFormat: "L",
+          unitPrice: 1.35,
+          isApproxSize: false,
+          source: "mercadona",
+          sourceProductId: "123",
+        },
+        {
+          id: catalogResponseTwo.body.id,
+          kind: "catalog",
+          name: "Whole Milk",
+          qty: 2,
           checked: false,
           updatedAt: expect.any(String),
           thumbnail: "https://cdn.example.com/milk-thumb.jpg",
@@ -519,7 +501,7 @@ describe("lists endpoints", () => {
   });
 
   it("PATCH /api/lists/:id/editing marks an active list as editing", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const listResponse = await request(app)
@@ -528,9 +510,9 @@ describe("lists endpoints", () => {
       .send({ title: "Weekly" });
 
     const itemResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Milk" });
+      .send({ source: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -563,7 +545,7 @@ describe("lists endpoints", () => {
   });
 
   it("POST /api/lists/:id/finish-edit applies autosave draft to active list", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const listResponse = await request(app)
@@ -572,9 +554,9 @@ describe("lists endpoints", () => {
       .send({ title: "Weekly" });
 
     await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Milk" });
+      .send({ source: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -594,10 +576,12 @@ describe("lists endpoints", () => {
         items: [
           {
             id: "autosave-item-1",
-            kind: "manual",
-            name: "Bread",
+            kind: "catalog",
+            name: "Whole Milk",
             qty: 2,
             checked: false,
+            source: "mercadona",
+            sourceProductId: "123",
           },
         ],
       });
@@ -624,7 +608,7 @@ describe("lists endpoints", () => {
     expect(detailResponse.body.items).toEqual([
       expect.objectContaining({
         id: "autosave-item-1",
-        name: "Bread",
+        name: "Whole Milk",
         checked: false,
       }),
     ]);
@@ -642,7 +626,7 @@ describe("lists endpoints", () => {
   });
 
   it("POST /api/lists/:id/reuse duplicates a completed list", async () => {
-    const app = createApp();
+    const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
 
     const listResponse = await request(app)
@@ -651,9 +635,9 @@ describe("lists endpoints", () => {
       .send({ title: "Weekly" });
 
     const itemResponse = await request(app)
-      .post(`/api/lists/${listResponse.body.id}/items`)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ name: "Milk" });
+      .send({ source: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -676,8 +660,8 @@ describe("lists endpoints", () => {
       status: "DRAFT",
       items: [
         expect.objectContaining({
-          kind: "manual",
-          name: "Milk",
+          kind: "catalog",
+          name: "Whole Milk",
           checked: false,
         }),
       ],

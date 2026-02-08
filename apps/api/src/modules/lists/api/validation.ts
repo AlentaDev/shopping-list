@@ -5,12 +5,6 @@ export const createListSchema = z.object({
   title: z.string().min(1).max(60),
 });
 
-export const addItemSchema = z.object({
-  name: z.string().min(1).max(120),
-  qty: z.number().int().min(1).max(99).optional(),
-  note: z.string().max(240).optional(),
-});
-
 export const addCatalogItemSchema = z.object({
   source: z.literal("mercadona"),
   productId: z.string().min(1),
@@ -48,15 +42,6 @@ export const completeListSchema = z.object({
   checkedItemIds: z.array(z.string().min(1)),
 });
 
-const autosaveManualItemSchema = z.object({
-  id: z.string().min(1),
-  kind: z.literal("manual"),
-  name: z.string().min(1).max(120),
-  qty: z.number().int().min(1).max(99),
-  checked: z.boolean(),
-  note: z.string().max(240).optional(),
-});
-
 const autosaveCatalogItemSchema = z.object({
   id: z.string().min(1),
   kind: z.literal("catalog"),
@@ -76,12 +61,7 @@ const autosaveCatalogItemSchema = z.object({
 
 export const upsertAutosaveSchema = z.object({
   title: z.string().min(1).max(60),
-  items: z.array(
-    z.discriminatedUnion("kind", [
-      autosaveManualItemSchema,
-      autosaveCatalogItemSchema,
-    ]),
-  ),
+  items: z.array(autosaveCatalogItemSchema),
 });
 
 export const editingSchema = z.object({
