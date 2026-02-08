@@ -59,7 +59,8 @@ export class ShoppingListPage {
   }
 
   async close(): Promise<void> {
-    // Click en el botón "Cerrar" en lugar del backdrop
-    await this.dialog.getByRole("button", { name: "Cerrar" }).click();
+    // Cerrar por teclado para evitar intercepciones del backdrop
+    await this.page.keyboard.press("Escape");
+    await this.dialog.waitFor({ state: "hidden" });
   }
 }
