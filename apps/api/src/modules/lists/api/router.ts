@@ -14,7 +14,7 @@ import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
-import { DuplicateList } from "../application/DuplicateList.js";
+import { ReuseList } from "../application/ReuseList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
 import { StartListEditing } from "../application/StartListEditing.js";
 import { FinishListEdit } from "../application/FinishListEdit.js";
@@ -41,7 +41,7 @@ type ListsRouterDependencies = {
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
   completeList: CompleteList;
-  duplicateList: DuplicateList;
+  reuseList: ReuseList;
   startListEditing: StartListEditing;
   finishListEdit: FinishListEdit;
   getAutosaveDraft: GetAutosaveDraft;
@@ -176,7 +176,7 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     try {
       const params = listParamsSchema.parse(req.params);
       const userId = getUserId(req);
-      const response = await deps.duplicateList.execute({
+      const response = await deps.reuseList.execute({
         userId,
         listId: params.id,
       });
