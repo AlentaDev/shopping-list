@@ -26,27 +26,37 @@ const setAutosaveChecked = () => {
   }
 };
 
-const mapAutosaveToDraftInput = (
-  draft: AutosaveDraft,
-): AutosaveDraftInput => ({
+const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => ({
   title: draft.title,
-  items: draft.items.map((item) => ({
-    id: item.id,
-    kind: item.kind,
-    name: item.name,
-    qty: item.qty,
-    checked: item.checked,
-    note: item.note ?? null,
-    source: item.kind === "catalog" ? item.source ?? "mercadona" : undefined,
-    sourceProductId:
-      item.kind === "catalog" ? item.sourceProductId ?? item.id : undefined,
-    thumbnail: item.thumbnail ?? null,
-    price: item.price ?? null,
-    unitSize: item.unitSize ?? null,
-    unitFormat: item.unitFormat ?? null,
-    unitPrice: item.unitPrice ?? null,
-    isApproxSize: item.isApproxSize ?? false,
-  })),
+  items: draft.items.map((item) => {
+    if (item.kind === "catalog") {
+      return {
+        id: item.id,
+        kind: "catalog",
+        name: item.name,
+        qty: item.qty,
+        checked: item.checked,
+        note: item.note ?? null,
+        source: item.source ?? "mercadona",
+        sourceProductId: item.sourceProductId ?? item.id,
+        thumbnail: item.thumbnail ?? null,
+        price: item.price ?? null,
+        unitSize: item.unitSize ?? null,
+        unitFormat: item.unitFormat ?? null,
+        unitPrice: item.unitPrice ?? null,
+        isApproxSize: item.isApproxSize ?? false,
+      };
+    }
+
+    return {
+      id: item.id,
+      kind: "manual",
+      name: item.name,
+      qty: item.qty,
+      checked: item.checked,
+      note: item.note ?? null,
+    };
+  }),
 });
 
 export const useAutosaveRecovery = (

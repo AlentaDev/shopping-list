@@ -3,6 +3,6 @@ export type ShoppingListItem = {
   name: string;
   category: string;
   thumbnail?: string | null;
-  price: number;
+  price?: number | null;
   quantity: number;
 };
