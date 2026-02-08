@@ -244,7 +244,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         listId: params.id,
         productId: input.productId,
         qty: input.qty,
-        note: input.note,
       });
 
       res.status(201).json(response);
@@ -265,7 +264,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         name: input.name,
         qty: input.qty,
         checked: input.checked,
-        note: input.note,
       });
 
       res.status(200).json(response);

@@ -59,7 +59,6 @@ describe("FinishListEdit", () => {
           isApproxSizeSnapshot: false,
           qty: 2,
           checked: false,
-          note: undefined,
           createdAt: new Date("2024-01-02T10:00:00.000Z"),
           updatedAt: new Date("2024-01-02T10:00:00.000Z"),
         },

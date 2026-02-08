@@ -83,7 +83,6 @@ function duplicateItem(
       name: item.name,
       qty: item.qty,
       checked: false,
-      note: item.note,
       createdAt: now,
       updatedAt: now,
     };
@@ -104,7 +103,6 @@ function duplicateItem(
     isApproxSizeSnapshot: item.isApproxSizeSnapshot,
     qty: item.qty,
     checked: false,
-    note: item.note,
     createdAt: now,
     updatedAt: now,
   };
