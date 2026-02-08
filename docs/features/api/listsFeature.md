@@ -3,6 +3,7 @@
 ## Resumen
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
+Existe un **único `DRAFT` por usuario** que puede estar vacío y se reutiliza entre flujos (crear, reusar, editar).
 
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
@@ -79,6 +80,7 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 ```
 
 Si no hay borrador autosave, responde con `204`.
+Al iniciar sesión se garantiza un `DRAFT` único (aunque esté vacío), por lo que normalmente devolverá `200`.
 
 ### PUT /api/lists/autosave
 
@@ -107,6 +109,8 @@ Si no hay borrador autosave, responde con `204`.
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+Sobrescribe el `DRAFT` único con el contenido enviado (incluyendo el caso vacío).
 
 ### GET /api/lists/:id
 
@@ -152,6 +156,8 @@ Si no hay borrador autosave, responde con `204`.
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+**Regla:** solo se permite activar si el `DRAFT` tiene items. Tras activar, se crea un `DRAFT` vacío para mantener el borrador único.
 
 ### POST /api/lists/:id/complete
 
@@ -239,7 +245,7 @@ Sin contenido (autosave descartado).
 
 ### POST /api/lists/:id/reuse
 
-Reusa una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
+Reusa una lista completada sobrescribiendo el `DRAFT` único con los mismos items sin marcar.
 
 ### PATCH /api/lists/:id/activate
 
@@ -277,7 +283,7 @@ Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEd
 
 ### POST /api/lists/:id/finish-edit
 
-Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y elimina el autosave.
+Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y reinicia el `DRAFT` único a vacío.
 
 ## Notas de implementación
 

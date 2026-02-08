@@ -9,13 +9,14 @@ Permitir a los usuarios **preparar listas de la compra en PC**, guardarlas en su
 ## Estados de una lista
 
 * **LOCAL_DRAFT**: único borrador en navegador cuando no hay sesión.
-* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse.
+* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse. Puede estar vacío y se reutiliza entre flujos (reusar, editar, crear).
 * **ACTIVE**: lista preparada para comprar, visible en web y móvil.
 * **COMPLETED**: compra finalizada, visible en historial.
 
 ### Autosave con sesión (decisión)
 
-Cuando el usuario ya está autenticado, el autosave se persiste en servidor.
+Cuando el usuario ya está autenticado, el autosave se persiste en servidor y se crea
+si no existe (aunque esté vacío).
 La comparación entre el borrador local y el autosave remoto ocurre **una sola vez**
 al iniciar la app o tras login. La regla es:
 
@@ -84,12 +85,13 @@ existen, el usuario decide cuál mantener.
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-El usuario crea y edita listas en modo borrador desde el PC. Si no existe borrador local ni autosave remoto, **no se crea un DRAFT vacío** hasta que el usuario añada el primer item.
+El usuario crea y edita listas en modo borrador desde el PC. Al autenticarse, se asegura
+un `DRAFT` único (puede estar vacío) para reutilizarlo en los distintos flujos.
 
 **Flujo principal:**
 
-1. Al autenticarse, no se crea ningún borrador si no hay items.
-2. Al añadir el primer item, se crea el `DRAFT` y se inicia el autosave remoto.
+1. Al autenticarse, se crea el `DRAFT` si no existe (aunque esté vacío).
+2. Al añadir el primer item, el `DRAFT` se actualiza y se inicia el autosave remoto.
 3. Añade, edita o elimina productos.
 4. La lista se autoguarda localmente; si hay sesión, también se sincroniza por autosave.
 5. El usuario puede cerrar sesión o refrescar sin perder cambios.
@@ -129,7 +131,7 @@ El usuario indica que la lista está finalizada para usarse en el móvil.
 
 1. Desde una lista en `DRAFT`, en el modal el usuario pulsa “Finalizar lista” (solo si hay items).
 2. El sistema cambia el estado de la lista a `ACTIVE` **reutilizando el mismo registro**.
-3. El borrador local/autosave se limpia y **no se crea un DRAFT nuevo** hasta añadir el primer item.
+3. El borrador local/autosave se limpia y se crea un **nuevo `DRAFT` vacío** para mantener el borrador único.
 4. La lista `ACTIVE` ya está disponible en móvil para marcar/desmarcar productos y para ver en la web.
 5. Se cierra el modal de edición y se muestra la lista en la pantalla principal de listas.
 6. Se muestra un toast indicando que la lista se ha finalizado y está disponible en móvil.
@@ -187,11 +189,11 @@ crea un `DRAFT` paralelo editable. En móvil queda en solo lectura hasta termina
 1. El usuario abre una lista `ACTIVE` en la web para ver los productos (modal desde la pantalla de listas).
 2. Al pulsar editar, se muestra un aviso: la lista dejará de estar disponible en móvil y, si hay DRAFT, se perderá.
 3. Si confirma, la lista `ACTIVE` queda con `isEditing=true`.
-4. Se crea un **DRAFT paralelo editable** con el mismo contenido (reemplazando el DRAFT previo si existía).
+4. Se crea un **DRAFT paralelo editable** con el mismo contenido (reemplazando el DRAFT único si existía).
 5. El usuario edita la lista. Si pulsa “Añadir productos”, navega al catálogo y sigue editando el DRAFT.
 6. No se permite marcar/desmarcar productos en móvil mientras la lista está en edición.
-7. Si el usuario cancela la edición, se descartan los cambios: se borra el DRAFT temporal y se deja `ACTIVE` con su contenido original.
-8. Al pulsar “Terminar edición”, se aplica el DRAFT a la lista `ACTIVE`, se pone `isEditing=false`, se elimina el DRAFT y se muestra un toast indicando que ya está disponible en móvil.
+7. Si el usuario cancela la edición, se descartan los cambios: el `DRAFT` se reinicia a vacío y la lista sigue `ACTIVE` con su contenido original, `isEditing=false`, y se muestra un toast indicando que la lista original vuelve a estar disponible en móvil.
+8. Al pulsar “Terminar edición”, se aplica el DRAFT a la lista `ACTIVE`, se pone `isEditing=false`, el `DRAFT` se reinicia a vacío y se muestra un toast indicando que ya está disponible en móvil.
 9. Si el usuario cierra sesión o refresca durante la edición, se descartan los cambios del DRAFT y se restaura la lista `ACTIVE` original.
 
 **Estado resultante:** `DRAFT` o `ACTIVE`
