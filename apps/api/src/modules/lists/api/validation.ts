@@ -5,24 +5,16 @@ export const createListSchema = z.object({
   title: z.string().min(1).max(60),
 });
 
-export const addItemSchema = z.object({
-  name: z.string().min(1).max(120),
-  qty: z.number().int().min(1).max(999).optional(),
-  note: z.string().max(240).optional(),
-});
-
 export const addCatalogItemSchema = z.object({
   source: z.literal("mercadona"),
   productId: z.string().min(1),
-  qty: z.number().int().min(1).max(999).optional(),
-  note: z.string().max(240).optional(),
+  qty: z.number().int().min(1).max(99).optional(),
 });
 
 export const patchItemSchema = z.object({
   name: z.string().min(1).max(120).optional(),
-  qty: z.number().int().min(1).max(999).optional(),
+  qty: z.number().int().min(1).max(99).optional(),
   checked: z.boolean().optional(),
-  note: z.string().max(240).optional(),
 });
 
 export const updateListStatusSchema = z
@@ -40,26 +32,20 @@ export const updateListStatusSchema = z
     }
   });
 
-export const completeListSchema = z.object({
-  checkedItemIds: z.array(z.string().min(1)),
+export const activateListSchema = z.object({
+  status: z.literal("ACTIVE"),
 });
 
-const autosaveManualItemSchema = z.object({
-  id: z.string().min(1),
-  kind: z.literal("manual"),
-  name: z.string().min(1).max(120),
-  qty: z.number().int().min(1).max(999),
-  checked: z.boolean(),
-  note: z.string().max(240).optional(),
+export const completeListSchema = z.object({
+  checkedItemIds: z.array(z.string().min(1)),
 });
 
 const autosaveCatalogItemSchema = z.object({
   id: z.string().min(1),
   kind: z.literal("catalog"),
   name: z.string().min(1).max(120),
-  qty: z.number().int().min(1).max(999),
+  qty: z.number().int().min(1).max(99),
   checked: z.boolean(),
-  note: z.string().max(240).optional(),
   source: z.literal("mercadona"),
   sourceProductId: z.string().min(1),
   thumbnail: z.string().optional().nullable(),
@@ -72,12 +58,11 @@ const autosaveCatalogItemSchema = z.object({
 
 export const upsertAutosaveSchema = z.object({
   title: z.string().min(1).max(60),
-  items: z.array(
-    z.discriminatedUnion("kind", [
-      autosaveManualItemSchema,
-      autosaveCatalogItemSchema,
-    ]),
-  ),
+  items: z.array(autosaveCatalogItemSchema),
+});
+
+export const editingSchema = z.object({
+  isEditing: z.boolean(),
 });
 
 export const listParamsSchema = z.object({

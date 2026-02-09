@@ -1,5 +1,4 @@
 import { requireAuth } from "@src/shared/web/requireAuth.js";
-import { AddManualItem } from "./application/AddManualItem.js";
 import { AddCatalogItem } from "./application/AddCatalogItem.js";
 import { CreateList } from "./application/CreateList.js";
 import { GetList } from "./application/GetList.js";
@@ -11,9 +10,10 @@ import { UpdateListStatus } from "./application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "./application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "./application/DiscardAutosaveDraft.js";
 import { CompleteList } from "./application/CompleteList.js";
-import { DuplicateList } from "./application/DuplicateList.js";
+import { ReuseList } from "./application/ReuseList.js";
 import { StartListEditing } from "./application/StartListEditing.js";
 import { UpsertAutosaveDraft } from "./application/UpsertAutosaveDraft.js";
+import { FinishListEdit } from "./application/FinishListEdit.js";
 import type { CatalogProvider } from "@src/modules/catalog/public.js";
 import type { IdGenerator, ListRepository } from "./application/ports.js";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository.js";
@@ -34,7 +34,6 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const listLists = new ListLists(listRepository);
   const getList = new GetList(listRepository);
   const deleteList = new DeleteList(listRepository);
-  const addManualItem = new AddManualItem(listRepository, idGenerator);
   const addCatalogItem = new AddCatalogItem(
     listRepository,
     idGenerator,
@@ -42,10 +41,11 @@ export function createListsModule(deps: ListsModuleDependencies) {
   );
   const updateItem = new UpdateItem(listRepository);
   const removeItem = new RemoveItem(listRepository);
-  const updateListStatus = new UpdateListStatus(listRepository);
+  const updateListStatus = new UpdateListStatus(listRepository, idGenerator);
   const completeList = new CompleteList(listRepository);
-  const duplicateList = new DuplicateList(listRepository, idGenerator);
+  const reuseList = new ReuseList(listRepository, idGenerator);
   const startListEditing = new StartListEditing(listRepository);
+  const finishListEdit = new FinishListEdit(listRepository);
   const getAutosaveDraft = new GetAutosaveDraft(listRepository);
   const discardAutosaveDraft = new DiscardAutosaveDraft(listRepository);
   const upsertAutosaveDraft = new UpsertAutosaveDraft(
@@ -58,14 +58,14 @@ export function createListsModule(deps: ListsModuleDependencies) {
     listLists,
     getList,
     deleteList,
-    addManualItem,
     addCatalogItem,
     updateItem,
     removeItem,
     updateListStatus,
     completeList,
-    duplicateList,
+    reuseList,
     startListEditing,
+    finishListEdit,
     getAutosaveDraft,
     discardAutosaveDraft,
     upsertAutosaveDraft,

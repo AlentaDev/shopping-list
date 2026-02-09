@@ -19,7 +19,6 @@ describe("UpsertAutosaveDraft", () => {
           name: "Milk",
           qty: 2,
           checked: false,
-          note: "Semi-skimmed",
         },
       ],
     });
@@ -47,7 +46,6 @@ describe("UpsertAutosaveDraft", () => {
             name: "Milk",
             qty: 2,
             checked: false,
-            note: "Semi-skimmed",
             createdAt: expect.any(Date),
             updatedAt: expect.any(Date),
           }),

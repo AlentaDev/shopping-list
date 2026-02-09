@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { LIST_STATUS, getListActions } from "./listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
+import { getListActions } from "./listActions";
 
 describe("listActions", () => {
   it("define las acciones para borradores", () => {
@@ -22,6 +23,14 @@ describe("listActions", () => {
     expect(getListActions(LIST_STATUS.COMPLETED)).toEqual([
       "view",
       "reuse",
+      "delete",
+    ]);
+  });
+
+  it("define las acciones para borradores locales", () => {
+    expect(getListActions(LIST_STATUS.LOCAL_DRAFT)).toEqual([
+      "edit",
+      "activate",
       "delete",
     ]);
   });

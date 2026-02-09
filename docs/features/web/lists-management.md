@@ -2,14 +2,15 @@
 
 ## Objetivo
 
-Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El borrador en progreso se gestiona en el modal de lista y no aparece en este listado.
+Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El borrador único se gestiona en el modal de lista (puede estar vacío) y no aparece en este listado.
 
 ## Endpoints
 
 - `GET /api/lists` (carga de listas)
-- `POST /api/lists/:id/duplicate` (reusar listas del historial)
+- `POST /api/lists/:id/reuse` (ReuseList: reusar listas del historial)
 - `DELETE /api/lists/:id` (borrar listas)
-- Cambios de estado (pendiente de endpoint documentado)
+- `PATCH /api/lists/:id/editing` (activar/desactivar edición)
+- `POST /api/lists/:id/finish-edit` (finalizar edición)
 
 ## Reglas importantes
 
@@ -18,6 +19,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - Tabs por estado: **Activas**, **Historial**.
 - Orden: fecha más nueva primero.
 - No se muestran listas sin items.
+- El `DRAFT` único no se lista nunca (aunque exista vacío o con items).
 - Nombre de la lista: máximo 35 caracteres, truncado con `…`.
 - Estados vacíos: mostrar mensaje informativo.
 
@@ -31,16 +33,21 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ### Activas (detalle)
 
 - Se muestran productos + total.
-- Botones: **Editar**, **Cerrar**, **Borrar**.
+- Botones: **Editar**, **Borrar**.
 - Borrar reutiliza el modal de confirmación del listado.
 
 #### Editar lista activa
 
-- Siempre se avisa: “No se podrá usar en móvil mientras se edita”.
-- Si hay draft con items, se añade aviso: “Perderás la lista que estás confeccionando”.
-- Si el draft está vacío, no se muestra esa parte del mensaje.
-- Al editar, se marca `isEditing=true` en la lista activa.
+- La edición solo se inicia desde el modal de visualización.
+- Antes de editar, se muestra un modal de confirmación con:
+  - “No se podrá usar en móvil mientras se edita”.
+  - Si hay draft con items: “Perderás la lista que estás confeccionando”.
+- Al confirmar, la lista activa queda con `isEditing=true`.
+- Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
+- Si ya existía DRAFT, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
+- Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false`.
+- Si el usuario termina la edición, se aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío.
 
 ### Historial (listado)
 
@@ -51,9 +58,9 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ### Historial (detalle)
 
 - Se muestran productos + total.
-- Botones: **Cerrar**, **Reusar**, **Borrar**.
-- Reusar convierte la lista en draft.
-- Solo se avisa de pérdida de draft si el draft tiene items.
+- Botones: **Reusar**, **Borrar**.
+- ReuseList abre el modal y sobrescribe el `DRAFT` único con los items del historial.
+- Si existe un DRAFT con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
 
 ### Estado en móvil

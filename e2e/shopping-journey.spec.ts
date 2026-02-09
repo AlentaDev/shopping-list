@@ -158,12 +158,6 @@ test("auth happy path permite registrar con auto-login y cerrar sesión", async 
   // Después del registro, debería redirigir a la pantalla principal
   await page.waitForURL("/");
 
-  // Verificar que aparece el toast de bienvenida
-  await expect(
-    page.getByText(/gracias.*ana.*por registrarte/i),
-    "El toast de bienvenida debe aparecer después del registro",
-  ).toBeVisible({ timeout: 5000 });
-
   const userMenuButton = page.getByRole("button", {
     name: "Abrir menú de usuario",
   });
@@ -258,7 +252,7 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
   ).toHaveText("1");
 });
 
-test("modal permite ajustar cantidades, eliminar items, estado vacío y guardar nombre", async ({
+test("modal permite ajustar cantidades, eliminar items, estado vacío y volver al catálogo", async ({
   page,
 }) => {
   await mockAuthRoutes(page);
@@ -323,17 +317,15 @@ test("modal permite ajustar cantidades, eliminar items, estado vacío y guardar 
   await catalogPage.addToCart(PRODUCT.name);
   await page.getByRole("button", { name: "Abrir carrito" }).click();
 
-  await page.getByRole("button", { name: "Guardar lista" }).click();
-  await page.getByLabel("Nombre de la lista").fill("Compra semanal");
-  await page.getByRole("button", { name: "Guardar" }).click();
-
-  await expect(
-    listPage.heading,
-    "El título del modal debe actualizarse con el nombre guardado",
-  ).toHaveText("Compra semanal");
-
   await expect(
     listPage.totalValue,
     "El total debe mostrarse con formato de moneda",
   ).toContainText("€");
+
+  await page.getByRole("button", { name: "Añadir más productos" }).click();
+
+  await page.getByRole("dialog").waitFor({
+    state: "hidden",
+    timeout: 5000,
+  });
 });

@@ -8,6 +8,7 @@ Propuesto.
 Se han refinado los flujos de listas para usuarios autenticados con nuevas reglas de negocio y UX:
 
 - Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
+- No se crea un draft vacío: el autosave nace al añadir el primer item.
 - En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
 - Las acciones cambian: **Editar/Cerrar/Borrar** en Activas y **Reusar/Cerrar/Borrar** en Historial.
 - Se requiere bloquear la edición en móvil cuando una lista activa esté en edición (`isEditing=true`).

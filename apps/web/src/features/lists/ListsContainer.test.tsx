@@ -3,9 +3,9 @@ import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import Lists from "./Lists";
+import ListsContainer from "./ListsContainer";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { LIST_STATUS } from "./services/listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
 type FetchResponse = {
   ok: boolean;
@@ -18,21 +18,6 @@ describe("Lists", () => {
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input, init) => {
       const url = typeof input === "string" ? input : input.url;
-
-      if (url === "/api/lists" && init?.method === "POST") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "created-1",
-            title: "Tu lista",
-            updatedAt: "2024-02-03T10:00:00.000Z",
-            activatedAt: null,
-            itemCount: 0,
-            isEditing: false,
-            status: LIST_STATUS.DRAFT,
-          }),
-        };
-      }
 
       if (url === "/api/lists") {
         return {
@@ -76,7 +61,7 @@ describe("Lists", () => {
             items: [
               {
                 id: "item-1",
-                kind: "manual",
+                kind: "catalog",
                 name: "Leche",
                 qty: 1,
                 checked: true,
@@ -84,7 +69,7 @@ describe("Lists", () => {
               },
               {
                 id: "item-2",
-                kind: "manual",
+                kind: "catalog",
                 name: "Pan",
                 qty: 1,
                 checked: false,
@@ -139,31 +124,9 @@ describe("Lists", () => {
     vi.stubGlobal("fetch", fetchMock);
     const onOpenList = vi.fn();
 
-    render(<Lists onOpenList={onOpenList} />);
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     expect(await screen.findByText("Despensa")).toBeInTheDocument();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists",
-        expect.objectContaining({ method: "POST" })
-      );
-    });
-
-    expect(onOpenList).toHaveBeenCalledWith({
-      id: "created-1",
-      title: "Tu lista",
-      updatedAt: "2024-02-03T10:00:00.000Z",
-      activatedAt: null,
-      itemCount: 0,
-      isEditing: false,
-      items: [],
-      status: LIST_STATUS.DRAFT,
-    });
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })

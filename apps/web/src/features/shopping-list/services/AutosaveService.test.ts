@@ -14,11 +14,12 @@ const SAMPLE_DRAFT: AutosaveDraftInput = {
   items: [
     {
       id: "item-1",
-      kind: "manual",
+      kind: "catalog",
       name: "Leche",
       qty: 2,
       checked: false,
-      note: "Sin lactosa",
+      source: "mercadona",
+      sourceProductId: "item-1",
     },
   ],
 };
@@ -44,15 +45,21 @@ describe("AutosaveService", () => {
   it("guarda el borrador local en localStorage", () => {
     saveLocalDraft(SAMPLE_DRAFT);
 
-    expect(localStorage.getItem("lists.localDraft")).toBe(
-      JSON.stringify(SAMPLE_DRAFT)
-    );
+    const stored = localStorage.getItem("lists.localDraft");
+    expect(stored).toBeTruthy();
+    const parsed = JSON.parse(stored ?? "{}") as AutosaveDraftInput & {
+      updatedAt?: string;
+    };
+
+    expect(parsed).toMatchObject(SAMPLE_DRAFT);
+    expect(parsed.updatedAt).toEqual(expect.any(String));
   });
 
   it("recupera el borrador local desde localStorage", () => {
     localStorage.setItem("lists.localDraft", JSON.stringify(SAMPLE_DRAFT));
 
-    expect(loadLocalDraft()).toEqual(SAMPLE_DRAFT);
+    expect(loadLocalDraft()).toMatchObject(SAMPLE_DRAFT);
+    expect(loadLocalDraft()?.updatedAt).toEqual(expect.any(String));
   });
 
   it("devuelve null si el borrador local es inválido", () => {
@@ -68,6 +75,7 @@ describe("AutosaveService", () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
+        status: 204,
         json: async () => null,
       })
     );
@@ -174,9 +182,13 @@ describe("AutosaveService", () => {
 
     scheduler.schedule(SAMPLE_DRAFT);
 
-    expect(localStorage.getItem("lists.localDraft")).toBe(
-      JSON.stringify(SAMPLE_DRAFT)
-    );
+    const stored = localStorage.getItem("lists.localDraft");
+    expect(stored).toBeTruthy();
+    const parsed = JSON.parse(stored ?? "{}") as AutosaveDraftInput & {
+      updatedAt?: string;
+    };
+    expect(parsed).toMatchObject(SAMPLE_DRAFT);
+    expect(parsed.updatedAt).toEqual(expect.any(String));
     expect(fetchMock).not.toHaveBeenCalled();
 
     await vi.advanceTimersByTimeAsync(1500);
@@ -237,11 +249,12 @@ describe("AutosaveService", () => {
       items: [
         {
           id: "item-2",
-          kind: "manual",
+          kind: "catalog",
           name: "Pan",
           qty: 1,
           checked: false,
-          note: null,
+          source: "mercadona",
+          sourceProductId: "item-2",
         },
       ],
     };

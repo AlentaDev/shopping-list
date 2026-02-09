@@ -1,17 +1,16 @@
-import type { ListRepository } from "./ports.js";
+import type { IdGenerator, ListRepository } from "./ports.js";
 import {
-  ItemNotFoundError,
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
 } from "./errors.js";
 import type { ListStatus } from "../domain/list.js";
+import type { List } from "../domain/list.js";
 
 type UpdateListStatusInput = {
   userId: string;
   listId: string;
   status: ListStatus;
-  checkedItemIds?: string[];
 };
 
 type UpdateListStatusResult = {
@@ -22,12 +21,15 @@ type UpdateListStatusResult = {
 
 const ALLOWED_TRANSITIONS: Record<ListStatus, ListStatus[]> = {
   DRAFT: ["ACTIVE"],
-  ACTIVE: ["COMPLETED"],
+  ACTIVE: [],
   COMPLETED: [],
 };
 
 export class UpdateListStatus {
-  constructor(private readonly listRepository: ListRepository) {}
+  constructor(
+    private readonly listRepository: ListRepository,
+    private readonly idGenerator: IdGenerator,
+  ) {}
 
   async execute(
     input: UpdateListStatusInput,
@@ -51,34 +53,18 @@ export class UpdateListStatus {
         throw new ListStatusTransitionError();
       }
 
-      if (input.status === "COMPLETED") {
-        if (!input.checkedItemIds) {
-          throw new ListStatusTransitionError();
-        }
+      const now = new Date();
+      list.status = input.status;
+      list.updatedAt = now;
 
-        const checkedIds = new Set(input.checkedItemIds);
-        for (const checkedId of checkedIds) {
-          if (!list.items.some((item) => item.id === checkedId)) {
-            throw new ItemNotFoundError();
-          }
-        }
+      if (input.status === "ACTIVE") {
+        list.isAutosaveDraft = false;
+        list.activatedAt = now;
+      }
+      await this.listRepository.save(list);
 
-        const now = new Date();
-        for (const item of list.items) {
-          const shouldBeChecked = checkedIds.has(item.id);
-          if (item.checked !== shouldBeChecked) {
-            item.checked = shouldBeChecked;
-            item.updatedAt = now;
-          }
-        }
-
-        list.status = "COMPLETED";
-        list.updatedAt = now;
-        await this.listRepository.save(list);
-      } else {
-        list.status = input.status;
-        list.updatedAt = new Date();
-        await this.listRepository.save(list);
+      if (input.status === "ACTIVE") {
+        await this.createEmptyDraft(list, now);
       }
     }
 
@@ -87,5 +73,21 @@ export class UpdateListStatus {
       status: list.status,
       updatedAt: list.updatedAt.toISOString(),
     };
+  }
+
+  private async createEmptyDraft(activeList: List, now: Date) {
+    const draft: List = {
+      id: this.idGenerator.generate(),
+      ownerUserId: activeList.ownerUserId,
+      title: activeList.title,
+      isAutosaveDraft: false,
+      status: "DRAFT",
+      items: [],
+      isEditing: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.listRepository.save(draft);
   }
 }

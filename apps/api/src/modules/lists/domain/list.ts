@@ -5,7 +5,6 @@ export type ManualListItem = {
   name: string;
   qty: number;
   checked: boolean;
-  note?: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,7 +24,6 @@ export type CatalogListItem = {
   isApproxSizeSnapshot: boolean;
   qty: number;
   checked: boolean;
-  note?: string;
   createdAt: Date;
   updatedAt: Date;
 };

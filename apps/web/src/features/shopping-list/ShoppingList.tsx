@@ -2,39 +2,36 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
-import AutosaveRecoveryBanner from "./components/AutosaveRecoveryBanner";
+import AutosaveConflictModal from "./components/AutosaveConflictModal";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
+import { useToast } from "@src/context/useToast";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { SHOPPING_LIST_VIEW } from "@src/shared/constants/appState";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
-import type { AutosaveDraft, AutosaveDraftInput } from "./services/types";
+import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
+import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdapter";
 import {
   deleteList,
   reuseList,
   startListEditing,
 } from "./services/ListDetailActionsService";
-import {
-  LIST_STATUS,
-  canActivateList,
-  type ListStatus,
-} from "./services/listStatus";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
+import { canActivateList } from "./services/listStatus";
 
 type ShoppingListProps = {
   isOpen: boolean;
   onClose: () => void;
+  onAddMoreProducts?: () => void;
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
   initialListIsEditing?: boolean;
   isLoading?: boolean;
 };
-
-type ViewMode = typeof SHOPPING_LIST_VIEW.LIST | typeof SHOPPING_LIST_VIEW.SAVE;
 
 const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
 const DETAIL_ACTION_BASE_CLASS =
@@ -66,7 +63,6 @@ type DetailActionsProps = {
   isActive: boolean;
   onEdit: () => void;
   onReuse: () => void;
-  onClose: () => void;
   onDelete: () => void;
   isDisabled?: boolean;
   loadingAction?: "edit" | "reuse" | "delete" | null;
@@ -76,7 +72,6 @@ const DetailActions = ({
   isActive,
   onEdit,
   onReuse,
-  onClose,
   onDelete,
   isDisabled = false,
   loadingAction = null,
@@ -97,17 +92,6 @@ const DetailActions = ({
             ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT
             : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT}
         </button>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
-        </button>
       </>
     ) : (
       <>
@@ -123,17 +107,6 @@ const DetailActions = ({
           {loadingAction === "reuse"
             ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.REUSE
             : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE}
         </button>
       </>
     )}
@@ -235,13 +208,9 @@ type ShoppingListListViewProps = {
   isActiveList: boolean;
   onEdit: () => void;
   onReuse: () => void;
-  onClose: () => void;
   onDelete: () => void;
   isActionsDisabled: boolean;
   detailActionLoading: "edit" | "reuse" | "delete" | null;
-  autosaveDraft: AutosaveDraft | null;
-  onAutosaveContinue: () => void;
-  onAutosaveDiscard: () => void;
   isLoading: boolean;
   sortedItems: ShoppingListItem[];
   isReadOnlyMobile: boolean;
@@ -250,7 +219,6 @@ type ShoppingListListViewProps = {
   onRemove: (item: ShoppingListItem) => void;
   total: number;
   onAddMore: () => void;
-  onSave: () => void;
 };
 
 const ShoppingListListView = ({
@@ -258,13 +226,9 @@ const ShoppingListListView = ({
   isActiveList,
   onEdit,
   onReuse,
-  onClose,
   onDelete,
   isActionsDisabled,
   detailActionLoading,
-  autosaveDraft,
-  onAutosaveContinue,
-  onAutosaveDiscard,
   isLoading,
   sortedItems,
   isReadOnlyMobile,
@@ -273,7 +237,6 @@ const ShoppingListListView = ({
   onRemove,
   total,
   onAddMore,
-  onSave,
 }: ShoppingListListViewProps) => {
   const renderListContent = () => {
     if (isLoading) {
@@ -311,76 +274,20 @@ const ShoppingListListView = ({
           isActive={isActiveList}
           onEdit={onEdit}
           onReuse={onReuse}
-          onClose={onClose}
           onDelete={onDelete}
           isDisabled={isActionsDisabled}
           loadingAction={detailActionLoading}
-        />
-      ) : null}
-      {autosaveDraft ? (
-        <AutosaveRecoveryBanner
-          onContinue={onAutosaveContinue}
-          onDiscard={onAutosaveDiscard}
         />
       ) : null}
       {renderListContent()}
       {isLoading ? (
         <ShoppingListTotalSkeleton />
       ) : (
-        <Total total={total} onAddMore={onAddMore} onSave={onSave} />
+        <Total total={total} onAddMore={onAddMore} />
       )}
     </div>
   );
 };
-
-type ShoppingListSaveViewProps = {
-  listName: string;
-  onListNameChange: (value: string) => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-};
-
-const ShoppingListSaveView = ({
-  listName,
-  onListNameChange,
-  onCancel,
-  onConfirm,
-}: ShoppingListSaveViewProps) => (
-  <div className="space-y-4">
-    <div className="space-y-2">
-      <label
-        htmlFor="shopping-list-name"
-        className="text-sm font-semibold text-slate-700"
-      >
-        {UI_TEXT.SHOPPING_LIST.LIST_NAME_LABEL}
-      </label>
-      <input
-        id="shopping-list-name"
-        type="text"
-        value={listName}
-        onChange={(event) => onListNameChange(event.target.value)}
-        placeholder={UI_TEXT.SHOPPING_LIST.LIST_NAME_PLACEHOLDER}
-        className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-      />
-    </div>
-    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-      >
-        {UI_TEXT.SHOPPING_LIST.CANCEL_LABEL}
-      </button>
-      <button
-        type="button"
-        onClick={onConfirm}
-        className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
-      >
-        {UI_TEXT.SHOPPING_LIST.SAVE_LABEL}
-      </button>
-    </div>
-  </div>
-);
 
 const ShoppingList = ({
   isOpen,
@@ -390,10 +297,11 @@ const ShoppingList = ({
   initialListTitle,
   initialListIsEditing,
   isLoading = false,
+  onAddMoreProducts,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
+  const { showToast } = useToast();
   const { items, total, updateQuantity, removeItem, setItems } = useList();
-  const [viewMode, setViewMode] = useState<ViewMode>(SHOPPING_LIST_VIEW.LIST);
   const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
     initialListTitle ?? UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
@@ -412,7 +320,9 @@ const ShoppingList = ({
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
-  const canReadyToShop = Boolean(authUser) && canActivateList(listStatus);
+  const canShowReadyToShop =
+    Boolean(authUser) && canActivateList(listStatus);
+  const isReadyToShopDisabled = items.length === 0 || isLoading;
   const draftTitle = listName.trim() || listTitle;
   const isActiveList = listStatus === LIST_STATUS.ACTIVE;
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
@@ -423,26 +333,28 @@ const ShoppingList = ({
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
-      if (items.length > 0 || draft.items.length === 0) {
-        return;
-      }
-
       const restoredTitle =
         draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
-      const restoredItems = draft.items.map((item) => ({
-        id: item.id,
-        name: item.name,
-        category: "",
-        thumbnail: item.thumbnail ?? null,
-        price: item.price ?? null,
-        quantity: item.qty,
-      }));
+      const restoredItems = adaptShoppingListItems(draft.items);
 
       setItems(restoredItems);
       setListName(draft.title);
       setListTitle(restoredTitle);
     },
-    [items.length, setItems],
+    [setItems],
+  );
+
+  const handleAutoRestore = useCallback(
+    (draft: AutosaveDraftInput) => {
+      const restoredTitle =
+        draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
+      showToast({
+        message: UI_TEXT.SHOPPING_LIST.AUTOSAVE_RECOVERY.RESTORED_TOAST_MESSAGE,
+        productName: restoredTitle,
+        thumbnail: null,
+      });
+    },
+    [showToast],
   );
 
   useAutosaveDraft(
@@ -453,11 +365,11 @@ const ShoppingList = ({
     },
   );
 
-  const { draft: autosaveDraft, handleContinue, handleDiscard } =
-    useAutosaveRecovery({
-      enabled: Boolean(authUser),
-      onRehydrate: handleRehydrate,
-    });
+  const { conflict, handleKeepLocal, handleKeepRemote } = useAutosaveRecovery({
+    enabled: Boolean(authUser),
+    onRehydrate: handleRehydrate,
+    onAutoRestore: handleAutoRestore,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) {
@@ -480,6 +392,11 @@ const ShoppingList = ({
     setPendingRemoval(null);
     setPendingListDeletion(false);
     onClose();
+  };
+
+  const handleAddMore = () => {
+    handleClose();
+    onAddMoreProducts?.();
   };
 
   const sortedItems = useMemo<ShoppingListItem[]>(
@@ -524,6 +441,11 @@ const ShoppingList = ({
       }
 
       removeItem(pendingRemoval.id);
+      showToast({
+        message: UI_TEXT.SHOPPING_LIST.TOAST_REMOVED_MESSAGE,
+        productName: pendingRemoval.name,
+        thumbnail: pendingRemoval.thumbnail ?? null,
+      });
       setPendingRemoval(null);
     } catch (error) {
       console.warn("No se pudo eliminar el item.", error);
@@ -556,23 +478,14 @@ const ShoppingList = ({
     setDetailActionLoading("reuse");
     reuseList(listId)
       .then((response) => {
-        const reusedItems = (response.items ?? []).map((item) => ({
-          id: item.id ?? "",
-          name: item.name ?? "",
-          category: "",
-          thumbnail: item.thumbnail ?? null,
-          price: item.price ?? null,
-          quantity: item.qty ?? 0,
-        }));
-
-        setItems(reusedItems);
+        setItems(response.items);
         setListId(response.id);
         setListStatus(LIST_STATUS.DRAFT);
         setListIsEditing(false);
         setListTitle(
-          response.title?.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+          response.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
         );
-        setListName(response.title ?? "");
+        setListName(response.title);
       })
       .catch((error) => {
         console.warn("No se pudo reusar la lista.", error);
@@ -607,21 +520,6 @@ const ShoppingList = ({
       });
   };
 
-  const handleStartSave = () => {
-    setViewMode(SHOPPING_LIST_VIEW.SAVE);
-  };
-
-  const handleCancelSave = () => {
-    setViewMode(SHOPPING_LIST_VIEW.LIST);
-  };
-
-  const handleConfirmSave = () => {
-    const trimmedName = listName.trim();
-
-    setListTitle(trimmedName || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
-    setViewMode(SHOPPING_LIST_VIEW.LIST);
-  };
-
   const handleReadyToShop = useCallback(async () => {
     if (!authUser || !canActivateList(listStatus)) {
       return;
@@ -644,41 +542,32 @@ const ShoppingList = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={listTitle}
-      onReadyToShop={
-        canReadyToShop && !isLoading ? handleReadyToShop : undefined
-      }
+      onReadyToShop={canShowReadyToShop ? handleReadyToShop : undefined}
+      itemCount={sortedItems.length}
+      isReadyToShopDisabled={isReadyToShopDisabled}
     >
-      {viewMode === SHOPPING_LIST_VIEW.LIST ? (
-        <ShoppingListListView
-          showDetailActions={showDetailActions}
-          isActiveList={isActiveList}
-          onEdit={handleEditList}
-          onReuse={handleReuseList}
-          onClose={handleClose}
-          onDelete={() => setPendingListDeletion(true)}
-          isActionsDisabled={isActionsDisabled}
-          detailActionLoading={detailActionLoading}
-          autosaveDraft={autosaveDraft}
-          onAutosaveContinue={handleContinue}
-          onAutosaveDiscard={handleDiscard}
-          isLoading={isLoading}
-          sortedItems={sortedItems}
-          isReadOnlyMobile={isReadOnlyMobile}
-          onIncrement={handleIncrement}
-          onDecrement={handleDecrement}
-          onRemove={handleRemoveRequest}
-          total={total}
-          onAddMore={handleClose}
-          onSave={handleStartSave}
-        />
-      ) : (
-        <ShoppingListSaveView
-          listName={listName}
-          onListNameChange={setListName}
-          onCancel={handleCancelSave}
-          onConfirm={handleConfirmSave}
-        />
-      )}
+      <ShoppingListListView
+        showDetailActions={showDetailActions}
+        isActiveList={isActiveList}
+        onEdit={handleEditList}
+        onReuse={handleReuseList}
+        onDelete={() => setPendingListDeletion(true)}
+        isActionsDisabled={isActionsDisabled}
+        detailActionLoading={detailActionLoading}
+        isLoading={isLoading}
+        sortedItems={sortedItems}
+        isReadOnlyMobile={isReadOnlyMobile}
+        onIncrement={handleIncrement}
+        onDecrement={handleDecrement}
+        onRemove={handleRemoveRequest}
+        total={total}
+        onAddMore={handleAddMore}
+      />
+      <AutosaveConflictModal
+        isOpen={Boolean(conflict)}
+        onKeepLocal={handleKeepLocal}
+        onKeepRemote={handleKeepRemote}
+      />
       {pendingRemoval ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
           <div

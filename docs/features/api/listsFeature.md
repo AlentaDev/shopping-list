@@ -3,6 +3,9 @@
 ## Resumen
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
+Existe un **único `DRAFT` por usuario** (no autosave) que puede estar vacío y se reutiliza entre flujos (crear, `ReuseList`, editar).
+
+> **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
 ## Endpoints
 
@@ -66,11 +69,18 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
   "items": [
     {
       "id": "uuid",
-      "kind": "manual",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note",
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -78,7 +88,8 @@ El módulo de listas permite crear y gestionar listas de compra para usuarios au
 }
 ```
 
-Si no hay borrador autosave, responde con `null`.
+Si no hay borrador autosave, responde con `204`.
+El autosave se crea cuando el frontend guarda cambios del borrador.
 
 ### PUT /api/lists/autosave
 
@@ -90,11 +101,18 @@ Si no hay borrador autosave, responde con `null`.
   "items": [
     {
       "id": "uuid",
-      "kind": "manual",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note"
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false
     }
   ]
 }
@@ -109,6 +127,8 @@ Si no hay borrador autosave, responde con `null`.
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+Sobrescribe el borrador autosave con el contenido enviado (incluyendo el caso vacío).
 
 ### GET /api/lists/:id
 
@@ -125,10 +145,18 @@ Si no hay borrador autosave, responde con `null`.
   "items": [
     {
       "id": "uuid",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note",
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -136,22 +164,13 @@ Si no hay borrador autosave, responde con `null`.
 }
 ```
 
-### PATCH /api/lists/:id/status
+### PATCH /api/lists/:id/activate
 
 **Request**
 
 ```json
 {
   "status": "ACTIVE"
-}
-```
-
-Para completar la lista y sincronizar items marcados:
-
-```json
-{
-  "status": "COMPLETED",
-  "checkedItemIds": ["uuid"]
 }
 ```
 
@@ -162,6 +181,20 @@ Para completar la lista y sincronizar items marcados:
   "id": "uuid",
   "status": "ACTIVE",
   "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Regla:** solo se permite activar si el `DRAFT` tiene items. Tras activar, se crea un `DRAFT` vacío para mantener el borrador único.
+
+### POST /api/lists/:id/complete
+
+Completa una lista activa y sincroniza items marcados.
+
+**Request**
+
+```json
+{
+  "checkedItemIds": ["uuid"]
 }
 ```
 
@@ -181,15 +214,15 @@ Para completar la lista y sincronizar items marcados:
 
 Sin contenido (autosave descartado).
 
-### POST /api/lists/:id/items
+### POST /api/lists/:id/items/from-catalog
 
 **Request**
 
 ```json
 {
-  "name": "Milk",
-  "qty": 2,
-  "note": "Optional note"
+  "source": "mercadona",
+  "productId": "123",
+  "qty": 2
 }
 ```
 
@@ -198,10 +231,18 @@ Sin contenido (autosave descartado).
 ```json
 {
   "id": "uuid",
+  "kind": "catalog",
   "name": "Milk",
   "qty": 2,
   "checked": false,
-  "note": "Optional note",
+  "source": "mercadona",
+  "sourceProductId": "123",
+  "thumbnail": "https://cdn.example.com/milk.png",
+  "price": 1.25,
+  "unitSize": 1,
+  "unitFormat": "L",
+  "unitPrice": 1.25,
+  "isApproxSize": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -213,8 +254,7 @@ Sin contenido (autosave descartado).
 ```json
 {
   "checked": true,
-  "qty": 3,
-  "note": "Updated note"
+  "qty": 3
 }
 ```
 
@@ -223,10 +263,18 @@ Sin contenido (autosave descartado).
 ```json
 {
   "id": "uuid",
+  "kind": "catalog",
   "name": "Milk",
   "qty": 3,
   "checked": true,
-  "note": "Updated note",
+  "source": "mercadona",
+  "sourceProductId": "123",
+  "thumbnail": "https://cdn.example.com/milk.png",
+  "price": 1.25,
+  "unitSize": 1,
+  "unitFormat": "L",
+  "unitPrice": 1.25,
+  "isApproxSize": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -241,29 +289,9 @@ Sin contenido (autosave descartado).
 }
 ```
 
-### POST /api/lists/:id/duplicate
-
-Duplica una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
-
 ### POST /api/lists/:id/reuse
 
-Reusa una lista completada creando una nueva lista en `DRAFT` con los mismos items sin marcar.
-
-> Nota: `/api/lists/:id/duplicate` se mantiene por compatibilidad, pero el endpoint preferido es `/api/lists/:id/reuse`.
-
-### PATCH /api/lists/:id/editing
-
-Marca una lista activa como en edición (`isEditing=true`).
-
-**Response 200**
-
-```json
-{
-  "id": "uuid",
-  "isEditing": true,
-  "updatedAt": "2024-01-01T00:00:00.000Z"
-}
-```
+Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el `DRAFT` único con los mismos items sin marcar.
 
 **Response 201**
 
@@ -275,16 +303,50 @@ Marca una lista activa como en edición (`isEditing=true`).
   "items": [
     {
       "id": "uuid",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
-      "note": "Optional note",
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+### PATCH /api/lists/:id/editing
+
+Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEditing=false`).
+
+**Request**
+
+```json
+{
+  "isEditing": true
+}
+```
+
+**Response 200**
+
+```json
+{
+  "id": "uuid",
+  "isEditing": true,
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### POST /api/lists/:id/finish-edit
+
+Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y reinicia el `DRAFT` único a vacío.
 
 ## Notas de implementación
 
@@ -296,7 +358,4 @@ Marca una lista activa como en edición (`isEditing=true`).
 
 ## Cambios previstos (API)
 
-- Añadir soporte de `isEditing` para marcar listas activas en edición (y bloquear edición en móvil).
-- Persistir `activatedAt` cuando una lista pasa a `ACTIVE`.
-- Ajustar `GET /api/lists` para incluir `status`, `itemCount`, `activatedAt` y excluir autosave/draft.
-- Renombrar el concepto `duplicate` como `reusar` en documentación y UI (el endpoint puede mantenerse con el mismo path).
+- Sin cambios pendientes relevantes.

@@ -1,4 +1,9 @@
-import type { AutosaveDraft, AutosaveDraftInput, AutosaveSummary } from "./types";
+import type {
+  AutosaveDraft,
+  AutosaveDraftInput,
+  AutosaveSummary,
+  LocalDraft,
+} from "./types";
 import {
   adaptAutosaveResponse,
   adaptAutosaveSummaryResponse,
@@ -14,20 +19,35 @@ type AutosaveServiceOptions = {
 
 export const saveLocalDraft = (draft: AutosaveDraftInput): void => {
   try {
-    localStorage.setItem(LOCAL_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    const storedDraft: LocalDraft = {
+      ...draft,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(
+      LOCAL_DRAFT_STORAGE_KEY,
+      JSON.stringify(storedDraft)
+    );
   } catch (error) {
     console.warn("No se pudo guardar el borrador local.", error);
   }
 };
 
-export const loadLocalDraft = (): AutosaveDraftInput | null => {
+export const loadLocalDraft = (): LocalDraft | null => {
   try {
     const stored = localStorage.getItem(LOCAL_DRAFT_STORAGE_KEY);
     if (!stored) {
       return null;
     }
 
-    return JSON.parse(stored) as AutosaveDraftInput;
+    const parsed = JSON.parse(stored) as LocalDraft;
+    if (typeof parsed.updatedAt === "string") {
+      return parsed;
+    }
+
+    return {
+      ...parsed,
+      updatedAt: new Date().toISOString(),
+    };
   } catch (error) {
     console.warn("No se pudo recuperar el borrador local.", error);
     return null;
@@ -48,6 +68,10 @@ export const getAutosave = async (
   const response = await fetch(AUTOSAVE_ENDPOINT, {
     credentials: "include",
   });
+
+  if (response.status === 204) {
+    return null;
+  }
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load autosave.");

@@ -225,12 +225,13 @@ paths:
         - cookieAuth: []
       responses:
         "200":
-          description: Borrador de autosave o null si no existe
+          description: Borrador de autosave
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/AutosaveDraft"
-                nullable: true
+        "204":
+          description: No hay borrador de autosave
         "401":
           $ref: "#/components/responses/NotAuthenticated"
     put:
@@ -318,11 +319,11 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ListNotFound"
-  /api/lists/{id}/status:
+  /api/lists/{id}/activate:
     patch:
       tags:
         - lists
-      summary: Actualizar estado de lista
+      summary: Activar lista
       security:
         - cookieAuth: []
       parameters:
@@ -336,7 +337,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateListStatusRequest"
+              $ref: "#/components/schemas/ActivateListRequest"
       responses:
         "200":
           description: Estado actualizado
@@ -398,39 +399,6 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ItemNotFound"
-  /api/lists/{id}/duplicate:
-    post:
-      deprecated: true
-      tags:
-        - lists
-      summary: Duplicar lista completada
-      security:
-        - cookieAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "201":
-          description: Lista duplicada
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DuplicateListResponse"
-        "400":
-          description: Error de transición inválida
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AppError"
-        "401":
-          $ref: "#/components/responses/NotAuthenticated"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "404":
-          $ref: "#/components/responses/ListNotFound"
   /api/lists/{id}/reuse:
     post:
       tags:
@@ -476,6 +444,12 @@ paths:
           required: true
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateListEditingRequest"
       responses:
         "200":
           description: Lista marcada como en edición
@@ -495,11 +469,11 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/ListNotFound"
-  /api/lists/{id}/items:
+  /api/lists/{id}/finish-edit:
     post:
       tags:
         - lists
-      summary: Añadir item manual a la lista
+      summary: Finalizar edición de lista activa
       security:
         - cookieAuth: []
       parameters:
@@ -508,21 +482,19 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddManualItemRequest"
       responses:
-        "201":
-          description: Item creado
+        "200":
+          description: Lista activa actualizada con el borrador
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListItemDto"
+                $ref: "#/components/schemas/ListDetail"
         "400":
-          $ref: "#/components/responses/ValidationError"
+          description: Error de transición inválida
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppError"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
         "403":
@@ -758,6 +730,21 @@ components:
             type: string
       required:
         - status
+    ActivateListRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE]
+      required:
+        - status
+    UpdateListEditingRequest:
+      type: object
+      properties:
+        isEditing:
+          type: boolean
+      required:
+        - isEditing
     UpdateListStatusResponse:
       type: object
       properties:
@@ -831,7 +818,6 @@ components:
           type: string
         isEditing:
           type: boolean
-          enum: [true]
         updatedAt:
           type: string
           format: date-time
@@ -905,8 +891,6 @@ components:
           type: number
         checked:
           type: boolean
-        note:
-          type: string
       required:
         - id
         - kind
@@ -927,8 +911,6 @@ components:
           type: number
         checked:
           type: boolean
-        note:
-          type: string
         source:
           type: string
           enum: [mercadona]
@@ -1029,21 +1011,6 @@ components:
         - itemCount
         - items
         - updatedAt
-    AddManualItemRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 120
-        qty:
-          type: integer
-          minimum: 1
-          maximum: 999
-        note:
-          type: string
-          maxLength: 240
-      required:
-        - name
     AddCatalogItemRequest:
       type: object
       properties:
@@ -1055,10 +1022,7 @@ components:
         qty:
           type: integer
           minimum: 1
-          maximum: 999
-        note:
-          type: string
-          maxLength: 240
+          maximum: 99
       required:
         - source
         - productId
@@ -1071,12 +1035,9 @@ components:
         qty:
           type: integer
           minimum: 1
-          maximum: 999
+          maximum: 99
         checked:
           type: boolean
-        note:
-          type: string
-          maxLength: 240
     ListItemDto:
       oneOf:
         - $ref: "#/components/schemas/ManualListItem"
@@ -1097,8 +1058,6 @@ components:
           type: number
         checked:
           type: boolean
-        note:
-          type: string
         updatedAt:
           type: string
           format: date-time
@@ -1123,8 +1082,6 @@ components:
           type: number
         checked:
           type: boolean
-        note:
-          type: string
         updatedAt:
           type: string
           format: date-time

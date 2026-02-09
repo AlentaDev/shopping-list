@@ -5,7 +5,7 @@ import {
   loadLocalDraft,
   saveLocalDraft,
 } from "./AutosaveService";
-import type { AutosaveDraftInput, AutosaveItemInput } from "./types";
+import type { AutosaveCatalogItemInput, AutosaveDraftInput } from "./types";
 
 type UseAutosaveDraftOptions = {
   enabled?: boolean;
@@ -21,13 +21,14 @@ type UseAutosaveDraftParams = {
 
 type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
 
-const mapListItemToAutosave = (item: ListItem): AutosaveItemInput => ({
+const mapListItemToAutosave = (
+  item: ListItem,
+): AutosaveCatalogItemInput => ({
   id: item.id,
   kind: "catalog",
   name: item.name,
   qty: item.quantity,
   checked: false,
-  note: "",
   source: "mercadona",
   sourceProductId: item.id,
   thumbnail: item.thumbnail ?? null,
@@ -40,6 +41,13 @@ const buildAutosaveDraft = (
 ): AutosaveDraftInput => ({
   title,
   items: items.map(mapListItemToAutosave),
+});
+
+const mapLocalDraftToInput = (
+  draft: AutosaveDraftInput & { updatedAt?: string }
+): AutosaveDraftInput => ({
+  title: draft.title,
+  items: draft.items,
 });
 
 export const useAutosaveDraft = (
@@ -76,7 +84,7 @@ export const useAutosaveDraft = (
     const localDraft = loadLocalDraft();
 
     if (localDraft && onRehydrate) {
-      onRehydrate(localDraft);
+      onRehydrate(mapLocalDraftToInput(localDraft));
     }
 
     hasRehydratedRef.current = true;

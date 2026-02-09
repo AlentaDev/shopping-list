@@ -7,12 +7,12 @@ import {
   ListStatusTransitionError,
 } from "./errors.js";
 
-type DuplicateListInput = {
+type ReuseListInput = {
   userId: string;
   listId: string;
 };
 
-type DuplicateListResult = {
+type ReuseListResult = {
   id: string;
   title: string;
   status: "DRAFT";
@@ -20,13 +20,13 @@ type DuplicateListResult = {
   updatedAt: string;
 };
 
-export class DuplicateList {
+export class ReuseList {
   constructor(
     private readonly listRepository: ListRepository,
     private readonly idGenerator: IdGenerator,
   ) {}
 
-  async execute(input: DuplicateListInput): Promise<DuplicateListResult> {
+  async execute(input: ReuseListInput): Promise<ReuseListResult> {
     const list = await this.listRepository.findById(input.listId);
     if (!list) {
       throw new ListNotFoundError();
@@ -40,10 +40,12 @@ export class DuplicateList {
       throw new ListStatusTransitionError();
     }
 
+    const lists = await this.listRepository.listByOwner(input.userId);
+    const existingDraft = findLatestDraft(lists);
     const now = new Date();
-    const newListId = this.idGenerator.generate();
-    const clonedItems = list.items.map((item) =>
-      duplicateItem(item, newListId, now, this.idGenerator),
+    const newListId = existingDraft?.id ?? this.idGenerator.generate();
+    const reusedItems = list.items.map((item) =>
+      reuseItem(item, newListId, now, this.idGenerator),
     );
     const newList: List = {
       id: newListId,
@@ -51,9 +53,9 @@ export class DuplicateList {
       title: list.title,
       isAutosaveDraft: false,
       status: "DRAFT",
-      items: clonedItems,
+      items: reusedItems,
       isEditing: false,
-      createdAt: now,
+      createdAt: existingDraft?.createdAt ?? now,
       updatedAt: now,
     };
 
@@ -69,7 +71,7 @@ export class DuplicateList {
   }
 }
 
-function duplicateItem(
+function reuseItem(
   item: ListItem,
   listId: string,
   now: Date,
@@ -83,7 +85,6 @@ function duplicateItem(
       name: item.name,
       qty: item.qty,
       checked: false,
-      note: item.note,
       createdAt: now,
       updatedAt: now,
     };
@@ -104,8 +105,20 @@ function duplicateItem(
     isApproxSizeSnapshot: item.isApproxSizeSnapshot,
     qty: item.qty,
     checked: false,
-    note: item.note,
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function findLatestDraft(lists: List[]): List | null {
+  const drafts = lists.filter(
+    (candidate) => candidate.status === "DRAFT" && !candidate.isAutosaveDraft,
+  );
+  if (drafts.length === 0) {
+    return null;
+  }
+
+  return drafts.reduce((latest, current) =>
+    current.updatedAt > latest.updatedAt ? current : latest,
+  );
 }

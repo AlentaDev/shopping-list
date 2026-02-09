@@ -8,11 +8,12 @@ import {
 type StartListEditingInput = {
   userId: string;
   listId: string;
+  isEditing: boolean;
 };
 
 type StartListEditingResult = {
   id: string;
-  isEditing: true;
+  isEditing: boolean;
   updatedAt: string;
 };
 
@@ -35,14 +36,14 @@ export class StartListEditing {
       throw new ListStatusTransitionError();
     }
 
-    list.isEditing = true;
+    list.isEditing = input.isEditing;
     list.updatedAt = new Date();
 
     await this.listRepository.save(list);
 
     return {
       id: list.id,
-      isEditing: true,
+      isEditing: list.isEditing,
       updatedAt: list.updatedAt.toISOString(),
     };
   }

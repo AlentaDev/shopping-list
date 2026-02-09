@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { activateList } from "./ListStatusService";
-import { LIST_STATUS } from "./listStatus";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 
 vi.mock("./LocalDraftSyncService", () => ({
@@ -46,7 +46,7 @@ describe("ListStatusService", () => {
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-1/status",
+      "/api/lists/list-1/activate",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
@@ -78,7 +78,7 @@ describe("ListStatusService", () => {
 
     expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-2/status",
+      "/api/lists/list-2/activate",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),

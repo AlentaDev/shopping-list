@@ -1,4 +1,4 @@
-import { LIST_STATUS } from "../listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type {
   ListCollection,
   ListDetail,
@@ -25,12 +25,11 @@ type ListCollectionPayload = {
 
 type ListItemPayload = {
   id?: string;
-  kind?: "manual" | "catalog";
+  kind?: "catalog";
   name?: string;
   qty?: number;
   checked?: boolean;
   updatedAt?: string;
-  note?: string;
   thumbnail?: string | null;
   price?: number | null;
   unitSize?: number | null;
@@ -67,12 +66,11 @@ const resolveStatus = (status?: string): ListSummary["status"] => {
 
 const adaptListItem = (item: ListItemPayload): ListItem => ({
   id: item.id ?? "",
-  kind: item.kind ?? "manual",
+  kind: item.kind ?? "catalog",
   name: item.name ?? "",
   qty: item.qty ?? 0,
   checked: item.checked ?? false,
   updatedAt: item.updatedAt ?? "",
-  note: item.note,
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
   unitSize: item.unitSize ?? null,

@@ -1,16 +1,11 @@
-import type {
-  AutosaveDraft,
-  AutosaveItem,
-  AutosaveSummary,
-} from "../types";
+import type { AutosaveDraft, AutosaveItem, AutosaveSummary } from "../types";
 
 type AutosaveItemPayload = {
   id?: string;
-  kind?: "manual" | "catalog";
+  kind?: "catalog";
   name?: string;
   qty?: number;
   checked?: boolean;
-  note?: string | null;
   updatedAt?: string;
   thumbnail?: string | null;
   price?: number | null;
@@ -37,23 +32,24 @@ type AutosaveSummaryPayload = {
 
 const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   id: item.id ?? "",
-  kind: item.kind ?? "manual",
+  kind: item.kind ?? "catalog",
   name: item.name ?? "",
   qty: item.qty ?? 0,
   checked: item.checked ?? false,
-  note: item.note ?? null,
   updatedAt: item.updatedAt ?? "",
+  source: item.source ?? "mercadona",
+  sourceProductId: item.sourceProductId ?? item.id ?? "",
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
   unitSize: item.unitSize ?? null,
   unitFormat: item.unitFormat ?? null,
   unitPrice: item.unitPrice ?? null,
   isApproxSize: item.isApproxSize ?? false,
-  source: item.source,
-  sourceProductId: item.sourceProductId,
 });
 
-export const adaptAutosaveResponse = (payload: unknown): AutosaveDraft | null => {
+export const adaptAutosaveResponse = (
+  payload: unknown,
+): AutosaveDraft | null => {
   if (payload === null) {
     return null;
   }
@@ -63,15 +59,13 @@ export const adaptAutosaveResponse = (payload: unknown): AutosaveDraft | null =>
   return {
     id: data.id ?? "",
     title: data.title ?? "",
-    items: Array.isArray(data.items)
-      ? data.items.map(adaptAutosaveItem)
-      : [],
+    items: Array.isArray(data.items) ? data.items.map(adaptAutosaveItem) : [],
     updatedAt: data.updatedAt ?? "",
   };
 };
 
 export const adaptAutosaveSummaryResponse = (
-  payload: unknown
+  payload: unknown,
 ): AutosaveSummary => {
   const data = payload as AutosaveSummaryPayload;
 

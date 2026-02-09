@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import {
-  LIST_STATUS,
   getListActions,
   type ListActionKey,
-  type ListStatus,
 } from "../services/listActions";
 import type { ListSummary } from "../services/types";
 
@@ -12,12 +11,10 @@ type TabKey = "ACTIVE" | "COMPLETED";
 
 type ListsScreenProps = {
   lists: ListSummary[];
-  onAction: (listId: string, action: ListActionKey) => void;
-  onCreate: () => void;
+  onAction: (list: ListSummary, action: ListActionKey) => void;
   hasDraftItems?: boolean;
   isLoading?: boolean;
   actionLoading?: { listId: string; action: ListActionKey } | null;
-  isCreating?: boolean;
 };
 
 type ListActionButtonProps = {
@@ -84,10 +81,12 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
         {getListActions(list.status).map((action) => {
           const isLoadingAction =
             isListActionLoading && actionLoading?.action === action;
+          const isActivateDisabled =
+            action === "activate" && list.itemCount === 0;
           const label = isLoadingAction
             ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
             : ACTION_LABELS[action];
-          const isDisabled = isListActionLoading;
+          const isDisabled = isListActionLoading || isActivateDisabled;
 
           return (
             <ListActionButton
@@ -100,6 +99,11 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
           );
         })}
       </div>
+      {list.status === LIST_STATUS.DRAFT && list.itemCount === 0 ? (
+        <p className="text-xs text-slate-400">
+          {UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE}
+        </p>
+      ) : null}
     </article>
   );
 };
@@ -124,6 +128,7 @@ const ACTION_LABELS: Record<ListActionKey, string> = {
 };
 
 const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
+  [LIST_STATUS.DRAFT]: "ACTIVE",
   [LIST_STATUS.ACTIVE]: "ACTIVE",
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
@@ -131,11 +136,9 @@ const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
 const ListsScreen = ({
   lists,
   onAction,
-  onCreate,
   hasDraftItems = false,
   isLoading = false,
   actionLoading = null,
-  isCreating = false,
 }: ListsScreenProps) => {
   const [activeTab, setActiveTab] = useState<TabKey>("ACTIVE");
   const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
@@ -160,7 +163,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(list.id, action);
+    onAction(list, action);
   };
 
   const handleConfirmDelete = () => {
@@ -168,7 +171,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(pendingDelete.id, "delete");
+    onAction(pendingDelete, "delete");
     setPendingDelete(null);
   };
 
@@ -177,7 +180,7 @@ const ListsScreen = ({
       return;
     }
 
-    onAction(pendingDraftLoss.list.id, pendingDraftLoss.action);
+    onAction(pendingDraftLoss.list, pendingDraftLoss.action);
     setPendingDraftLoss(null);
   };
 
@@ -201,10 +204,6 @@ const ListsScreen = ({
       ))}
     </div>
   );
-
-  const createButtonLabel = isCreating
-    ? UI_TEXT.LISTS.NEW_LIST_LOADING_LABEL
-    : UI_TEXT.LISTS.NEW_LIST_LABEL;
 
   const renderListsContent = () => {
     if (isLoading) {
@@ -243,18 +242,6 @@ const ListsScreen = ({
             {UI_TEXT.LISTS.TITLE}
           </h1>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          disabled={isCreating}
-          className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-            isCreating
-              ? "cursor-not-allowed border-slate-200 text-slate-300"
-              : "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900"
-          }`}
-        >
-          {createButtonLabel}
-        </button>
       </header>
 
       <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 text-sm">

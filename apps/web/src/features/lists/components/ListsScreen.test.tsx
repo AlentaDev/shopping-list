@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import ListsScreen from "./ListsScreen";
-import { LIST_STATUS } from "../services/listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type { ListSummary } from "../services/types";
 
 const sampleLists: ListSummary[] = [
@@ -17,6 +17,15 @@ const sampleLists: ListSummary[] = [
     itemCount: 3,
     isEditing: false,
     status: LIST_STATUS.ACTIVE,
+  },
+  {
+    id: "draft-1",
+    title: "Vacía",
+    updatedAt: "2024-01-10",
+    activatedAt: null,
+    itemCount: 0,
+    isEditing: false,
+    status: LIST_STATUS.DRAFT,
   },
   {
     id: "completed-1",
@@ -31,9 +40,7 @@ const sampleLists: ListSummary[] = [
 
 describe("ListsScreen", () => {
   it("muestra las tabs y el estado vacío por defecto", () => {
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={[]} onAction={vi.fn()} />);
 
     expect(
       screen.getByRole("heading", { name: UI_TEXT.LISTS.TITLE })
@@ -47,9 +54,7 @@ describe("ListsScreen", () => {
   });
 
   it("cambia entre tabs y muestra el texto vacío correspondiente", async () => {
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={[]} onAction={vi.fn()} />);
 
     await userEvent.click(
       screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
@@ -61,9 +66,7 @@ describe("ListsScreen", () => {
   });
 
   it("muestra acciones según el estado", async () => {
-    render(
-      <ListsScreen lists={sampleLists} onAction={vi.fn()} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={sampleLists} onAction={vi.fn()} />);
 
     expect(screen.getByText("Cena")).toBeInTheDocument();
     expect(
@@ -88,13 +91,10 @@ describe("ListsScreen", () => {
 
   it("dispara callbacks de acción y creación", async () => {
     const onAction = vi.fn();
-    const onCreate = vi.fn();
-
     render(
       <ListsScreen
         lists={sampleLists}
         onAction={onAction}
-        onCreate={onCreate}
         hasDraftItems={false}
       />
     );
@@ -103,7 +103,7 @@ describe("ListsScreen", () => {
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "complete");
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "complete");
 
     await userEvent.click(
       screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
@@ -113,13 +113,7 @@ describe("ListsScreen", () => {
       screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE })
     );
 
-    expect(onAction).toHaveBeenCalledWith("completed-1", "reuse");
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    expect(onCreate).toHaveBeenCalledTimes(1);
+    expect(onAction).toHaveBeenCalledWith(sampleLists[2], "reuse");
   });
 
   it("muestra aviso de pérdida de borrador al editar con ítems", async () => {
@@ -129,13 +123,17 @@ describe("ListsScreen", () => {
       <ListsScreen
         lists={sampleLists}
         onAction={onAction}
-        onCreate={vi.fn()}
         hasDraftItems
       />
     );
 
+    const activeCard = screen.getByText("Cena").closest("article");
+    expect(activeCard).not.toBeNull();
+
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT })
+      within(activeCard as HTMLElement).getByRole("button", {
+        name: UI_TEXT.LISTS.ACTIONS.EDIT,
+      })
     );
 
     expect(
@@ -148,18 +146,21 @@ describe("ListsScreen", () => {
       })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "edit");
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "edit");
   });
 
   it("muestra confirmación antes de borrar una lista", async () => {
     const onAction = vi.fn();
 
-    render(
-      <ListsScreen lists={sampleLists} onAction={onAction} onCreate={vi.fn()} />
-    );
+    render(<ListsScreen lists={sampleLists} onAction={onAction} />);
+
+    const activeCard = screen.getByText("Cena").closest("article");
+    expect(activeCard).not.toBeNull();
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
+      within(activeCard as HTMLElement).getByRole("button", {
+        name: UI_TEXT.LISTS.ACTIONS.DELETE,
+      })
     );
 
     expect(
@@ -172,21 +173,7 @@ describe("ListsScreen", () => {
       })
     );
 
-    expect(onAction).toHaveBeenCalledWith("active-1", "delete");
-  });
-
-  it("dispara onCreate desde el botón principal", async () => {
-    const onCreate = vi.fn();
-
-    render(
-      <ListsScreen lists={[]} onAction={vi.fn()} onCreate={onCreate} />
-    );
-
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.NEW_LIST_LABEL })
-    );
-
-    expect(onCreate).toHaveBeenCalledTimes(1);
+    expect(onAction).toHaveBeenCalledWith(sampleLists[0], "delete");
   });
 
   it("muestra skeletons cuando está cargando", () => {
@@ -194,7 +181,6 @@ describe("ListsScreen", () => {
       <ListsScreen
         lists={[]}
         onAction={vi.fn()}
-        onCreate={vi.fn()}
         isLoading
       />
     );
@@ -207,7 +193,6 @@ describe("ListsScreen", () => {
       <ListsScreen
         lists={sampleLists}
         onAction={vi.fn()}
-        onCreate={vi.fn()}
         actionLoading={{ listId: "active-1", action: "complete" }}
       />
     );
@@ -217,5 +202,20 @@ describe("ListsScreen", () => {
     });
 
     expect(loadingButton).toBeDisabled();
+  });
+
+  it("deshabilita activar cuando la lista no tiene productos", () => {
+    const onAction = vi.fn();
+
+    render(<ListsScreen lists={sampleLists} onAction={onAction} />);
+
+    const activateButton = screen.getByRole("button", {
+      name: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
+    });
+
+    expect(activateButton).toBeDisabled();
+    expect(
+      screen.getByText(UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE),
+    ).toBeInTheDocument();
   });
 });

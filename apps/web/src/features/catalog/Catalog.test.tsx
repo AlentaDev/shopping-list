@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import Catalog from "./Catalog";
 import { ListProvider } from "@src/context/ListContext";
 import { ToastProvider } from "@src/context/ToastContext";
+import Toast from "@src/shared/components/toast/Toast";
 
 vi.mock("./services/useCatalog", () => ({
   useCatalog: () => ({
@@ -63,6 +65,7 @@ describe("Catalog", () => {
       <ToastProvider>
         <ListProvider>
           <Catalog />
+          <Toast />
         </ListProvider>
       </ToastProvider>,
     );
@@ -78,5 +81,27 @@ describe("Catalog", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Ensaimada")).toBeInTheDocument();
     expect(screen.getByText("Empanada")).toBeInTheDocument();
+  });
+
+  it("shows a toast when adding a product", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    const toastStack = screen.getByTestId("toast-stack");
+
+    expect(
+      within(toastStack).getByText("Añadido a la lista"),
+    ).toBeInTheDocument();
+    expect(within(toastStack).getByText("Ensaimada")).toBeInTheDocument();
   });
 });

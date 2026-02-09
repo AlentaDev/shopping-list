@@ -5,7 +5,7 @@ import {
   adaptListStatusSummaryResponse,
   adaptListSummaryResponse,
 } from "./adapters/ListAdapter";
-import { LIST_STATUS } from "./listActions";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type {
   ListCollection,
   ListDetail,
@@ -80,7 +80,7 @@ export const activateList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListStatusSummary> => {
-  const response = await fetch(`/api/lists/${listId}/status`, {
+  const response = await fetch(`/api/lists/${listId}/activate`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

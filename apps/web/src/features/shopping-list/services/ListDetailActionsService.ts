@@ -1,20 +1,32 @@
+import type { ShoppingListItem } from "../types";
+import { adaptShoppingListItems } from "./adapters/ShoppingListItemAdapter";
+
 type ListActionOptions = {
   errorMessage?: string;
+};
+
+type ReuseListItemPayload = {
+  id?: string;
+  kind?: "catalog";
+  name?: string;
+  qty?: number;
+  checked?: boolean;
+  thumbnail?: string | null;
+  price?: number | null;
+};
+
+type ReuseListPayload = {
+  id?: string;
+  title?: string;
+  status?: string;
+  items?: ReuseListItemPayload[];
 };
 
 type ReuseListResponse = {
   id: string;
   title: string;
   status?: string;
-  items?: Array<{
-    id?: string;
-    kind?: "manual" | "catalog";
-    name?: string;
-    qty?: number;
-    checked?: boolean;
-    thumbnail?: string | null;
-    price?: number | null;
-  }>;
+  items: ShoppingListItem[];
 };
 
 export const startListEditing = async (
@@ -23,6 +35,10 @@ export const startListEditing = async (
 ): Promise<void> => {
   const response = await fetch(`/api/lists/${listId}/editing`, {
     method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ isEditing: true }),
   });
 
   if (!response.ok) {
@@ -44,7 +60,14 @@ export const reuseList = async (
     throw new Error(options.errorMessage ?? "Unable to reuse list.");
   }
 
-  return (await response.json()) as ReuseListResponse;
+  const data = (await response.json()) as ReuseListPayload;
+
+  return {
+    id: data.id ?? "",
+    title: data.title ?? "",
+    status: data.status,
+    items: adaptShoppingListItems(data.items),
+  };
 };
 
 export const deleteList = async (

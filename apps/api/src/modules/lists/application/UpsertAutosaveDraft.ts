@@ -8,7 +8,6 @@ type AutosaveItemInput =
       name: string;
       qty: number;
       checked: boolean;
-      note?: string;
     }
   | {
       id: string;
@@ -16,7 +15,6 @@ type AutosaveItemInput =
       name: string;
       qty: number;
       checked: boolean;
-      note?: string;
       source: "mercadona";
       sourceProductId: string;
       thumbnail?: string | null;
@@ -92,7 +90,6 @@ function toListItem(
       name: item.name,
       qty: item.qty,
       checked: item.checked,
-      note: item.note,
       createdAt: now,
       updatedAt: now,
     };
@@ -113,7 +110,6 @@ function toListItem(
     isApproxSizeSnapshot: item.isApproxSize ?? false,
     qty: item.qty,
     checked: item.checked,
-    note: item.note,
     createdAt: now,
     updatedAt: now,
   };

@@ -1,4 +1,4 @@
-import type { ListStatus } from "./listActions";
+import type { ListStatus } from "@src/shared/domain/listStatus";
 
 export type ListSummary = {
   id: string;
@@ -12,12 +12,11 @@ export type ListSummary = {
 
 export type ListItem = {
   id: string;
-  kind: "manual" | "catalog";
+  kind: "catalog";
   name: string;
   qty: number;
   checked: boolean;
   updatedAt: string;
-  note?: string;
   thumbnail?: string | null;
   price?: number | null;
   unitSize?: number | null;

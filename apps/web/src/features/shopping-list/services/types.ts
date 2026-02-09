@@ -1,13 +1,4 @@
-import type { ListStatus } from "./listStatus";
-
-export type AutosaveManualItemInput = {
-  id: string;
-  kind: "manual";
-  name: string;
-  qty: number;
-  checked: boolean;
-  note?: string | null;
-};
+import type { ListStatus } from "@src/shared/domain/listStatus";
 
 export type AutosaveCatalogItemInput = {
   id: string;
@@ -15,7 +6,6 @@ export type AutosaveCatalogItemInput = {
   name: string;
   qty: number;
   checked: boolean;
-  note?: string | null;
   source: "mercadona";
   sourceProductId: string;
   thumbnail?: string | null;
@@ -26,16 +16,16 @@ export type AutosaveCatalogItemInput = {
   isApproxSize?: boolean;
 };
 
-export type AutosaveItemInput =
-  | AutosaveManualItemInput
-  | AutosaveCatalogItemInput;
-
 export type AutosaveDraftInput = {
   title: string;
-  items: AutosaveItemInput[];
+  items: AutosaveCatalogItemInput[];
 };
 
-export type AutosaveItem = AutosaveItemInput & {
+export type LocalDraft = AutosaveDraftInput & {
+  updatedAt: string;
+};
+
+export type AutosaveItem = AutosaveCatalogItemInput & {
   updatedAt: string;
 };
 

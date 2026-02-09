@@ -43,7 +43,7 @@ describe("StartListEditing", () => {
     vi.setSystemTime(now);
 
     await expect(
-      useCase.execute({ userId: "user-1", listId: "list-1" }),
+      useCase.execute({ userId: "user-1", listId: "list-1", isEditing: true }),
     ).resolves.toEqual({
       id: "list-1",
       isEditing: true,
@@ -77,7 +77,7 @@ describe("StartListEditing", () => {
     await listRepository.save(list);
 
     await expect(
-      useCase.execute({ userId: "user-1", listId: "list-1" }),
+      useCase.execute({ userId: "user-1", listId: "list-1", isEditing: true }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
   });
 
@@ -86,7 +86,7 @@ describe("StartListEditing", () => {
     const useCase = new StartListEditing(listRepository);
 
     await expect(
-      useCase.execute({ userId: "user-1", listId: "missing" }),
+      useCase.execute({ userId: "user-1", listId: "missing", isEditing: true }),
     ).rejects.toBeInstanceOf(ListNotFoundError);
   });
 
@@ -109,7 +109,45 @@ describe("StartListEditing", () => {
     await listRepository.save(list);
 
     await expect(
-      useCase.execute({ userId: "user-2", listId: "list-1" }),
+      useCase.execute({ userId: "user-2", listId: "list-1", isEditing: true }),
     ).rejects.toBeInstanceOf(ListForbiddenError);
+  });
+
+  it("allows disabling editing on an active list", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new StartListEditing(listRepository);
+    const list: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+    const now = new Date("2024-01-03T10:00:00.000Z");
+
+    await listRepository.save(list);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+
+    await expect(
+      useCase.execute({ userId: "user-1", listId: "list-1", isEditing: false }),
+    ).resolves.toEqual({
+      id: "list-1",
+      isEditing: false,
+      updatedAt: now.toISOString(),
+    });
+
+    await expect(listRepository.findById("list-1")).resolves.toMatchObject({
+      isEditing: false,
+      updatedAt: now,
+    });
+
+    vi.useRealTimers();
   });
 });

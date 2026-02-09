@@ -4,7 +4,6 @@ import { AppError } from "@src/shared/errors/appError.js";
 import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 import type { AuthenticatedRequest } from "@src/shared/web/requireAuth.js";
 import { AddCatalogItem } from "../application/AddCatalogItem.js";
-import { AddManualItem } from "../application/AddManualItem.js";
 import { CreateList } from "../application/CreateList.js";
 import { GetList } from "../application/GetList.js";
 import { ListLists } from "../application/ListLists.js";
@@ -15,20 +14,21 @@ import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
 import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
-import { DuplicateList } from "../application/DuplicateList.js";
+import { ReuseList } from "../application/ReuseList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
 import { StartListEditing } from "../application/StartListEditing.js";
+import { FinishListEdit } from "../application/FinishListEdit.js";
 import {
   addCatalogItemSchema,
-  addItemSchema,
+  activateListSchema,
   completeListSchema,
   createListSchema,
+  editingSchema,
   itemParamsSchema,
   listParamsSchema,
   listQuerySchema,
   patchItemSchema,
   upsertAutosaveSchema,
-  updateListStatusSchema,
 } from "./validation.js";
 
 type ListsRouterDependencies = {
@@ -36,14 +36,14 @@ type ListsRouterDependencies = {
   listLists: ListLists;
   getList: GetList;
   deleteList: DeleteList;
-  addManualItem: AddManualItem;
   addCatalogItem: AddCatalogItem;
   updateItem: UpdateItem;
   removeItem: RemoveItem;
   updateListStatus: UpdateListStatus;
   completeList: CompleteList;
-  duplicateList: DuplicateList;
+  reuseList: ReuseList;
   startListEditing: StartListEditing;
+  finishListEdit: FinishListEdit;
   getAutosaveDraft: GetAutosaveDraft;
   discardAutosaveDraft: DiscardAutosaveDraft;
   upsertAutosaveDraft: UpsertAutosaveDraft;
@@ -88,6 +88,10 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     try {
       const userId = getUserId(req);
       const response = await deps.getAutosaveDraft.execute(userId);
+      if (!response) {
+        res.status(204).end();
+        return;
+      }
 
       res.status(200).json(response);
     } catch (error) {
@@ -134,16 +138,15 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     }
   });
 
-  router.patch("/:id/status", async (req, res, next) => {
+  router.patch("/:id/activate", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
-      const input = updateListStatusSchema.parse(req.body);
+      const input = activateListSchema.parse(req.body);
       const userId = getUserId(req);
       const response = await deps.updateListStatus.execute({
         userId,
         listId: params.id,
         status: input.status,
-        checkedItemIds: input.checkedItemIds,
       });
 
       res.status(200).json(response);
@@ -169,26 +172,11 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     }
   });
 
-  router.post("/:id/duplicate", async (req, res, next) => {
-    try {
-      const params = listParamsSchema.parse(req.params);
-      const userId = getUserId(req);
-      const response = await deps.duplicateList.execute({
-        userId,
-        listId: params.id,
-      });
-
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  });
-
   router.post("/:id/reuse", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
       const userId = getUserId(req);
-      const response = await deps.duplicateList.execute({
+      const response = await deps.reuseList.execute({
         userId,
         listId: params.id,
       });
@@ -202,8 +190,25 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.patch("/:id/editing", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
+      const input = editingSchema.parse(req.body);
       const userId = getUserId(req);
       const response = await deps.startListEditing.execute({
+        userId,
+        listId: params.id,
+        isEditing: input.isEditing,
+      });
+
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:id/finish-edit", async (req, res, next) => {
+    try {
+      const params = listParamsSchema.parse(req.params);
+      const userId = getUserId(req);
+      const response = await deps.finishListEdit.execute({
         userId,
         listId: params.id,
       });
@@ -229,25 +234,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
     }
   });
 
-  router.post("/:id/items", async (req, res, next) => {
-    try {
-      const params = listParamsSchema.parse(req.params);
-      const input = addItemSchema.parse(req.body);
-      const userId = getUserId(req);
-      const response = await deps.addManualItem.execute({
-        userId,
-        listId: params.id,
-        name: input.name,
-        qty: input.qty,
-        note: input.note,
-      });
-
-      res.status(201).json(response);
-    } catch (error) {
-      next(error);
-    }
-  });
-
   router.post("/:id/items/from-catalog", async (req, res, next) => {
     try {
       const params = listParamsSchema.parse(req.params);
@@ -258,7 +244,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         listId: params.id,
         productId: input.productId,
         qty: input.qty,
-        note: input.note,
       });
 
       res.status(201).json(response);
@@ -279,7 +264,6 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
         name: input.name,
         qty: input.qty,
         checked: input.checked,
-        note: input.note,
       });
 
       res.status(200).json(response);

@@ -5,6 +5,8 @@ type ListModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onReadyToShop?: () => void;
+  itemCount?: number;
+  isReadyToShopDisabled?: boolean;
   children: ReactNode;
   title?: string;
 };
@@ -13,6 +15,8 @@ const ListModal = ({
   isOpen,
   onClose,
   onReadyToShop,
+  itemCount,
+  isReadyToShopDisabled = false,
   children,
   title,
 }: ListModalProps) => {
@@ -54,6 +58,9 @@ const ListModal = ({
     return null;
   }
 
+  const isEmptyList = itemCount === 0;
+  const shouldDisableReadyToShop = isReadyToShopDisabled || isEmptyList;
+
   return (
     <div className="fixed inset-0 z-50">
       <button
@@ -78,21 +85,26 @@ const ListModal = ({
           <div className="px-6 py-4">{children}</div>
           <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
             {onReadyToShop ? (
-              <button
-                type="button"
-                onClick={onReadyToShop}
-                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
-              >
-                {UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL}
-              </button>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <button
+                  type="button"
+                  onClick={onReadyToShop}
+                  disabled={shouldDisableReadyToShop}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold text-white transition ${
+                    shouldDisableReadyToShop
+                      ? "cursor-not-allowed bg-emerald-200"
+                      : "bg-emerald-500 hover:bg-emerald-600"
+                  }`}
+                >
+                  {UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL}
+                </button>
+                {isEmptyList ? (
+                  <p className="text-xs text-slate-500">
+                    {UI_TEXT.LIST_MODAL.READY_TO_SHOP_EMPTY_MESSAGE}
+                  </p>
+                ) : null}
+              </div>
             ) : null}
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-            >
-              {UI_TEXT.LIST_MODAL.CLOSE_LABEL}
-            </button>
           </div>
         </div>
       </div>

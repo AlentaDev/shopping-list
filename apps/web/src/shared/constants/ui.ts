@@ -117,11 +117,20 @@ export const UI_TEXT = {
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: DELETE_CONFIRM_LABEL,
     },
+    TOAST_REMOVED_MESSAGE: "Eliminado de la lista",
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos encontrado un borrador guardado",
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",
       CONTINUE_LABEL: "Continuar",
       DISCARD_LABEL: "Descartar",
+      RESTORED_TOAST_MESSAGE: "Borrador remoto restaurado",
+    },
+    AUTOSAVE_CONFLICT: {
+      TITLE: "¿Con cuál borrador te quedas?",
+      MESSAGE:
+        "Detectamos cambios distintos en el mismo momento. Elige qué versión mantener.",
+      KEEP_LOCAL_LABEL: "Mantener local",
+      KEEP_REMOTE_LABEL: "Mantener remoto",
     },
     DETAIL_ACTIONS: {
       EDIT: "Editar",
@@ -146,19 +155,18 @@ export const UI_TEXT = {
     CLOSE_LABEL: "Cerrar",
     CLOSE_MODAL_LABEL: "Cerrar modal",
     SAVE_DRAFT_LABEL: "Guardar borrador",
-    READY_TO_SHOP_LABEL: "Lista lista para comprar",
+    READY_TO_SHOP_LABEL: "Finalizar lista",
+    READY_TO_SHOP_EMPTY_MESSAGE: "Añade al menos un producto para finalizar.",
   },
   LISTS: {
     TITLE: "Mis listas",
-    NEW_LIST_LABEL: "Nueva lista",
-    NEW_LIST_LOADING_LABEL: "Creando...",
     TABS: {
       ACTIVE: "Activas",
       COMPLETED: "Historial",
     },
     ACTIONS: {
       EDIT: "Editar",
-      ACTIVATE: "Lista lista para comprar",
+      ACTIVATE: "Finalizar lista",
       COMPLETE: "Completar compra",
       REUSE: "Reusar",
       DELETE: "Borrar",
@@ -193,6 +201,7 @@ export const UI_TEXT = {
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: "Continuar",
     },
+    ACTIVATE_DISABLED_MESSAGE: "Añade productos para poder finalizarla.",
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",
       MESSAGE: "Puedes continuar o descartarlo si ya no lo necesitas.",

@@ -9,20 +9,22 @@ Permitir a los usuarios **preparar listas de la compra en PC**, guardarlas en su
 ## Estados de una lista
 
 * **LOCAL_DRAFT**: único borrador en navegador cuando no hay sesión.
-* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse.
+* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse. Puede estar vacío y se reutiliza entre flujos (reusar, editar, crear).
 * **ACTIVE**: lista preparada para comprar, visible en web y móvil.
 * **COMPLETED**: compra finalizada, visible en historial.
 
 ### Autosave con sesión (decisión)
 
-Cuando el usuario ya está autenticado, el autosave se persiste en servidor.
+Cuando el usuario ya está autenticado, el autosave se persiste en servidor y se crea
+si no existe (aunque esté vacío).
 La comparación entre el borrador local y el autosave remoto ocurre **una sola vez**
 al iniciar la app o tras login. La regla es:
 
-* Gana el borrador con más productos (`items.length`).
-* Si hay conflicto (local + remoto), se pide al usuario elegir.
+* Se compara por `updatedAt` (más reciente gana).
+* Si ambos existen, `updatedAt` empata y el contenido difiere, se pide al usuario elegir.
 * Si elige el local, se sincroniza el autosave remoto con el local.
 * Si elige el remoto, se reemplaza el borrador local.
+* Si el local está vacío y el remoto tiene items, se usa el remoto automáticamente y se muestra un toast de recuperación.
 
 ---
 
@@ -46,7 +48,7 @@ El usuario puede crear una lista sin tener cuenta. La lista se guarda automátic
 **Flujo principal:**
 
 1. El usuario accede a la web sin iniciar sesión.
-2. Añade productos, cantidades y notas.
+2. Añade productos, cantidades o los borra.
 3. La lista se autoguarda en el navegador.
 4. Al recargar la página, la lista sigue disponible.
 
@@ -66,80 +68,73 @@ existen, el usuario decide cuál mantener.
 
 1. El usuario pulsa “Registrarse / Iniciar sesión”.
 2. El sistema detecta un `LOCAL_DRAFT`.
-3. Si existe autosave remoto, se muestra un modal para elegir:
-   * Mantener la lista local → se sincroniza el autosave remoto con el local.
-   * Mantener la lista remota → se reemplaza el borrador local.
-4. Si no existe autosave remoto, se sincroniza el borrador local al autosave remoto.
+3. Si existe autosave remoto, se compara por `updatedAt`:
+   * Si el local está vacío y el remoto tiene items, se usa el remoto y se muestra un toast.
+   * Si `updatedAt` es distinto, se mantiene el más reciente.
+   * Si `updatedAt` empata y el contenido difiere, se muestra un modal para elegir:
+     - Mantener la lista local → se sincroniza el autosave remoto con el local.
+     - Mantener la lista remota → se reemplaza el borrador local.
+4. Si no existe autosave remoto, se sincroniza el borrador local al autosave remoto creando uno nuevo.
 
 **Estado resultante:** `DRAFT`
 
 ---
 
-### CU-03: Crear y editar lista en borrador (web)
+### CU-03A: Crear y editar lista en borrador (web)
 
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-El usuario crea y edita listas en modo borrador desde el PC.
+El usuario crea y edita listas en modo borrador desde el PC. Al autenticarse, se asegura
+un `DRAFT` único (puede estar vacío) para reutilizarlo en los distintos flujos.
 
 **Flujo principal:**
 
-1. El usuario crea una nueva lista.
-2. Añade, edita o elimina productos.
-3. La lista se autoguarda localmente; si hay sesión, también se sincroniza por autosave.
-4. El usuario puede cerrar sesión o refrescar sin perder cambios.
-5. El usuario puede pulsar “Confirmar lista” para pasarla a `ACTIVE`.
+1. Al autenticarse, se crea el `DRAFT` si no existe (aunque esté vacío).
+2. Al añadir el primer item, el `DRAFT` se actualiza y se inicia el autosave remoto.
+3. Añade, edita o elimina productos.
+4. La lista se autoguarda localmente; si hay sesión, también se sincroniza por autosave.
+5. El usuario puede cerrar sesión o refrescar sin perder cambios.
+6. El usuario puede pulsar “Finalizar lista” para pasarla a `ACTIVE` (solo si hay items).
 
 **Estado resultante:** `DRAFT` o `ACTIVE`
 
----
-
-### CU-03B: Recuperar autosave temporal al reabrir
+### CU-03B: Al autenticarse, descartar o no autosave temporal
 
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-Si el usuario no guardó explícitamente, el autosave temporal se recupera al volver a abrir la app.
+Al autenticarse (login o sesión mantenida), si el usuario tiene un borrador local `LOCAL_DRAFT` y un autosave remoto `DRAFT`, se comparan por `updatedAt`. Si empatan y el contenido difiere, se muestra un modal para elegir cuál mantener.
 
 **Flujo principal:**
 
-1. El usuario cierra o pierde la sesión mientras edita.
-2. Al volver a abrir la app, el sistema compara local vs remoto una única vez.
-3. Se carga el borrador ganador para continuar.
+1. El usuario se autentica ya sea login o con la sesión mantenida al abrir la app.
+2. La app detecta que hay un borrador local `LOCAL_DRAFT` y un autosave remoto `DRAFT`.
+3. Si el local está vacío y el remoto tiene items, se usa el remoto y se muestra un toast.
+4. Si ambos existen y `updatedAt` es distinto, se mantiene el más reciente.
+5. Si `updatedAt` empata y el contenido difiere, se muestra un modal para elegir:
+   * Mantener la lista local `LOCAL_DRAFT` → se sincroniza el autosave remoto `DRAFT` con el local.
+   * Mantener la lista remota `DRAFT` → se sincroniza el borrador local `LOCAL_DRAFT` con el remoto.
 
-**Estado resultante:** `DRAFT` (autosave temporal)
+**Estado resultante:** `DRAFT` 
 
 ---
 
-### CU-03C: Descartar autosave temporal
+### CU-04: Marcar lista como finalizada en web y pasar a activa para móvil
 
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-El usuario decide no continuar con el autosave temporal.
+El usuario indica que la lista está finalizada para usarse en el móvil.
 
 **Flujo principal:**
 
-1. El usuario recibe el modal de elección local/remoto.
-2. El usuario elige mantener el borrador local.
-3. El sistema sobrescribe el autosave remoto con el borrador local.
-
-**Estado resultante:** sin borrador temporal activo
-
----
-
-### CU-04: Marcar lista como lista para comprar
-
-**Actor:** Usuario registrado (web)
-
-**Descripción:**
-El usuario indica que la lista está lista para usarse en el móvil.
-
-**Flujo principal:**
-
-1. Desde una lista en `DRAFT`, el usuario pulsa “Confirmar lista”.
+1. Desde una lista en `DRAFT`, en el modal el usuario pulsa “Finalizar lista” (solo si hay items).
 2. El sistema cambia el estado de la lista a `ACTIVE` **reutilizando el mismo registro**.
-3. El borrador local/autosave se limpia (sin items) y se restaura un título genérico.
+3. El borrador local/autosave se limpia y se crea un **nuevo `DRAFT` vacío** para mantener el borrador único.
+4. La lista `ACTIVE` ya está disponible en móvil para marcar/desmarcar productos y para ver en la web.
+5. Se cierra el modal de edición y se muestra la lista en la pantalla principal de listas.
+6. Se muestra un toast indicando que la lista se ha finalizado y está disponible en móvil.
 
 **Estado resultante:** `ACTIVE`
 
@@ -165,20 +160,41 @@ El usuario ve únicamente las listas activas y las usa durante la compra. En mó
 
 ---
 
-### CU-06: Editar lista activa desde web
+### CU-06A: Editar lista activa desde web y cancelar edición
 
 **Actor:** Usuario registrado (web)
 
 **Descripción:**
-Al editar una lista `ACTIVE` desde la web, pasa temporalmente a `DRAFT` y deja de estar disponible
-en móvil hasta volver a confirmarla.
+Al editar una lista `ACTIVE` desde la web y cancelar, la lista vuelve a `ACTIVE` sin cambios y sigue disponible en móvil.
 
 **Flujo principal:**
 
-1. El usuario abre una lista `ACTIVE` en la web.
-2. El sistema avisa que mientras se edita no estará disponible en móvil.
-3. La lista pasa a `DRAFT` y se permite editar productos.
-4. Al pulsar “Confirmar lista”, vuelve a `ACTIVE`.
+1. El usuario abre una lista `ACTIVE` en la web para ver los productos (modal desde la pantalla de listas).
+2. Al pulsar editar, se muestra un aviso: la lista no podrá usarse en móvil y, si hay DRAFT, se perderá.
+3. Si el usuario cancela, la lista se mantiene `ACTIVE` sin cambios.
+
+**Estado resultante:** `ACTIVE`
+
+---
+### CU-06B: Editar lista activa desde web 
+
+**Actor:** Usuario registrado (web)
+
+**Descripción:**
+Al editar una lista `ACTIVE` desde la web, la lista permanece `ACTIVE` con `isEditing=true` y se
+crea un `DRAFT` paralelo editable. En móvil queda en solo lectura hasta terminar la edición.
+
+**Flujo principal:**
+
+1. El usuario abre una lista `ACTIVE` en la web para ver los productos (modal desde la pantalla de listas).
+2. Al pulsar editar, se muestra un aviso: la lista dejará de estar disponible en móvil y, si hay DRAFT, se perderá.
+3. Si confirma, la lista `ACTIVE` queda con `isEditing=true`.
+4. Se crea un **DRAFT paralelo editable** con el mismo contenido (reemplazando el DRAFT único si existía).
+5. El usuario edita la lista. Si pulsa “Añadir productos”, navega al catálogo y sigue editando el DRAFT.
+6. No se permite marcar/desmarcar productos en móvil mientras la lista está en edición.
+7. Si el usuario cancela la edición, se descartan los cambios: el `DRAFT` se reinicia a vacío y la lista sigue `ACTIVE` con su contenido original, `isEditing=false`, y se muestra un toast indicando que la lista original vuelve a estar disponible en móvil.
+8. Al pulsar “Terminar edición”, se aplica el DRAFT a la lista `ACTIVE`, se pone `isEditing=false`, el `DRAFT` se reinicia a vacío y se muestra un toast indicando que ya está disponible en móvil.
+9. Si el usuario cierra sesión o refresca durante la edición, se descartan los cambios del DRAFT y se restaura la lista `ACTIVE` original.
 
 **Estado resultante:** `DRAFT` o `ACTIVE`
 
@@ -217,7 +233,7 @@ El usuario puede consultar listas de compras anteriores.
 
 ---
 
-### CU-09: Reutilizar una lista completada
+### CU-09: ReuseList (reutilizar una lista completada)
 
 **Actor:** Usuario registrado (web)
 
@@ -227,10 +243,10 @@ El usuario crea una nueva lista a partir de una compra anterior.
 **Flujo principal:**
 
 1. Desde una lista `COMPLETED`, el usuario pulsa “Reutilizar”.
-2. El sistema crea una nueva lista copiando todos los productos.
+2. El sistema ejecuta **ReuseList**, que sobrescribe o crea el `DRAFT` único con los productos de la lista completada.
 3. Los productos aparecen sin marcar.
 
-**Estado resultante:** nueva lista en `DRAFT`
+**Estado resultante:** `DRAFT`
 
 ---
 
@@ -259,9 +275,15 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 * Se pueden tener **varias listas activas a la vez**.
 * Todas las listas pueden borrarse.
 * El autoguardado es continuo en web y se sincroniza si hay sesión.
+* Si falla el autosave remoto, se guarda localmente y se reintenta en background.
 * Solo existe **un borrador en progreso** (local + autosave remoto).
-* Las listas `ACTIVE` **pueden volver a `DRAFT`** durante la edición web.
+* El `DRAFT` único puede estar vacío y se reutiliza entre flujos (crear, ReuseList, editar).
+* ReuseList o editar una `ACTIVE` **reemplaza** el `DRAFT` previo (con aviso).
+* En edición web, la lista `ACTIVE` se mantiene con `isEditing=true` y se crea un DRAFT paralelo.
 * Si una lista `ACTIVE` se borra antes de sincronizar en móvil, la sincronización devuelve error.
+* Los items solo se añaden desde catálogo. Repetir añade cantidad.
+* Cantidad válida: **1–99**. Duplicados se consolidan por nombre (trim + case-insensitive).
+* No se puede finalizar una lista sin items.
 
 ---
 
