@@ -16,7 +16,7 @@ type AppHeaderProps = {
   onNavigateLists: () => void;
   onCloseUserMenu: () => void;
   onLogout: () => void;
-  userMenuRef: RefObject<HTMLDivElement>;
+  userMenuRef: RefObject<HTMLDivElement | null>;
 };
 
 export const AppHeader = ({
