@@ -41,7 +41,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   );
   const updateItem = new UpdateItem(listRepository);
   const removeItem = new RemoveItem(listRepository);
-  const updateListStatus = new UpdateListStatus(listRepository);
+  const updateListStatus = new UpdateListStatus(listRepository, idGenerator);
   const completeList = new CompleteList(listRepository);
   const reuseList = new ReuseList(listRepository, idGenerator);
   const startListEditing = new StartListEditing(listRepository);

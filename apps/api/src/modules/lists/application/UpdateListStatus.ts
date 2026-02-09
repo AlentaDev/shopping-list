@@ -1,10 +1,11 @@
-import type { ListRepository } from "./ports.js";
+import type { IdGenerator, ListRepository } from "./ports.js";
 import {
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
 } from "./errors.js";
 import type { ListStatus } from "../domain/list.js";
+import type { List } from "../domain/list.js";
 
 type UpdateListStatusInput = {
   userId: string;
@@ -25,7 +26,10 @@ const ALLOWED_TRANSITIONS: Record<ListStatus, ListStatus[]> = {
 };
 
 export class UpdateListStatus {
-  constructor(private readonly listRepository: ListRepository) {}
+  constructor(
+    private readonly listRepository: ListRepository,
+    private readonly idGenerator: IdGenerator,
+  ) {}
 
   async execute(
     input: UpdateListStatusInput,
@@ -58,6 +62,10 @@ export class UpdateListStatus {
         list.activatedAt = now;
       }
       await this.listRepository.save(list);
+
+      if (input.status === "ACTIVE") {
+        await this.createEmptyDraft(list, now);
+      }
     }
 
     return {
@@ -65,5 +73,21 @@ export class UpdateListStatus {
       status: list.status,
       updatedAt: list.updatedAt.toISOString(),
     };
+  }
+
+  private async createEmptyDraft(activeList: List, now: Date) {
+    const draft: List = {
+      id: this.idGenerator.generate(),
+      ownerUserId: activeList.ownerUserId,
+      title: activeList.title,
+      isAutosaveDraft: false,
+      status: "DRAFT",
+      items: [],
+      isEditing: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await this.listRepository.save(draft);
   }
 }

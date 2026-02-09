@@ -23,16 +23,18 @@ export class CreateList {
   ) {}
 
   async execute(input: CreateListInput): Promise<ListSummary> {
+    const lists = await this.listRepository.listByOwner(input.userId);
+    const existingDraft = findLatestDraft(lists);
     const now = new Date();
     const list: List = {
-      id: this.idGenerator.generate(),
+      id: existingDraft?.id ?? this.idGenerator.generate(),
       ownerUserId: input.userId,
       title: input.title,
       isAutosaveDraft: false,
       status: "DRAFT",
       items: [],
       isEditing: false,
-      createdAt: now,
+      createdAt: existingDraft?.createdAt ?? now,
       updatedAt: now,
     };
 
@@ -48,4 +50,17 @@ export class CreateList {
       status: list.status,
     };
   }
+}
+
+function findLatestDraft(lists: List[]): List | null {
+  const drafts = lists.filter(
+    (list) => list.status === "DRAFT" && !list.isAutosaveDraft,
+  );
+  if (drafts.length === 0) {
+    return null;
+  }
+
+  return drafts.reduce((latest, current) =>
+    current.updatedAt > latest.updatedAt ? current : latest,
+  );
 }

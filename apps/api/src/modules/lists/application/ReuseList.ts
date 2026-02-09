@@ -40,8 +40,10 @@ export class ReuseList {
       throw new ListStatusTransitionError();
     }
 
+    const lists = await this.listRepository.listByOwner(input.userId);
+    const existingDraft = findLatestDraft(lists);
     const now = new Date();
-    const newListId = this.idGenerator.generate();
+    const newListId = existingDraft?.id ?? this.idGenerator.generate();
     const reusedItems = list.items.map((item) =>
       reuseItem(item, newListId, now, this.idGenerator),
     );
@@ -53,7 +55,7 @@ export class ReuseList {
       status: "DRAFT",
       items: reusedItems,
       isEditing: false,
-      createdAt: now,
+      createdAt: existingDraft?.createdAt ?? now,
       updatedAt: now,
     };
 
@@ -106,4 +108,17 @@ function reuseItem(
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function findLatestDraft(lists: List[]): List | null {
+  const drafts = lists.filter(
+    (candidate) => candidate.status === "DRAFT" && !candidate.isAutosaveDraft,
+  );
+  if (drafts.length === 0) {
+    return null;
+  }
+
+  return drafts.reduce((latest, current) =>
+    current.updatedAt > latest.updatedAt ? current : latest,
+  );
 }
