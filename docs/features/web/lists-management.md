@@ -7,7 +7,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ## Endpoints
 
 - `GET /api/lists` (carga de listas)
-- `POST /api/lists/:id/reuse` (reusar listas del historial)
+- `POST /api/lists/:id/reuse` (ReuseList: reusar listas del historial)
 - `DELETE /api/lists/:id` (borrar listas)
 - `PATCH /api/lists/:id/editing` (activar/desactivar edición)
 - `POST /api/lists/:id/finish-edit` (finalizar edición)
@@ -59,7 +59,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 
 - Se muestran productos + total.
 - Botones: **Reusar**, **Borrar**.
-- Reusar abre el modal y sobrescribe el `DRAFT` único con los items del historial.
+- ReuseList abre el modal y sobrescribe el `DRAFT` único con los items del historial.
 - Si existe un DRAFT con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
 
