@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { List } from "../domain/list.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
 import { UpsertAutosaveDraft } from "./UpsertAutosaveDraft.js";
@@ -6,7 +6,9 @@ import { UpsertAutosaveDraft } from "./UpsertAutosaveDraft.js";
 describe("UpsertAutosaveDraft", () => {
   it("creates a new autosave draft when none exists", async () => {
     const listRepository = new InMemoryListRepository();
-    const idGenerator = { generate: () => "list-1" };
+    const idGenerator = {
+      generate: vi.fn().mockReturnValueOnce("list-1").mockReturnValueOnce("item-1"),
+    };
     const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
 
     const response = await useCase.execute({
@@ -14,7 +16,7 @@ describe("UpsertAutosaveDraft", () => {
       title: "Autosave",
       items: [
         {
-          id: "item-1",
+          id: "product-1",
           kind: "manual",
           name: "Milk",
           qty: 2,
@@ -58,7 +60,9 @@ describe("UpsertAutosaveDraft", () => {
 
   it("updates the latest autosave draft for the user", async () => {
     const listRepository = new InMemoryListRepository();
-    const idGenerator = { generate: () => "list-new" };
+    const idGenerator = {
+      generate: vi.fn().mockReturnValueOnce("item-2"),
+    };
     const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
     const olderDraft: List = {
       id: "list-1",
@@ -93,7 +97,7 @@ describe("UpsertAutosaveDraft", () => {
       title: "Updated autosave",
       items: [
         {
-          id: "item-2",
+          id: "product-2",
           kind: "manual",
           name: "Bread",
           qty: 1,

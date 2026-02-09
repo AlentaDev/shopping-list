@@ -125,6 +125,49 @@ describe("useAutosaveRecovery", () => {
     expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 
+  it("rehidrata usando sourceProductId como id del item", async () => {
+    const onRehydrate = vi.fn();
+    const localDraft: LocalDraft = {
+      title: "",
+      items: [],
+      updatedAt: "2024-01-01T09:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          items: [
+            {
+              ...SAMPLE_REMOTE.items[0],
+              id: "autosave-item-1",
+              sourceProductId: "product-1",
+            },
+          ],
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness onRehydrate={onRehydrate} />);
+
+    await waitFor(() => {
+      expect(onRehydrate).toHaveBeenCalledWith({
+        title: "Lista recuperada",
+        items: [
+          expect.objectContaining({
+            id: "product-1",
+            sourceProductId: "product-1",
+          }),
+        ],
+      });
+    });
+  });
+
   it("sincroniza el borrador local si es más reciente", async () => {
     const localDraft: LocalDraft = {
       title: "Lista local",

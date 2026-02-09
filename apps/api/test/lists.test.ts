@@ -606,7 +606,7 @@ describe("lists endpoints", () => {
 
     expect(detailResponse.body.items).toEqual([
       expect.objectContaining({
-        id: "autosave-item-1",
+        id: expect.any(String),
         name: "Whole Milk",
         checked: false,
       }),

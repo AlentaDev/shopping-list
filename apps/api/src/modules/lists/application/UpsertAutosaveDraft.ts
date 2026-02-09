@@ -61,7 +61,9 @@ export class UpsertAutosaveDraft {
       title: input.title,
       isAutosaveDraft: true,
       status: "DRAFT",
-      items: input.items.map((item) => toListItem(item, listId, now)),
+      items: input.items.map((item) =>
+        toListItem(item, listId, now, this.idGenerator),
+      ),
       isEditing: false,
       createdAt: latestAutosave?.createdAt ?? now,
       updatedAt: now,
@@ -81,10 +83,12 @@ function toListItem(
   item: AutosaveItemInput,
   listId: string,
   now: Date,
+  idGenerator: IdGenerator,
 ): ListItem {
+  const itemId = idGenerator.generate();
   if (item.kind === "manual") {
     return {
-      id: item.id,
+      id: itemId,
       listId,
       kind: "manual",
       name: item.name,
@@ -96,7 +100,7 @@ function toListItem(
   }
 
   return {
-    id: item.id,
+    id: itemId,
     listId,
     kind: "catalog",
     source: item.source,

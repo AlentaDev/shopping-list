@@ -35,7 +35,7 @@ const setAutosaveChecked = () => {
 const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => ({
   title: draft.title,
   items: draft.items.map((item) => ({
-    id: item.id,
+    id: item.sourceProductId ?? item.id,
     kind: "catalog",
     name: item.name,
     qty: item.qty,
