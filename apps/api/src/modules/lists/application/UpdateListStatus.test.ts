@@ -7,7 +7,8 @@ import { UpdateListStatus } from "./UpdateListStatus.js";
 describe("UpdateListStatus", () => {
   it("updates status when transition is allowed", async () => {
     const listRepository = new InMemoryListRepository();
-    const useCase = new UpdateListStatus(listRepository);
+    const idGenerator = { generate: vi.fn().mockReturnValue("draft-2") };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
@@ -60,7 +61,8 @@ describe("UpdateListStatus", () => {
 
   it("clears autosave flag and sets activation time", async () => {
     const listRepository = new InMemoryListRepository();
-    const useCase = new UpdateListStatus(listRepository);
+    const idGenerator = { generate: vi.fn().mockReturnValue("draft-2") };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
     const list: List = {
       id: "list-2",
       ownerUserId: "user-1",
@@ -114,7 +116,8 @@ describe("UpdateListStatus", () => {
 
   it("throws when transition is not allowed", async () => {
     const listRepository = new InMemoryListRepository();
-    const useCase = new UpdateListStatus(listRepository);
+    const idGenerator = { generate: vi.fn() };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
@@ -141,7 +144,8 @@ describe("UpdateListStatus", () => {
 
   it("throws when trying to complete an active list", async () => {
     const listRepository = new InMemoryListRepository();
-    const useCase = new UpdateListStatus(listRepository);
+    const idGenerator = { generate: vi.fn() };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
@@ -179,7 +183,8 @@ describe("UpdateListStatus", () => {
 
   it("throws when activating a list without items", async () => {
     const listRepository = new InMemoryListRepository();
-    const useCase = new UpdateListStatus(listRepository);
+    const idGenerator = { generate: vi.fn() };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
@@ -202,5 +207,73 @@ describe("UpdateListStatus", () => {
         status: "ACTIVE",
       }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
+  });
+
+  it("creates a new empty draft after activation", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: vi.fn().mockReturnValue("draft-2") };
+    const useCase = new UpdateListStatus(listRepository, idGenerator);
+    const list: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [
+        {
+          id: "item-1",
+          listId: "list-1",
+          kind: "manual",
+          name: "Milk",
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-01T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+    const now = new Date("2024-01-04T10:00:00.000Z");
+
+    await listRepository.save(list);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        listId: "list-1",
+        status: "ACTIVE",
+      }),
+    ).resolves.toEqual({
+      id: "list-1",
+      status: "ACTIVE",
+      updatedAt: now.toISOString(),
+    });
+
+    const lists = await listRepository.listByOwner("user-1");
+    const draft = lists.find(
+      (savedList) => savedList.status === "DRAFT" && !savedList.isAutosaveDraft,
+    );
+
+    expect(draft).toMatchObject({
+      id: "draft-2",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      status: "DRAFT",
+      isAutosaveDraft: false,
+      items: [],
+      isEditing: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
   });
 });
