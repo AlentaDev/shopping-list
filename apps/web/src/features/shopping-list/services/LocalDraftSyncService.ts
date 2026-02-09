@@ -11,6 +11,10 @@ type SyncResult = {
   itemsCreated: number;
 };
 
+type SyncOptions = {
+  clearLocal?: boolean;
+};
+
 const normalizeDraftTitle = (draft: AutosaveDraftInput) =>
   draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
 
@@ -19,7 +23,9 @@ const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => ({
   items: draft.items,
 });
 
-export const syncLocalDraftToRemoteList = async (): Promise<SyncResult | null> => {
+export const syncLocalDraftToRemoteList = async (
+  options: SyncOptions = {},
+): Promise<SyncResult | null> => {
   const localDraft = loadLocalDraft();
 
   if (!localDraft) {
@@ -32,7 +38,9 @@ export const syncLocalDraftToRemoteList = async (): Promise<SyncResult | null> =
   };
   const autosaveSummary = await putAutosave(draftToSync);
 
-  clearLocalDraft();
+  if (options.clearLocal) {
+    clearLocalDraft();
+  }
 
   return {
     listId: autosaveSummary.id,

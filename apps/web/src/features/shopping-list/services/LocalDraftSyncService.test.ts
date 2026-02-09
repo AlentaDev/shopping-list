@@ -51,7 +51,7 @@ describe("LocalDraftSyncService", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("guarda el autosave remoto y limpia el borrador local", async () => {
+  it("guarda el autosave remoto y mantiene el borrador local", async () => {
     localStorage.setItem("lists.localDraft", JSON.stringify(SAMPLE_DRAFT));
     const fetchMock = vi
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
@@ -82,7 +82,9 @@ describe("LocalDraftSyncService", () => {
         }),
       }),
     );
-    expect(localStorage.getItem("lists.localDraft")).toBeNull();
+    expect(localStorage.getItem("lists.localDraft")).toBe(
+      JSON.stringify(SAMPLE_DRAFT),
+    );
   });
 
   it("incluye items de catálogo en el autosave", async () => {
@@ -187,5 +189,30 @@ describe("LocalDraftSyncService", () => {
         }),
       }),
     );
+  });
+
+  it("limpia el borrador local cuando se indica explícitamente", async () => {
+    localStorage.setItem("lists.localDraft", JSON.stringify(SAMPLE_DRAFT));
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Compra semanal",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      syncLocalDraftToRemoteList({ clearLocal: true }),
+    ).resolves.toEqual({
+      listId: "autosave-1",
+      itemsCreated: 2,
+    });
+
+    expect(localStorage.getItem("lists.localDraft")).toBeNull();
   });
 });

@@ -45,6 +45,9 @@ describe("ListStatusService", () => {
     });
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
+    expect(syncLocalDraftToRemoteList).toHaveBeenCalledWith({
+      clearLocal: true,
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/list-1/activate",
       expect.objectContaining({

@@ -16,7 +16,7 @@ const resolveListIdForActivation = async (
   listId: string | null,
 ): Promise<string> => {
   if (status === LIST_STATUS.LOCAL_DRAFT) {
-    const syncResult = await syncLocalDraftToRemoteList();
+    const syncResult = await syncLocalDraftToRemoteList({ clearLocal: true });
     if (!syncResult) {
       throw new Error("Unable to activate list without local draft");
     }
