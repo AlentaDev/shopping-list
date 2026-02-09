@@ -2,6 +2,7 @@ import type { ListStatus } from "@src/shared/domain/listStatus";
 
 export type AutosaveCatalogItemInput = {
   id: string;
+  kind: "catalog";
   name: string;
   qty: number;
   checked: boolean;

@@ -36,6 +36,7 @@ const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => ({
   title: draft.title,
   items: draft.items.map((item) => ({
     id: item.id,
+    kind: "catalog",
     name: item.name,
     qty: item.qty,
     checked: item.checked,
@@ -63,6 +64,7 @@ const normalizeDraftForComparison = (draft: AutosaveDraftInput) => ({
   items: [...draft.items]
     .map((item) => ({
       id: item.id,
+      kind: item.kind,
       name: item.name,
       qty: item.qty,
       checked: item.checked,
