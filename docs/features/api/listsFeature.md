@@ -3,7 +3,7 @@
 ## Resumen
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
-Existe un **único `DRAFT` por usuario** que puede estar vacío y se reutiliza entre flujos (crear, reusar, editar).
+Existe un **único `DRAFT` por usuario** (no autosave) que puede estar vacío y se reutiliza entre flujos (crear, `ReuseList`, editar).
 
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
@@ -69,9 +69,18 @@ Existe un **único `DRAFT` por usuario** que puede estar vacío y se reutiliza e
   "items": [
     {
       "id": "uuid",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -80,7 +89,7 @@ Existe un **único `DRAFT` por usuario** que puede estar vacío y se reutiliza e
 ```
 
 Si no hay borrador autosave, responde con `204`.
-Al iniciar sesión se garantiza un `DRAFT` único (aunque esté vacío), por lo que normalmente devolverá `200`.
+El autosave se crea cuando el frontend guarda cambios del borrador.
 
 ### PUT /api/lists/autosave
 
@@ -92,9 +101,18 @@ Al iniciar sesión se garantiza un `DRAFT` único (aunque esté vacío), por lo 
   "items": [
     {
       "id": "uuid",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
-      "checked": false
+      "checked": false,
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false
     }
   ]
 }
@@ -110,7 +128,7 @@ Al iniciar sesión se garantiza un `DRAFT` único (aunque esté vacío), por lo 
 }
 ```
 
-Sobrescribe el `DRAFT` único con el contenido enviado (incluyendo el caso vacío).
+Sobrescribe el borrador autosave con el contenido enviado (incluyendo el caso vacío).
 
 ### GET /api/lists/:id
 
@@ -127,9 +145,18 @@ Sobrescribe el `DRAFT` único con el contenido enviado (incluyendo el caso vací
   "items": [
     {
       "id": "uuid",
+      "kind": "catalog",
       "name": "Milk",
       "qty": 1,
       "checked": false,
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
       "updatedAt": "2024-01-01T00:00:00.000Z"
     }
   ],
@@ -187,13 +214,14 @@ Completa una lista activa y sincroniza items marcados.
 
 Sin contenido (autosave descartado).
 
-### POST /api/lists/:id/items
+### POST /api/lists/:id/items/from-catalog
 
 **Request**
 
 ```json
 {
-  "name": "Milk",
+  "source": "mercadona",
+  "productId": "123",
   "qty": 2
 }
 ```
@@ -203,9 +231,18 @@ Sin contenido (autosave descartado).
 ```json
 {
   "id": "uuid",
+  "kind": "catalog",
   "name": "Milk",
   "qty": 2,
   "checked": false,
+  "source": "mercadona",
+  "sourceProductId": "123",
+  "thumbnail": "https://cdn.example.com/milk.png",
+  "price": 1.25,
+  "unitSize": 1,
+  "unitFormat": "L",
+  "unitPrice": 1.25,
+  "isApproxSize": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -226,9 +263,18 @@ Sin contenido (autosave descartado).
 ```json
 {
   "id": "uuid",
+  "kind": "catalog",
   "name": "Milk",
   "qty": 3,
   "checked": true,
+  "source": "mercadona",
+  "sourceProductId": "123",
+  "thumbnail": "https://cdn.example.com/milk.png",
+  "price": 1.25,
+  "unitSize": 1,
+  "unitFormat": "L",
+  "unitPrice": 1.25,
+  "isApproxSize": false,
   "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
@@ -245,17 +291,34 @@ Sin contenido (autosave descartado).
 
 ### POST /api/lists/:id/reuse
 
-Reusa una lista completada sobrescribiendo el `DRAFT` único con los mismos items sin marcar.
+Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el `DRAFT` único con los mismos items sin marcar.
 
-### PATCH /api/lists/:id/activate
-
-Activa una lista en `DRAFT` y pasa a `ACTIVE`.
-
-**Request**
+**Response 201**
 
 ```json
 {
-  "status": "ACTIVE"
+  "id": "uuid",
+  "title": "Groceries",
+  "status": "DRAFT",
+  "items": [
+    {
+      "id": "uuid",
+      "kind": "catalog",
+      "name": "Milk",
+      "qty": 1,
+      "checked": false,
+      "source": "mercadona",
+      "sourceProductId": "123",
+      "thumbnail": "https://cdn.example.com/milk.png",
+      "price": 1.25,
+      "unitSize": 1,
+      "unitFormat": "L",
+      "unitPrice": 1.25,
+      "isApproxSize": false,
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 

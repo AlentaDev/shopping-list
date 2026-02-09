@@ -233,7 +233,7 @@ El usuario puede consultar listas de compras anteriores.
 
 ---
 
-### CU-09: Reutilizar una lista completada
+### CU-09: ReuseList (reutilizar una lista completada)
 
 **Actor:** Usuario registrado (web)
 
@@ -243,10 +243,10 @@ El usuario crea una nueva lista a partir de una compra anterior.
 **Flujo principal:**
 
 1. Desde una lista `COMPLETED`, el usuario pulsa “Reutilizar”.
-2. El sistema crea una nueva lista copiando todos los productos.
+2. El sistema ejecuta **ReuseList**, que sobrescribe o crea el `DRAFT` único con los productos de la lista completada.
 3. Los productos aparecen sin marcar.
 
-**Estado resultante:** nueva lista en `DRAFT`
+**Estado resultante:** `DRAFT`
 
 ---
 
@@ -277,8 +277,8 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 * El autoguardado es continuo en web y se sincroniza si hay sesión.
 * Si falla el autosave remoto, se guarda localmente y se reintenta en background.
 * Solo existe **un borrador en progreso** (local + autosave remoto).
-* No se crea un DRAFT vacío: el borrador nace al añadir el primer item.
-* Reusar una lista o editar una ACTIVE **reemplaza** el DRAFT previo (con aviso).
+* El `DRAFT` único puede estar vacío y se reutiliza entre flujos (crear, ReuseList, editar).
+* ReuseList o editar una `ACTIVE` **reemplaza** el `DRAFT` previo (con aviso).
 * En edición web, la lista `ACTIVE` se mantiene con `isEditing=true` y se crea un DRAFT paralelo.
 * Si una lista `ACTIVE` se borra antes de sincronizar en móvil, la sincronización devuelve error.
 * Los items solo se añaden desde catálogo. Repetir añade cantidad.
