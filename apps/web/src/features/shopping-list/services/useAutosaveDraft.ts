@@ -25,6 +25,7 @@ const mapListItemToAutosave = (
   item: ListItem,
 ): AutosaveCatalogItemInput => ({
   id: item.id,
+  kind: "catalog",
   name: item.name,
   qty: item.quantity,
   checked: false,

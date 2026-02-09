@@ -13,6 +13,7 @@ const SAMPLE_REMOTE = {
   items: [
     {
       id: "item-1",
+      kind: "catalog",
       name: "Leche",
       qty: 2,
       checked: false,
@@ -103,6 +104,7 @@ describe("useAutosaveRecovery", () => {
         items: [
           {
             id: "item-1",
+            kind: "catalog",
             name: "Leche",
             qty: 2,
             checked: false,
@@ -129,6 +131,7 @@ describe("useAutosaveRecovery", () => {
       items: [
         {
           id: "item-local",
+          kind: "catalog",
           name: "Pan",
           qty: 1,
           checked: false,
@@ -182,6 +185,7 @@ describe("useAutosaveRecovery", () => {
       items: [
         {
           id: "item-local",
+          kind: "catalog",
           name: "Pan",
           qty: 1,
           checked: false,
