@@ -183,7 +183,12 @@ const resolveRecoveryDecision = (
     return { type: DECISION_NONE };
   }
 
-  if (remoteDraft && !hasItems(localInput) && hasItems(remoteInput)) {
+  if (
+    remoteDraft &&
+    remoteInput &&
+    !hasItems(localInput) &&
+    hasItems(remoteInput)
+  ) {
     return buildRestoreRemoteDecision(remoteInput, true);
   }
 
@@ -191,7 +196,7 @@ const resolveRecoveryDecision = (
     return buildSyncLocalDecision(localInput);
   }
 
-  if (remoteDraft && localInput && remoteInput) {
+  if (localDraft && remoteDraft && localInput && remoteInput) {
     return resolveDecisionForBothDrafts(
       localDraft,
       remoteDraft,
