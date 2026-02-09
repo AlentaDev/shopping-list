@@ -20,6 +20,10 @@ export type AutosaveDraftInput = {
   items: AutosaveCatalogItemInput[];
 };
 
+export type LocalDraft = AutosaveDraftInput & {
+  updatedAt: string;
+};
+
 export type AutosaveItem = AutosaveCatalogItemInput & {
   updatedAt: string;
 };

@@ -17,7 +17,6 @@ import {
   type RegisterInput,
   type AuthUser,
 } from "@src/features/auth/services/AuthService";
-import { syncLocalDraftToRemoteList } from "@src/features/shopping-list/services/LocalDraftSyncService";
 
 export type AuthContextType = {
   authUser: AuthUser | null;
@@ -49,24 +48,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let isActive = true;
 
-    const applyAuthenticatedUser = async (
-      user: AuthUser,
-      options: { syncLocalDraft?: boolean } = {},
-    ) => {
+    const applyAuthenticatedUser = async (user: AuthUser) => {
       if (!isActive) {
         return;
       }
       setAuthUser(user);
-      if (options.syncLocalDraft) {
-        try {
-          await syncLocalDraftToRemoteList();
-        } catch (error) {
-          console.warn(
-            "No se pudo sincronizar el borrador local tras recuperar sesión.",
-            error,
-          );
-        }
-      }
     };
 
     const loadCurrentUser = async () => {
@@ -116,14 +102,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const user = await registerUser(values);
       setAuthUser(user);
-      try {
-        await syncLocalDraftToRemoteList();
-      } catch (error) {
-        console.warn(
-          "No se pudo sincronizar el borrador local tras registro.",
-          error,
-        );
-      }
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));
@@ -139,14 +117,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const user = await loginUser(values);
       setAuthUser(user);
-      try {
-        await syncLocalDraftToRemoteList();
-      } catch (error) {
-        console.warn(
-          "No se pudo sincronizar el borrador local tras login.",
-          error,
-        );
-      }
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));

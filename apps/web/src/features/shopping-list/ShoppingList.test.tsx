@@ -512,9 +512,8 @@ describe("ShoppingList", () => {
     ).toBeInTheDocument();
   });
 
-  it("muestra el banner de recuperación y permite continuar", async () => {
+  it("restaura el autosave remoto y muestra un toast si el local está vacío", async () => {
     sessionStorage.setItem("lists.autosaveChecked", "false");
-    const user = userEvent.setup();
     const fetchMock = vi.fn<
       (
         input: RequestInfo,
@@ -528,86 +527,49 @@ describe("ShoppingList", () => {
         return { ok: true, json: async () => ({}) };
       }
 
-      return {
-        ok: true,
-        json: async () => ({
-          id: "autosave-1",
-          title: "Lista recuperada",
-          updatedAt: "2024-01-01T00:00:00.000Z",
-          items: [
-            {
-              id: "item-1",
-              name: "Leche",
-              qty: 2,
-              checked: false,
-              updatedAt: "2024-01-01T00:00:00.000Z",
-              source: "mercadona",
-              sourceProductId: "item-1",
-            },
-          ],
-        }),
-      };
-    });
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista recuperada",
+            updatedAt: "2024-01-01T00:00:00.000Z",
+            items: [
+              {
+                id: "item-1",
+                name: "Leche",
+                qty: 2,
+                checked: false,
+                updatedAt: "2024-01-01T00:00:00.000Z",
+                source: "mercadona",
+                sourceProductId: "item-1",
+              },
+            ],
+          }),
+        };
+      });
 
     vi.stubGlobal("fetch", fetchMock);
-
-    renderShoppingList({ items: [], authenticated: true });
-
-    expect(
-      await screen.findByText("Hemos encontrado un borrador guardado"),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Continuar" }));
-
-    expect(screen.getByText("Leche")).toBeInTheDocument();
-    expect(screen.getByTestId("quantity-item-1")).toHaveTextContent("2");
-    expect(
-      screen.queryByText("Hemos encontrado un borrador guardado"),
-    ).toBeNull();
-  });
-
-  it("descarta el autosave remoto desde el banner", async () => {
-    sessionStorage.setItem("lists.autosaveChecked", "false");
-    const user = userEvent.setup();
-    const fetchMock = vi.fn<
-      (
-        input: RequestInfo,
-        init?: RequestInit,
-      ) => Promise<{
-        ok: boolean;
-        json: () => Promise<unknown>;
-      }>
-    >(async (_input, init) => {
-      if (init?.method === "DELETE") {
-        return { ok: true, json: async () => ({}) };
-      }
-
-      return {
-        ok: true,
-        json: async () => ({
-          id: "autosave-1",
-          title: "Lista recuperada",
-          updatedAt: "2024-01-01T00:00:00.000Z",
-          items: [],
-        }),
-      };
-    });
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    renderShoppingList({ items: [], authenticated: true });
-
-    await screen.findByText("Hemos encontrado un borrador guardado");
-
-    await user.click(screen.getByRole("button", { name: "Descartar" }));
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/autosave",
-      expect.objectContaining({ method: "DELETE" }),
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "",
+        items: [],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      })
     );
+
+    renderShoppingList({ items: [], authenticated: true });
+
+    expect(await screen.findByText("Leche")).toBeInTheDocument();
+    expect(await screen.findByTestId("quantity-item-1")).toHaveTextContent("2");
     expect(
-      screen.queryByText("Hemos encontrado un borrador guardado"),
-    ).toBeNull();
+      await screen.findByText(
+        UI_TEXT.SHOPPING_LIST.AUTOSAVE_RECOVERY.RESTORED_TOAST_MESSAGE
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Lista recuperada" })
+    ).toBeInTheDocument();
   });
 
   it("no intenta guardar autosave remoto si el usuario no está autenticado", async () => {
