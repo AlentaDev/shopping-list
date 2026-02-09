@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAutosaveRecovery } from "./useAutosaveRecovery";
+import type { AutosaveDraftInput, LocalDraft } from "./types";
 
-const SAMPLE_DRAFT = {
+const SAMPLE_REMOTE = {
   id: "autosave-1",
   title: "Lista recuperada",
   updatedAt: "2024-01-01T10:00:00.000Z",
@@ -29,45 +30,35 @@ type FetchResponse = {
 
 type HarnessProps = {
   enabled?: boolean;
-  onRehydrate?: (draft: {
-    title: string;
-    items: {
-      id: string;
-      name: string;
-      qty: number;
-      checked: boolean;
-      source: "mercadona";
-      sourceProductId: string;
-      thumbnail?: string | null;
-      price?: number | null;
-      unitSize?: number | null;
-      unitFormat?: string | null;
-      unitPrice?: number | null;
-      isApproxSize?: boolean;
-    }[];
-  }) => void;
+  onRehydrate?: (draft: AutosaveDraftInput) => void;
+  onAutoRestore?: (draft: AutosaveDraftInput) => void;
 };
 
-const Harness = ({ enabled = true, onRehydrate }: HarnessProps) => {
-  const { draft, handleContinue, handleDiscard } = useAutosaveRecovery({
+const Harness = ({
+  enabled = true,
+  onRehydrate,
+  onAutoRestore,
+}: HarnessProps) => {
+  const { conflict, handleKeepLocal, handleKeepRemote } = useAutosaveRecovery({
     enabled,
     onRehydrate,
+    onAutoRestore,
   });
 
   return (
     <div>
-      {draft ? (
+      {conflict ? (
         <div>
-          <span>{draft.title}</span>
-          <button type="button" onClick={handleContinue}>
-            Continuar
+          <span>Conflict</span>
+          <button type="button" onClick={handleKeepLocal}>
+            Keep local
           </button>
-          <button type="button" onClick={() => void handleDiscard()}>
-            Descartar
+          <button type="button" onClick={handleKeepRemote}>
+            Keep remote
           </button>
         </div>
       ) : (
-        <span>No draft</span>
+        <span>No conflict</span>
       )}
     </div>
   );
@@ -77,46 +68,34 @@ describe("useAutosaveRecovery", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     sessionStorage.clear();
+    localStorage.clear();
   });
 
   afterEach(() => {
     cleanup();
   });
 
-  it("carga el autosave remoto cuando está habilitado", async () => {
-    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
-      async () => ({
-        ok: true,
-        json: async () => SAMPLE_DRAFT,
-      }),
-    );
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<Harness />);
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/autosave",
-      expect.objectContaining({ credentials: "include" }),
-    );
-    expect(await screen.findByText("Lista recuperada")).toBeInTheDocument();
-  });
-
-  it("continúa el borrador y lo normaliza al rehidratar", async () => {
-    const user = userEvent.setup();
+  it("restaura el autosave remoto si el local está vacío", async () => {
     const onRehydrate = vi.fn();
+    const onAutoRestore = vi.fn();
+    const localDraft: LocalDraft = {
+      title: "",
+      items: [],
+      updatedAt: "2024-01-01T09:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
-        json: async () => SAMPLE_DRAFT,
-      }),
+        json: async () => SAMPLE_REMOTE,
+      })
     );
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<Harness onRehydrate={onRehydrate} />);
-
-    await user.click(await screen.findByRole("button", { name: "Continuar" }));
+    render(<Harness onRehydrate={onRehydrate} onAutoRestore={onAutoRestore} />);
 
     await waitFor(() => {
       expect(onRehydrate).toHaveBeenCalledWith({
@@ -140,71 +119,102 @@ describe("useAutosaveRecovery", () => {
       });
     });
 
-    expect(screen.getByText("No draft")).toBeInTheDocument();
+    expect(onAutoRestore).toHaveBeenCalled();
+    expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 
-  it("descarta el borrador remoto al confirmar", async () => {
-    const user = userEvent.setup();
+  it("sincroniza el borrador local si es más reciente", async () => {
+    const localDraft: LocalDraft = {
+      title: "Lista local",
+      items: [
+        {
+          id: "item-local",
+          name: "Pan",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-local",
+        },
+      ],
+      updatedAt: "2024-02-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (_input, init) => {
-      if (init?.method === "DELETE") {
-        return { ok: true, json: async () => ({}) };
+      if (init?.method === "PUT") {
+        return {
+          ok: true,
+          json: async () => ({ id: "autosave-1", updatedAt: "2024-02-01" }),
+        };
       }
 
-      return { ok: true, json: async () => SAMPLE_DRAFT };
+      return {
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        }),
+      };
     });
 
     vi.stubGlobal("fetch", fetchMock);
 
     render(<Harness />);
-
-    await user.click(await screen.findByRole("button", { name: "Descartar" }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/autosave",
-        expect.objectContaining({ method: "DELETE", credentials: "include" }),
+        expect.objectContaining({ method: "PUT" })
       );
     });
 
-    expect(screen.getByText("No draft")).toBeInTheDocument();
+    expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 
-  it("no vuelve a consultar autosave si ya se revisó en la sesión", () => {
-    sessionStorage.setItem("lists.autosaveChecked", "true");
+  it("muestra conflicto si empatan y difieren", async () => {
+    const user = userEvent.setup();
+    const onRehydrate = vi.fn();
+    const localDraft: LocalDraft = {
+      title: "Lista local",
+      items: [
+        {
+          id: "item-local",
+          name: "Pan",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-local",
+        },
+      ],
+      updatedAt: "2024-01-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
-        json: async () => SAMPLE_DRAFT,
-      }),
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        }),
+      })
     );
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<Harness />);
+    render(<Harness onRehydrate={onRehydrate} />);
 
-    expect(fetchMock).not.toHaveBeenCalled();
-    expect(screen.getByText("No draft")).toBeInTheDocument();
-  });
+    expect(await screen.findByText("Conflict")).toBeInTheDocument();
 
-  it("marca el autosave como revisado al descartar", async () => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn<
-      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
-    >(async (_input, init) => {
-      if (init?.method === "DELETE") {
-        return { ok: true, json: async () => ({}) };
-      }
+    await user.click(screen.getByRole("button", { name: "Keep remote" }));
 
-      return { ok: true, json: async () => SAMPLE_DRAFT };
+    await waitFor(() => {
+      expect(onRehydrate).toHaveBeenCalled();
     });
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<Harness />);
-
-    await user.click(await screen.findByRole("button", { name: "Descartar" }));
 
     expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });

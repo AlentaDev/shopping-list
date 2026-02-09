@@ -3,7 +3,7 @@ import {
   loadLocalDraft,
   putAutosave,
 } from "./AutosaveService";
-import type { AutosaveDraftInput } from "./types";
+import type { AutosaveDraftInput, LocalDraft } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type SyncResult = {
@@ -14,6 +14,11 @@ type SyncResult = {
 const normalizeDraftTitle = (draft: AutosaveDraftInput) =>
   draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
 
+const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => ({
+  title: draft.title,
+  items: draft.items,
+});
+
 export const syncLocalDraftToRemoteList = async (): Promise<SyncResult | null> => {
   const localDraft = loadLocalDraft();
 
@@ -22,7 +27,7 @@ export const syncLocalDraftToRemoteList = async (): Promise<SyncResult | null> =
   }
 
   const draftToSync: AutosaveDraftInput = {
-    ...localDraft,
+    ...mapLocalDraftToInput(localDraft),
     title: normalizeDraftTitle(localDraft),
   };
   const autosaveSummary = await putAutosave(draftToSync);

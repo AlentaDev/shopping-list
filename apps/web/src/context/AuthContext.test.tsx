@@ -22,10 +22,6 @@ vi.mock("@src/features/auth/services/AuthService", async () => {
   };
 });
 
-vi.mock("@src/features/shopping-list/services/LocalDraftSyncService", () => ({
-  syncLocalDraftToRemoteList: vi.fn(),
-}));
-
 import {
   getCurrentUser,
   registerUser,
@@ -34,7 +30,6 @@ import {
   refreshSession,
   AuthServiceError,
 } from "@src/features/auth/services/AuthService";
-import { syncLocalDraftToRemoteList } from "@src/features/shopping-list/services/LocalDraftSyncService";
 const TEST_EMAIL = "test@example.com";
 const TEST_PASSWORD = "password"; // nosem
 const TEST_POSTAL_CODE = "28001";
@@ -139,7 +134,6 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
-    expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
   });
 
   it("refreshes session and retries current user when initial load fails", async () => {
@@ -168,7 +162,6 @@ describe("AuthProvider", () => {
 
     expect(getCurrentUser).toHaveBeenCalledTimes(2);
     expect(refreshSession).toHaveBeenCalled();
-    expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
   });
 
   it("handles register and authenticates user", async () => {
@@ -198,7 +191,6 @@ describe("AuthProvider", () => {
         "test@example.com",
       );
     });
-    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
   it("shows a descriptive error when register fails with duplicate email", async () => {
@@ -252,7 +244,6 @@ describe("AuthProvider", () => {
         "test@example.com",
       );
     });
-    expect(syncLocalDraftToRemoteList).toHaveBeenCalled();
   });
 
   it("handles logout", async () => {

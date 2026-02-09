@@ -76,7 +76,10 @@ describe("useAutosaveDraft", () => {
 
     const stored = localStorage.getItem("lists.localDraft");
     expect(stored).toBeTruthy();
-    expect(JSON.parse(stored ?? "{}")).toEqual({
+    const parsed = JSON.parse(stored ?? "{}") as AutosaveDraftInput & {
+      updatedAt?: string;
+    };
+    expect(parsed).toMatchObject({
       title: "Lista semanal",
       items: [
         {
@@ -91,6 +94,7 @@ describe("useAutosaveDraft", () => {
         },
       ],
     });
+    expect(parsed.updatedAt).toEqual(expect.any(String));
 
     await vi.advanceTimersByTimeAsync(1500);
 
@@ -114,13 +118,26 @@ describe("useAutosaveDraft", () => {
           sourceProductId: "item-1",
         },
       ],
+      updatedAt: "2024-01-01T00:00:00.000Z",
     };
 
     localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
 
     render(<Harness onRehydrate={onRehydrate} />);
 
-    expect(onRehydrate).toHaveBeenCalledWith(localDraft);
+    expect(onRehydrate).toHaveBeenCalledWith({
+      title: "Lista recuperada",
+      items: [
+        {
+          id: "item-1",
+          name: "Leche",
+          qty: 2,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-1",
+        },
+      ],
+    });
   });
 
   it("solo guarda en localStorage cuando está deshabilitado", async () => {

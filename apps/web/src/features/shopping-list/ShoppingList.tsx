@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
-import AutosaveRecoveryBanner from "./components/AutosaveRecoveryBanner";
+import AutosaveConflictModal from "./components/AutosaveConflictModal";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";
@@ -10,7 +10,7 @@ import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
-import type { AutosaveDraft, AutosaveDraftInput } from "./services/types";
+import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
 import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdapter";
@@ -211,9 +211,6 @@ type ShoppingListListViewProps = {
   onDelete: () => void;
   isActionsDisabled: boolean;
   detailActionLoading: "edit" | "reuse" | "delete" | null;
-  autosaveDraft: AutosaveDraft | null;
-  onAutosaveContinue: () => void;
-  onAutosaveDiscard: () => void;
   isLoading: boolean;
   sortedItems: ShoppingListItem[];
   isReadOnlyMobile: boolean;
@@ -232,9 +229,6 @@ const ShoppingListListView = ({
   onDelete,
   isActionsDisabled,
   detailActionLoading,
-  autosaveDraft,
-  onAutosaveContinue,
-  onAutosaveDiscard,
   isLoading,
   sortedItems,
   isReadOnlyMobile,
@@ -283,12 +277,6 @@ const ShoppingListListView = ({
           onDelete={onDelete}
           isDisabled={isActionsDisabled}
           loadingAction={detailActionLoading}
-        />
-      ) : null}
-      {autosaveDraft ? (
-        <AutosaveRecoveryBanner
-          onContinue={onAutosaveContinue}
-          onDiscard={onAutosaveDiscard}
         />
       ) : null}
       {renderListContent()}
@@ -345,10 +333,6 @@ const ShoppingList = ({
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
-      if (items.length > 0 || draft.items.length === 0) {
-        return;
-      }
-
       const restoredTitle =
         draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
       const restoredItems = adaptShoppingListItems(draft.items);
@@ -357,7 +341,20 @@ const ShoppingList = ({
       setListName(draft.title);
       setListTitle(restoredTitle);
     },
-    [items.length, setItems],
+    [setItems],
+  );
+
+  const handleAutoRestore = useCallback(
+    (draft: AutosaveDraftInput) => {
+      const restoredTitle =
+        draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
+      showToast({
+        message: UI_TEXT.SHOPPING_LIST.AUTOSAVE_RECOVERY.RESTORED_TOAST_MESSAGE,
+        productName: restoredTitle,
+        thumbnail: null,
+      });
+    },
+    [showToast],
   );
 
   useAutosaveDraft(
@@ -368,11 +365,11 @@ const ShoppingList = ({
     },
   );
 
-  const { draft: autosaveDraft, handleContinue, handleDiscard } =
-    useAutosaveRecovery({
-      enabled: Boolean(authUser),
-      onRehydrate: handleRehydrate,
-    });
+  const { conflict, handleKeepLocal, handleKeepRemote } = useAutosaveRecovery({
+    enabled: Boolean(authUser),
+    onRehydrate: handleRehydrate,
+    onAutoRestore: handleAutoRestore,
+  });
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) {
@@ -557,9 +554,6 @@ const ShoppingList = ({
         onDelete={() => setPendingListDeletion(true)}
         isActionsDisabled={isActionsDisabled}
         detailActionLoading={detailActionLoading}
-        autosaveDraft={autosaveDraft}
-        onAutosaveContinue={handleContinue}
-        onAutosaveDiscard={handleDiscard}
         isLoading={isLoading}
         sortedItems={sortedItems}
         isReadOnlyMobile={isReadOnlyMobile}
@@ -568,6 +562,11 @@ const ShoppingList = ({
         onRemove={handleRemoveRequest}
         total={total}
         onAddMore={handleAddMore}
+      />
+      <AutosaveConflictModal
+        isOpen={Boolean(conflict)}
+        onKeepLocal={handleKeepLocal}
+        onKeepRemote={handleKeepRemote}
       />
       {pendingRemoval ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">

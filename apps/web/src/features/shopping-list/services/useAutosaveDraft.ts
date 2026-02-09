@@ -42,6 +42,13 @@ const buildAutosaveDraft = (
   items: items.map(mapListItemToAutosave),
 });
 
+const mapLocalDraftToInput = (
+  draft: AutosaveDraftInput & { updatedAt?: string }
+): AutosaveDraftInput => ({
+  title: draft.title,
+  items: draft.items,
+});
+
 export const useAutosaveDraft = (
   { title, items }: UseAutosaveDraftParams,
   options: UseAutosaveDraftOptions = {}
@@ -76,7 +83,7 @@ export const useAutosaveDraft = (
     const localDraft = loadLocalDraft();
 
     if (localDraft && onRehydrate) {
-      onRehydrate(localDraft);
+      onRehydrate(mapLocalDraftToInput(localDraft));
     }
 
     hasRehydratedRef.current = true;

@@ -123,6 +123,14 @@ export const UI_TEXT = {
       MESSAGE: "Puedes continuar donde lo dejaste o descartarlo.",
       CONTINUE_LABEL: "Continuar",
       DISCARD_LABEL: "Descartar",
+      RESTORED_TOAST_MESSAGE: "Borrador remoto restaurado",
+    },
+    AUTOSAVE_CONFLICT: {
+      TITLE: "¿Con cuál borrador te quedas?",
+      MESSAGE:
+        "Detectamos cambios distintos en el mismo momento. Elige qué versión mantener.",
+      KEEP_LOCAL_LABEL: "Mantener local",
+      KEEP_REMOTE_LABEL: "Mantener remoto",
     },
     DETAIL_ACTIONS: {
       EDIT: "Editar",
