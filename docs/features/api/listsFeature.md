@@ -135,6 +135,33 @@ El autosave se crea o recupera al autenticarse (puede estar vacío) y se actuali
 
 Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 
+
+## Sync policy
+
+- **Debounce (cliente web):** el cliente agrupa cambios del `LOCAL_DRAFT` y envía `PUT /api/lists/autosave` con ventana de **800 ms**. La API asume escrituras idempotentes del último snapshot recibido.
+- **Retry en autosave fallido (cliente):**
+  - Estrategia esperada: 3 reintentos con backoff exponencial (**1 s**, **2 s**, **4 s**).
+  - Si se agotan, el cliente conserva cambios localmente y deja el estado en error de sincronización hasta reintento manual o nueva edición.
+- **Conflictos multi-tab / actualizaciones concurrentes:**
+  - `PUT /api/lists/autosave` debe validar precondición de versión (`updatedAt` o equivalente) para detectar escrituras sobre snapshot obsoleto.
+  - Ante conflicto, responder **`409 Conflict`** sin aplicar overwrite silencioso.
+  - El cliente debe tratar el conflicto como recuperación explícita (no merge implícito en backend).
+- **Comportamiento offline esperado:**
+  - Sin red, no hay persistencia en servidor; los cambios permanecen en `LOCAL_DRAFT`.
+  - Al recuperar conectividad, el cliente reintenta sincronizar el último snapshot pendiente.
+- **Regla explícita server -> local:**
+  - Los datos del servidor solo pueden sobrescribir estado local en escenarios de recuperación definidos: bootstrap inicial de sesión, rehidratación tras relogin, o resolución explícita de conflicto (`409`) iniciada por el usuario.
+  - Fuera de esos casos, el servidor no debe considerarse fuente para sobrescribir edición local en curso.
+
+### Timeline de ejemplo (conflicto concurrente)
+
+1. **t0:** Cliente A y B leen autosave con `updatedAt=10:00`.
+2. **t1:** A envía `PUT /autosave` con base `10:00`; API guarda y devuelve `updatedAt=10:01`.
+3. **t2:** B envía `PUT /autosave` todavía con base `10:00`.
+4. **t3:** API detecta desfasaje y responde `409 Conflict` (sin persistir payload de B).
+5. **t4:** B mantiene cambios locales pendientes y solicita último autosave remoto (`10:01`).
+6. **t5:** Solo si el usuario elige flujo de recuperación, B reemplaza local por remoto o reintenta con snapshot reconciliado.
+
 ### GET /api/lists/:id
 
 **Response 200**
