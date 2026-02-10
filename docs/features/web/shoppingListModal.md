@@ -24,10 +24,10 @@ cantidades, eliminar líneas y ver el total.
 - El decremento nunca baja de 1 y el incremento no supera 99.
 - Si no hay items se muestra un estado vacío con mensaje.
 - Si no hay items, no se muestra "Finalizar lista".
-- Al iniciar sesión se crea el `DRAFT` único (puede estar vacío) y se reutiliza en los flujos de reusar/editar.
+- Al iniciar sesión se crea/recupera el `DRAFT` único (autosave persistido en servidor), puede estar vacío y se reutiliza en los flujos de reusar/editar.
 - El `DRAFT` no aparece en el listado principal de listas.
 - Al marcar "Finalizar lista", la lista pasa a `ACTIVE` reutilizando el mismo registro.
-- Tras finalizar, se elimina el autosave actual y se crea un `DRAFT` vacío para mantener el borrador único.
+- Tras finalizar, se limpia el autosave del `DRAFT` actual y se crea un `DRAFT` vacío para mantener el borrador único.
 - El borrado de productos es directo (sin modal de confirmación) y muestra toast.
 
 ## Notas de implementación

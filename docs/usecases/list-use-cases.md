@@ -6,12 +6,13 @@ Permitir a los usuarios **preparar listas de la compra en PC**, guardarlas en su
 
 ---
 
-## Estados de una lista
+## Glosario canónico de estados
 
-* **LOCAL_DRAFT**: único borrador en navegador cuando no hay sesión.
-* **DRAFT**: único borrador sincronizado con autosave remoto al autenticarse. Puede estar vacío y se reutiliza entre flujos (reusar, editar, crear).
-* **ACTIVE**: lista preparada para comprar, visible en web y móvil.
-* **COMPLETED**: compra finalizada, visible en historial.
+* **`LOCAL_DRAFT`**: borrador en `localStorage` del navegador usado por las interacciones Web antes de persistirse en servidor.
+* **`DRAFT`**: borrador autosave persistido en servidor con el modelo actual (`status=DRAFT` + `is_autosave_draft` cuando aplique). Es único por usuario, puede estar vacío y se reutiliza entre flujos (crear, reusar, editar).
+* **`ACTIVE`**: estado de negocio persistido para listas listas para comprar, visibles en web y móvil.
+* **`COMPLETED`**: estado de negocio persistido para listas finalizadas, visibles en historial.
+
 
 ### Autosave con sesión (decisión)
 

@@ -3,7 +3,7 @@
 ## Resumen
 
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
-Existe un **único `DRAFT` por usuario** (no autosave) que puede estar vacío y se reutiliza entre flujos (crear, `ReuseList`, editar).
+Existe un **único `DRAFT` por usuario** y siempre es el autosave persistido en servidor. En el modelo actual corresponde a `status=DRAFT` con `is_autosave_draft` cuando aplica. Puede estar vacío y se reutiliza entre flujos (crear, `ReuseList`, editar).
 
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
@@ -55,8 +55,9 @@ Existe un **único `DRAFT` por usuario** (no autosave) que puede estar vacío y 
 
 **Notas**
 
-- El listado general excluye el autosave draft y listas en estado `DRAFT`.
+- El listado general excluye listas en estado `DRAFT`.
 - Orden por fecha más reciente (Activas: `activatedAt`, Historial: `updatedAt`).
+
 
 ### GET /api/lists/autosave
 
@@ -88,8 +89,8 @@ Existe un **único `DRAFT` por usuario** (no autosave) que puede estar vacío y 
 }
 ```
 
-Si no hay borrador autosave, responde con `204`.
-El autosave se crea cuando el frontend guarda cambios del borrador.
+Si no hay `DRAFT`, responde con `204`.
+El autosave se crea cuando el frontend guarda cambios del `LOCAL_DRAFT` o del propio `DRAFT`.
 
 ### PUT /api/lists/autosave
 
@@ -128,7 +129,7 @@ El autosave se crea cuando el frontend guarda cambios del borrador.
 }
 ```
 
-Sobrescribe el borrador autosave con el contenido enviado (incluyendo el caso vacío).
+Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 
 ### GET /api/lists/:id
 
@@ -212,7 +213,7 @@ Completa una lista activa y sincroniza items marcados.
 
 **Response 204**
 
-Sin contenido (autosave descartado).
+Sin contenido (`DRAFT` descartado).
 
 ### POST /api/lists/:id/items/from-catalog
 
