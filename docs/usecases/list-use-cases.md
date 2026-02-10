@@ -41,6 +41,24 @@ Para la experiencia web, la fuente de verdad operativa durante la edición es si
 
 ---
 
+## Draft Invariant and Recovery Policy
+
+Esta sección es la referencia canónica para la semántica de `DRAFT` y recuperación backend.
+
+1. Un usuario autenticado por primera vez puede no tener todavía un draft en servidor.
+2. Después del bootstrap, un usuario autenticado debe tener exactamente un `DRAFT` reutilizable en servidor.
+3. Semántica Variant A: el registro de draft es persistente; los flujos limpian su contenido en vez de eliminar la entidad draft.
+4. Regla de recuperación: si un flujo requiere draft y falta, el backend debe auto-recuperarse con estrategia update-or-create.
+5. Post-condición de toda operación que muta draft: existe exactamente un draft en servidor.
+
+Referencias que deben mantenerse alineadas con esta política:
+
+- `docs/features/api/listsFeature.md`
+- `docs/api/design.md`
+- `docs/features/web/lists-management.md`
+
+---
+
 
 ## Tabla de transiciones de estado
 

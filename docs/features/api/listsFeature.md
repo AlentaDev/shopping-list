@@ -11,6 +11,19 @@ Se prefiere permitir `DRAFT` vacío para mantener contratos API estables y unifi
 
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
+
+## Política canónica de Draft y Recovery
+
+La política canónica de invariante y recuperación del `DRAFT` vive en `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
+
+Resumen operativo para API:
+
+- Un usuario autenticado en primer bootstrap puede no tener draft todavía.
+- Tras bootstrap debe existir exactamente un `DRAFT` reutilizable en servidor.
+- Variant A: el draft no se elimina; los flujos limpian su contenido.
+- Si un flujo requiere draft y no existe, backend aplica self-heal con update-or-create.
+- Toda operación que muta draft debe dejar exactamente un `DRAFT` en servidor.
+
 ## Endpoints
 
 ### POST /api/lists

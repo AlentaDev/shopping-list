@@ -12,6 +12,12 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - `PATCH /api/lists/:id/editing` (activar/desactivar edición)
 - `POST /api/lists/:id/finish-edit` (finalizar edición)
 
+
+## Política canónica de Draft y Recovery
+
+La política canónica de invariante y recuperación del `DRAFT` está en `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
+Este documento debe tratarla como fuente única para reglas de bootstrap, reutilización y self-healing backend.
+
 ## Reglas importantes
 
 ### Listado general
