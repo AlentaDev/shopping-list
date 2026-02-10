@@ -75,6 +75,10 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - El `DRAFT` del servidor se usa para bootstrap/recuperación, no como estado primario de edición.
 - Flujo ejemplo: editar item -> actualizar `LOCAL_DRAFT` al instante -> lanzar autosave con debounce -> persistir en `DRAFT` remoto.
 
+## Referencia de transiciones
+
+- Ver la tabla canónica de transiciones en `docs/usecases/list-use-cases.md#tabla-de-transiciones-de-estado` para validar los flujos de reconciliación login/bootstrap, activar desde draft, edición de listas activas, reutilización de historial y finalización desde móvil.
+
 ## Notas de implementación
 
 - La pantalla se monta cuando la ruta es `/lists`.

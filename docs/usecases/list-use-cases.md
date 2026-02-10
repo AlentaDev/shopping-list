@@ -41,6 +41,19 @@ Para la experiencia web, la fuente de verdad operativa durante la edición es si
 
 ---
 
+
+## Tabla de transiciones de estado
+
+| Current state | Trigger | Next state | LOCAL_DRAFT effect | server DRAFT effect | ACTIVE/COMPLETED effect | user feedback |
+| --- | --- | --- | --- | --- | --- | --- |
+| LOCAL_DRAFT + DRAFT (login/bootstrap) | Reconciliación por `updatedAt` al autenticar o restaurar sesión | DRAFT | Se conserva el más reciente; si empatan y difieren, se reemplaza según la elección del usuario | Se conserva el más reciente; si el usuario elige local, se sobrescribe remoto con local | Sin cambios en listas `ACTIVE`/`COMPLETED` | Toast de recuperación cuando remoto gana por local vacío; modal de elección si empate con contenido distinto |
+| DRAFT | Activar desde borrador (`Finalizar lista` / `PATCH /api/lists/:id/activate`) | ACTIVE | Se limpia el `LOCAL_DRAFT` operativo tras activar | El `DRAFT` activado pasa a `ACTIVE` y se crea un nuevo `DRAFT` vacío | Se crea/actualiza una lista `ACTIVE` disponible en web y móvil | Toast de éxito indicando disponibilidad en móvil |
+| ACTIVE (`isEditing=false`) | Iniciar edición de activa (`PATCH /api/lists/:id/editing` con `isEditing=true`) | ACTIVE (`isEditing=true`) + DRAFT paralelo | `LOCAL_DRAFT` pasa a reflejar el DRAFT paralelo editable | El `DRAFT` único se reemplaza por una copia editable de la lista activa | La lista `ACTIVE` queda en modo edición y en móvil solo lectura | Modal de confirmación previo con aviso de bloqueo en móvil y pérdida del DRAFT previo |
+| ACTIVE (`isEditing=true`) + DRAFT paralelo | Cancelar edición de activa | ACTIVE (`isEditing=false`) | Se descarta el `LOCAL_DRAFT` de edición y vuelve a vacío | El `DRAFT` se reinicia a vacío | La lista `ACTIVE` conserva contenido original y vuelve a estar disponible en móvil | Toast de cancelación/restauración de disponibilidad |
+| ACTIVE (`isEditing=true`) + DRAFT paralelo | Terminar edición (`POST /api/lists/:id/finish-edit`) | ACTIVE (`isEditing=false`) | Se limpia el `LOCAL_DRAFT` tras aplicar cambios | El contenido del `DRAFT` se aplica a `ACTIVE` y luego se reinicia `DRAFT` a vacío | La lista `ACTIVE` queda actualizada y vuelve a editable/usable en móvil | Toast de éxito de edición finalizada |
+| COMPLETED | Reuse desde historial (`POST /api/lists/:id/reuse`) | DRAFT | `LOCAL_DRAFT` se sobrescribe con los items reutilizados sin marcar | El `DRAFT` único se crea o sobrescribe con los items de `COMPLETED` | `COMPLETED` permanece inmutable en historial | Aviso previo si se perderá el DRAFT en progreso; feedback de reutilización completada |
+| ACTIVE | Completar compra desde móvil (`POST /api/lists/:id/complete`) | COMPLETED | Sin cambios en `LOCAL_DRAFT` (flujo móvil) | Sin cambios directos en `DRAFT` (permanece como borrador único) | La lista `ACTIVE` pasa a `COMPLETED` con checks sincronizados | Confirmación de compra finalizada; error si la lista fue borrada antes de sincronizar |
+
 ## Actores
 
 * Usuario no registrado (web)
