@@ -110,7 +110,8 @@ Secuencia típica:
 - Respuesta `200`: `AutosaveDraftSummary`.
 
 **DELETE `/autosave`**
-- Respuesta `204`: sin contenido.
+- Respuesta `204`: limpia el contenido del draft (título/items según regla vigente) y conserva la entidad draft.
+- After completion, exactly one reusable server DRAFT exists.
 
 **POST `/:id/items`**
 - Params: `{ id }`.
@@ -135,14 +136,20 @@ Secuencia típica:
 - Params: `{ id }`.
 - Body: `{ status: "ACTIVE" }`.
 - Respuesta `200`: `{ id, status, updatedAt }`.
+- Mantiene el invariante post-activación de un único draft reutilizable en servidor.
+- After completion, exactly one reusable server DRAFT exists.
 
 **POST `/:id/reuse`**
 - Params: `{ id }`.
 - Respuesta `201`: `ListDetail`.
+- Sobrescribe contenido del draft existente; si no existe draft, aplica fallback update-or-create.
+- After completion, exactly one reusable server DRAFT exists.
 
 **POST `/:id/finish-edit`**
 - Params: `{ id }`.
 - Respuesta `200`: `ListDetail`.
+- Aplica draft sobre la lista ACTIVE y luego limpia el contenido del draft.
+- After completion, exactly one reusable server DRAFT exists.
 
 **PATCH `/:id/editing`**
 - Params: `{ id }`.

@@ -241,7 +241,9 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 }
 ```
 
-**Regla:** solo se permite activar si el `DRAFT` tiene items. Tras activar, se crea un `DRAFT` vacío para mantener el borrador único.
+**Regla:** solo se permite activar si el `DRAFT` tiene items. Tras activar, se mantiene el invariante post-activación de un único `DRAFT` reutilizable en servidor.
+
+After completion, exactly one reusable server DRAFT exists.
 
 ### POST /api/lists/:id/complete
 
@@ -269,7 +271,9 @@ Completa una lista activa y sincroniza items marcados.
 
 **Response 204**
 
-Sin contenido (`DRAFT` descartado).
+Sin contenido. Limpia el contenido del `DRAFT` (título/items según regla vigente), pero conserva la entidad `DRAFT`.
+
+After completion, exactly one reusable server DRAFT exists.
 
 ### POST /api/lists/:id/items/from-catalog
 
@@ -348,7 +352,7 @@ Sin contenido (`DRAFT` descartado).
 
 ### POST /api/lists/:id/reuse
 
-Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el `DRAFT` único con los mismos items sin marcar.
+Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el contenido del `DRAFT` existente con los mismos items sin marcar; si falta draft, aplica fallback update-or-create.
 
 **Response 201**
 
@@ -379,6 +383,8 @@ Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el `DRAFT`
 }
 ```
 
+After completion, exactly one reusable server DRAFT exists.
+
 ### PATCH /api/lists/:id/editing
 
 Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEditing=false`).
@@ -403,7 +409,9 @@ Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEd
 
 ### POST /api/lists/:id/finish-edit
 
-Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y reinicia el `DRAFT` único a vacío.
+Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y luego limpia el contenido del `DRAFT`.
+
+After completion, exactly one reusable server DRAFT exists.
 
 ## Referencia de transiciones
 
