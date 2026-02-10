@@ -8,7 +8,7 @@ Propuesto.
 Se han refinado los flujos de listas para usuarios autenticados con nuevas reglas de negocio y UX:
 
 - Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
-- No se crea un draft vacío: el autosave nace al añadir el primer item.
+- El `DRAFT` único puede crearse vacío al autenticarse para garantizar continuidad entre sesiones y flujos.
 - En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
 - Las acciones cambian: **Editar/Cerrar/Borrar** en Activas y **Reusar/Cerrar/Borrar** en Historial.
 - Se requiere bloquear la edición en móvil cuando una lista activa esté en edición (`isEditing=true`).
@@ -34,6 +34,10 @@ Adoptar un plan de migración incremental que prioriza **API/BD primero** y lueg
    - Mensajes de confirmación para pérdida de draft (solo si tiene ítems).
    - Bloqueo móvil cuando `isEditing=true`.
    - Estados de carga con skeletons y botones con loading.
+
+### Decision rationale
+
+Se prioriza permitir la creación de `DRAFT` vacío porque simplifica el modelo (siempre existe a lo sumo un borrador remoto), reduce ramas condicionales en login/recuperación y hace más predecibles los flujos de reusar/editar. El coste es persistir borradores sin items, pero se considera aceptable porque mejora la consistencia funcional y evita divergencias entre web y API.
 
 ## Consecuencias
 

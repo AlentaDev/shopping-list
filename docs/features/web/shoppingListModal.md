@@ -30,6 +30,10 @@ cantidades, eliminar líneas y ver el total.
 - Tras finalizar, se limpia el autosave del `DRAFT` actual y se crea un `DRAFT` vacío para mantener el borrador único.
 - El borrado de productos es directo (sin modal de confirmación) y muestra toast.
 
+### Decision rationale
+
+Se mantiene la política de permitir `DRAFT` vacío para que la experiencia web tenga un punto de sincronización estable desde el inicio de sesión, sin esperar al primer item. A cambio de guardar un registro vacío, se obtiene un flujo más consistente para recuperación, edición y reutilización.
+
 
 ### Web source of truth (normativo)
 
