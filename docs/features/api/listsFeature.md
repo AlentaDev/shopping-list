@@ -24,6 +24,28 @@ Resumen operativo para API:
 - Si un flujo requiere draft y no existe, backend aplica self-heal con update-or-create.
 - Toda operación que muta draft debe dejar exactamente un `DRAFT` en servidor.
 
+### Defensive update-or-create behavior
+
+Cualquier operación dependiente de draft debe aplicar comportamiento defensivo `update-or-create`:
+
+- Si existe `DRAFT`, se actualiza ese draft.
+- Si falta `DRAFT`, se crea uno nuevo antes de continuar.
+
+Alcance mínimo obligatorio:
+
+- escrituras de autosave (`PUT /api/lists/autosave`),
+- operaciones de `reuse`,
+- operaciones de draft relacionadas con edición.
+
+Este fallback existe para resiliencia ante errores transitorios y condiciones de carrera (por ejemplo, lecturas desfasadas o eventos concurrentes). Aun en estos escenarios, la operación debe preservar el invariante de **draft único por usuario**.
+
+Ejemplo conciso de recuperación (reuse/edit):
+
+1. Cliente inicia `reuse` de una lista y backend intenta aplicar cambios sobre `DRAFT`.
+2. El `DRAFT` esperado no existe (eliminación accidental o carrera).
+3. Backend crea `DRAFT` en el mismo flujo y continúa la operación de edición/reuse.
+4. La respuesta es exitosa y el usuario termina con exactamente un `DRAFT` reutilizable.
+
 ## Endpoints
 
 ### POST /api/lists
