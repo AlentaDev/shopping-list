@@ -30,6 +30,14 @@ cantidades, eliminar líneas y ver el total.
 - Tras finalizar, se limpia el autosave del `DRAFT` actual y se crea un `DRAFT` vacío para mantener el borrador único.
 - El borrado de productos es directo (sin modal de confirmación) y muestra toast.
 
+
+### Web source of truth (normativo)
+
+- Web lee y escribe primero en `LOCAL_DRAFT`.
+- El autosave sincroniza al `DRAFT` del servidor como backup.
+- El `DRAFT` del servidor se usa para bootstrap/recuperación, no como estado primario de edición.
+- Flujo ejemplo: editar item -> actualizar `LOCAL_DRAFT` al instante -> lanzar autosave con debounce -> persistir en `DRAFT` remoto.
+
 ## Notas de implementación
 
 - Estado local en `features/shopping-list/ShoppingList.tsx`.
