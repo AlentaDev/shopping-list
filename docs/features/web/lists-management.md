@@ -18,6 +18,26 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 La política canónica de invariante y recuperación del `DRAFT` está en `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
 Este documento debe tratarla como fuente única para reglas de bootstrap, reutilización y self-healing backend.
 
+
+### Bootstrap de primer login (resumen operativo web)
+
+Al autenticarse por primera vez, la web debe cerrar bootstrap con un único `DRAFT` remoto reutilizable:
+
+1. Sin `DRAFT` remoto + `LOCAL_DRAFT` con items: crear `DRAFT` remoto con contenido local y mantener edición sobre `LOCAL_DRAFT`.
+2. Sin `DRAFT` remoto + `LOCAL_DRAFT` vacío: crear `DRAFT` remoto vacío para dejar preparado autosave posterior.
+3. Condición de carrera (local y remoto aparecen a la vez): resolver por `updatedAt`; con empate y contenido distinto usar desempate explícito:
+   - Prioridad local cuando remoto quedó vacío y local tiene items.
+   - Modal de elección cuando ambos tienen contenido distinto.
+
+Feedback UX esperado:
+
+- Creación desde local con items: toast de confirmación de guardado en cuenta.
+- Creación de `DRAFT` vacío: sin modal, mensaje no bloqueante opcional.
+- Resolución automática por `updatedAt`: toast de recuperación indicando que se aplicó la versión más reciente.
+- Empate con conflicto de contenido: modal obligatorio para elegir fuente + toast final de confirmación.
+
+Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto por usuario, reutilizable por crear/editar/reusar sin crear drafts adicionales.
+
 ## Reglas importantes
 
 ### Listado general
