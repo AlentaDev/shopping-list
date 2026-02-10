@@ -12,6 +12,12 @@ Este documento describe el estado **actual** de la API (lo que está implementad
 - **Base URL**: todas las rutas de API se sirven bajo `/api`.
 - **Healthcheck**: `GET /health` devuelve `{ "status": "ok" }`.
 
+
+## Draft Invariant and Recovery Policy (referencia)
+
+La política canónica de draft y recuperación está centralizada en `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
+Toda decisión de API sobre autosave/draft debe mantenerse alineada con esa sección.
+
 ## Middleware y formato de errores
 - Se usa `express.json()` para body JSON.
 - CORS abierto (`Access-Control-Allow-Origin: *`) con headers y métodos básicos.
