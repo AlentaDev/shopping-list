@@ -75,6 +75,34 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - El `DRAFT` del servidor se usa para bootstrap/recuperación, no como estado primario de edición.
 - Flujo ejemplo: editar item -> actualizar `LOCAL_DRAFT` al instante -> lanzar autosave con debounce -> persistir en `DRAFT` remoto.
 
+### Sync policy
+
+- **Debounce de autosave:** cada cambio en `LOCAL_DRAFT` programa un `PUT /api/lists/autosave` con debounce de **800 ms**. Cambios consecutivos dentro de la ventana reinician el temporizador y solo se envía el último snapshot.
+- **Retry en fallos de autosave:**
+  - Reintentos automáticos con backoff exponencial: **1 s**, **2 s**, **4 s** (máximo 3 reintentos).
+  - Si todos fallan, se mantiene el estado en `LOCAL_DRAFT`, se marca estado `sync=error` y se habilita reintento manual.
+  - Un nuevo cambio del usuario vuelve a intentar sincronizar automáticamente.
+- **Conflictos multi-tab/concurrencia:**
+  - Regla base: el servidor valida con `updatedAt` (o versión equivalente) enviado por cliente.
+  - Si llega `409 Conflict`, la pestaña no sobrescribe el remoto automáticamente.
+  - Se mantiene `LOCAL_DRAFT` como “cambios pendientes”, se obtiene snapshot remoto actualizado y se muestra estado de conflicto para que el usuario recargue/aplique recuperación.
+- **Comportamiento offline:**
+  - Sin conectividad no se intentan llamadas de autosave.
+  - Los cambios siguen aplicando a `LOCAL_DRAFT`.
+  - Al volver la red, se reanuda el autosave con el último snapshot local pendiente.
+- **Regla explícita de sobreescritura server -> local:**
+  - Los datos del servidor **solo pueden sobrescribir `LOCAL_DRAFT`** en escenarios de recuperación definidos: bootstrap inicial de sesión, recuperación tras logout/login, o resolución explícita después de conflicto (`409`) aceptada por el usuario.
+  - Fuera de esos escenarios, nunca se pisa `LOCAL_DRAFT` con datos remotos de forma implícita.
+
+#### Timeline de ejemplo (resolución de conflicto entre pestañas)
+
+1. **t0:** Pestaña A y B cargan el mismo `DRAFT` (`updatedAt=10:00`).
+2. **t1:** A edita y autosave guarda OK (`updatedAt=10:01`).
+3. **t2:** B edita sobre snapshot viejo (`updatedAt=10:00`) y envía autosave.
+4. **t3:** API responde `409 Conflict` a B.
+5. **t4:** B conserva su `LOCAL_DRAFT` pendiente, descarga snapshot remoto (`10:01`) y muestra aviso de conflicto.
+6. **t5:** Usuario en B elige “recargar desde servidor” (flujo de recuperación); recién ahí se permite sobrescribir `LOCAL_DRAFT` con remoto.
+
 ## Referencia de transiciones
 
 - Ver la tabla canónica de transiciones en `docs/usecases/list-use-cases.md#tabla-de-transiciones-de-estado` para validar los flujos de reconciliación login/bootstrap, activar desde draft, edición de listas activas, reutilización de historial y finalización desde móvil.
