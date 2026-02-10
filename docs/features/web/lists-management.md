@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El borrador único se gestiona en el modal de lista (puede estar vacío) y no aparece en este listado.
+Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El `DRAFT` único (autosave persistido en servidor) se gestiona en el modal de lista, puede estar vacío y no aparece en este listado.
 
 ## Endpoints
 
@@ -41,10 +41,10 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - La edición solo se inicia desde el modal de visualización.
 - Antes de editar, se muestra un modal de confirmación con:
   - “No se podrá usar en móvil mientras se edita”.
-  - Si hay draft con items: “Perderás la lista que estás confeccionando”.
+  - Si hay `DRAFT` con items: “Perderás la lista que estás confeccionando”.
 - Al confirmar, la lista activa queda con `isEditing=true`.
 - Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
-- Si ya existía DRAFT, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
+- Si ya existía `DRAFT`, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
 - Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false`.
 - Si el usuario termina la edición, se aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío.
@@ -60,7 +60,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 - Se muestran productos + total.
 - Botones: **Reusar**, **Borrar**.
 - ReuseList abre el modal y sobrescribe el `DRAFT` único con los items del historial.
-- Si existe un DRAFT con items, se avisa de pérdida y se reemplaza.
+- Si existe un `DRAFT` con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
 
 ### Estado en móvil
