@@ -27,6 +27,10 @@ al iniciar la app o tras login. La regla es:
 * Si elige el remoto, se reemplaza el borrador local.
 * Si el local está vacío y el remoto tiene items, se usa el remoto automáticamente y se muestra un toast de recuperación.
 
+### Decision rationale
+
+Se adopta la política de permitir `DRAFT` vacío porque reduce complejidad operativa: el backend y el frontend siempre trabajan con un único borrador remoto reutilizable, incluso antes del primer item. Aunque implica almacenar drafts vacíos, el beneficio de consistencia entre bootstrap, login, reusar y editar compensa ese coste.
+
 ### Web source of truth (normativo)
 
 Para la experiencia web, la fuente de verdad operativa durante la edición es siempre `LOCAL_DRAFT`.

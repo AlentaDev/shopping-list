@@ -5,6 +5,10 @@
 El módulo de listas permite crear y gestionar listas de compra para usuarios autenticados. Los invitados no persisten listas en el servidor.
 Existe un **único `DRAFT` por usuario** y siempre es el autosave persistido en servidor. En el modelo actual corresponde a `status=DRAFT` con `is_autosave_draft` cuando aplica. Puede estar vacío y se reutiliza entre flujos (crear, `ReuseList`, editar).
 
+### Decision rationale
+
+Se prefiere permitir `DRAFT` vacío para mantener contratos API estables y unificados en todos los flujos. Esta decisión evita lógica especial de creación diferida del autosave y facilita la recuperación de sesión con menor complejidad en cliente y servidor.
+
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
 ## Endpoints
@@ -90,7 +94,7 @@ Existe un **único `DRAFT` por usuario** y siempre es el autosave persistido en 
 ```
 
 Si no hay `DRAFT`, responde con `204`.
-El autosave se crea cuando el frontend guarda cambios del `LOCAL_DRAFT` o del propio `DRAFT`.
+El autosave se crea o recupera al autenticarse (puede estar vacío) y se actualiza cuando el frontend guarda cambios del `LOCAL_DRAFT` o del propio `DRAFT`.
 
 ### PUT /api/lists/autosave
 
