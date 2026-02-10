@@ -353,6 +353,10 @@ Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEd
 
 Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y reinicia el `DRAFT` único a vacío.
 
+## Referencia de transiciones
+
+- Ver la tabla canónica de transiciones en `docs/usecases/list-use-cases.md#tabla-de-transiciones-de-estado` para el detalle de reconciliación login/bootstrap, activación, edición de `ACTIVE`, reutilización de `COMPLETED` y cierre de compra en móvil.
+
 ## Notas de implementación
 
 - Todas las rutas requieren sesión autenticada.
