@@ -27,6 +27,29 @@ al iniciar la app o tras login. La regla es:
 * Si elige el remoto, se reemplaza el borrador local.
 * Si el local está vacío y el remoto tiene items, se usa el remoto automáticamente y se muestra un toast de recuperación.
 
+
+### Bootstrap de primer login (normativo)
+
+Cuando el usuario se autentica por primera vez y el servidor todavía no tiene `DRAFT`, se aplica bootstrap explícito:
+
+1. Si `LOCAL_DRAFT` tiene items, se crea `DRAFT` remoto con ese contenido.
+2. Si `LOCAL_DRAFT` está vacío, se crea `DRAFT` remoto vacío.
+3. Si por condición de carrera aparece a la vez `LOCAL_DRAFT` con items y un `DRAFT` remoto recién creado, se reconcilia por `updatedAt`.
+4. Si `updatedAt` empata y el contenido difiere, se aplica desempate explícito:
+   * Priorizar `LOCAL_DRAFT` si contiene items y el remoto está vacío (preserva trabajo del usuario).
+   * Si ambos tienen items distintos, mostrar modal de elección para confirmar fuente.
+
+Feedback esperado en bootstrap:
+
+* `LOCAL_DRAFT` con items + remoto inexistente: toast de éxito corto (“Hemos guardado tu borrador en tu cuenta”).
+* `LOCAL_DRAFT` vacío + remoto inexistente: sin modal; toast informativo opcional no bloqueante (“Tu borrador está listo”).
+* Carrera resuelta por remoto más reciente: toast de recuperación (“Recuperamos tu borrador más reciente”).
+* Carrera con empate y elección manual: modal de conflicto + toast de confirmación tras elegir.
+
+Invariante de salida del bootstrap:
+
+* Tras finalizar el flujo de autenticación debe existir exactamente un `DRAFT` remoto reutilizable por usuario.
+
 ### Decision rationale
 
 Se adopta la política de permitir `DRAFT` vacío porque reduce complejidad operativa: el backend y el frontend siempre trabajan con un único borrador remoto reutilizable, incluso antes del primer item. Aunque implica almacenar drafts vacíos, el beneficio de consistencia entre bootstrap, login, reusar y editar compensa ese coste.
@@ -64,6 +87,7 @@ Referencias que deben mantenerse alineadas con esta política:
 
 | Current state | Trigger | Next state | LOCAL_DRAFT effect | server DRAFT effect | ACTIVE/COMPLETED effect | user feedback |
 | --- | --- | --- | --- | --- | --- | --- |
+| Sin sesión + primer login sin DRAFT remoto | Bootstrap de autenticación inicial | DRAFT | Se mantiene tal cual; si tiene items se toma como fuente inicial | Se crea un único `DRAFT` (con items locales o vacío) | Sin cambios en listas `ACTIVE`/`COMPLETED` | Toast de creación/sincronización; sin modal salvo conflicto por carrera |
 | LOCAL_DRAFT + DRAFT (login/bootstrap) | Reconciliación por `updatedAt` al autenticar o restaurar sesión | DRAFT | Se conserva el más reciente; si empatan y difieren, se reemplaza según la elección del usuario | Se conserva el más reciente; si el usuario elige local, se sobrescribe remoto con local | Sin cambios en listas `ACTIVE`/`COMPLETED` | Toast de recuperación cuando remoto gana por local vacío; modal de elección si empate con contenido distinto |
 | DRAFT | Activar desde borrador (`Finalizar lista` / `PATCH /api/lists/:id/activate`) | ACTIVE | Se limpia el `LOCAL_DRAFT` operativo tras activar | El `DRAFT` activado pasa a `ACTIVE` y se crea un nuevo `DRAFT` vacío | Se crea/actualiza una lista `ACTIVE` disponible en web y móvil | Toast de éxito indicando disponibilidad en móvil |
 | ACTIVE (`isEditing=false`) | Iniciar edición de activa (`PATCH /api/lists/:id/editing` con `isEditing=true`) | ACTIVE (`isEditing=true`) + DRAFT paralelo | `LOCAL_DRAFT` pasa a reflejar el DRAFT paralelo editable | El `DRAFT` único se reemplaza por una copia editable de la lista activa | La lista `ACTIVE` queda en modo edición y en móvil solo lectura | Modal de confirmación previo con aviso de bloqueo en móvil y pérdida del DRAFT previo |
@@ -119,6 +143,8 @@ existen, el usuario decide cuál mantener.
      - Mantener la lista local → se sincroniza el autosave remoto con el local.
      - Mantener la lista remota → se reemplaza el borrador local.
 4. Si no existe autosave remoto, se sincroniza el borrador local al autosave remoto creando uno nuevo.
+   * Si el borrador local está vacío, igualmente se crea `DRAFT` remoto vacío para cumplir el invariante.
+   * Si se detecta creación concurrente local/remota, se resuelve por `updatedAt`; con empate y contenido distinto se aplica desempate explícito (prioridad local si remoto vacío, o modal si ambos tienen contenido).
 
 **Estado resultante:** `DRAFT`
 
