@@ -46,6 +46,37 @@ Ejemplo conciso de recuperación (reuse/edit):
 3. Backend crea `DRAFT` en el mismo flujo y continúa la operación de edición/reuse.
 4. La respuesta es exitosa y el usuario termina con exactamente un `DRAFT` reutilizable.
 
+## Acceptance checklist (backend + frontend)
+
+> Checklist verificable para QA/API/Web. Cada criterio referencia endpoint(s) y caso(s) de uso concretos para evitar ambigüedad de implementación.
+
+- [ ] **`204` solo en bootstrap de primer login/auth**
+  - **Endpoint:** `GET /api/lists/autosave`
+  - **Use case:** bootstrap de sesión autenticada sin draft previo.
+  - **Criterio verificable:**
+    1. Usuario autenticado recién creado, sin `DRAFT` inicializado -> `GET /api/lists/autosave` devuelve `204`.
+    2. Después de primera inicialización (`PUT /api/lists/autosave` o flujo equivalente de bootstrap) -> `GET /api/lists/autosave` devuelve siempre `200` (incluyendo draft vacío).
+    3. En usuarios existentes (ya bootstrappeados) no reaparece `204` como estado normal.
+
+- [ ] **Usuarios existentes terminan operaciones con exactamente un draft**
+  - **Endpoints / casos de uso:** `PUT /api/lists/autosave`, `PATCH /api/lists/:id/activate`, `POST /api/lists/:id/reuse`, `POST /api/lists/:id/finish-edit`, `DELETE /api/lists/autosave`.
+  - **Criterio verificable:** al finalizar cualquiera de estos flujos para usuario existente, una consulta de autosave (`GET /api/lists/autosave`) devuelve un único `DRAFT` reutilizable (`200`) y no existen 0 ni >1 drafts.
+
+- [ ] **`finish-edit` y `DELETE autosave` limpian contenido, no eliminan entidad draft**
+  - **Endpoints:** `POST /api/lists/:id/finish-edit`, `DELETE /api/lists/autosave`.
+  - **Criterio verificable:**
+    1. Tras `POST /api/lists/:id/finish-edit`, la lista activa queda actualizada y el `DRAFT` permanece existente pero vacío/limpio según contrato.
+    2. Tras `DELETE /api/lists/autosave`, la API responde `204` y el `DRAFT` sigue existiendo (lectura posterior con `GET /api/lists/autosave` devuelve `200` con contenido limpio).
+
+- [ ] **Flujos de reuse/edit recuperan automáticamente si falta draft (update-or-create)**
+  - **Endpoints / casos de uso:** `POST /api/lists/:id/reuse` y operaciones de edición que dependen de draft (`POST /api/lists/:id/finish-edit`, escrituras `PUT /api/lists/autosave`).
+  - **Criterio verificable:** si el `DRAFT` no existe por condición transitoria/carrera, la operación crea uno en el mismo flujo y responde éxito funcional (sin error por draft faltante), manteniendo invariante de draft único.
+
+- [ ] **Migración local-first en primer login preserva items locales pre-auth al draft servidor**
+  - **Use case:** reconciliación login/bootstrap cliente-servidor.
+  - **Endpoints:** `GET /api/lists/autosave` (detección bootstrap `204`) + `PUT /api/lists/autosave` (persistencia del `LOCAL_DRAFT` pre-auth).
+  - **Criterio verificable:** con items en `LOCAL_DRAFT` antes de autenticar, el primer login debe terminar con `GET /api/lists/autosave` en `200` y los items locales presentes en el draft servidor (sin pérdida silenciosa).
+
 ## Endpoints
 
 ### POST /api/lists
