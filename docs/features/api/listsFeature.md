@@ -106,7 +106,19 @@ Resumen operativo para API:
 }
 ```
 
-Si no hay `DRAFT`, responde con `204`.
+Para un usuario autenticado que aún no inicializó su draft (estado bootstrap inicial), `GET /api/lists/autosave` responde `204`.
+Para usuarios con draft ya inicializado, `GET /api/lists/autosave` responde `200` con el payload de autosave (aunque esté vacío).
+
+El `204` representa un estado inicial de bootstrap, no un estado normal recurrente para usuarios establecidos.
+Después de la primera escritura/bootstrapping que crea el draft, las lecturas siguientes deben devolver `200`.
+
+Secuencia de ejemplo:
+
+1. Usuario se registra.
+2. `GET /api/lists/autosave` → `204` (sin draft inicializado todavía).
+3. Bootstrap/primera escritura crea el `DRAFT`.
+4. `GET /api/lists/autosave` → `200` con payload de draft.
+
 El autosave se crea o recupera al autenticarse (puede estar vacío) y se actualiza cuando el frontend guarda cambios del `LOCAL_DRAFT` o del propio `DRAFT`.
 
 ### PUT /api/lists/autosave

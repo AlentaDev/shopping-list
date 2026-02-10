@@ -95,8 +95,15 @@ Todas las rutas requieren autenticación.
 - Respuesta `200`: `ListDetail`.
 
 **GET `/autosave`**
-- Respuesta `200`: `AutosaveDraft`.
-- Respuesta `204`: sin contenido cuando no hay autosave.
+- Respuesta `204`: solo para usuario autenticado en estado bootstrap inicial (antes de inicializar draft).
+- Respuesta `200`: `AutosaveDraft` para usuarios con draft ya inicializado (incluye draft vacío).
+- El `204` es un estado inicial de bootstrap, no un estado normal recurrente para usuarios establecidos.
+
+Secuencia típica:
+1. Usuario se registra.
+2. `GET /autosave` -> `204`.
+3. Bootstrap/primera escritura crea draft.
+4. `GET /autosave` -> `200` con payload de draft.
 
 **PUT `/autosave`**
 - Body: `{ title, items }`.
