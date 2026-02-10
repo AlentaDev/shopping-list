@@ -27,6 +27,14 @@ al iniciar la app o tras login. La regla es:
 * Si elige el remoto, se reemplaza el borrador local.
 * Si el local está vacío y el remoto tiene items, se usa el remoto automáticamente y se muestra un toast de recuperación.
 
+### Web source of truth (normativo)
+
+Para la experiencia web, la fuente de verdad operativa durante la edición es siempre `LOCAL_DRAFT`.
+
+* Web lee y escribe primero en `LOCAL_DRAFT`.
+* El autosave sincroniza (backup) al `DRAFT` del servidor.
+* El `DRAFT` del servidor se usa para flujos de bootstrap/recuperación (inicio de sesión, sesión restaurada, recuperación tras recarga), no como estado primario de edición.
+
 ---
 
 ## Actores

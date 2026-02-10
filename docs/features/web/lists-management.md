@@ -67,6 +67,14 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 
 - Si una lista activa está en edición (`isEditing=true`), en móvil solo se permite ver y se muestra aviso fijo de edición.
 
+
+### Web source of truth (normativo)
+
+- Web lee y escribe primero en `LOCAL_DRAFT`.
+- El autosave sincroniza al `DRAFT` del servidor como backup.
+- El `DRAFT` del servidor se usa para bootstrap/recuperación, no como estado primario de edición.
+- Flujo ejemplo: editar item -> actualizar `LOCAL_DRAFT` al instante -> lanzar autosave con debounce -> persistir en `DRAFT` remoto.
+
 ## Notas de implementación
 
 - La pantalla se monta cuando la ruta es `/lists`.
