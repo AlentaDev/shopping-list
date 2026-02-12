@@ -96,8 +96,8 @@ Todas las rutas requieren autenticación.
 
 **GET `/autosave`**
 - Respuesta `204`: solo para usuario autenticado en estado bootstrap inicial (antes de inicializar draft).
-- Respuesta `200`: `AutosaveDraft` para usuarios con draft ya inicializado (incluye draft vacío).
-- El `204` es un estado inicial de bootstrap, no un estado normal recurrente para usuarios establecidos.
+- Respuesta `200`: `AutosaveDraft` para usuarios bootstrap-completed con draft ya inicializado (incluye draft vacío).
+- El `204` es exclusivo del bootstrap inicial y no un estado normal recurrente para usuarios establecidos.
 
 Secuencia típica:
 1. Usuario se registra.
@@ -110,7 +110,7 @@ Secuencia típica:
 - Respuesta `200`: `AutosaveDraftSummary`.
 
 **DELETE `/autosave`**
-- Respuesta `204`: limpia el contenido del draft (título/items según regla vigente) y conserva la entidad draft.
+- Respuesta `204`: en Variant A para usuarios bootstrap-completed, limpia el contenido del draft (título/items según regla vigente) y conserva la entidad draft persistente (no la elimina).
 - After completion, exactly one reusable server DRAFT exists.
 
 **POST `/:id/items`**
@@ -148,7 +148,7 @@ Secuencia típica:
 **POST `/:id/finish-edit`**
 - Params: `{ id }`.
 - Respuesta `200`: `ListDetail`.
-- Aplica draft sobre la lista ACTIVE y luego limpia el contenido del draft.
+- Aplica draft sobre la lista ACTIVE y luego limpia el contenido del draft sin eliminar la entidad draft persistente (Variant A).
 - After completion, exactly one reusable server DRAFT exists.
 
 **PATCH `/:id/editing`**
