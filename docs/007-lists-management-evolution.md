@@ -8,7 +8,7 @@ Propuesto.
 Se han refinado los flujos de listas para usuarios autenticados con nuevas reglas de negocio y UX:
 
 - Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
-- El `DRAFT` único puede crearse vacío al autenticarse para garantizar continuidad entre sesiones y flujos.
+- El `DRAFT` único puede crearse vacío al autenticarse para garantizar continuidad entre sesiones y flujos, y en usuarios con bootstrap completado se mantiene como entidad persistente (Variant A).
 - En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
 - Las acciones cambian: **Editar/Cerrar/Borrar** en Activas y **Reusar/Cerrar/Borrar** en Historial.
 - Se requiere bloquear la edición en móvil cuando una lista activa esté en edición (`isEditing=true`).
@@ -16,6 +16,9 @@ Se han refinado los flujos de listas para usuarios autenticados con nuevas regla
 - Se requiere persistir `activated_at` e `is_editing` en BD.
 
 Estos cambios afectan **API**, **BD** y **Web**, y deben implementarse de forma incremental y comprobable en los 3 entornos.
+
+- En semántica Variant A, `DELETE /api/lists/autosave` y `POST /api/lists/:id/finish-edit` limpian contenido del draft y no eliminan la entidad.
+- `GET /api/lists/autosave` solo devuelve `204` en bootstrap inicial previo a primera inicialización de draft; luego devuelve `200`.
 
 ## Decisión
 

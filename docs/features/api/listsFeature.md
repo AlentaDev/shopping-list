@@ -20,7 +20,7 @@ Resumen operativo para API:
 
 - Un usuario autenticado en primer bootstrap puede no tener draft todavía.
 - Tras bootstrap debe existir exactamente un `DRAFT` reutilizable en servidor.
-- Variant A: el draft no se elimina; los flujos limpian su contenido.
+- Variant A (canónica): para usuarios con bootstrap completado, la entidad `DRAFT` es persistente y no se elimina; los flujos limpian su contenido.
 - Si un flujo requiere draft y no existe, backend aplica self-heal con update-or-create.
 - Toda operación que muta draft debe dejar exactamente un `DRAFT` en servidor.
 
@@ -160,10 +160,10 @@ Ejemplo conciso de recuperación (reuse/edit):
 ```
 
 Para un usuario autenticado que aún no inicializó su draft (estado bootstrap inicial), `GET /api/lists/autosave` responde `204`.
-Para usuarios con draft ya inicializado, `GET /api/lists/autosave` responde `200` con el payload de autosave (aunque esté vacío).
+Para usuarios con bootstrap completado (draft inicializado), `GET /api/lists/autosave` responde siempre `200` con el payload de autosave (aunque esté vacío).
 
-El `204` representa un estado inicial de bootstrap, no un estado normal recurrente para usuarios establecidos.
-Después de la primera escritura/bootstrapping que crea el draft, las lecturas siguientes deben devolver `200`.
+El `204` representa exclusivamente el estado inicial de bootstrap y no debe reaparecer como estado normal en usuarios establecidos.
+Después de la primera inicialización/bootstrapping que crea el draft, las lecturas siguientes deben devolver `200`.
 
 Secuencia de ejemplo:
 
@@ -324,7 +324,7 @@ Completa una lista activa y sincroniza items marcados.
 
 **Response 204**
 
-Sin contenido. Limpia el contenido del `DRAFT` (título/items según regla vigente), pero conserva la entidad `DRAFT`.
+Sin contenido. En Variant A para usuarios bootstrap-completed, limpia el contenido del `DRAFT` (título/items según regla vigente), pero no elimina la entidad `DRAFT` persistente.
 
 After completion, exactly one reusable server DRAFT exists.
 
@@ -462,7 +462,7 @@ Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEd
 
 ### POST /api/lists/:id/finish-edit
 
-Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y luego limpia el contenido del `DRAFT`.
+Aplica el borrador autosave a la lista `ACTIVE`, pone `isEditing=false` y luego limpia el contenido del `DRAFT` sin eliminar la entidad persistente.
 
 After completion, exactly one reusable server DRAFT exists.
 

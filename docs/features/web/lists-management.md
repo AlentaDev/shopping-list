@@ -16,7 +16,7 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 ## Política canónica de Draft y Recovery
 
 La política canónica de invariante y recuperación del `DRAFT` está en `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
-Este documento debe tratarla como fuente única para reglas de bootstrap, reutilización y self-healing backend.
+Este documento debe tratarla como fuente única para reglas de bootstrap, reutilización y self-healing backend, siguiendo Variant A como semántica canónica de draft persistente.
 
 
 ### Bootstrap de primer login (resumen operativo web)
@@ -72,8 +72,8 @@ Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto
 - Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
 - Si ya existía `DRAFT`, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
-- Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false`.
-- Si el usuario termina la edición, se aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío.
+- Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false` (sin eliminar la entidad draft).
+- Si el usuario termina la edición, `POST /api/lists/:id/finish-edit` aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío (sin eliminar la entidad draft).
 
 ### Historial (listado)
 
@@ -100,6 +100,12 @@ Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto
 - El autosave sincroniza al `DRAFT` del servidor como backup.
 - El `DRAFT` del servidor se usa para bootstrap/recuperación, no como estado primario de edición.
 - Flujo ejemplo: editar item -> actualizar `LOCAL_DRAFT` al instante -> lanzar autosave con debounce -> persistir en `DRAFT` remoto.
+
+- Semántica de limpieza del draft en servidor (Variant A):
+  - `DELETE /api/lists/autosave` limpia contenido del `DRAFT`, no elimina la entidad.
+  - `POST /api/lists/:id/finish-edit` también limpia contenido del `DRAFT` tras aplicar cambios a `ACTIVE`, sin eliminar la entidad.
+- `GET /api/lists/autosave` devuelve `204` solo en bootstrap inicial antes de la primera inicialización del draft.
+  Después de bootstrap (usuarios establecidos), debe devolver `200` incluso con draft vacío.
 
 ### Sync policy
 

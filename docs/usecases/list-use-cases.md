@@ -70,9 +70,15 @@ Esta sección es la referencia canónica para la semántica de `DRAFT` y recuper
 
 1. Un usuario autenticado por primera vez puede no tener todavía un draft en servidor.
 2. Después del bootstrap, un usuario autenticado debe tener exactamente un `DRAFT` reutilizable en servidor.
-3. Semántica Variant A: el registro de draft es persistente; los flujos limpian su contenido en vez de eliminar la entidad draft.
+3. Semántica Variant A (canónica): para usuarios con bootstrap completado, la entidad `DRAFT` en servidor es persistente; los flujos limpian su contenido en vez de eliminar la entidad draft.
 4. Regla de recuperación: si un flujo requiere draft y falta, el backend debe auto-recuperarse con estrategia update-or-create.
 5. Post-condición de toda operación que muta draft: existe exactamente un draft en servidor.
+
+Reglas explícitas derivadas de Variant A:
+
+- `DELETE /api/lists/autosave` limpia contenido del `DRAFT`; no elimina la entidad.
+- `POST /api/lists/:id/finish-edit` aplica cambios a `ACTIVE` y luego limpia contenido del `DRAFT`; no elimina la entidad.
+- `GET /api/lists/autosave` solo puede devolver `204` durante bootstrap inicial (antes de la primera inicialización del draft). Para usuarios bootstrap-completed debe devolver `200` (incluyendo draft vacío).
 
 Referencias que deben mantenerse alineadas con esta política:
 
