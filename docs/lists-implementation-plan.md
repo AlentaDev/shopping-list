@@ -63,6 +63,8 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 1. Definir endpoint para activar `isEditing=true` en listas activas.
 2. Alinear “reusar” con el endpoint existente o renombrarlo en API (documentar decisión).
 3. Validar reglas: listas activas/historial no pueden quedarse sin ítems.
+4. Formalizar semántica de vacío: `DRAFT` puede estar vacío, pero `DRAFT` -> `ACTIVE` sin items debe rechazarse.
+5. Aplicar validación en dos capas: Web (UX guard) + API (invariante de negocio).
 
 **Verificación (web)**:
 - Acciones existentes siguen funcionando; no se rompe la UI.
@@ -140,3 +142,4 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 - [x] [Web] Usar `/activate` en lugar de `/status`.
 - [x] [Web] Enviar `{ isEditing: true/false }` al editar.
 - [x] [Web] Ajustar límites de cantidad a **1–99**.
+- [ ] [Docs] Alinear semántica de listas vacías: `DRAFT` puede estar vacío; activación sin items prohibida; validación en Web + API; `COMPLETED` no vacío en flujo normal.

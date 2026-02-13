@@ -54,6 +54,13 @@ Invariante de salida del bootstrap:
 
 Se adopta la política de permitir `DRAFT` vacío porque reduce complejidad operativa: el backend y el frontend siempre trabajan con un único borrador remoto reutilizable, incluso antes del primer item. Aunque implica almacenar drafts vacíos, el beneficio de consistencia entre bootstrap, login, reusar y editar compensa ese coste.
 
+### Semántica de listas vacías (normativa)
+
+- `DRAFT` puede estar vacío por diseño; esto no viola invariantes.
+- La transición `DRAFT` -> `ACTIVE` sin items está prohibida.
+- Esta prohibición se valida en dos capas: Web (guard de UX) y API (invariante de negocio).
+- Implicación del flujo: `COMPLETED` no debería quedar vacío en operación normal, porque solo se completa una lista `ACTIVE` que ya fue validada con items.
+
 ### Web source of truth (normativo)
 
 Para la experiencia web, la fuente de verdad operativa durante la edición es siempre `LOCAL_DRAFT`.
@@ -220,7 +227,7 @@ El usuario indica que la lista está finalizada para usarse en el móvil.
 
 **Flujo principal:**
 
-1. Desde una lista en `DRAFT`, en el modal el usuario pulsa “Finalizar lista” (solo si hay items).
+1. Desde una lista en `DRAFT`, en el modal el usuario pulsa “Finalizar lista” (solo si hay items). La Web debe bloquear esta acción cuando el borrador está vacío (UX guard).
 2. El sistema cambia el estado de la lista a `ACTIVE` **reutilizando el mismo registro**.
 3. El borrador local/autosave se limpia y se crea un **nuevo `DRAFT` vacío** para mantener el borrador único.
 4. La lista `ACTIVE` ya está disponible en móvil para marcar/desmarcar productos y para ver en la web.

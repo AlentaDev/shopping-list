@@ -9,6 +9,15 @@ Existe un **único `DRAFT` por usuario** y siempre es el autosave persistido en 
 
 Se prefiere permitir `DRAFT` vacío para mantener contratos API estables y unificados en todos los flujos. Esta decisión evita lógica especial de creación diferida del autosave y facilita la recuperación de sesión con menor complejidad en cliente y servidor.
 
+### Semántica de listas vacías (normativa)
+
+- `DRAFT` **puede estar vacío** y seguir siendo válido como autosave persistente.
+- Está **prohibido** activar (`DRAFT` -> `ACTIVE`) una lista sin items.
+- La validación es en doble capa obligatoria:
+  - **Web**: guard de UX que bloquea “Finalizar lista” cuando el borrador está vacío.
+  - **API**: invariante de negocio que rechaza la transición aunque el cliente no aplique el guard.
+- Implicación esperada: una lista `COMPLETED` en flujo normal **no debe estar vacía**, porque parte de una `ACTIVE` válida con items.
+
 > **Deprecado:** los items manuales están en proceso de eliminación y se retirarán de la API, la base de datos y la web. Todas las evoluciones futuras deben asumir listas **solo de catálogo**.
 
 

@@ -9,6 +9,8 @@ Se han refinado los flujos de listas para usuarios autenticados con nuevas regla
 
 - Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
 - El `DRAFT` único puede crearse vacío al autenticarse para garantizar continuidad entre sesiones y flujos, y en usuarios con bootstrap completado se mantiene como entidad persistente (Variant A).
+- Se explicita semántica de listas vacías: `DRAFT` puede estar vacío, `DRAFT` -> `ACTIVE` sin items está prohibido, y la validación es obligatoria en Web (UX guard) y API (invariante de negocio).
+- Implicación de flujo: `COMPLETED` no debería quedar vacío en operación normal.
 - En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
 - Matriz canónica UI: tarjetas `ACTIVE` y `COMPLETED` muestran botón **Borrar**; click en tarjeta abre modal de detalle en solo lectura (items + total, sin edición inline).
 - En modal `ACTIVE`: **Editar/Borrar/Cerrar**. En modal `COMPLETED`: **Reusar/Borrar/Cerrar**.
@@ -33,6 +35,7 @@ Adoptar un plan de migración incremental que prioriza **API/BD primero** y lueg
    - Alinear acciones y endpoints con **editar** y **reusar**.
    - Ordenar listados por fecha más reciente (activas por `activated_at`, historial por fecha de cierre o `updated_at` si no existe campo específico).
    - Validar que listas activas/historial nunca queden sin ítems.
+   - Rechazar explícitamente activación de listas vacías (`DRAFT` -> `ACTIVE`) como invariante de negocio.
 3. **Web**:
    - UI con solo **Activas** e **Historial**.
    - Detalle en solo lectura (items + total, sin edición inline) con acciones:
