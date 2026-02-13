@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { getAutosave, loadLocalDraft, putAutosave } from "./AutosaveService";
+import {
+  AutosaveConflictError,
+  getAutosave,
+  loadLocalDraft,
+  putAutosave,
+} from "./AutosaveService";
 import type {
   AutosaveDraft,
   AutosaveDraftInput,
@@ -292,6 +297,24 @@ export const useAutosaveRecovery = (
       setConflict(null);
       setAutosaveChecked();
     } catch (error) {
+      if (error instanceof AutosaveConflictError) {
+        try {
+          const latestRemoteDraft = await getAutosave({
+            errorMessage: "No se pudo recuperar el borrador.",
+          });
+
+          if (latestRemoteDraft) {
+            setConflict({
+              local: conflict.local,
+              remote: latestRemoteDraft,
+            });
+            return;
+          }
+        } catch (remoteError) {
+          console.warn("No se pudo refrescar el borrador remoto.", remoteError);
+        }
+      }
+
       console.warn("No se pudo sincronizar el borrador local.", error);
     }
   }, [conflict]);

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 import {
+  AutosaveConflictError,
   createAutosaveScheduler,
   getAutosave,
   loadLocalDraft,
@@ -191,6 +192,24 @@ describe("AutosaveService", () => {
     );
 
     warnSpy.mockRestore();
+  });
+
+  it("lanza error de conflicto cuando el autosave responde 409", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+        json: async () => ({}),
+        text: async () => "conflict",
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).rejects.toBeInstanceOf(
+      AutosaveConflictError
+    );
   });
 
   it("elimina el autosave del servidor", async () => {

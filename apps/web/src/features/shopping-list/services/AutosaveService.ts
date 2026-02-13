@@ -9,10 +9,18 @@ import {
   adaptAutosaveSummaryResponse,
 } from "./adapters/AutosaveAdapter";
 
+
+export class AutosaveConflictError extends Error {
+  constructor(message = DEFAULT_AUTOSAVE_ERROR_MESSAGE) {
+    super(message);
+    this.name = "AutosaveConflictError";
+  }
+}
 const LOCAL_DRAFT_STORAGE_KEY = "lists.localDraft";
 const LOCAL_DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
 const AUTOSAVE_ENDPOINT = "/api/lists/autosave";
 const DEFAULT_AUTOSAVE_DEBOUNCE_MS = 1500;
+const DEFAULT_AUTOSAVE_ERROR_MESSAGE = "Unable to save autosave.";
 
 type AutosaveServiceOptions = {
   errorMessage?: string;
@@ -163,7 +171,14 @@ export const putAutosave = async (
       responseBody,
       draft,
     });
-    throw new Error(options.errorMessage ?? "Unable to save autosave.");
+
+    if (response.status === 409) {
+      throw new AutosaveConflictError(
+        options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
+      );
+    }
+
+    throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
   }
 
   const payload = await response.json();
