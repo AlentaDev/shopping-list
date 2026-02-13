@@ -40,6 +40,25 @@ Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto
 
 ## Reglas importantes
 
+### Matriz canónica de acciones UI (listas)
+
+Esta matriz define una sola fuente de verdad para las acciones visibles y separa explícitamente:
+
+- **Acciones de negocio**: cambian estado o datos de listas.
+- **Acción modal de UX**: solo cierra el modal, sin cambiar estado.
+
+| Contexto UI | Acción visible | Tipo | UI text key |
+| --- | --- | --- | --- |
+| Tarjeta `ACTIVE` (listado) | `Borrar` (botón en tarjeta) | Negocio | `UI_TEXT.LISTS.ACTIONS.DELETE` |
+| Tarjeta `COMPLETED` (listado) | `Borrar` (botón en tarjeta) | Negocio | `UI_TEXT.LISTS.ACTIONS.DELETE` |
+| Click en tarjeta (`ACTIVE`/`COMPLETED`) | Abrir modal de detalle en solo lectura (items + total, sin edición inline) | UX navegación | `UI_TEXT.LISTS.ACTIONS.VIEW` |
+| Modal detalle `ACTIVE` | `Editar` | Negocio | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT` |
+| Modal detalle `ACTIVE` | `Borrar` | Negocio | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE` |
+| Modal detalle `ACTIVE` | `Cerrar` | UX modal-only | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE` |
+| Modal detalle `COMPLETED` | `Reusar` | Negocio | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE` |
+| Modal detalle `COMPLETED` | `Borrar` | Negocio | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE` |
+| Modal detalle `COMPLETED` | `Cerrar` | UX modal-only | `UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.CLOSE` |
+
 ### Listado general
 
 - Tabs por estado: **Activas**, **Historial**.
@@ -52,15 +71,16 @@ Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto
 ### Activas (listado)
 
 - Cada tarjeta muestra: nombre, nº de productos, fecha de activación y botón de borrar.
-- Click en la tarjeta abre el detalle.
+- Click en la tarjeta abre un modal de detalle en **solo lectura** (items + total, sin edición inline).
 - Borrar abre un **modal** de confirmación (“no se puede recuperar”).
 - Si falla el backend al borrar: toast de error y no se elimina en UI.
 
 ### Activas (detalle)
 
-- Se muestran productos + total.
-- Botones: **Editar**, **Borrar**.
+- Se muestran productos + total, en modo **solo lectura** (sin edición inline de items).
+- Botones: **Editar**, **Borrar**, **Cerrar**.
 - Borrar reutiliza el modal de confirmación del listado.
+- **Cerrar** es una acción de UX modal-only (no cambia estado de negocio).
 
 #### Editar lista activa
 
@@ -78,16 +98,17 @@ Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto
 ### Historial (listado)
 
 - Cada tarjeta muestra: nombre, nº de productos e icono de borrar.
-- Click en la tarjeta abre el detalle.
+- Click en la tarjeta abre un modal de detalle en **solo lectura** (items + total, sin edición inline).
 - Borrar abre modal de confirmación.
 
 ### Historial (detalle)
 
-- Se muestran productos + total.
-- Botones: **Reusar**, **Borrar**.
+- Se muestran productos + total, en modo **solo lectura** (sin edición inline de items).
+- Botones: **Reusar**, **Borrar**, **Cerrar**.
 - ReuseList abre el modal y sobrescribe el `DRAFT` único con los items del historial.
 - Si existe un `DRAFT` con items, se avisa de pérdida y se reemplaza.
 - Borrar reutiliza el modal de confirmación del listado.
+- **Cerrar** es una acción de UX modal-only (no cambia estado de negocio).
 
 ### Estado en móvil
 

@@ -112,6 +112,21 @@ Referencias que deben mantenerse alineadas con esta política:
 
 ## Casos de uso
 
+### Matriz canónica de acciones UI para gestión de listas
+
+La gestión de listas usa una sola matriz de acciones para evitar ambigüedad entre acción de negocio y acción modal de UX.
+
+- Tarjeta `ACTIVE`: botón `Borrar`.
+- Tarjeta `COMPLETED`: botón `Borrar`.
+- Click en tarjeta (`ACTIVE`/`COMPLETED`): abre modal de detalle en solo lectura (items + total, sin edición inline).
+- Modal `ACTIVE`: `Editar`, `Borrar`, `Cerrar`.
+- Modal `COMPLETED`: `Reusar`, `Borrar`, `Cerrar`.
+- `Cerrar` es exclusivamente una acción modal-only de UX y no una acción de negocio.
+
+Terminología canónica UI:
+- `Editar`, `Reusar`, `Borrar`: acciones de negocio.
+- `Cerrar`: acción modal-only de UX.
+
 ### CU-01: Crear lista sin registrarse (borrador local)
 
 **Actor:** Usuario no registrado (web)
@@ -303,7 +318,7 @@ El usuario puede consultar listas de compras anteriores.
 
 1. El usuario accede a la sección de historial.
 2. El sistema muestra listas con estado `COMPLETED`.
-3. El usuario puede abrir una lista para verla.
+3. El usuario puede abrir una lista para verla en un modal de detalle en solo lectura (items + total, sin edición inline).
 
 **Estado resultante:** `COMPLETED`
 
@@ -318,7 +333,7 @@ El usuario crea una nueva lista a partir de una compra anterior.
 
 **Flujo principal:**
 
-1. Desde una lista `COMPLETED`, el usuario pulsa “Reutilizar”.
+1. Desde una lista `COMPLETED`, el usuario abre el detalle en solo lectura y pulsa “Reusar”.
 2. El sistema ejecuta **ReuseList**, que sobrescribe o crea el `DRAFT` único con los productos de la lista completada.
 3. Los productos aparecen sin marcar.
 
@@ -335,7 +350,7 @@ El usuario puede borrar cualquier lista, independientemente de su estado.
 
 **Flujo principal:**
 
-1. El usuario pulsa “Borrar lista”.
+1. El usuario pulsa “Borrar” desde una tarjeta (`ACTIVE`/`COMPLETED`) o desde el modal de detalle.
 2. El sistema elimina la lista.
 3. Si la lista estaba activa, desaparece inmediatamente del móvil y la sincronización fallará.
 
