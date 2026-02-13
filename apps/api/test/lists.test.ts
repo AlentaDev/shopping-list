@@ -612,6 +612,18 @@ describe("lists endpoints", () => {
         checked: false,
       }),
     ]);
+
+    const autosaveResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveResponse.status).toBe(200);
+    expect(autosaveResponse.body).toEqual({
+      id: expect.any(String),
+      title: "",
+      items: [],
+      updatedAt: expect.any(String),
+    });
   });
 
   it("GET /api/lists/autosave returns 204 when there is no autosave", async () => {
