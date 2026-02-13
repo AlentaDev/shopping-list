@@ -122,12 +122,10 @@ const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps
         {cardActions.map((action) => {
           const isLoadingAction =
             isListActionLoading && actionLoading?.action === action;
-          const isActivateDisabled =
-            action === "activate" && list.itemCount === 0;
           const label = isLoadingAction
             ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
             : ACTION_LABELS[action];
-          const isDisabled = isListActionLoading || isActivateDisabled;
+          const isDisabled = isListActionLoading;
 
           return (
             <ListActionButton

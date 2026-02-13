@@ -167,6 +167,24 @@ describe("lists endpoints", () => {
     });
   });
 
+  it("PATCH /api/lists/:id/activate returns 400 when draft has no items", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Vacía" });
+
+    const response = await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "invalid_list_status_transition" });
+  });
+
   it("GET /api/lists/:id returns 403 for other user", async () => {
     const app = createApp();
     const ownerCookie = await loginUser(app, defaultUser);

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useToast } from "@src/context/useToast";
+import { UI_TEXT } from "@src/shared/constants/ui";
 import type { ListActionKey } from "./services/listActions";
 import type { ListDetail, ListSummary } from "./services/types";
 import {
@@ -21,6 +23,7 @@ const ListsContainer = ({
   onStartOpenList,
   hasDraftItems = false,
 }: ListsContainerProps) => {
+  const { showToast } = useToast();
   const [actionLoading, setActionLoading] = useState<{
     listId: string;
     action: ListActionKey;
@@ -53,6 +56,14 @@ const ListsContainer = ({
   };
 
   const handleAction = async (list: ListSummary, action: ListActionKey) => {
+    if (action === "activate" && list.itemCount === 0) {
+      showToast({
+        message: UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE,
+        productName: list.title,
+      });
+      return;
+    }
+
     setActionLoading({ listId: list.id, action });
 
     try {
