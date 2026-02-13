@@ -85,12 +85,16 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 
 **Objetivo**: incorporar las nuevas acciones en el detalle.
 
-1. Botones **Editar/Cerrar/Borrar** para activas.
-2. Botones **Reusar/Cerrar/Borrar** para historial.
-3. Modal de confirmación para borrar en listado y detalle.
+1. Mantener una matriz canónica única de acciones UI por estado (`ACTIVE`/`COMPLETED`).
+2. Asegurar botón **Borrar** en tarjetas de `ACTIVE` y `COMPLETED`.
+3. Definir click de tarjeta como apertura de modal de detalle en solo lectura (items + total, sin edición inline).
+4. Botones modal `ACTIVE`: **Editar/Borrar/Cerrar**.
+5. Botones modal `COMPLETED`: **Reusar/Borrar/Cerrar**.
+6. Tratar **Cerrar** como acción modal-only de UX (no acción de negocio).
+7. Modal de confirmación para borrar en listado y detalle.
 
 **Verificación (web)**:
-- Las acciones corresponden a los estados y se muestran los modales.
+- La matriz canónica de acciones se aplica de forma consistente entre tarjetas, modales y textos.
 
 ---
 

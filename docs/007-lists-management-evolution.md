@@ -10,7 +10,9 @@ Se han refinado los flujos de listas para usuarios autenticados con nuevas regla
 - Solo existe **un draft** (carrito) con autosave local; **no** aparece en el listado principal.
 - El `DRAFT` único puede crearse vacío al autenticarse para garantizar continuidad entre sesiones y flujos, y en usuarios con bootstrap completado se mantiene como entidad persistente (Variant A).
 - En el listado principal solo se muestran **Activas** e **Historial**, ordenadas por fecha más nueva.
-- Las acciones cambian: **Editar/Cerrar/Borrar** en Activas y **Reusar/Cerrar/Borrar** en Historial.
+- Matriz canónica UI: tarjetas `ACTIVE` y `COMPLETED` muestran botón **Borrar**; click en tarjeta abre modal de detalle en solo lectura (items + total, sin edición inline).
+- En modal `ACTIVE`: **Editar/Borrar/Cerrar**. En modal `COMPLETED`: **Reusar/Borrar/Cerrar**.
+- **Cerrar** es una acción modal-only de UX (no acción de negocio).
 - Se requiere bloquear la edición en móvil cuando una lista activa esté en edición (`isEditing=true`).
 - Se necesitan campos adicionales en resumen/detalle: `itemCount`, `activatedAt`, `isEditing`.
 - Se requiere persistir `activated_at` e `is_editing` en BD.
@@ -33,7 +35,10 @@ Adoptar un plan de migración incremental que prioriza **API/BD primero** y lueg
    - Validar que listas activas/historial nunca queden sin ítems.
 3. **Web**:
    - UI con solo **Activas** e **Historial**.
-   - Detalle con botones **Editar/Cerrar/Borrar** o **Reusar/Cerrar/Borrar** según el estado.
+   - Detalle en solo lectura (items + total, sin edición inline) con acciones:
+     - `ACTIVE`: **Editar/Borrar/Cerrar**
+     - `COMPLETED`: **Reusar/Borrar/Cerrar**
+   - **Cerrar** se trata explícitamente como acción modal-only de UX.
    - Mensajes de confirmación para pérdida de draft (solo si tiene ítems).
    - Bloqueo móvil cuando `isEditing=true`.
    - Estados de carga con skeletons y botones con loading.
