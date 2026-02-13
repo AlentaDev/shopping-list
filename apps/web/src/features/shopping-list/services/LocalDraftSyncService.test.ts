@@ -79,6 +79,7 @@ describe("LocalDraftSyncService", () => {
         body: JSON.stringify({
           title: "Compra semanal",
           items: SAMPLE_DRAFT.items,
+          baseUpdatedAt: null,
         }),
       }),
     );
@@ -125,7 +126,10 @@ describe("LocalDraftSyncService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
-        body: JSON.stringify(catalogDraft),
+        body: JSON.stringify({
+          ...catalogDraft,
+          baseUpdatedAt: null,
+        }),
       }),
     );
   });
@@ -184,6 +188,7 @@ describe("LocalDraftSyncService", () => {
         body: JSON.stringify({
           title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
           items: SAMPLE_DRAFT.items,
+          baseUpdatedAt: null,
         }),
       }),
     );

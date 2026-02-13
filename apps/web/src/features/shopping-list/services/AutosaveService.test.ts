@@ -110,7 +110,54 @@ describe("AutosaveService", () => {
       expect.objectContaining({
         method: "PUT",
         credentials: "include",
-        body: JSON.stringify(SAMPLE_DRAFT),
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: null,
+        }),
+      })
+    );
+  });
+
+  it("usa el updatedAt remoto como baseUpdatedAt en autosaves siguientes", async () => {
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          items: [],
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-01-01T00:00:01.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getAutosave();
+    await putAutosave(SAMPLE_DRAFT);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+    );
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({
+        baseUpdatedAt: "2024-01-01T00:00:01.000Z",
       })
     );
   });
@@ -269,7 +316,10 @@ describe("AutosaveService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         credentials: "include",
-        body: JSON.stringify(secondDraft),
+        body: JSON.stringify({
+          ...secondDraft,
+          baseUpdatedAt: null,
+        }),
       })
     );
   });
