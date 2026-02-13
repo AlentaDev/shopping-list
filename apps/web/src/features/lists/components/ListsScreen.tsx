@@ -1,17 +1,22 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
+import { formatPrice } from "@src/shared/utils/formatPrice";
 import {
   getListActions,
   type ListActionKey,
 } from "../services/listActions";
-import type { ListSummary } from "../services/types";
+import type { ListDetail, ListSummary } from "../services/types";
 
 type TabKey = "ACTIVE" | "COMPLETED";
 
 type ListsScreenProps = {
   lists: ListSummary[];
   onAction: (list: ListSummary, action: ListActionKey) => void;
+  onOpenDetail: (list: ListSummary) => void;
+  onCloseDetail: () => void;
+  selectedList: ListSummary | null;
+  selectedListDetail: ListDetail | null;
   hasDraftItems?: boolean;
   isLoading?: boolean;
   actionLoading?: { listId: string; action: ListActionKey } | null;
@@ -22,6 +27,7 @@ type ListActionButtonProps = {
   label: string;
   isDisabled: boolean;
   onClick: () => void;
+  stopPropagation?: boolean;
 };
 
 const ListActionButton = ({
@@ -29,6 +35,7 @@ const ListActionButton = ({
   label,
   isDisabled,
   onClick,
+  stopPropagation = false,
 }: ListActionButtonProps) => {
   let buttonStyle =
     "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900";
@@ -43,7 +50,13 @@ const ListActionButton = ({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(event) => {
+        if (stopPropagation) {
+          event.stopPropagation();
+        }
+
+        onClick();
+      }}
       disabled={isDisabled}
       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${buttonStyle}`}
     >
@@ -56,13 +69,41 @@ type ListCardProps = {
   list: ListSummary;
   actionLoading: { listId: string; action: ListActionKey } | null;
   onAction: (list: ListSummary, action: ListActionKey) => void;
+  onOpenDetail: (list: ListSummary) => void;
 };
 
-const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
+const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps) => {
   const isListActionLoading = actionLoading?.listId === list.id;
+  const cardActions =
+    list.status === LIST_STATUS.ACTIVE || list.status === LIST_STATUS.COMPLETED
+      ? (["delete"] satisfies ListActionKey[])
+      : getListActions(list.status);
+
+  const canOpenDetail =
+    list.status === LIST_STATUS.ACTIVE || list.status === LIST_STATUS.COMPLETED;
+
+  const handleCardClick = () => {
+    if (!canOpenDetail) {
+      return;
+    }
+
+    onOpenDetail(list);
+  };
 
   return (
-    <article className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div
+      data-testid={`list-card-${list.id}`}
+      className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+      role={canOpenDetail ? "button" : undefined}
+      tabIndex={canOpenDetail ? 0 : undefined}
+      onClick={handleCardClick}
+      onKeyDown={(event) => {
+        if (canOpenDetail && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          handleCardClick();
+        }
+      }}
+    >
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-slate-900">{list.title}</h2>
         <p className="text-sm text-slate-500">
@@ -78,7 +119,7 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {getListActions(list.status).map((action) => {
+        {cardActions.map((action) => {
           const isLoadingAction =
             isListActionLoading && actionLoading?.action === action;
           const isActivateDisabled =
@@ -95,6 +136,7 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
               label={label}
               isDisabled={isDisabled}
               onClick={() => onAction(list, action)}
+              stopPropagation={canOpenDetail}
             />
           );
         })}
@@ -104,7 +146,7 @@ const ListCard = ({ list, actionLoading, onAction }: ListCardProps) => {
           {UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE}
         </p>
       ) : null}
-    </article>
+    </div>
   );
 };
 
@@ -136,6 +178,10 @@ const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
 const ListsScreen = ({
   lists,
   onAction,
+  onOpenDetail,
+  onCloseDetail,
+  selectedList,
+  selectedListDetail,
   hasDraftItems = false,
   isLoading = false,
   actionLoading = null,
@@ -150,6 +196,19 @@ const ListsScreen = ({
   const filteredLists = useMemo(
     () => lists.filter((list) => STATUS_TO_TAB[list.status] === activeTab),
     [lists, activeTab],
+  );
+
+  const selectedListStatus = selectedList?.status;
+  const detailActions =
+    selectedListStatus === LIST_STATUS.COMPLETED
+      ? (["reuse", "delete"] satisfies ListActionKey[])
+      : selectedListStatus === LIST_STATUS.ACTIVE
+        ? (["edit", "delete"] satisfies ListActionKey[])
+        : [];
+
+  const detailTotal = (selectedListDetail?.items ?? []).reduce(
+    (total, item) => total + (item.price ?? 0) * item.qty,
+    0,
   );
 
   const handleAction = (list: ListSummary, action: ListActionKey) => {
@@ -228,6 +287,7 @@ const ListsScreen = ({
             list={list}
             actionLoading={actionLoading}
             onAction={handleAction}
+            onOpenDetail={onOpenDetail}
           />
         ))}
       </div>
@@ -264,6 +324,51 @@ const ListsScreen = ({
       </div>
 
       {renderListsContent()}
+      {selectedList && selectedListDetail ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+          >
+            <h3 className="text-lg font-semibold text-slate-900">
+              {selectedListDetail.title}
+            </h3>
+            <ul className="mt-4 space-y-2">
+              {selectedListDetail.items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-center justify-between text-sm text-slate-700"
+                >
+                  <span>{`${item.name} x${item.qty}`}</span>
+                  <span>{formatPrice((item.price ?? 0) * item.qty)}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-right text-sm font-semibold text-slate-800">
+              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-end gap-2">
+              {detailActions.map((action) => (
+                <ListActionButton
+                  key={action}
+                  action={action}
+                  label={ACTION_LABELS[action]}
+                  isDisabled={false}
+                  onClick={() => handleAction(selectedList, action)}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={onCloseDetail}
+                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+              >
+                {UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {pendingDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
           <div

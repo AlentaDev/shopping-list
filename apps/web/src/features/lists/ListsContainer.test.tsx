@@ -12,8 +12,8 @@ type FetchResponse = {
   json: () => Promise<unknown>;
 };
 
-describe("Lists", () => {
-  it("dispara requests al hacer acciones", async () => {
+describe("ListsContainer", () => {
+  it("abre modal de detalle al hacer click y ejecuta acciones canónicas", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input, init) => {
@@ -66,27 +66,24 @@ describe("Lists", () => {
                 qty: 1,
                 checked: true,
                 updatedAt: "2024-02-01T11:30:00.000Z",
-              },
-              {
-                id: "item-2",
-                kind: "catalog",
-                name: "Pan",
-                qty: 1,
-                checked: false,
-                updatedAt: "2024-02-01T11:35:00.000Z",
+                price: 1.5,
               },
             ],
           }),
         };
       }
 
-      if (url === "/api/lists/active-1/complete" && init?.method === "POST") {
+      if (url === "/api/lists/completed-1") {
         return {
           ok: true,
           json: async () => ({
-            id: "active-1",
+            id: "completed-1",
+            title: "Navidad",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 4,
+            isEditing: false,
             status: LIST_STATUS.COMPLETED,
-            updatedAt: "2024-02-01T12:30:00.000Z",
             items: [],
           }),
         };
@@ -95,16 +92,7 @@ describe("Lists", () => {
       if (url === "/api/lists/completed-1/reuse") {
         return {
           ok: true,
-          json: async () => ({
-            id: "duplicated-1",
-            title: "Navidad",
-            updatedAt: "2024-02-03T10:00:00.000Z",
-            activatedAt: null,
-            itemCount: 0,
-            isEditing: false,
-            items: [],
-            status: LIST_STATUS.DRAFT,
-          }),
+          json: async () => ({ id: "duplicated-1" }),
         };
       }
 
@@ -122,65 +110,41 @@ describe("Lists", () => {
     });
 
     vi.stubGlobal("fetch", fetchMock);
-    const onOpenList = vi.fn();
 
-    render(<ListsContainer onOpenList={onOpenList} />);
+    render(<ListsContainer onOpenList={vi.fn()} />);
 
-    expect(await screen.findByText("Despensa")).toBeInTheDocument();
+    const activeCard = await screen.findByText("Despensa");
+    await userEvent.click(activeCard);
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("Leche x1")).toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.COMPLETE })
+      screen.getByRole("button", { name: UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL }),
     );
 
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith("/api/lists/active-1");
-    });
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists/active-1/complete",
-        expect.objectContaining({ method: "POST" })
-      );
-    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 
     await userEvent.click(
-      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED })
+      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }),
     );
 
-    expect(await screen.findByText("Navidad")).toBeInTheDocument();
+    await userEvent.click(screen.getByText("Navidad"));
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE })
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }),
     );
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/completed-1/reuse",
-        expect.objectContaining({ method: "POST" })
+        expect.objectContaining({ method: "POST" }),
       );
     });
 
-    await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE })
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/completed-1/close",
+      expect.anything(),
     );
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(UI_TEXT.LISTS.DELETE_CONFIRMATION.TITLE)
-      ).toBeInTheDocument();
-    });
-
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL,
-      })
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists/completed-1",
-        expect.objectContaining({ method: "DELETE" })
-      );
-    });
   });
 });

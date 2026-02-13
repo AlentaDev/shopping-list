@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import ListsScreen from "./components/ListsScreen";
 import type { ListActionKey } from "./services/listActions";
-import type { ListSummary } from "./services/types";
+import type { ListDetail, ListSummary } from "./services/types";
 import { getLists } from "./services/ListsService";
 
 type ListsProps = {
   onAction: (list: ListSummary, action: ListActionKey) => void;
+  onOpenDetail: (list: ListSummary) => void;
+  onCloseDetail: () => void;
+  selectedList: ListSummary | null;
+  selectedListDetail: ListDetail | null;
   hasDraftItems?: boolean;
   actionLoading?: {
     listId: string;
@@ -16,6 +20,10 @@ type ListsProps = {
 
 const Lists = ({
   onAction,
+  onOpenDetail,
+  onCloseDetail,
+  selectedList,
+  selectedListDetail,
   hasDraftItems = false,
   actionLoading = null,
   refreshToken = 0,
@@ -55,6 +63,10 @@ const Lists = ({
     <ListsScreen
       lists={lists}
       onAction={onAction}
+      onOpenDetail={onOpenDetail}
+      onCloseDetail={onCloseDetail}
+      selectedList={selectedList}
+      selectedListDetail={selectedListDetail}
       hasDraftItems={hasDraftItems}
       isLoading={isLoading}
       actionLoading={actionLoading}

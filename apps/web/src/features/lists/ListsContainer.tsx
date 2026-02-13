@@ -26,9 +26,30 @@ const ListsContainer = ({
     action: ListActionKey;
   } | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
+  const [selectedList, setSelectedList] = useState<ListSummary | null>(null);
+  const [selectedListDetail, setSelectedListDetail] = useState<ListDetail | null>(
+    null,
+  );
 
   const refreshLists = () => {
     setRefreshToken((prev) => prev + 1);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedList(null);
+    setSelectedListDetail(null);
+  };
+
+  const handleOpenDetail = async (list: ListSummary) => {
+    setActionLoading({ listId: list.id, action: "view" });
+
+    try {
+      const listDetail = await getListDetail(list.id);
+      setSelectedList(list);
+      setSelectedListDetail(listDetail);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleAction = async (list: ListSummary, action: ListActionKey) => {
@@ -54,19 +75,27 @@ const ListsContainer = ({
       if (action === "reuse") {
         await reuseList(list.id);
         refreshLists();
+        handleCloseDetail();
         return;
       }
 
       if (action === "delete") {
         await deleteList(list.id);
         refreshLists();
+        handleCloseDetail();
         return;
       }
 
-      if (action === "view" || action === "edit") {
+      if (action === "view") {
+        await handleOpenDetail(list);
+        return;
+      }
+
+      if (action === "edit") {
         onStartOpenList?.(list);
         const listDetail = await getListDetail(list.id);
         onOpenList(listDetail);
+        handleCloseDetail();
       }
     } finally {
       setActionLoading(null);
@@ -76,6 +105,10 @@ const ListsContainer = ({
   return (
     <Lists
       onAction={handleAction}
+      onOpenDetail={handleOpenDetail}
+      onCloseDetail={handleCloseDetail}
+      selectedList={selectedList}
+      selectedListDetail={selectedListDetail}
       hasDraftItems={hasDraftItems}
       actionLoading={actionLoading}
       refreshToken={refreshToken}
