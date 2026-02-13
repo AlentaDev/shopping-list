@@ -119,6 +119,23 @@ describe("AutosaveService", () => {
     );
   });
 
+  it("tolera respuesta null al guardar autosave remoto", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => null,
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toEqual({
+      id: "",
+      title: "",
+      updatedAt: "",
+    });
+  });
+
   it("usa el updatedAt remoto como baseUpdatedAt en autosaves siguientes", async () => {
     const fetchMock = vi
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
