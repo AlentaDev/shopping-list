@@ -673,7 +673,6 @@ describe("lists endpoints", () => {
     expect(conflictResponse.body).toEqual({
       error: "autosave_version_conflict",
       remoteUpdatedAt: firstResponse.body.updatedAt,
-      message: "El borrador remoto cambió. Recarga antes de guardar.",
     });
 
     const persistedResponse = await request(app)
