@@ -572,6 +572,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly updated",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
         items: [
           {
             id: "autosave-item-1",
@@ -622,6 +623,71 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie);
 
     expect(response.status).toBe(204);
+  });
+
+  it("PUT /api/lists/autosave returns 400 when baseUpdatedAt is missing", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const response = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly updated",
+        items: [],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        error: "validation_error",
+      }),
+    );
+  });
+
+  it("PUT /api/lists/autosave returns 409 when baseUpdatedAt does not match remote draft", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const firstResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        items: [],
+      });
+
+    expect(firstResponse.status).toBe(200);
+
+    const conflictResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly changed",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        items: [],
+      });
+
+    expect(conflictResponse.status).toBe(409);
+    expect(conflictResponse.body).toEqual({
+      error: "autosave_version_conflict",
+      remoteUpdatedAt: firstResponse.body.updatedAt,
+      message: "El borrador remoto cambió. Recarga antes de guardar.",
+    });
+
+    const persistedResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(persistedResponse.status).toBe(200);
+    expect(persistedResponse.body).toEqual(
+      expect.objectContaining({
+        id: firstResponse.body.id,
+        title: "Weekly",
+        updatedAt: firstResponse.body.updatedAt,
+      }),
+    );
   });
 
   it("POST /api/lists/:id/reuse duplicates a completed list", async () => {

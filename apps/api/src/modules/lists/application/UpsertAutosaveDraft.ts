@@ -1,3 +1,4 @@
+import { AutosaveVersionConflictError } from "./errors.js";
 import type { List, ListItem } from "../domain/list.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 
@@ -28,6 +29,7 @@ type AutosaveItemInput =
 type UpsertAutosaveDraftInput = {
   userId: string;
   title: string;
+  baseUpdatedAt: string;
   items: AutosaveItemInput[];
 };
 
@@ -53,6 +55,15 @@ export class UpsertAutosaveDraft {
         : autosaveDrafts.reduce((latest, current) =>
             current.updatedAt > latest.updatedAt ? current : latest,
           );
+
+    if (
+      latestAutosave &&
+      latestAutosave.updatedAt.toISOString() !== input.baseUpdatedAt
+    ) {
+      throw new AutosaveVersionConflictError(
+        latestAutosave.updatedAt.toISOString(),
+      );
+    }
 
     const listId = latestAutosave?.id ?? this.idGenerator.generate();
     const list: List = {

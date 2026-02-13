@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { List } from "../domain/list.js";
+import { AutosaveVersionConflictError } from "./errors.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
 import { UpsertAutosaveDraft } from "./UpsertAutosaveDraft.js";
 
@@ -12,6 +13,7 @@ describe("UpsertAutosaveDraft", () => {
     const response = await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
           id: "item-1",
@@ -91,6 +93,7 @@ describe("UpsertAutosaveDraft", () => {
     const response = await useCase.execute({
       userId: "user-1",
       title: "Updated autosave",
+      baseUpdatedAt: "2024-01-01T11:10:00.000Z",
       items: [
         {
           id: "item-2",
@@ -132,5 +135,39 @@ describe("UpsertAutosaveDraft", () => {
 
     const savedOlder = await listRepository.findById("list-1");
     expect(savedOlder?.title).toBe("Older autosave");
+  });
+
+  it("throws conflict when baseUpdatedAt does not match latest autosave version", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "list-new" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+    const latestDraft: List = {
+      id: "list-2",
+      ownerUserId: "user-1",
+      title: "Latest autosave",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T11:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T11:10:00.000Z"),
+    };
+
+    await listRepository.save(latestDraft);
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        title: "Updated autosave",
+        baseUpdatedAt: "2024-01-01T11:09:59.000Z",
+        items: [],
+      }),
+    ).rejects.toEqual(
+      new AutosaveVersionConflictError("2024-01-01T11:10:00.000Z"),
+    );
+
+    const persistedDraft = await listRepository.findById("list-2");
+    expect(persistedDraft).toEqual(latestDraft);
   });
 });

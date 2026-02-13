@@ -18,6 +18,7 @@ import { ReuseList } from "../application/ReuseList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
 import { StartListEditing } from "../application/StartListEditing.js";
 import { FinishListEdit } from "../application/FinishListEdit.js";
+import { AutosaveVersionConflictError } from "../application/errors.js";
 import {
   addCatalogItemSchema,
   activateListSchema,
@@ -106,11 +107,21 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       const response = await deps.upsertAutosaveDraft.execute({
         userId,
         title: input.title,
+        baseUpdatedAt: input.baseUpdatedAt,
         items: input.items,
       });
 
       res.status(200).json(response);
     } catch (error) {
+      if (error instanceof AutosaveVersionConflictError) {
+        res.status(409).json({
+          error: "autosave_version_conflict",
+          remoteUpdatedAt: error.remoteUpdatedAt,
+          message: error.message,
+        });
+        return;
+      }
+
       next(error);
     }
   });

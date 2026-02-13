@@ -58,6 +58,7 @@ const autosaveCatalogItemSchema = z.object({
 
 export const upsertAutosaveSchema = z.object({
   title: z.string().min(1).max(60),
+  baseUpdatedAt: z.iso.datetime(),
   items: z.array(autosaveCatalogItemSchema),
 });
 
