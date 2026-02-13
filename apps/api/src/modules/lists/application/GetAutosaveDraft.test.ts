@@ -76,4 +76,31 @@ describe("GetAutosaveDraft", () => {
       updatedAt: "2024-01-01T11:10:00.000Z",
     });
   });
+
+  it("returns cleaned autosave draft instead of null", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new GetAutosaveDraft(listRepository);
+    const cleanedAutosave: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+
+    await listRepository.save(cleanedAutosave);
+
+    await expect(useCase.execute("user-1")).resolves.toEqual({
+      id: "list-1",
+      title: "",
+      items: [],
+      updatedAt: "2024-01-01T10:01:00.000Z",
+    });
+  });
+
 });

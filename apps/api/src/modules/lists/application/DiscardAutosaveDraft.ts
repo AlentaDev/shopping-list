@@ -19,7 +19,11 @@ export class DiscardAutosaveDraft {
       current.updatedAt > latest.updatedAt ? current : latest,
     );
 
-    await this.listRepository.deleteById(latestAutosave.id);
+    latestAutosave.title = "";
+    latestAutosave.items = [];
+    latestAutosave.updatedAt = new Date();
+
+    await this.listRepository.save(latestAutosave);
 
     return { ok: true };
   }

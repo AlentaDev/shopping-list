@@ -4,7 +4,7 @@ import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository
 import { DiscardAutosaveDraft } from "./DiscardAutosaveDraft.js";
 
 describe("DiscardAutosaveDraft", () => {
-  it("deletes the latest autosave draft for the user", async () => {
+  it("clears and keeps the latest autosave draft for the user", async () => {
     const repository = new InMemoryListRepository();
     const useCase = new DiscardAutosaveDraft(repository);
     const olderAutosave: List = {
@@ -60,11 +60,24 @@ describe("DiscardAutosaveDraft", () => {
     await repository.save(latestAutosave);
     await repository.save(activeList);
     await repository.save(otherUserAutosave);
+    const previousUpdatedAt = latestAutosave.updatedAt.getTime();
 
     await expect(useCase.execute("user-1")).resolves.toEqual({ ok: true });
 
     await expect(repository.findById("list-1")).resolves.toEqual(olderAutosave);
-    await expect(repository.findById("list-2")).resolves.toBeNull();
+    const cleanedAutosave = await repository.findById("list-2");
+    expect(cleanedAutosave).not.toBeNull();
+    expect(cleanedAutosave).toMatchObject({
+      id: "list-2",
+      ownerUserId: "user-1",
+      title: "",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      items: [],
+    });
+    expect(cleanedAutosave?.updatedAt.getTime()).toBeGreaterThanOrEqual(
+      previousUpdatedAt,
+    );
     await expect(repository.findById("list-3")).resolves.toEqual(activeList);
     await expect(repository.findById("list-4")).resolves.toEqual(otherUserAutosave);
   });
