@@ -27,6 +27,9 @@ const SAMPLE_REMOTE = {
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
+  status?: number;
+  statusText?: string;
+  text?: () => Promise<string>;
 };
 
 type HarnessProps = {
@@ -87,7 +90,7 @@ describe("useAutosaveRecovery", () => {
 
     localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
 
-    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
         json: async () => SAMPLE_REMOTE,
@@ -177,6 +180,75 @@ describe("useAutosaveRecovery", () => {
     expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 
+
+
+  it("mantiene conflicto abierto cuando guardar local responde 409 y refresca remoto", async () => {
+    const user = userEvent.setup();
+    const localDraft: LocalDraft = {
+      title: "Lista local",
+      items: [
+        {
+          id: "item-local",
+          kind: "catalog",
+          name: "Pan",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-local",
+        },
+      ],
+      updatedAt: "2024-01-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+        json: async () => ({}),
+        text: async () => "conflict",
+      } as FetchResponse)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          title: "Lista remota reciente",
+          updatedAt: "2024-01-01T10:00:01.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness />);
+
+    expect(await screen.findByText("Conflict")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Keep local" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        "/api/lists/autosave",
+        expect.objectContaining({ credentials: "include" })
+      );
+    });
+
+    expect(screen.getByText("Conflict")).toBeInTheDocument();
+    expect(localStorage.getItem("lists.localDraft")).toBe(
+      JSON.stringify(localDraft)
+    );
+    expect(sessionStorage.getItem("lists.autosaveChecked")).not.toBe("true");
+  });
   it("muestra conflicto si empatan y difieren", async () => {
     const user = userEvent.setup();
     const onRehydrate = vi.fn();
@@ -198,7 +270,7 @@ describe("useAutosaveRecovery", () => {
 
     localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
 
-    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
       async () => ({
         ok: true,
         json: async () => ({
