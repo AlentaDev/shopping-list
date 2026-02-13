@@ -67,6 +67,14 @@ export const adaptAutosaveResponse = (
 export const adaptAutosaveSummaryResponse = (
   payload: unknown,
 ): AutosaveSummary => {
+  if (payload === null || typeof payload !== "object") {
+    return {
+      id: "",
+      title: "",
+      updatedAt: "",
+    };
+  }
+
   const data = payload as AutosaveSummaryPayload;
 
   return {
