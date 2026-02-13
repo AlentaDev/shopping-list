@@ -10,11 +10,58 @@ import {
 } from "./adapters/AutosaveAdapter";
 
 const LOCAL_DRAFT_STORAGE_KEY = "lists.localDraft";
+const LOCAL_DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
 const AUTOSAVE_ENDPOINT = "/api/lists/autosave";
 const DEFAULT_AUTOSAVE_DEBOUNCE_MS = 1500;
 
 type AutosaveServiceOptions = {
   errorMessage?: string;
+};
+
+type AutosaveSyncMetadata = {
+  baseUpdatedAt: string | null;
+};
+
+const loadAutosaveSyncMetadata = (): AutosaveSyncMetadata => {
+  try {
+    const stored = localStorage.getItem(LOCAL_DRAFT_SYNC_STORAGE_KEY);
+
+    if (!stored) {
+      return { baseUpdatedAt: null };
+    }
+
+    const parsed = JSON.parse(stored) as Partial<AutosaveSyncMetadata>;
+
+    if (typeof parsed.baseUpdatedAt === "string") {
+      return { baseUpdatedAt: parsed.baseUpdatedAt };
+    }
+
+    return { baseUpdatedAt: null };
+  } catch (error) {
+    console.warn("No se pudo recuperar el estado de sincronización local.", error);
+    return { baseUpdatedAt: null };
+  }
+};
+
+const saveAutosaveSyncMetadata = (metadata: AutosaveSyncMetadata): void => {
+  try {
+    localStorage.setItem(
+      LOCAL_DRAFT_SYNC_STORAGE_KEY,
+      JSON.stringify(metadata)
+    );
+  } catch (error) {
+    console.warn("No se pudo guardar el estado de sincronización local.", error);
+  }
+};
+
+const updateAutosaveSyncMetadata = (updatedAt?: string): void => {
+  if (!updatedAt) {
+    return;
+  }
+
+  saveAutosaveSyncMetadata({
+    baseUpdatedAt: updatedAt,
+  });
 };
 
 export const saveLocalDraft = (draft: AutosaveDraftInput): void => {
@@ -78,8 +125,11 @@ export const getAutosave = async (
   }
 
   const payload = await response.json();
+  const autosaveDraft = adaptAutosaveResponse(payload);
 
-  return adaptAutosaveResponse(payload);
+  updateAutosaveSyncMetadata(autosaveDraft?.updatedAt);
+
+  return autosaveDraft;
 };
 
 export const putAutosave = async (
@@ -92,7 +142,10 @@ export const putAutosave = async (
       "Content-Type": "application/json",
     },
     credentials: "include",
-    body: JSON.stringify(draft),
+    body: JSON.stringify({
+      ...draft,
+      baseUpdatedAt: loadAutosaveSyncMetadata().baseUpdatedAt,
+    }),
   });
 
   if (!response.ok) {
@@ -114,8 +167,11 @@ export const putAutosave = async (
   }
 
   const payload = await response.json();
+  const autosaveSummary = adaptAutosaveSummaryResponse(payload);
 
-  return adaptAutosaveSummaryResponse(payload);
+  updateAutosaveSyncMetadata(autosaveSummary.updatedAt);
+
+  return autosaveSummary;
 };
 
 export const deleteAutosave = async (
@@ -129,6 +185,8 @@ export const deleteAutosave = async (
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to delete autosave.");
   }
+
+  saveAutosaveSyncMetadata({ baseUpdatedAt: null });
 };
 
 type AutosaveScheduler = {
