@@ -7,12 +7,72 @@ import ListsContainer from "./ListsContainer";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
+const { showToastMock } = vi.hoisted(() => ({
+  showToastMock: vi.fn(),
+}));
+
+vi.mock("@src/context/useToast", () => ({
+  useToast: () => ({
+    showToast: showToastMock,
+  }),
+}));
+
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
 };
 
 describe("ListsContainer", () => {
+  it("bloquea la activación de listas vacías y muestra feedback", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "draft-empty",
+                title: "Vacía",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: null,
+                itemCount: 0,
+                isEditing: false,
+                status: LIST_STATUS.DRAFT,
+              },
+            ],
+          }),
+        };
+      }
+
+      return {
+        ok: false,
+        json: async () => ({}),
+      };
+    });
+
+    showToastMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
+    );
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/draft-empty/activate",
+      expect.anything(),
+    );
+    expect(showToastMock).toHaveBeenCalledWith({
+      message: UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE,
+      productName: "Vacía",
+    });
+  });
+
   it("abre modal de detalle al hacer click y ejecuta acciones canónicas", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
