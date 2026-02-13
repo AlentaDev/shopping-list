@@ -93,6 +93,19 @@ Referencias que deben mantenerse alineadas con esta política:
 - `docs/api/design.md`
 - `docs/features/web/lists-management.md`
 
+### Criterios de aceptación transversales (finales y testeables)
+
+1. **Variant A (persistencia de draft):** para usuarios con bootstrap completado, los flujos que “vacían” autosave (`DELETE /api/lists/autosave`, `POST /api/lists/:id/finish-edit`) limpian contenido y conservan el `DRAFT` como entidad reutilizable; `GET /api/lists/autosave` posterior debe devolver `200` (incluyendo draft vacío).
+2. **Matriz read-only en detalle (`ACTIVE`/`COMPLETED`):**
+   - `ACTIVE`: acciones permitidas **Editar/Borrar/Cerrar**.
+   - `COMPLETED`: acciones permitidas **Reusar/Borrar/Cerrar**.
+   - **Cerrar** es solo UX (sin mutación ni endpoint de negocio).
+3. **Guard de transición no vacía `DRAFT` -> `ACTIVE`:**
+   - Web bloquea “Finalizar lista” cuando no hay ítems.
+   - API rechaza `PATCH /api/lists/:id/activate` si el draft está vacío.
+4. **Conflicto de autosave controlado por versión:** en `PUT /api/lists/autosave`, si `baseUpdatedAt` difiere de `updatedAt` remoto, la respuesta debe ser `409` con `remoteUpdatedAt` y sin sobrescritura silenciosa del contenido remoto.
+5. **Consistencia con endpoints:** ningún criterio debe exigir endpoints retirados o renombrados (ej.: `PATCH /status`, `POST /duplicate`), y todas las reglas anteriores se validan sobre endpoints vigentes (`/activate`, `/reuse`, `/finish-edit`, `/autosave`).
+
 ---
 
 
