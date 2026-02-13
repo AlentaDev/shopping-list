@@ -145,7 +145,8 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
   - Si todos fallan, se mantiene el estado en `LOCAL_DRAFT`, se marca estado `sync=error` y se habilita reintento manual.
   - Un nuevo cambio del usuario vuelve a intentar sincronizar automáticamente.
 - **Conflictos multi-tab/concurrencia:**
-  - Regla base: el servidor valida con `updatedAt` (o versión equivalente) enviado por cliente.
+  - Regla base: el cliente envía `baseUpdatedAt` y el servidor compara contra `updatedAt` remoto actual.
+  - Contrato determinista: si `server.updatedAt !== baseUpdatedAt`, responde `409 Conflict` con `{ error, remoteUpdatedAt, message }` y no persiste el snapshot.
   - Si llega `409 Conflict`, la pestaña no sobrescribe el remoto automáticamente.
   - Se mantiene `LOCAL_DRAFT` como “cambios pendientes”, se obtiene snapshot remoto actualizado y se muestra estado de conflicto para que el usuario recargue/aplique recuperación.
 - **Comportamiento offline:**
@@ -163,7 +164,7 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 3. **t2:** B edita sobre snapshot viejo (`updatedAt=10:00`) y envía autosave.
 4. **t3:** API responde `409 Conflict` a B.
 5. **t4:** B conserva su `LOCAL_DRAFT` pendiente, descarga snapshot remoto (`10:01`) y muestra aviso de conflicto.
-6. **t5:** Usuario en B elige “recargar desde servidor” (flujo de recuperación); recién ahí se permite sobrescribir `LOCAL_DRAFT` con remoto.
+6. **t5:** Usuario en B elige “recargar desde servidor” (flujo de recuperación); recién ahí se permite sobrescribir `LOCAL_DRAFT` con remoto y reintentar usando el nuevo `baseUpdatedAt`.
 
 ## Referencia de transiciones
 

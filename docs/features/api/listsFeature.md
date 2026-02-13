@@ -190,6 +190,7 @@ El autosave se crea o recupera al autenticarse (puede estar vacío) y se actuali
 ```json
 {
   "title": "Autosave",
+  "baseUpdatedAt": "2024-01-01T00:00:00.000Z",
   "items": [
     {
       "id": "uuid",
@@ -222,6 +223,22 @@ El autosave se crea o recupera al autenticarse (puede estar vacío) y se actuali
 
 Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 
+**Regla de concurrencia (obligatoria):**
+
+- `baseUpdatedAt` representa la versión remota sobre la que el cliente editó.
+- El servidor compara `baseUpdatedAt` contra el `updatedAt` actual del `DRAFT`.
+- Si `updatedAt` servidor `!= baseUpdatedAt`, la API **debe** responder `409 Conflict` y **no** persistir la escritura.
+
+**Response 409 (conflict)**
+
+```json
+{
+  "error": "autosave_version_conflict",
+  "remoteUpdatedAt": "2024-01-01T00:00:00.000Z",
+  "message": "Autosave conflict: remote draft was updated by another session."
+}
+```
+
 
 ## Sync policy
 
@@ -230,7 +247,8 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
   - Estrategia esperada: 3 reintentos con backoff exponencial (**1 s**, **2 s**, **4 s**).
   - Si se agotan, el cliente conserva cambios localmente y deja el estado en error de sincronización hasta reintento manual o nueva edición.
 - **Conflictos multi-tab / actualizaciones concurrentes:**
-  - `PUT /api/lists/autosave` debe validar precondición de versión (`updatedAt` o equivalente) para detectar escrituras sobre snapshot obsoleto.
+  - `PUT /api/lists/autosave` valida precondición de versión con `baseUpdatedAt`.
+  - Contrato determinista: si `server.updatedAt !== baseUpdatedAt`, responde `409` con `remoteUpdatedAt` y no aplica cambios.
   - Ante conflicto, responder **`409 Conflict`** sin aplicar overwrite silencioso.
   - El cliente debe tratar el conflicto como recuperación explícita (no merge implícito en backend).
 - **Comportamiento offline esperado:**
@@ -246,7 +264,7 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 2. **t1:** A envía `PUT /autosave` con base `10:00`; API guarda y devuelve `updatedAt=10:01`.
 3. **t2:** B envía `PUT /autosave` todavía con base `10:00`.
 4. **t3:** API detecta desfasaje y responde `409 Conflict` (sin persistir payload de B).
-5. **t4:** B mantiene cambios locales pendientes y solicita último autosave remoto (`10:01`).
+5. **t4:** B mantiene cambios locales pendientes y usa `remoteUpdatedAt=10:01` para pedir el último autosave remoto.
 6. **t5:** Solo si el usuario elige flujo de recuperación, B reemplaza local por remoto o reintenta con snapshot reconciliado.
 
 ### GET /api/lists/:id
