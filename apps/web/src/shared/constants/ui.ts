@@ -209,6 +209,9 @@ export const UI_TEXT = {
       DISCARD_LABEL: "Descartar",
     },
     UPDATED_AT_LABEL: "Actualizado",
+    DETAIL_MODAL: {
+      CLOSE_LABEL: "Cerrar",
+    },
   },
   ITEM_LIST: {
     PRICE_UNAVAILABLE_MESSAGE: "Precio no disponible",
