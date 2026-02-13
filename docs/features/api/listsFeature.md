@@ -71,6 +71,10 @@ Ejemplo conciso de recuperación (reuse/edit):
   - **Endpoints / casos de uso:** `PUT /api/lists/autosave`, `PATCH /api/lists/:id/activate`, `POST /api/lists/:id/reuse`, `POST /api/lists/:id/finish-edit`, `DELETE /api/lists/autosave`.
   - **Criterio verificable:** al finalizar cualquiera de estos flujos para usuario existente, una consulta de autosave (`GET /api/lists/autosave`) devuelve un único `DRAFT` reutilizable (`200`) y no existen 0 ni >1 drafts.
 
+- [ ] **Semántica Variant A: la entidad draft persiste y los flujos la limpian**
+  - **Endpoints / casos de uso:** `GET /api/lists/autosave`, `PUT /api/lists/autosave`, `DELETE /api/lists/autosave`, `POST /api/lists/:id/finish-edit`, `POST /api/lists/:id/reuse`.
+  - **Criterio verificable:** en usuarios con bootstrap completado, tras limpiar autosave o terminar edición/reuso debe seguir existiendo la misma entidad lógica de `DRAFT` (lectura posterior `GET /api/lists/autosave` en `200`, incluyendo contenido vacío), sin volver al estado normal de `204`.
+
 - [ ] **`finish-edit` y `DELETE autosave` limpian contenido, no eliminan entidad draft**
   - **Endpoints:** `POST /api/lists/:id/finish-edit`, `DELETE /api/lists/autosave`.
   - **Criterio verificable:**
@@ -85,6 +89,28 @@ Ejemplo conciso de recuperación (reuse/edit):
   - **Use case:** reconciliación login/bootstrap cliente-servidor.
   - **Endpoints:** `GET /api/lists/autosave` (detección bootstrap `204`) + `PUT /api/lists/autosave` (persistencia del `LOCAL_DRAFT` pre-auth).
   - **Criterio verificable:** con items en `LOCAL_DRAFT` antes de autenticar, el primer login debe terminar con `GET /api/lists/autosave` en `200` y los items locales presentes en el draft servidor (sin pérdida silenciosa).
+
+- [ ] **Matriz canónica de acciones en modal de detalle read-only (`ACTIVE`/`COMPLETED`)**
+  - **Estado UI esperado (web):** el modal de detalle abre en solo lectura para ambos estados.
+  - **Criterio verificable:**
+    1. En `ACTIVE`, el modal muestra únicamente acciones de **Editar**, **Borrar** y **Cerrar**.
+    2. En `COMPLETED`, el modal muestra únicamente acciones de **Reusar**, **Borrar** y **Cerrar**.
+    3. En ambos estados, **Cerrar** no muta datos ni llama endpoints de negocio.
+    4. Ninguna combinación de acciones contradice endpoints actuales: edición vía `PATCH /api/lists/:id/editing` + `POST /api/lists/:id/finish-edit`, reuso vía `POST /api/lists/:id/reuse`, borrado vía endpoint de delete vigente.
+
+- [ ] **Guard de transición `DRAFT` -> `ACTIVE` no vacío en Web y API**
+  - **Endpoints / casos de uso:** acción “Finalizar lista” web + `PATCH /api/lists/:id/activate`.
+  - **Criterio verificable:**
+    1. Si el borrador no tiene items, la Web bloquea la acción de finalizar (guard UX).
+    2. Si un cliente intenta activar un `DRAFT` vacío directo contra API, `PATCH /api/lists/:id/activate` rechaza la transición (error de validación de negocio).
+    3. Si el borrador tiene >=1 item, Web permite finalizar y API devuelve éxito.
+
+- [ ] **Conflictos de autosave con `baseUpdatedAt` devuelven `409` sin overwrite silencioso**
+  - **Endpoint:** `PUT /api/lists/autosave`.
+  - **Criterio verificable:**
+    1. Con `baseUpdatedAt` igual al `updatedAt` remoto vigente, la escritura se persiste y devuelve `200`.
+    2. Con `baseUpdatedAt` desfasado, la API devuelve `409` con `error=autosave_version_conflict` y `remoteUpdatedAt`.
+    3. Tras un `409`, una lectura `GET /api/lists/autosave` confirma que el contenido remoto no fue sobreescrito por el payload en conflicto.
 
 ## Endpoints
 

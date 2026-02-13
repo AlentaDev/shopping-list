@@ -142,4 +142,8 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 - [x] [Web] Usar `/activate` en lugar de `/status`.
 - [x] [Web] Enviar `{ isEditing: true/false }` al editar.
 - [x] [Web] Ajustar límites de cantidad a **1–99**.
-- [ ] [Docs] Alinear semántica de listas vacías: `DRAFT` puede estar vacío; activación sin items prohibida; validación en Web + API; `COMPLETED` no vacío en flujo normal.
+- [x] [Docs] Alinear semántica de listas vacías: `DRAFT` puede estar vacío; activación sin items prohibida; validación en Web + API; `COMPLETED` no vacío en flujo normal.
+- [x] [Docs] Criterio Variant A: el `DRAFT` persiste como entidad y los flujos limpian contenido (no eliminación).
+- [x] [Docs] Criterio matriz read-only en detalle: `ACTIVE` => Editar/Borrar/Cerrar y `COMPLETED` => Reusar/Borrar/Cerrar.
+- [x] [Docs] Criterio de guard de transición no vacía en Web + API para `PATCH /api/lists/:id/activate`.
+- [x] [Docs] Criterio de conflicto de autosave: `baseUpdatedAt` desfasado => `409` con `remoteUpdatedAt` y sin overwrite.
