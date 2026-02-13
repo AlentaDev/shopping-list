@@ -68,6 +68,15 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 - Nombre de la lista: máximo 35 caracteres, truncado con `…`.
 - Estados vacíos: mostrar mensaje informativo.
 
+### Semántica de listas vacías (normativa)
+
+- `DRAFT` **puede estar vacío**. Esto es válido y esperado como parte del autosave persistente.
+- Está **prohibido** transicionar de `DRAFT` a `ACTIVE` sin items.
+- Esta regla debe validarse en dos capas:
+  - **Web (UX guard)**: bloquear acción de “Finalizar lista” si no hay items y mostrar feedback claro.
+  - **API (invariante de negocio)**: rechazar cualquier transición a `ACTIVE` sin items aunque la UI falle o sea omitida.
+- Implicación esperada: `COMPLETED` **no debería quedar vacío en flujo normal**, porque proviene de una `ACTIVE` válida con items.
+
 ### Activas (listado)
 
 - Cada tarjeta muestra: nombre, nº de productos, fecha de activación y botón de borrar.
