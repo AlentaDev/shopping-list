@@ -62,8 +62,22 @@ export class FinishListEdit {
     list.isEditing = false;
     list.updatedAt = now;
 
+    latestAutosave.title = "";
+    latestAutosave.items = [];
+    latestAutosave.updatedAt = now;
+
     await this.listRepository.save(list);
-    await this.listRepository.deleteById(latestAutosave.id);
+    await this.listRepository.save(latestAutosave);
+
+    const staleAutosaveDrafts = autosaveDrafts.filter(
+      (autosaveDraft) => autosaveDraft.id !== latestAutosave.id,
+    );
+
+    await Promise.all(
+      staleAutosaveDrafts.map((autosaveDraft) =>
+        this.listRepository.deleteById(autosaveDraft.id),
+      ),
+    );
 
     return {
       id: list.id,

@@ -9,7 +9,7 @@ import {
 import { FinishListEdit } from "./FinishListEdit.js";
 
 describe("FinishListEdit", () => {
-  it("applies the latest autosave draft to an active list", async () => {
+  it("applies the latest autosave draft to an active list and clears it", async () => {
     const listRepository = new InMemoryListRepository();
     const useCase = new FinishListEdit(listRepository);
     const activeList: List = {
@@ -85,7 +85,7 @@ describe("FinishListEdit", () => {
     });
 
     const updatedActive = await listRepository.findById("list-1");
-    const removedDraft = await listRepository.findById("draft-1");
+    const clearedDraft = await listRepository.findById("draft-1");
 
     expect(updatedActive).toMatchObject({
       title: "Weekly updated",
@@ -99,7 +99,13 @@ describe("FinishListEdit", () => {
       ],
       updatedAt: now,
     });
-    expect(removedDraft).toBeNull();
+    expect(clearedDraft).toMatchObject({
+      id: "draft-1",
+      isAutosaveDraft: true,
+      title: "",
+      items: [],
+      updatedAt: now,
+    });
 
     vi.useRealTimers();
   });
@@ -125,6 +131,81 @@ describe("FinishListEdit", () => {
     await expect(
       useCase.execute({ userId: "user-1", listId: "list-1" }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
+  });
+
+  it("keeps exactly one reusable autosave draft after finishing edit", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+    const now = new Date("2024-01-03T10:00:00.000Z");
+
+    await listRepository.save({
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Weekly",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-old",
+      ownerUserId: "user-1",
+      title: "Old draft",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-latest",
+      ownerUserId: "user-1",
+      title: "Latest draft",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [
+        {
+          id: "item-1",
+          listId: "draft-latest",
+          kind: "manual",
+          name: "Milk",
+          qty: 2,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+
+    await useCase.execute({ userId: "user-1", listId: "list-1" });
+
+    const remainingAutosaveDrafts = (await listRepository.listByOwner("user-1")).filter(
+      (list) => list.isAutosaveDraft,
+    );
+
+    expect(remainingAutosaveDrafts).toHaveLength(1);
+    expect(remainingAutosaveDrafts[0]).toMatchObject({
+      id: "draft-latest",
+      title: "",
+      items: [],
+      updatedAt: now,
+    });
+
+    vi.useRealTimers();
   });
 
   it("throws when list is missing or owned by another user", async () => {
