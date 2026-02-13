@@ -4,6 +4,12 @@
 
 Implementar los cambios de listas de forma **incremental y verificable** en los 3 entornos, siguiendo la decisión del ADR 007.
 
+## Clasificación de estado (obligatoria)
+
+- **TARGET BEHAVIOR**: este documento contiene únicamente el plan de migración objetivo (to-be).
+- **CURRENT BEHAVIOR**: consultar `docs/api/design.md` para snapshot de API actual y `docs/features/web/lists-management.md` para comportamiento web vigente.
+- **TRANSITION NOTE**: las decisiones de transición de alto nivel están en `docs/007-lists-management-evolution.md`.
+
 ## Alcance
 
 - **API y BD** primero para asegurar compatibilidad de datos.
@@ -130,20 +136,8 @@ Implementar los cambios de listas de forma **incremental y verificable** en los 
 - Mantener reutilización de componentes de confirmación y mensajes.
 - Usar `UI_TEXT` para todos los textos de UI.
 
-## Checklist (decisiones recientes)
+## Notas de transición
 
-- [x] [API] Cambiar `GET /api/lists/autosave` a `204` cuando no exista borrador.
-- [x] [API] Renombrar `PATCH /api/lists/:id/status` a `PATCH /api/lists/:id/activate`.
-- [x] [API] Eliminar `POST /api/lists/:id/duplicate` (mantener solo `reuse`).
-- [x] [API] Implementar `POST /api/lists/:id/finish-edit`.
-- [x] [API] Aceptar `{ isEditing: boolean }` en `PATCH /api/lists/:id/editing`.
-- [x] [API] Alinear validaciones de cantidad a **1–99**.
-- [x] [Web] Consumir `204` en autosave y tratarlo como “sin borrador”.
-- [x] [Web] Usar `/activate` en lugar de `/status`.
-- [x] [Web] Enviar `{ isEditing: true/false }` al editar.
-- [x] [Web] Ajustar límites de cantidad a **1–99**.
-- [x] [Docs] Alinear semántica de listas vacías: `DRAFT` puede estar vacío; activación sin items prohibida; validación en Web + API; `COMPLETED` no vacío en flujo normal.
-- [x] [Docs] Criterio Variant A: el `DRAFT` persiste como entidad y los flujos limpian contenido (no eliminación).
-- [x] [Docs] Criterio matriz read-only en detalle: `ACTIVE` => Editar/Borrar/Cerrar y `COMPLETED` => Reusar/Borrar/Cerrar.
-- [x] [Docs] Criterio de guard de transición no vacía en Web + API para `PATCH /api/lists/:id/activate`.
-- [x] [Docs] Criterio de conflicto de autosave: `baseUpdatedAt` desfasado => `409` con `remoteUpdatedAt` y sin overwrite.
+- Este plan evita registrar estado "ya implementado" para no mezclar snapshot actual con objetivo.
+- Si una decisión ya fue aplicada, debe reflejarse en `docs/api/design.md` (API actual) o en la documentación feature correspondiente.
+- Cualquier cambio de target debe actualizar ADR/referencias antes de ejecutar nuevas iteraciones.

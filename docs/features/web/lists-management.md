@@ -4,6 +4,12 @@
 
 Proveer una pantalla dedicada para gestionar listas por estado desde el menú de usuario. El `DRAFT` único (autosave persistido en servidor) se gestiona en el modal de lista, puede estar vacío y no aparece en este listado.
 
+## Clasificación de estado
+
+- **CURRENT BEHAVIOR**: reglas implementadas deben contrastarse con `docs/api/design.md` y con el comportamiento real de UI.
+- **TARGET BEHAVIOR**: decisiones objetivo de producto/arquitectura en `docs/007-lists-management-evolution.md`.
+- **TRANSITION NOTE**: orden de migración y cortes por iteración en `docs/lists-implementation-plan.md`.
+
 ## Endpoints
 
 - `GET /api/lists` (carga de listas)

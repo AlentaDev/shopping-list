@@ -8,6 +8,11 @@ Este documento describe el estado **actual** de la API (lo que está implementad
 - Endpoints actuales, formato de errores, autenticación por cookies y dependencias clave.
 - Persistencia in-memory por defecto con opción de Postgres y proveedor externo de catálogo (Mercadona).
 
+## Clasificación de estado (obligatoria)
+- **CURRENT BEHAVIOR**: este documento es un snapshot de la API implementada hoy.
+- **TARGET BEHAVIOR**: no se define aquí; ver `docs/007-lists-management-evolution.md` y `docs/lists-implementation-plan.md`.
+- **TRANSITION NOTE**: el detalle de migración incremental vive en `docs/lists-implementation-plan.md`.
+
 ## Base URL y healthcheck
 - **Base URL**: todas las rutas de API se sirven bajo `/api`.
 - **Healthcheck**: `GET /health` devuelve `{ "status": "ok" }`.
@@ -203,7 +208,7 @@ Contrato de concurrencia para multi-tab y recuperación:
 ```
 
 ### ListItemDto
-- **Deprecado:** los items manuales y las notas están en proceso de eliminación de API/DB/web. Todo cambio nuevo debe asumir **solo catálogo** y sin notas libres.
+- **Estado actual:** coexisten items `manual` y `catalog`. Los items `manual` están marcados como deprecados en la API actual.
 - **Manual**
 ```
 {
