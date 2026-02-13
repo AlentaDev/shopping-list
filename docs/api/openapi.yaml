@@ -257,6 +257,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "401":
           $ref: "#/components/responses/NotAuthenticated"
+        "409":
+          $ref: "#/components/responses/AutosaveVersionConflict"
     delete:
       tags:
         - lists
@@ -648,6 +650,21 @@ components:
           type: string
       required:
         - error
+    AutosaveVersionConflictError:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: [autosave_version_conflict]
+        remoteUpdatedAt:
+          type: string
+          format: date-time
+        message:
+          type: string
+      required:
+        - error
+        - remoteUpdatedAt
+        - message
     ValidationError:
       type: object
       properties:
@@ -864,12 +881,17 @@ components:
         title:
           type: string
           maxLength: 60
+        baseUpdatedAt:
+          type: string
+          format: date-time
+          description: Versión remota (`updatedAt`) sobre la que se construyó el snapshot local.
         items:
           type: array
           items:
             $ref: "#/components/schemas/AutosaveItem"
       required:
         - title
+        - baseUpdatedAt
         - items
     AutosaveItem:
       oneOf:
@@ -1328,3 +1350,13 @@ components:
             $ref: "#/components/schemas/AppError"
           example:
             error: catalog_provider_failed
+    AutosaveVersionConflict:
+      description: Conflicto de versión en autosave
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AutosaveVersionConflictError"
+          example:
+            error: autosave_version_conflict
+            remoteUpdatedAt: "2024-01-01T00:00:00.000Z"
+            message: "Autosave conflict: remote draft was updated by another session."

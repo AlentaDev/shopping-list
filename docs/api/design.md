@@ -105,9 +105,17 @@ Secuencia típica:
 3. Bootstrap/primera escritura crea draft.
 4. `GET /autosave` -> `200` con payload de draft.
 
+Contrato de concurrencia para multi-tab y recuperación:
+- Cada `PUT /autosave` debe incluir `baseUpdatedAt`.
+- El servidor solo acepta la escritura si coincide con la versión remota actual.
+- En conflicto (`409`), el cliente conserva cambios locales pendientes y usa `remoteUpdatedAt` para rehidratar/reconciliar antes de reintentar.
+
 **PUT `/autosave`**
-- Body: `{ title, items }`.
+- Body: `{ title, baseUpdatedAt, items }`.
+- `baseUpdatedAt` es la versión remota (`updatedAt`) sobre la que el cliente construyó su snapshot local.
+- Regla de conflicto determinista: si `updatedAt` remoto actual `!= baseUpdatedAt`, la API responde `409 Conflict` y no persiste cambios.
 - Respuesta `200`: `AutosaveDraftSummary`.
+- Respuesta `409`: `{ error: "autosave_version_conflict", remoteUpdatedAt, message }`.
 
 **DELETE `/autosave`**
 - Respuesta `204`: en Variant A para usuarios bootstrap-completed, limpia el contenido del draft (título/items según regla vigente) y conserva la entidad draft persistente (no la elimina).
