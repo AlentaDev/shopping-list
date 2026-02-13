@@ -39,6 +39,7 @@ export class AutosaveVersionConflictError extends AppError {
       409,
       "autosave_version_conflict",
       "El borrador remoto cambió. Recarga antes de guardar.",
+      { remoteUpdatedAt },
     );
     this.remoteUpdatedAt = remoteUpdatedAt;
   }

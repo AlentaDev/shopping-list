@@ -14,7 +14,9 @@ export function errorMiddleware(
   }
 
   if (error instanceof AppError) {
-    res.status(error.status).json({ error: error.code });
+    res
+      .status(error.status)
+      .json({ error: error.code, ...(error.details ?? {}) });
     return;
   }
 

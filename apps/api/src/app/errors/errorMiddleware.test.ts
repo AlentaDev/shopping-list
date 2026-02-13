@@ -47,6 +47,27 @@ describe("errorMiddleware", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it("includes AppError details in response payload", () => {
+    const { res, json, status } = createMockResponse();
+    const next = vi.fn();
+
+    errorMiddleware(
+      new AppError(409, "autosave_version_conflict", "Conflict", {
+        remoteUpdatedAt: "2024-01-01T11:10:00.000Z",
+      }),
+      {} as Request,
+      res,
+      next,
+    );
+
+    expect(status).toHaveBeenCalledWith(409);
+    expect(json).toHaveBeenCalledWith({
+      error: "autosave_version_conflict",
+      remoteUpdatedAt: "2024-01-01T11:10:00.000Z",
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it("returns 500 for unknown errors", () => {
     const { res, json, status } = createMockResponse();
     const next = vi.fn();
