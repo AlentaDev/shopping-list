@@ -29,3 +29,17 @@ export class ListStatusTransitionError extends AppError {
     super(400, "invalid_list_status_transition", "Invalid list status");
   }
 }
+
+
+export class AutosaveVersionConflictError extends AppError {
+  readonly remoteUpdatedAt: string;
+
+  constructor(remoteUpdatedAt: string) {
+    super(
+      409,
+      "autosave_version_conflict",
+      "El borrador remoto cambió. Recarga antes de guardar.",
+    );
+    this.remoteUpdatedAt = remoteUpdatedAt;
+  }
+}
