@@ -140,6 +140,27 @@ export const getAutosave = async (
   return autosaveDraft;
 };
 
+
+const resolveBaseUpdatedAt = async (
+  options: AutosaveServiceOptions,
+): Promise<string> => {
+  const localBaseUpdatedAt = loadAutosaveSyncMetadata().baseUpdatedAt;
+  if (localBaseUpdatedAt) {
+    return localBaseUpdatedAt;
+  }
+
+  try {
+    const remoteDraft = await getAutosave(options);
+    if (remoteDraft?.updatedAt) {
+      return remoteDraft.updatedAt;
+    }
+  } catch (error) {
+    console.warn("No se pudo inicializar baseUpdatedAt desde autosave remoto.", error);
+  }
+
+  return new Date().toISOString();
+};
+
 export const putAutosave = async (
   draft: AutosaveDraftInput,
   options: AutosaveServiceOptions = {}
@@ -152,8 +173,7 @@ export const putAutosave = async (
     credentials: "include",
     body: JSON.stringify({
       ...draft,
-      baseUpdatedAt:
-        loadAutosaveSyncMetadata().baseUpdatedAt ?? new Date().toISOString(),
+      baseUpdatedAt: await resolveBaseUpdatedAt(options),
     }),
   });
 
