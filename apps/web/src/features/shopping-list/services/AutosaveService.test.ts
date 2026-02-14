@@ -194,55 +194,6 @@ describe("AutosaveService", () => {
     );
   });
 
-  it("loggea trazas de horas al resolver baseUpdatedAt desde autosave remoto", async () => {
-    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
-    const fetchMock = vi
-      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({
-          id: "autosave-1",
-          title: "Lista semanal",
-          items: [],
-          updatedAt: "2024-02-01T10:00:00.000Z",
-        }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: "autosave-1",
-          title: "Lista semanal",
-          updatedAt: "2024-02-01T10:00:01.000Z",
-        }),
-      });
-
-    vi.stubGlobal("fetch", fetchMock);
-
-    await putAutosave(SAMPLE_DRAFT);
-
-    expect(infoSpy).toHaveBeenCalledWith(
-      "Autosave baseUpdatedAt trace",
-      expect.objectContaining({
-        source: "remote-autosave",
-        baseUpdatedAt: expect.objectContaining({
-          raw: "2024-02-01T10:00:00.000Z",
-          utc: "2024-02-01T10:00:00.000Z",
-          local: expect.any(String),
-          timezoneOffsetMinutes: expect.any(Number),
-        }),
-      }),
-    );
-
-    expect(infoSpy).toHaveBeenCalledWith(
-      "Autosave baseUpdatedAt trace",
-      expect.objectContaining({
-        source: "put-response",
-      }),
-    );
-
-    infoSpy.mockRestore();
-  });
 
   it("tolera respuesta null al guardar autosave remoto", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(

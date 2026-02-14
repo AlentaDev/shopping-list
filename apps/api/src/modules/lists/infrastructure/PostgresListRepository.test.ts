@@ -106,6 +106,36 @@ describe("PostgresListRepository", () => {
     await expect(repository.findById(baseList.id)).resolves.toEqual(list);
   });
 
+
+  it("preserves milliseconds when postgres rows return Date objects", async () => {
+    const updatedAt = new Date("2026-02-14T23:18:18.034Z");
+    const pool = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: baseList.id,
+              owner_user_id: baseList.ownerUserId,
+              title: baseList.title,
+              status: baseList.status,
+              is_autosave_draft: baseList.isAutosaveDraft,
+              activated_at: baseList.activatedAt,
+              is_editing: baseList.isEditing,
+              created_at: baseList.createdAt,
+              updated_at: updatedAt,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({ rows: [] }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    const persisted = await repository.findById(baseList.id);
+    expect(persisted?.updatedAt.toISOString()).toBe("2026-02-14T23:18:18.034Z");
+  });
+
   it("returns null when list is missing", async () => {
     const pool = {
       query: vi.fn().mockResolvedValueOnce({ rows: [] }),
