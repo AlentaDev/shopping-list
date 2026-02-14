@@ -111,14 +111,43 @@ describe("AutosaveService", () => {
       expect.objectContaining({
         method: "PUT",
         credentials: "include",
-        body: JSON.stringify({
-          ...SAMPLE_DRAFT,
-          baseUpdatedAt: null,
-        }),
+        body: expect.stringMatching(/"baseUpdatedAt":".+"/),
       })
     );
   });
 
+
+
+  it("envía baseUpdatedAt con fecha ISO cuando no hay metadata previa", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-02-01T10:00:00.000Z"));
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-02-01T10:00:01.000Z",
+        }),
+      })
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await putAutosave(SAMPLE_DRAFT);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: "2024-02-01T10:00:00.000Z",
+        }),
+      })
+    );
+  });
   it("tolera respuesta null al guardar autosave remoto", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
@@ -352,10 +381,18 @@ describe("AutosaveService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         credentials: "include",
-        body: JSON.stringify({
-          ...secondDraft,
-          baseUpdatedAt: null,
-        }),
+        body: expect.any(String),
+      })
+    );
+
+    const sentBody = JSON.parse(
+      String(fetchMock.mock.calls[0]?.[1]?.body ?? "{}")
+    ) as AutosaveDraftInput & { baseUpdatedAt?: string };
+
+    expect(sentBody).toEqual(
+      expect.objectContaining({
+        ...secondDraft,
+        baseUpdatedAt: expect.any(String),
       })
     );
   });

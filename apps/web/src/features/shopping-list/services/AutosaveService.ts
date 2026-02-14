@@ -152,7 +152,8 @@ export const putAutosave = async (
     credentials: "include",
     body: JSON.stringify({
       ...draft,
-      baseUpdatedAt: loadAutosaveSyncMetadata().baseUpdatedAt,
+      baseUpdatedAt:
+        loadAutosaveSyncMetadata().baseUpdatedAt ?? new Date().toISOString(),
     }),
   });
 

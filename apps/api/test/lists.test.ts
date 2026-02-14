@@ -625,7 +625,7 @@ describe("lists endpoints", () => {
 
     expect(detailResponse.body.items).toEqual([
       expect.objectContaining({
-        id: "autosave-item-1",
+        id: expect.any(String),
         name: "Whole Milk",
         checked: false,
       }),
@@ -675,6 +675,8 @@ describe("lists endpoints", () => {
     );
   });
 
+
+
   it("PUT /api/lists/autosave returns 409 when baseUpdatedAt does not match remote draft", async () => {
     const app = createApp();
     const cookie = await loginUser(app, defaultUser);
@@ -718,6 +720,78 @@ describe("lists endpoints", () => {
       }),
     );
   });
+
+  it("PUT /api/lists/autosave allows different users to save same catalog product id", async () => {
+    const app = createApp();
+    const aliceCookie = await loginUser(app, defaultUser);
+    const bobCookie = await loginUser(app, {
+      name: "Bob",
+      email: "bob-autosave@example.com",
+      password: "Password12!A",
+      postalCode: "54321",
+      fingerprint: "device-2",
+    });
+
+    const aliceResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", aliceCookie)
+      .send({
+        title: "Alice draft",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        items: [
+          {
+            id: "4749",
+            kind: "catalog",
+            name: "Aceite de oliva virgen Hacendado",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "4749",
+          },
+        ],
+      });
+
+    expect(aliceResponse.status).toBe(200);
+
+    const bobResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", bobCookie)
+      .send({
+        title: "Bob draft",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        items: [
+          {
+            id: "4749",
+            kind: "catalog",
+            name: "Aceite de oliva virgen Hacendado",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "4749",
+          },
+        ],
+      });
+
+    expect(bobResponse.status).toBe(200);
+
+    const bobDraftResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", bobCookie);
+
+    expect(bobDraftResponse.status).toBe(200);
+    expect(bobDraftResponse.body).toEqual(
+      expect.objectContaining({
+        title: "Bob draft",
+        items: [
+          expect.objectContaining({
+            id: expect.any(String),
+            sourceProductId: "4749",
+          }),
+        ],
+      }),
+    );
+  });
+
 
   it("POST /api/lists/:id/reuse duplicates a completed list", async () => {
     const app = createAppWithCatalogProvider(catalogProvider);

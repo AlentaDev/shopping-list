@@ -107,7 +107,7 @@ function toListItem(
   }
 
   return {
-    id: item.id,
+    id: buildAutosaveCatalogItemId(listId, item.id),
     listId,
     kind: "catalog",
     source: item.source,
@@ -124,4 +124,9 @@ function toListItem(
     createdAt: now,
     updatedAt: now,
   };
+}
+
+
+function buildAutosaveCatalogItemId(listId: string, itemId: string): string {
+  return `${listId}:${itemId}`;
 }
