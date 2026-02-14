@@ -26,6 +26,52 @@ type AutosaveServiceOptions = {
   errorMessage?: string;
 };
 
+
+type TimestampTrace = {
+  raw: string | null;
+  utc: string | null;
+  local: string | null;
+  timezoneOffsetMinutes: number | null;
+};
+
+const toTimestampTrace = (value: string | null): TimestampTrace => {
+  if (!value) {
+    return {
+      raw: null,
+      utc: null,
+      local: null,
+      timezoneOffsetMinutes: null,
+    };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return {
+      raw: value,
+      utc: null,
+      local: null,
+      timezoneOffsetMinutes: null,
+    };
+  }
+
+  return {
+    raw: value,
+    utc: date.toISOString(),
+    local: date.toString(),
+    timezoneOffsetMinutes: date.getTimezoneOffset(),
+  };
+};
+
+const logBaseUpdatedAtTrace = (
+  source: "local-metadata" | "remote-autosave" | "local-fallback-now" | "remote-autosave-error" | "put-payload" | "put-response",
+  payload: Record<string, unknown>,
+) => {
+  console.info("Autosave baseUpdatedAt trace", {
+    source,
+    ...payload,
+  });
+};
+
 type AutosaveSyncMetadata = {
   baseUpdatedAt: string | null;
 };
@@ -146,25 +192,44 @@ const resolveBaseUpdatedAt = async (
 ): Promise<string> => {
   const localBaseUpdatedAt = loadAutosaveSyncMetadata().baseUpdatedAt;
   if (localBaseUpdatedAt) {
+    logBaseUpdatedAtTrace("local-metadata", {
+      baseUpdatedAt: toTimestampTrace(localBaseUpdatedAt),
+    });
     return localBaseUpdatedAt;
   }
 
   try {
     const remoteDraft = await getAutosave(options);
     if (remoteDraft?.updatedAt) {
+      logBaseUpdatedAtTrace("remote-autosave", {
+        baseUpdatedAt: toTimestampTrace(remoteDraft.updatedAt),
+      });
       return remoteDraft.updatedAt;
     }
   } catch (error) {
+    logBaseUpdatedAtTrace("remote-autosave-error", {
+      message: error instanceof Error ? error.message : String(error),
+    });
     console.warn("No se pudo inicializar baseUpdatedAt desde autosave remoto.", error);
   }
 
-  return new Date().toISOString();
+  const now = new Date().toISOString();
+  logBaseUpdatedAtTrace("local-fallback-now", {
+    baseUpdatedAt: toTimestampTrace(now),
+  });
+
+  return now;
 };
 
 export const putAutosave = async (
   draft: AutosaveDraftInput,
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveSummary> => {
+  const baseUpdatedAt = await resolveBaseUpdatedAt(options);
+  logBaseUpdatedAtTrace("put-payload", {
+    baseUpdatedAt: toTimestampTrace(baseUpdatedAt),
+  });
+
   const response = await fetch(AUTOSAVE_ENDPOINT, {
     method: "PUT",
     headers: {
@@ -173,7 +238,7 @@ export const putAutosave = async (
     credentials: "include",
     body: JSON.stringify({
       ...draft,
-      baseUpdatedAt: await resolveBaseUpdatedAt(options),
+      baseUpdatedAt,
     }),
   });
 
@@ -204,6 +269,10 @@ export const putAutosave = async (
 
   const payload = await response.json();
   const autosaveSummary = adaptAutosaveSummaryResponse(payload);
+
+  logBaseUpdatedAtTrace("put-response", {
+    remoteUpdatedAt: toTimestampTrace(autosaveSummary.updatedAt),
+  });
 
   updateAutosaveSyncMetadata(autosaveSummary.updatedAt);
 
