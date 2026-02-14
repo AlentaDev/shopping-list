@@ -221,16 +221,33 @@ const resolveBaseUpdatedAt = async (
   return now;
 };
 
-export const putAutosave = async (
-  draft: AutosaveDraftInput,
-  options: AutosaveServiceOptions = {}
-): Promise<AutosaveSummary> => {
-  const baseUpdatedAt = await resolveBaseUpdatedAt(options);
-  logBaseUpdatedAtTrace("put-payload", {
-    baseUpdatedAt: toTimestampTrace(baseUpdatedAt),
-  });
 
-  const response = await fetch(AUTOSAVE_ENDPOINT, {
+type AutosaveConflictPayload = {
+  remoteUpdatedAt?: string;
+};
+
+const parseAutosaveConflictRemoteUpdatedAt = (
+  responseBody: string | null,
+): string | null => {
+  if (!responseBody) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(responseBody) as AutosaveConflictPayload;
+    return typeof payload.remoteUpdatedAt === "string"
+      ? payload.remoteUpdatedAt
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const putAutosaveRequest = async (
+  draft: AutosaveDraftInput,
+  baseUpdatedAt: string,
+) =>
+  fetch(AUTOSAVE_ENDPOINT, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -241,6 +258,17 @@ export const putAutosave = async (
       baseUpdatedAt,
     }),
   });
+
+export const putAutosave = async (
+  draft: AutosaveDraftInput,
+  options: AutosaveServiceOptions = {}
+): Promise<AutosaveSummary> => {
+  const baseUpdatedAt = await resolveBaseUpdatedAt(options);
+  logBaseUpdatedAtTrace("put-payload", {
+    baseUpdatedAt: toTimestampTrace(baseUpdatedAt),
+  });
+
+  let response = await putAutosaveRequest(draft, baseUpdatedAt);
 
   if (!response.ok) {
     let responseBody: string | null = null;
@@ -259,12 +287,30 @@ export const putAutosave = async (
     });
 
     if (response.status === 409) {
-      throw new AutosaveConflictError(
-        options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
-      );
-    }
+      const remoteUpdatedAt = parseAutosaveConflictRemoteUpdatedAt(responseBody);
 
-    throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
+      if (remoteUpdatedAt) {
+        logBaseUpdatedAtTrace("remote-autosave", {
+          baseUpdatedAt: toTimestampTrace(remoteUpdatedAt),
+          retryAfterConflict: true,
+        });
+        saveAutosaveSyncMetadata({ baseUpdatedAt: remoteUpdatedAt });
+
+        response = await putAutosaveRequest(draft, remoteUpdatedAt);
+
+        if (!response.ok) {
+          throw new AutosaveConflictError(
+            options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
+          );
+        }
+      } else {
+        throw new AutosaveConflictError(
+          options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
+        );
+      }
+    } else {
+      throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
+    }
   }
 
   const payload = await response.json();

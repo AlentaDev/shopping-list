@@ -336,6 +336,60 @@ describe("AutosaveService", () => {
     warnSpy.mockRestore();
   });
 
+  it("reintenta autosave una vez usando remoteUpdatedAt cuando recibe 409", async () => {
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          items: [],
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+        json: async () => ({}),
+        text: async () =>
+          JSON.stringify({
+            error: "autosave_version_conflict",
+            remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-01-01T00:00:03.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toEqual({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T00:00:03.000Z",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: "2024-01-01T00:00:02.000Z",
+        }),
+      }),
+    );
+  });
+
   it("lanza error de conflicto cuando el autosave responde 409", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async () => ({
