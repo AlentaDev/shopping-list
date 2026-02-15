@@ -27,8 +27,25 @@ const Toast = () => {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-400">
-                  {UI_TEXT.TOAST.NO_IMAGE_LABEL}
+                <div
+                  className="flex h-full w-full items-center justify-center"
+                  aria-label={UI_TEXT.TOAST.NO_IMAGE_LABEL}
+                >
+                  <svg
+                    data-testid="toast-fallback-icon"
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-6 w-6 text-emerald-500"
+                  >
+                    <circle cx="9" cy="20" r="1" />
+                    <circle cx="18" cy="20" r="1" />
+                    <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h9.8a1 1 0 0 0 1-.8L21 7H7" />
+                  </svg>
                 </div>
               )}
             </div>
