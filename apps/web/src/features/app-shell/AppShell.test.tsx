@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "@src/features/app-shell/AppShell";
 import { AppProviders } from "@src/providers/AppProviders";
@@ -608,5 +608,138 @@ describe("AppShell", () => {
         }),
       ).not.toBeInTheDocument();
     });
+  });
+
+  it("al finalizar una lista cierra el modal, no activa modo edición y redirige al catálogo", async () => {
+    window.history.pushState({}, "", "/lists");
+
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === CURRENT_USER_URL) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "user-1",
+            name: "Ada",
+            email: "ada@example.com",
+            postalCode: TEST_POSTAL_CODE,
+          }),
+        };
+      }
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "draft-1",
+                title: "Compra semanal",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: null,
+                itemCount: 1,
+                isEditing: false,
+                status: "DRAFT",
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/draft-1") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-1",
+            title: "Compra semanal",
+            updatedAt: "2024-02-01T11:00:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: "DRAFT",
+            items: [
+              {
+                id: "item-1",
+                kind: "catalog",
+                name: "Leche",
+                qty: 1,
+                checked: false,
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                price: 1.5,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/draft-1/activate") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-1",
+            status: "ACTIVE",
+            updatedAt: "2024-02-01T11:10:00.000Z",
+          }),
+        };
+      }
+
+      if (url === AUTOSAVE_URL) {
+        return {
+          ok: true,
+          status: 204,
+          json: async () => null,
+        };
+      }
+
+      if (url === rootCategoriesUrl) {
+        return {
+          ok: true,
+          json: async () => ({ categories: [] }),
+        };
+      }
+
+      throw new Error(UNEXPECTED_REQUEST_ERROR);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <AppProviders>
+        <AppShell />
+      </AppProviders>,
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT }),
+    );
+
+    const listDialog = await screen.findByRole("dialog", {
+      name: "Compra semanal",
+    });
+
+    expect(listDialog).toBeInTheDocument();
+
+    await userEvent.click(
+      within(listDialog).getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(window.location.pathname).toBe("/");
+    });
+
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/draft-1/editing",
+      expect.anything(),
+    );
   });
 });

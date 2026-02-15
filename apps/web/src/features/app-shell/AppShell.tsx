@@ -183,6 +183,14 @@ export const AppShell = () => {
             navigate(CATALOG_PATH);
           }
         }}
+        onReadyToShopSuccess={() => {
+          setCurrentListIsEditing(false);
+          setIsCartOpen(false);
+          setIsListLoading(false);
+          if (currentPath !== CATALOG_PATH) {
+            navigate(CATALOG_PATH);
+          }
+        }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}
         initialListTitle={currentListTitle}

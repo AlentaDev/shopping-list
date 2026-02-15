@@ -26,6 +26,7 @@ type ShoppingListProps = {
   isOpen: boolean;
   onClose: () => void;
   onAddMoreProducts?: () => void;
+  onReadyToShopSuccess?: () => void;
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
@@ -298,6 +299,7 @@ const ShoppingList = ({
   initialListIsEditing,
   isLoading = false,
   onAddMoreProducts,
+  onReadyToShopSuccess,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { showToast } = useToast();
@@ -547,10 +549,12 @@ const ShoppingList = ({
       });
       setListId(response.id);
       setListStatus(response.status);
+      setListIsEditing(false);
+      onReadyToShopSuccess?.();
     } catch (error) {
       console.warn("No se pudo activar la lista.", error);
     }
-  }, [authUser, listId, listStatus]);
+  }, [authUser, listId, listStatus, onReadyToShopSuccess]);
 
   return (
     <ListModal
