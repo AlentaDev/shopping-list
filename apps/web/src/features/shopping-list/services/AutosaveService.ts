@@ -31,8 +31,6 @@ export class AutosaveConflictError extends Error {
 }
 const LOCAL_DRAFT_STORAGE_KEY = "lists.localDraft";
 const LOCAL_DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
-const SESSION_REFRESHED_AT_STORAGE_KEY = "auth.sessionRefreshedAt";
-const SESSION_REFRESH_THRESHOLD_MS = 55 * 1000;
 const AUTOSAVE_ENDPOINT = "/api/lists/autosave";
 const DEFAULT_AUTOSAVE_DEBOUNCE_MS = 1500;
 const DEFAULT_AUTOSAVE_ERROR_MESSAGE = "Unable to save autosave.";
@@ -158,10 +156,6 @@ export const getAutosave = async (
     throw new Error(options.errorMessage ?? "Unable to load autosave.");
   }
 
-  if (loadSessionRefreshedAt() === null) {
-    saveSessionRefreshedAt(Date.now());
-  }
-
   const payload = await response.json();
   const autosaveDraft = adaptAutosaveResponse(payload);
 
@@ -234,42 +228,12 @@ const putAutosaveRequest = async (
     }),
   });
 
-const loadSessionRefreshedAt = (): number | null => {
-  const stored = localStorage.getItem(SESSION_REFRESHED_AT_STORAGE_KEY);
-
-  if (!stored) {
-    return null;
-  }
-
-  const parsed = Number(stored);
-
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const saveSessionRefreshedAt = (timestamp: number): void => {
-  localStorage.setItem(SESSION_REFRESHED_AT_STORAGE_KEY, String(timestamp));
-};
-
-const shouldRefreshSessionBeforeAutosave = (): boolean => {
-  const lastRefreshAt = loadSessionRefreshedAt();
-
-  if (lastRefreshAt === null) {
-    return false;
-  }
-
-  return Date.now() - lastRefreshAt >= SESSION_REFRESH_THRESHOLD_MS;
-};
-
 const refreshAutosaveSession = async (): Promise<boolean> => {
   try {
     const response = await fetch("/api/auth/refresh", {
       method: "POST",
       credentials: "include",
     });
-
-    if (response.ok) {
-      saveSessionRefreshedAt(Date.now());
-    }
 
     return response.ok;
   } catch {
@@ -282,10 +246,6 @@ export const putAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveSummary> => {
   const baseUpdatedAt = await resolveBaseUpdatedAt(options);
-
-  if (shouldRefreshSessionBeforeAutosave()) {
-    await refreshAutosaveSession();
-  }
 
   let response = await putAutosaveRequest(draft, baseUpdatedAt);
 
@@ -333,10 +293,6 @@ export const putAutosave = async (
     } else {
       throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
     }
-  }
-
-  if (loadSessionRefreshedAt() === null) {
-    saveSessionRefreshedAt(Date.now());
   }
 
   const payload = await response.json();

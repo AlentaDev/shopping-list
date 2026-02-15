@@ -354,9 +354,7 @@ describe("AutosaveService", () => {
     );
   });
 
-  it("refresca sesión antes del autosave cuando el refresh previo está próximo a expirar", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T10:01:00.000Z"));
+  it("no refresca sesión de forma preventiva antes del primer autosave", async () => {
     localStorage.setItem("auth.sessionRefreshedAt", String(Date.now() - 56_000));
 
     const fetchMock = vi
@@ -367,14 +365,6 @@ describe("AutosaveService", () => {
             ok: true,
             status: 204,
             json: async () => null,
-          };
-        }
-
-        if (input === "/api/auth/refresh") {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({ ok: true }),
           };
         }
 
@@ -397,21 +387,15 @@ describe("AutosaveService", () => {
       updatedAt: "2024-01-01T10:01:00.000Z",
     });
 
-    expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
+    expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/auth/refresh",
-      expect.objectContaining({ method: "POST", credentials: "include" }),
+      expect.anything(),
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
-      3,
+      2,
       "/api/lists/autosave",
       expect.objectContaining({ method: "PUT" }),
     );
-    expect(
-      fetchMock.mock.calls.filter(
-        ([input, init]) => input === "/api/lists/autosave" && init?.method === "PUT",
-      ),
-    ).toHaveLength(1);
   });
 
 
