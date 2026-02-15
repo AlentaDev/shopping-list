@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ItemList from "./components/ItemList";
 import ListModal from "./components/ListModal";
 import Total from "./components/Total";
@@ -14,11 +14,7 @@ import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
 import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdapter";
-import {
-  deleteList,
-  reuseList,
-  startListEditing,
-} from "./services/ListDetailActionsService";
+import { deleteList, reuseList } from "./services/ListDetailActionsService";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./services/listStatus";
 
@@ -29,11 +25,9 @@ type ShoppingListProps = {
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
-  initialListIsEditing?: boolean;
   isLoading?: boolean;
 };
 
-const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
 const DETAIL_ACTION_BASE_CLASS =
   "rounded-full border px-4 py-2 text-sm font-semibold transition";
 const DETAIL_ACTION_DISABLED_CLASS =
@@ -51,64 +45,37 @@ const getDetailActionClassName = (
     isDisabled ? DETAIL_ACTION_DISABLED_CLASS : enabledClass
   }`;
 
-const getIsMobile = (): boolean => {
-  if (typeof window === "undefined" || !window.matchMedia) {
-    return false;
-  }
-
-  return window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
-};
 
 type DetailActionsProps = {
   isActive: boolean;
-  onEdit: () => void;
   onReuse: () => void;
   onDelete: () => void;
   isDisabled?: boolean;
-  loadingAction?: "edit" | "reuse" | "delete" | null;
+  loadingAction?: "reuse" | "delete" | null;
 };
 
 const DetailActions = ({
   isActive,
-  onEdit,
   onReuse,
   onDelete,
   isDisabled = false,
   loadingAction = null,
 }: DetailActionsProps) => (
   <div className="flex flex-wrap gap-2">
-    {isActive ? (
-      <>
-        <button
-          type="button"
-          onClick={onEdit}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {loadingAction === "edit"
-            ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT
-            : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT}
-        </button>
-      </>
-    ) : (
-      <>
-        <button
-          type="button"
-          onClick={onReuse}
-          disabled={isDisabled}
-          className={getDetailActionClassName(
-            isDisabled,
-            DETAIL_ACTION_ENABLED_CLASS,
-          )}
-        >
-          {loadingAction === "reuse"
-            ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.REUSE
-            : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE}
-        </button>
-      </>
+    {isActive ? null : (
+      <button
+        type="button"
+        onClick={onReuse}
+        disabled={isDisabled}
+        className={getDetailActionClassName(
+          isDisabled,
+          DETAIL_ACTION_ENABLED_CLASS,
+        )}
+      >
+        {loadingAction === "reuse"
+          ? UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.REUSE
+          : UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE}
+      </button>
     )}
     <button
       type="button"
@@ -206,11 +173,10 @@ const ShoppingListTotalSkeleton = () => (
 type ShoppingListListViewProps = {
   showDetailActions: boolean;
   isActiveList: boolean;
-  onEdit: () => void;
   onReuse: () => void;
   onDelete: () => void;
   isActionsDisabled: boolean;
-  detailActionLoading: "edit" | "reuse" | "delete" | null;
+  detailActionLoading: "reuse" | "delete" | null;
   isLoading: boolean;
   sortedItems: ShoppingListItem[];
   isReadOnlyMobile: boolean;
@@ -224,7 +190,6 @@ type ShoppingListListViewProps = {
 const ShoppingListListView = ({
   showDetailActions,
   isActiveList,
-  onEdit,
   onReuse,
   onDelete,
   isActionsDisabled,
@@ -272,7 +237,6 @@ const ShoppingListListView = ({
       {showDetailActions ? (
         <DetailActions
           isActive={isActiveList}
-          onEdit={onEdit}
           onReuse={onReuse}
           onDelete={onDelete}
           isDisabled={isActionsDisabled}
@@ -295,7 +259,6 @@ const ShoppingList = ({
   initialListId,
   initialListStatus,
   initialListTitle,
-  initialListIsEditing,
   isLoading = false,
   onAddMoreProducts,
 }: ShoppingListProps) => {
@@ -310,12 +273,8 @@ const ShoppingList = ({
   const [listStatus, setListStatus] = useState<ListStatus>(
     initialListStatus ?? LIST_STATUS.LOCAL_DRAFT,
   );
-  const [listIsEditing, setListIsEditing] = useState<boolean>(
-    initialListIsEditing ?? false,
-  );
-  const [isMobile, setIsMobile] = useState(getIsMobile);
   const [detailActionLoading, setDetailActionLoading] = useState<
-    "edit" | "reuse" | "delete" | null
+    "reuse" | "delete" | null
   >(null);
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
@@ -328,7 +287,6 @@ const ShoppingList = ({
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
   const showDetailActions =
     Boolean(authUser) && Boolean(listId) && (isActiveList || isCompletedList);
-  const isReadOnlyMobile = isActiveList && listIsEditing && isMobile;
   const isActionsDisabled = isLoading || detailActionLoading !== null;
   const canEditTitle =
     listStatus === LIST_STATUS.LOCAL_DRAFT || listStatus === LIST_STATUS.DRAFT;
@@ -380,23 +338,6 @@ const ShoppingList = ({
       setListStatus(LIST_STATUS.DRAFT);
     },
   });
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia(MOBILE_BREAKPOINT_QUERY);
-    const handleChange = (event: MediaQueryListEvent) => {
-      setIsMobile(event.matches);
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener("change", handleChange);
-    };
-  }, []);
 
   const handleClose = () => {
     setPendingRemoval(null);
@@ -462,24 +403,6 @@ const ShoppingList = ({
     }
   };
 
-  const handleEditList = () => {
-    if (!listId) {
-      return;
-    }
-
-    setDetailActionLoading("edit");
-    startListEditing(listId)
-      .then(() => {
-        setListIsEditing(true);
-      })
-      .catch((error) => {
-        console.warn("No se pudo activar la edición.", error);
-      })
-      .finally(() => {
-        setDetailActionLoading(null);
-      });
-  };
-
   const handleReuseList = () => {
     if (!listId) {
       return;
@@ -491,7 +414,6 @@ const ShoppingList = ({
         setItems(response.items);
         setListId(response.id);
         setListStatus(LIST_STATUS.DRAFT);
-        setListIsEditing(false);
         setListTitle(
           response.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
         );
@@ -516,7 +438,6 @@ const ShoppingList = ({
         setItems([]);
         setListId(null);
         setListStatus(LIST_STATUS.LOCAL_DRAFT);
-        setListIsEditing(false);
         setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
         setListName("");
         setPendingListDeletion(false);
@@ -547,10 +468,12 @@ const ShoppingList = ({
       });
       setListId(response.id);
       setListStatus(response.status);
+      handleClose();
+      onAddMoreProducts?.();
     } catch (error) {
       console.warn("No se pudo activar la lista.", error);
     }
-  }, [authUser, listId, listStatus]);
+  }, [authUser, handleClose, listId, listStatus, onAddMoreProducts]);
 
   return (
     <ListModal
@@ -570,14 +493,13 @@ const ShoppingList = ({
       <ShoppingListListView
         showDetailActions={showDetailActions}
         isActiveList={isActiveList}
-        onEdit={handleEditList}
         onReuse={handleReuseList}
         onDelete={() => setPendingListDeletion(true)}
         isActionsDisabled={isActionsDisabled}
         detailActionLoading={detailActionLoading}
         isLoading={isLoading}
         sortedItems={sortedItems}
-        isReadOnlyMobile={isReadOnlyMobile}
+        isReadOnlyMobile={false}
         onIncrement={handleIncrement}
         onDecrement={handleDecrement}
         onRemove={handleRemoveRequest}

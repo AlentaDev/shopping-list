@@ -27,8 +27,6 @@ export const AppShell = () => {
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
     useState<ShoppingListStatus>(LIST_STATUS.LOCAL_DRAFT);
-  const [currentListIsEditing, setCurrentListIsEditing] =
-    useState<boolean>(false);
   const [isListLoading, setIsListLoading] = useState(false);
   const [currentListTitle, setCurrentListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
@@ -115,7 +113,6 @@ export const AppShell = () => {
     setCurrentListId(list.id);
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
-    setCurrentListIsEditing(list.isEditing);
     setIsListLoading(false);
     setIsCartOpen(true);
   };
@@ -124,7 +121,6 @@ export const AppShell = () => {
     setCurrentListId(list.id);
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
-    setCurrentListIsEditing(list.isEditing);
     setIsListLoading(true);
     setIsCartOpen(true);
   };
@@ -186,7 +182,6 @@ export const AppShell = () => {
         initialListId={currentListId}
         initialListStatus={currentListStatus}
         initialListTitle={currentListTitle}
-        initialListIsEditing={currentListIsEditing}
         isLoading={isListLoading}
       />
       <Toast />
