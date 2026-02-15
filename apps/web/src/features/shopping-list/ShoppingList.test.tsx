@@ -455,6 +455,16 @@ describe("ShoppingList", () => {
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
+
+    expect(
+      screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
+    ).toBeInTheDocument();
+
+    const storedLocalDraft = localStorage.getItem("lists.localDraft");
+    expect(storedLocalDraft).not.toBeNull();
+    expect(JSON.parse(storedLocalDraft ?? "{}")).toEqual(
+      expect.objectContaining({ items: [] }),
+    );
   });
 
   it("updates total when incrementing quantity", async () => {

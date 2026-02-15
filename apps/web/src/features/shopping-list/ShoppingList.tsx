@@ -9,6 +9,7 @@ import { useToast } from "@src/context/useToast";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
+import { saveLocalDraft } from "./services/AutosaveService";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
@@ -451,6 +452,18 @@ const ShoppingList = ({
       });
   };
 
+  const handleResetToEmptyLocalDraft = useCallback(() => {
+    setItems([]);
+    setListId(null);
+    setListStatus(LIST_STATUS.LOCAL_DRAFT);
+    setListName("");
+    setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
+    saveLocalDraft({
+      title: "",
+      items: [],
+    });
+  }, [setItems]);
+
   const handleTitleSubmit = useCallback((nextTitle: string) => {
     setListName(nextTitle);
     setListTitle(nextTitle);
@@ -462,18 +475,24 @@ const ShoppingList = ({
     }
 
     try {
-      const response = await activateList({
+      await activateList({
         status: listStatus,
         listId,
       });
-      setListId(response.id);
-      setListStatus(response.status);
+      handleResetToEmptyLocalDraft();
       handleClose();
       onAddMoreProducts?.();
     } catch (error) {
       console.warn("No se pudo activar la lista.", error);
     }
-  }, [authUser, handleClose, listId, listStatus, onAddMoreProducts]);
+  }, [
+    authUser,
+    handleClose,
+    handleResetToEmptyLocalDraft,
+    listId,
+    listStatus,
+    onAddMoreProducts,
+  ]);
 
   return (
     <ListModal
