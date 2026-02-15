@@ -64,7 +64,17 @@ const areDraftsEqual = (
   return JSON.stringify(current) === JSON.stringify(base);
 };
 
-const createTabId = () => `tab-${Date.now()}`;
+let tabSequence = 0;
+
+const createTabId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  tabSequence += 1;
+
+  return `tab-${Date.now()}-${tabSequence}`;
+};
 
 const getIsTabActive = () => {
   if (typeof document === "undefined") {
@@ -208,6 +218,7 @@ export const useAutosaveDraft = (
     }
 
     saveLocalDraft(draft);
+    baseDraftRef.current = draft;
   }, [draft, persistLocal]);
 
   useEffect(() => {

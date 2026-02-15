@@ -228,13 +228,34 @@ const putAutosaveRequest = async (
     }),
   });
 
+const refreshAutosaveSession = async (): Promise<boolean> => {
+  try {
+    const response = await fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 export const putAutosave = async (
   draft: AutosaveDraftInput,
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveSummary> => {
   const baseUpdatedAt = await resolveBaseUpdatedAt(options);
 
-  const response = await putAutosaveRequest(draft, baseUpdatedAt);
+  let response = await putAutosaveRequest(draft, baseUpdatedAt);
+
+  if (response.status === 401) {
+    const refreshed = await refreshAutosaveSession();
+
+    if (refreshed) {
+      response = await putAutosaveRequest(draft, baseUpdatedAt);
+    }
+  }
 
   if (!response.ok) {
     let responseBody: string | null = null;
