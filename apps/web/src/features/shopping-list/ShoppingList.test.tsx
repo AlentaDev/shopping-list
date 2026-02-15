@@ -453,6 +453,12 @@ describe("ShoppingList", () => {
       "/api/lists/list-100/activate",
       expect.objectContaining({ method: "PATCH" }),
     );
+    expect(
+      screen.getByText(UI_TEXT.LIST_MODAL.READY_TO_SHOP_TOAST_MESSAGE),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE).length,
+    ).toBeGreaterThan(0);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
 

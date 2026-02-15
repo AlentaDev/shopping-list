@@ -47,6 +47,10 @@ describe("Toast", () => {
       "src",
       PRODUCT_IMAGE,
     );
+    expect(screen.getByTestId("toast-fallback-icon")).toBeInTheDocument();
+    expect(screen.getByTestId("toast-fallback-icon")).toHaveClass(
+      "text-emerald-500",
+    );
     expect(screen.getByTestId("toast-stack")).toHaveClass("flex-col-reverse");
   });
 });
