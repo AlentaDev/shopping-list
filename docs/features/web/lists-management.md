@@ -153,8 +153,15 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 - **Conflictos multi-tab/concurrencia:**
   - Regla base: el cliente envía `baseUpdatedAt` y el servidor compara contra `updatedAt` remoto actual.
   - Contrato determinista: si `server.updatedAt !== baseUpdatedAt`, responde `409 Conflict` con `{ error, remoteUpdatedAt, message }` y no persiste el snapshot.
-  - Si llega `409 Conflict`, la pestaña no sobrescribe el remoto automáticamente.
-  - Se mantiene `LOCAL_DRAFT` como “cambios pendientes”, se obtiene snapshot remoto actualizado y se muestra estado de conflicto para que el usuario recargue/aplique recuperación.
+  - Si llega `409 Conflict`, la pestaña no sobrescribe el remoto automáticamente ni oculta el conflicto con retries silenciosos.
+  - Se mantiene `LOCAL_DRAFT` como “cambios pendientes”, se obtiene snapshot remoto actualizado y se muestra diálogo explícito de resolución.
+  - Resolución no silenciosa obligatoria (dos opciones visibles):
+    - `Mantener local`: conserva el contenido local como fuente y vuelve a intentar sincronizar con la nueva base remota.
+    - `Mantener remoto`: rehidrata la UI con el snapshot remoto y descarta el pendiente local.
+- **Refresh cross-tab por `storage` event:**
+  - Cuando otra pestaña actualiza `lists.localDraft`, la pestaña actual refresca la vista del draft en caliente.
+  - El refresco solo se aplica automáticamente si **no** hay cambios locales pendientes (safe refresh).
+  - Si hay cambios locales pendientes, no se pisa la edición local y se marca que existen cambios remotos disponibles.
 - **Comportamiento offline:**
   - Sin conectividad no se intentan llamadas de autosave.
   - Los cambios siguen aplicando a `LOCAL_DRAFT`.
@@ -193,3 +200,9 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 - Timeout amable (“Estamos tardando más de lo esperado”) con opción de reintentar.
 - Toast solo para errores (no para loading).
 - Banner offline: desactivar acciones de API si no hay red.
+
+## Checklist QA rápido (multi-tab y conflictos)
+
+- Dos pestañas del mismo navegador: la segunda pestaña refresca la vista del draft al recibir `storage` event cuando no tiene cambios locales pendientes.
+- Dos pestañas con ediciones conflictivas: aparece diálogo de conflicto (`409`) y funcionan ambas opciones (`Mantener local` / `Mantener remoto`).
+- No existe retry silencioso que oculte conflictos reales: cuando persiste el conflicto, la resolución siempre pasa por una acción explícita del usuario.
