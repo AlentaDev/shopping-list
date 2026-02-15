@@ -25,14 +25,19 @@ type FetchResponse = {
 type HarnessProps = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
+  title?: string;
 };
 
-const Harness = ({ enabled = true, onRehydrate }: HarnessProps) => {
+const Harness = ({
+  enabled = true,
+  onRehydrate,
+  title = "Lista semanal",
+}: HarnessProps) => {
   const [items, setItems] = useState<ListItem[]>([]);
 
   useAutosaveDraft(
     {
-      title: "Lista semanal",
+      title,
       items,
     },
     { enabled, onRehydrate }
@@ -84,6 +89,47 @@ const TabSyncHarness = () => {
       </button>
       <button type="button" onClick={() => setTitle("Lista local") }>
         Edit title
+      </button>
+    </>
+  );
+};
+
+const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
+  const [items, setItems] = useState<ListItem[]>([]);
+  const [title, setTitle] = useState("Lista secundaria");
+
+  const { remoteChangesAvailable } = useAutosaveDraft(
+    {
+      title,
+      items,
+    },
+    {
+      enabled,
+      onRehydrate: (draft) => {
+        setTitle(draft.title);
+        setItems(
+          draft.items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            category: "General",
+            thumbnail: item.thumbnail ?? null,
+            price: item.price ?? null,
+            quantity: item.qty,
+          })),
+        );
+      },
+    },
+  );
+
+  return (
+    <>
+      <span data-testid="secondary-title">{title}</span>
+      <span data-testid="secondary-count">{items.length}</span>
+      <span data-testid="secondary-remote-flag">
+        {remoteChangesAvailable ? "remote" : "clean"}
+      </span>
+      <button type="button" onClick={() => setItems([sampleItem])}>
+        Secondary edit local
       </button>
     </>
   );
@@ -382,6 +428,115 @@ describe("useAutosaveDraft", () => {
       "/api/lists/autosave",
       expect.objectContaining({ method: "PUT" }),
     );
+  });
+
+  it("pestaña secundaria autenticada recibe actualizaciones desde lists.localDraft", async () => {
+    render(<SecondaryTabHarness enabled={false} />);
+
+    saveLocalDraft({
+      title: "Lista remota autenticada",
+      items: [
+        {
+          id: "item-remote-auth",
+          kind: "catalog",
+          name: "Arroz",
+          qty: 3,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-remote-auth",
+        },
+      ],
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraft",
+          newValue: localStorage.getItem("lists.localDraft"),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("secondary-title")).toHaveTextContent(
+        "Lista remota autenticada",
+      );
+      expect(screen.getByTestId("secondary-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("secondary-remote-flag")).toHaveTextContent(
+        "clean",
+      );
+    });
+  });
+
+  it("pestaña secundaria inactiva no ejecuta autosave remoto aunque esté autenticada", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-1",
+        title: "Lista secundaria",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    render(<Harness enabled={true} title="Lista secundaria" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("preserva ediciones locales sin guardar cuando llega cambio remoto en pestaña secundaria", async () => {
+    render(<SecondaryTabHarness enabled={false} />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Secondary edit local" }),
+    );
+
+    saveLocalDraft({
+      title: "Lista remota externa",
+      items: [
+        {
+          id: "item-remote-2",
+          kind: "catalog",
+          name: "Pasta",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-remote-2",
+        },
+      ],
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraft",
+          newValue: localStorage.getItem("lists.localDraft"),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("secondary-title")).toHaveTextContent(
+        "Lista secundaria",
+      );
+      expect(screen.getByTestId("secondary-count")).toHaveTextContent("1");
+      expect(screen.getByTestId("secondary-remote-flag")).toHaveTextContent(
+        "remote",
+      );
+    });
   });
 
 });

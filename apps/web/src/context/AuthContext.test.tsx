@@ -53,6 +53,14 @@ class BroadcastChannelMock {
 
   postMessage(message: AuthSyncEvent) {
     this.messages.push(message);
+
+    for (const instance of BroadcastChannelMock.instances) {
+      if (instance === this || instance.name !== this.name) {
+        continue;
+      }
+
+      instance.emitMessage(message);
+    }
   }
 
   addEventListener(
@@ -73,6 +81,12 @@ class BroadcastChannelMock {
   static reset() {
     BroadcastChannelMock.instances.length = 0;
   }
+}
+
+function AuthState({ testId }: { testId: string }) {
+  const { authUser } = useAuth();
+
+  return <div data-testid={testId}>{authUser ? authUser.email : "No user"}</div>;
 }
 
 const TEST_EMAIL = "test@example.com";
@@ -373,8 +387,8 @@ describe("AuthProvider", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "Register" }));
-    await user.click(screen.getByRole("button", { name: "Login" }));
-    await user.click(screen.getByRole("button", { name: "Logout" }));
+    await user.click(screen.getAllByRole("button", { name: "Login" })[0]);
+    await user.click(screen.getAllByRole("button", { name: "Logout" })[0]);
 
     const publisherChannels = BroadcastChannelMock.instances.filter(
       (instance) => instance.messages.length > 0,
@@ -532,6 +546,97 @@ describe("AuthProvider", () => {
 
     await waitFor(() => {
       expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("sincroniza login entre pestañas y actualiza authUser en la pestaña secundaria", async () => {
+    const tabAUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    const tabBUser = {
+      ...tabAUser,
+      email: "tab-b@example.com",
+    };
+
+    vi.mocked(getCurrentUser)
+      .mockResolvedValueOnce(tabAUser)
+      .mockRejectedValueOnce(new Error("No authenticated user"))
+      .mockResolvedValueOnce(tabBUser);
+    vi.mocked(refreshSession).mockRejectedValue(new Error("No refresh"));
+    vi.mocked(loginUser).mockResolvedValueOnce(tabAUser);
+
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+        <AuthProvider>
+          <AuthState testId="tab-b-auth-user" />
+        </AuthProvider>
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+      expect(screen.getByTestId("tab-b-auth-user")).toHaveTextContent(
+        "No user",
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("tab-b-auth-user")).toHaveTextContent(
+        "tab-b@example.com",
+      );
+    });
+  });
+
+  it("sincroniza logout entre pestañas y limpia authUser en la pestaña secundaria", async () => {
+    const initialUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+
+    vi.mocked(getCurrentUser)
+      .mockResolvedValueOnce(initialUser)
+      .mockResolvedValueOnce(initialUser);
+    vi.mocked(logoutUser).mockResolvedValueOnce(undefined);
+
+    const user = userEvent.setup();
+
+    render(
+      <>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+        <AuthProvider>
+          <AuthState testId="tab-b-auth-user" />
+        </AuthProvider>
+      </>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+      expect(screen.getByTestId("tab-b-auth-user")).toHaveTextContent(
+        TEST_EMAIL,
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+      expect(screen.getByTestId("tab-b-auth-user")).toHaveTextContent(
+        "No user",
+      );
     });
   });
 });
