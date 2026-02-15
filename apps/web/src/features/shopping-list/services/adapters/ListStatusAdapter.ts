@@ -5,6 +5,11 @@ type ListStatusPayload = {
   id?: string;
   status?: ListStatus;
   updatedAt?: string;
+  autosaveDraft?: {
+    id?: string;
+    title?: string;
+    updatedAt?: string;
+  };
 };
 
 const resolveStatus = (status?: ListStatus): ListStatus => {
@@ -26,5 +31,16 @@ export const adaptListStatusResponse = (
     id: data.id ?? "",
     status: resolveStatus(data.status),
     updatedAt: data.updatedAt ?? "",
+    autosaveDraft:
+      data.autosaveDraft &&
+      typeof data.autosaveDraft.id === "string" &&
+      typeof data.autosaveDraft.title === "string" &&
+      typeof data.autosaveDraft.updatedAt === "string"
+        ? {
+            id: data.autosaveDraft.id,
+            title: data.autosaveDraft.title,
+            updatedAt: data.autosaveDraft.updatedAt,
+          }
+        : undefined,
   };
 };

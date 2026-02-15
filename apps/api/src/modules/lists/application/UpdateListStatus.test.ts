@@ -49,6 +49,11 @@ describe("UpdateListStatus", () => {
       id: "list-1",
       status: "ACTIVE",
       updatedAt: now.toISOString(),
+      autosaveDraft: {
+        id: "draft-2",
+        title: "Tu Lista",
+        updatedAt: now.toISOString(),
+      },
     });
 
     await expect(listRepository.findById("list-1")).resolves.toMatchObject({
@@ -103,6 +108,11 @@ describe("UpdateListStatus", () => {
       id: "list-2",
       status: "ACTIVE",
       updatedAt: now.toISOString(),
+      autosaveDraft: {
+        id: "draft-2",
+        title: "Tu Lista",
+        updatedAt: now.toISOString(),
+      },
     });
 
     await expect(listRepository.findById("list-2")).resolves.toMatchObject({
@@ -253,6 +263,11 @@ describe("UpdateListStatus", () => {
       id: "list-1",
       status: "ACTIVE",
       updatedAt: now.toISOString(),
+      autosaveDraft: {
+        id: "draft-2",
+        title: "Tu Lista",
+        updatedAt: now.toISOString(),
+      },
     });
 
     const lists = await listRepository.listByOwner("user-1");
@@ -263,7 +278,7 @@ describe("UpdateListStatus", () => {
     expect(draft).toMatchObject({
       id: "draft-2",
       ownerUserId: "user-1",
-      title: "Weekly groceries",
+      title: "Tu Lista",
       status: "DRAFT",
       isAutosaveDraft: true,
       items: [],

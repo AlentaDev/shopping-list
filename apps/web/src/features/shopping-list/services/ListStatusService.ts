@@ -3,6 +3,7 @@ import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
+import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
 const LISTS_ENDPOINT = "/api/lists";
 
@@ -54,5 +55,11 @@ export const activateList = async ({
 
   const payload = await response.json();
 
-  return adaptListStatusResponse(payload);
+  const statusSummary = adaptListStatusResponse(payload);
+
+  if (statusSummary.autosaveDraft?.updatedAt) {
+    saveAutosaveSyncMetadata(statusSummary.autosaveDraft.updatedAt);
+  }
+
+  return statusSummary;
 };

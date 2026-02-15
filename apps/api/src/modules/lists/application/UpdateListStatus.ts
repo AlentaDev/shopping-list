@@ -17,7 +17,14 @@ type UpdateListStatusResult = {
   id: string;
   status: ListStatus;
   updatedAt: string;
+  autosaveDraft?: {
+    id: string;
+    title: string;
+    updatedAt: string;
+  };
 };
+
+const DEFAULT_AUTOSAVE_DRAFT_TITLE = "Tu Lista";
 
 const ALLOWED_TRANSITIONS: Record<ListStatus, ListStatus[]> = {
   DRAFT: ["ACTIVE"],
@@ -63,9 +70,24 @@ export class UpdateListStatus {
       }
       await this.listRepository.save(list);
 
+      let autosaveDraft: List | null = null;
+
       if (input.status === "ACTIVE") {
-        await this.createEmptyDraft(list, now);
+        autosaveDraft = await this.createEmptyDraft(list, now);
       }
+
+      return {
+        id: list.id,
+        status: list.status,
+        updatedAt: list.updatedAt.toISOString(),
+        autosaveDraft: autosaveDraft
+          ? {
+              id: autosaveDraft.id,
+              title: autosaveDraft.title,
+              updatedAt: autosaveDraft.updatedAt.toISOString(),
+            }
+          : undefined,
+      };
     }
 
     return {
@@ -75,11 +97,11 @@ export class UpdateListStatus {
     };
   }
 
-  private async createEmptyDraft(activeList: List, now: Date) {
+  private async createEmptyDraft(activeList: List, now: Date): Promise<List> {
     const draft: List = {
       id: this.idGenerator.generate(),
       ownerUserId: activeList.ownerUserId,
-      title: activeList.title,
+      title: DEFAULT_AUTOSAVE_DRAFT_TITLE,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: [],
@@ -89,5 +111,7 @@ export class UpdateListStatus {
     };
 
     await this.listRepository.save(draft);
+
+    return draft;
   }
 }
