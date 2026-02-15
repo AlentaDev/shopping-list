@@ -2,7 +2,7 @@ import { z } from "zod";
 import { LIST_STATUSES } from "../domain/list.js";
 
 export const createListSchema = z.object({
-  title: z.string().min(1).max(60),
+  title: z.string().trim().min(3).max(35),
 });
 
 export const addCatalogItemSchema = z.object({
@@ -57,7 +57,7 @@ const autosaveCatalogItemSchema = z.object({
 });
 
 export const upsertAutosaveSchema = z.object({
-  title: z.string().min(1).max(60),
+  title: z.string().trim().min(3).max(35),
   baseUpdatedAt: z.iso.datetime(),
   items: z.array(autosaveCatalogItemSchema),
 });
