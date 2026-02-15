@@ -404,7 +404,11 @@ describe("AuthProvider", () => {
 
     vi.mocked(getCurrentUser)
       .mockResolvedValueOnce(initialUser)
-      .mockResolvedValueOnce(updatedUser);
+      .mockResolvedValueOnce(updatedUser)
+      .mockRejectedValueOnce(new Error("No authenticated user"));
+    vi.mocked(refreshSession).mockRejectedValue(
+      new AuthServiceError("not_authenticated"),
+    );
 
     const user = userEvent.setup();
 
@@ -448,6 +452,7 @@ describe("AuthProvider", () => {
     await waitFor(() => {
       expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
       expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+      expect(getCurrentUser).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -494,6 +499,39 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("authUser")).toHaveTextContent(
         "fallback@example.com",
       );
+    });
+  });
+
+  it("ignora eventos de storage de autosave para sincronización de auth", async () => {
+    globalThis.BroadcastChannel = undefined as never;
+    vi.mocked(getCurrentUser).mockResolvedValueOnce({
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraft",
+          newValue: JSON.stringify({ title: "Lista", items: [] }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(getCurrentUser).toHaveBeenCalledTimes(1);
     });
   });
 });
