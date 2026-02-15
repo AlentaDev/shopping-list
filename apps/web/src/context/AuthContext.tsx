@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -38,63 +39,133 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
+type AuthSyncEvent = {
+  type: "login" | "register" | "logout";
+  timestamp: number;
+  sourceTabId: string;
+};
+
+const AUTH_TAB_SYNC_KEY = "auth.tabSync";
+
+function createTabId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `tab-${Date.now()}`;
+}
+
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const sourceTabId = useMemo(() => createTabId(), []);
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const syncAuthenticatedUser = useCallback(async () => {
+    try {
+      const user = await getCurrentUser();
+      setAuthUser(user);
+      return;
+    } catch (error) {
+      if (
+        error instanceof AuthServiceError &&
+        error.code === "not_authenticated"
+      ) {
+        setAuthUser(null);
+        setIsUserMenuOpen(false);
+        setAuthError(resolveAuthErrorMessage(error));
+        return;
+      }
+    }
+
+    try {
+      await refreshSession();
+      const refreshedUser = await getCurrentUser();
+      setAuthUser(refreshedUser);
+    } catch (refreshError) {
+      if (
+        refreshError instanceof AuthServiceError &&
+        refreshError.code === "not_authenticated"
+      ) {
+        setAuthUser(null);
+        setIsUserMenuOpen(false);
+        setAuthError(resolveAuthErrorMessage(refreshError));
+      }
+    }
+  }, []);
+
+  const publishAuthSyncEvent = useCallback(
+    (type: AuthSyncEvent["type"]) => {
+      const event: AuthSyncEvent = {
+        type,
+        timestamp: Date.now(),
+        sourceTabId,
+      };
+
+      if (typeof BroadcastChannel !== "undefined") {
+        const channel = new BroadcastChannel("auth");
+        channel.postMessage(event);
+        channel.close();
+        return;
+      }
+
+      localStorage.setItem(AUTH_TAB_SYNC_KEY, JSON.stringify(event));
+    },
+    [sourceTabId],
+  );
 
   // Cargar usuario autenticado al montar
   useEffect(() => {
     let isActive = true;
 
-    const applyAuthenticatedUser = async (user: AuthUser) => {
-      if (!isActive) {
+    const runInitialSync = async () => {
+      await syncAuthenticatedUser();
+    };
+
+    const onSyncEvent = (event: AuthSyncEvent) => {
+      if (!isActive || event.sourceTabId === sourceTabId) {
         return;
       }
-      setAuthUser(user);
-    };
 
-    const loadCurrentUser = async () => {
-      try {
-        const user = await getCurrentUser();
-        await applyAuthenticatedUser(user);
-      } catch (error) {
-        if (
-          error instanceof AuthServiceError &&
-          error.code === "not_authenticated" &&
-          isActive
-        ) {
-          setAuthUser(null);
-          setIsUserMenuOpen(false);
-          setAuthError(resolveAuthErrorMessage(error));
-          return;
-        }
-        try {
-          await refreshSession();
-          const refreshedUser = await getCurrentUser();
-          await applyAuthenticatedUser(refreshedUser);
-        } catch (refreshError) {
-          if (
-            refreshError instanceof AuthServiceError &&
-            refreshError.code === "not_authenticated" &&
-            isActive
-          ) {
-            setAuthUser(null);
-            setIsUserMenuOpen(false);
-            setAuthError(resolveAuthErrorMessage(refreshError));
-          }
-          // No-op: usuario no autenticado
-        }
+      if (event.type === "logout") {
+        setAuthUser(null);
+        setIsUserMenuOpen(false);
+        return;
       }
+
+      void syncAuthenticatedUser();
     };
 
-    void loadCurrentUser();
+    const onStorage = (storageEvent: StorageEvent) => {
+      if (storageEvent.key !== AUTH_TAB_SYNC_KEY || !storageEvent.newValue) {
+        return;
+      }
+
+      const parsedEvent = JSON.parse(storageEvent.newValue) as AuthSyncEvent;
+      onSyncEvent(parsedEvent);
+    };
+
+    let channel: BroadcastChannel | null = null;
+
+    if (typeof BroadcastChannel !== "undefined") {
+      channel = new BroadcastChannel("auth");
+      channel.addEventListener("message", (messageEvent) => {
+        onSyncEvent(messageEvent.data as AuthSyncEvent);
+      });
+    } else {
+      window.addEventListener("storage", onStorage);
+    }
+
+    void runInitialSync();
 
     return () => {
       isActive = false;
+      channel?.close();
+      window.removeEventListener("storage", onStorage);
     };
-  }, []);
+  }, [sourceTabId, syncAuthenticatedUser]);
 
   const register = useCallback(async (values: RegisterInput) => {
     setAuthError(null);
@@ -102,6 +173,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const user = await registerUser(values);
       setAuthUser(user);
+      publishAuthSyncEvent("register");
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));
@@ -109,7 +181,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setIsAuthSubmitting(false);
     }
-  }, []);
+  }, [publishAuthSyncEvent]);
 
   const login = useCallback(async (values: LoginInput) => {
     setAuthError(null);
@@ -117,6 +189,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const user = await loginUser(values);
       setAuthUser(user);
+      publishAuthSyncEvent("login");
       return user;
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));
@@ -124,18 +197,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } finally {
       setIsAuthSubmitting(false);
     }
-  }, []);
+  }, [publishAuthSyncEvent]);
 
   const logout = useCallback(async () => {
     try {
       await logoutUser();
       setAuthUser(null);
       setIsUserMenuOpen(false);
+      publishAuthSyncEvent("logout");
     } catch (error) {
       setAuthError(resolveAuthErrorMessage(error));
       throw error;
     }
-  }, []);
+  }, [publishAuthSyncEvent]);
 
   const value: AuthContextType & {
     register: typeof register;
