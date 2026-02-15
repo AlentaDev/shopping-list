@@ -159,6 +159,8 @@ export const UI_TEXT = {
     SAVE_DRAFT_LABEL: "Guardar borrador",
     READY_TO_SHOP_LABEL: "Finalizar lista",
     READY_TO_SHOP_EMPTY_MESSAGE: "Añade al menos un producto para finalizar.",
+    READY_TO_SHOP_TOAST_MESSAGE:
+      "Ya puedes usar tu lista en el móvil para hacer tu compra sin olvidarte nada.",
     EDIT_TITLE: {
       BUTTON_LABEL: "Editar título",
       INPUT_LABEL: "Título de la lista",

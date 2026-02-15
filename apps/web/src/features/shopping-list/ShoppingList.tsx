@@ -479,6 +479,11 @@ const ShoppingList = ({
         status: listStatus,
         listId,
       });
+      showToast({
+        message: UI_TEXT.LIST_MODAL.READY_TO_SHOP_TOAST_MESSAGE,
+        productName: listTitle,
+        thumbnail: null,
+      });
       handleResetToEmptyLocalDraft();
       handleClose();
       onAddMoreProducts?.();
@@ -491,7 +496,9 @@ const ShoppingList = ({
     handleResetToEmptyLocalDraft,
     listId,
     listStatus,
+    listTitle,
     onAddMoreProducts,
+    showToast,
   ]);
 
   return (
