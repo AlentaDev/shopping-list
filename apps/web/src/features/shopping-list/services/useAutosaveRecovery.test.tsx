@@ -36,17 +36,25 @@ type HarnessProps = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
+  onKeepLocalConflict?: () => void;
 };
 
 const Harness = ({
   enabled = true,
   onRehydrate,
   onAutoRestore,
+  onKeepLocalConflict,
 }: HarnessProps) => {
-  const { conflict, handleKeepLocal, handleKeepRemote } = useAutosaveRecovery({
+  const {
+    conflict,
+    hasPendingConflict,
+    handleUpdateFromServerFirst,
+    handleKeepLocalDraft,
+  } = useAutosaveRecovery({
     enabled,
     onRehydrate,
     onAutoRestore,
+    onKeepLocalConflict,
   });
 
   return (
@@ -54,15 +62,15 @@ const Harness = ({
       {conflict ? (
         <div>
           <span>Conflict</span>
-          <button type="button" onClick={handleKeepLocal}>
-            Keep local
+          <button type="button" onClick={handleUpdateFromServerFirst}>
+            Update first
           </button>
-          <button type="button" onClick={handleKeepRemote}>
-            Keep remote
+          <button type="button" onClick={handleKeepLocalDraft}>
+            Keep local
           </button>
         </div>
       ) : (
-        <span>No conflict</span>
+        <span>{hasPendingConflict ? "Pending conflict" : "No conflict"}</span>
       )}
     </div>
   );
@@ -182,8 +190,9 @@ describe("useAutosaveRecovery", () => {
 
 
 
-  it("mantiene conflicto abierto cuando guardar local responde 409 y refresca remoto", async () => {
+  it("aplica flujo update first: refresca remoto, reaplica item local y sincroniza", async () => {
     const user = userEvent.setup();
+    const onRehydrate = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local",
       items: [
@@ -212,45 +221,111 @@ describe("useAutosaveRecovery", () => {
         }),
       })
       .mockResolvedValueOnce({
-        ok: false,
-        status: 409,
-        statusText: "Conflict",
-        json: async () => ({}),
-        text: async () => "conflict",
-      } as FetchResponse)
-      .mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           ...SAMPLE_REMOTE,
           title: "Lista remota reciente",
+          items: [
+            {
+              ...SAMPLE_REMOTE.items[0],
+              id: "item-remote",
+              sourceProductId: "item-remote",
+            },
+          ],
           updatedAt: "2024-01-01T10:00:01.000Z",
         }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "autosave-1", updatedAt: "2024-01-01T10:00:02.000Z" }),
       });
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<Harness />);
+    render(<Harness onRehydrate={onRehydrate} />);
+
+    expect(await screen.findByText("Conflict")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Update first" }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenNthCalledWith(
+        3,
+        "/api/lists/autosave",
+        expect.objectContaining({ method: "PUT" }),
+      );
+    });
+
+    const sentBody = JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body ?? "{}")) as {
+      items?: Array<{ id: string }>;
+    };
+
+    expect(sentBody.items?.map((item) => item.id)).toEqual([
+      "item-remote",
+      "item-local",
+    ]);
+    expect(onRehydrate).toHaveBeenCalledTimes(2);
+    expect(localStorage.getItem("lists.localDraft") ?? "").toContain("item-local");
+    expect(screen.getByText("No conflict")).toBeInTheDocument();
+  });
+
+  it("keep local mantiene borrador local y marca conflicto pendiente", async () => {
+    const user = userEvent.setup();
+    const onKeepLocalConflict = vi.fn();
+    const localDraft: LocalDraft = {
+      title: "Lista local",
+      items: [
+        {
+          id: "item-local",
+          kind: "catalog",
+          name: "Pan",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-local",
+        },
+      ],
+      updatedAt: "2024-01-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness onKeepLocalConflict={onKeepLocalConflict} />);
 
     expect(await screen.findByText("Conflict")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Keep local" }));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenNthCalledWith(
-        3,
-        "/api/lists/autosave",
-        expect.objectContaining({ credentials: "include" })
-      );
+      expect(screen.getByText("Pending conflict")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Conflict")).toBeInTheDocument();
-    expect(localStorage.getItem("lists.localDraft")).toBe(
-      JSON.stringify(localDraft)
-    );
-    expect(sessionStorage.getItem("lists.autosaveChecked")).not.toBe("true");
+    const savedDraft = JSON.parse(localStorage.getItem("lists.localDraft") ?? "{}") as {
+      title?: string;
+      items?: Array<{ id: string }>;
+      updatedAt?: string;
+    };
+
+    expect(savedDraft.title).toBe(localDraft.title);
+    expect(savedDraft.items?.map((item) => item.id)).toEqual(["item-local"]);
+    expect(savedDraft.updatedAt).toEqual(expect.any(String));
+    expect(onKeepLocalConflict).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
   it("muestra conflicto si empatan y difieren", async () => {
-    const user = userEvent.setup();
     const onRehydrate = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local",
@@ -286,12 +361,7 @@ describe("useAutosaveRecovery", () => {
 
     expect(await screen.findByText("Conflict")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Keep remote" }));
-
-    await waitFor(() => {
-      expect(onRehydrate).toHaveBeenCalled();
-    });
-
-    expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
+    expect(onRehydrate).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("lists.autosaveChecked")).not.toBe("true");
   });
 });

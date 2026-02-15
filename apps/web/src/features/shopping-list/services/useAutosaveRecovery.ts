@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  AutosaveConflictError,
   getAutosave,
   loadLocalDraft,
   putAutosave,
+  saveLocalDraft,
 } from "./AutosaveService";
 import type {
   AutosaveDraft,
@@ -16,6 +16,7 @@ type UseAutosaveRecoveryOptions = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
+  onKeepLocalConflict?: () => void;
 };
 
 const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
@@ -104,6 +105,21 @@ const parseUpdatedAt = (value?: string) => {
 
 const hasItems = (draft: AutosaveDraftInput | null) =>
   Boolean(draft && draft.items.length > 0);
+
+const mergeDraftWithPendingLocalItems = (
+  remoteDraft: AutosaveDraftInput,
+  localDraft: AutosaveDraftInput,
+): AutosaveDraftInput => {
+  const remoteIds = new Set(remoteDraft.items.map((item) => item.id));
+  const pendingLocalItems = localDraft.items.filter(
+    (item) => !remoteIds.has(item.id),
+  );
+
+  return {
+    title: localDraft.title,
+    items: [...remoteDraft.items, ...pendingLocalItems],
+  };
+};
 
 type AutosaveConflict = {
   local: LocalDraft;
@@ -216,9 +232,10 @@ const resolveRecoveryDecision = (
 export const useAutosaveRecovery = (
   options: UseAutosaveRecoveryOptions = {},
 ) => {
-  const { enabled = true, onRehydrate, onAutoRestore } = options;
+  const { enabled = true, onRehydrate, onAutoRestore, onKeepLocalConflict } = options;
   const [conflict, setConflict] = useState<AutosaveConflict | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasPendingConflict, setHasPendingConflict] = useState(false);
 
   useEffect(() => {
     if (!enabled || getAutosaveChecked()) {
@@ -234,6 +251,7 @@ export const useAutosaveRecovery = (
       try {
         const localDraft = loadLocalDraft();
         setConflict(null);
+        setHasPendingConflict(false);
         const remoteDraft = await getAutosave({
           errorMessage: "No se pudo recuperar el borrador.",
         });
@@ -283,56 +301,61 @@ export const useAutosaveRecovery = (
     };
   }, [enabled, onAutoRestore, onRehydrate]);
 
-  const handleKeepLocal = useCallback(async () => {
+  const handleUpdateFromServerFirst = useCallback(async () => {
     if (!conflict) {
       return;
     }
 
     const localInput = mapLocalDraftToInput(conflict.local);
-    try {
-      await putAutosave({
-        ...localInput,
-        title: normalizeDraftTitle(localInput),
-      });
-      setConflict(null);
-      setAutosaveChecked();
-    } catch (error) {
-      if (error instanceof AutosaveConflictError) {
-        try {
-          const latestRemoteDraft = await getAutosave({
-            errorMessage: "No se pudo recuperar el borrador.",
-          });
 
-          if (latestRemoteDraft) {
-            setConflict({
-              local: conflict.local,
-              remote: latestRemoteDraft,
-            });
-            return;
-          }
-        } catch (remoteError) {
-          console.warn("No se pudo refrescar el borrador remoto.", remoteError);
-        }
+    try {
+      const latestRemoteDraft = await getAutosave({
+        errorMessage: "No se pudo recuperar el borrador.",
+      });
+
+      if (!latestRemoteDraft) {
+        return;
       }
 
-      console.warn("No se pudo sincronizar el borrador local.", error);
-    }
-  }, [conflict]);
+      const remoteInput = mapAutosaveToDraftInput(latestRemoteDraft);
+      saveLocalDraft(remoteInput);
+      onRehydrate?.(remoteInput);
 
-  const handleKeepRemote = useCallback(() => {
+      const mergedDraft = mergeDraftWithPendingLocalItems(remoteInput, localInput);
+      saveLocalDraft(mergedDraft);
+      onRehydrate?.(mergedDraft);
+
+      await putAutosave({
+        ...mergedDraft,
+        title: normalizeDraftTitle(mergedDraft),
+      });
+
+      setConflict(null);
+      setHasPendingConflict(false);
+      setAutosaveChecked();
+    } catch (error) {
+      console.warn("No se pudo sincronizar el borrador con base remota.", error);
+    }
+  }, [conflict, onRehydrate]);
+
+  const handleKeepLocalDraft = useCallback(() => {
     if (!conflict) {
       return;
     }
 
-    onRehydrate?.(mapAutosaveToDraftInput(conflict.remote));
+    const localInput = mapLocalDraftToInput(conflict.local);
+    saveLocalDraft(localInput);
+    onRehydrate?.(localInput);
     setConflict(null);
-    setAutosaveChecked();
-  }, [conflict, onRehydrate]);
+    setHasPendingConflict(true);
+    onKeepLocalConflict?.();
+  }, [conflict, onKeepLocalConflict, onRehydrate]);
 
   return {
     conflict,
     isLoading,
-    handleKeepLocal,
-    handleKeepRemote,
+    hasPendingConflict,
+    handleUpdateFromServerFirst,
+    handleKeepLocalDraft,
   };
 };

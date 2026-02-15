@@ -11,9 +11,22 @@ import {
 
 
 export class AutosaveConflictError extends Error {
-  constructor(message = DEFAULT_AUTOSAVE_ERROR_MESSAGE) {
+  readonly remoteUpdatedAt: string | null;
+  readonly metadata?: Record<string, unknown>;
+
+  constructor({
+    message = DEFAULT_AUTOSAVE_ERROR_MESSAGE,
+    remoteUpdatedAt = null,
+    metadata,
+  }: {
+    message?: string;
+    remoteUpdatedAt?: string | null;
+    metadata?: Record<string, unknown>;
+  } = {}) {
     super(message);
     this.name = "AutosaveConflictError";
+    this.remoteUpdatedAt = remoteUpdatedAt;
+    this.metadata = metadata;
   }
 }
 const LOCAL_DRAFT_STORAGE_KEY = "lists.localDraft";
@@ -175,24 +188,27 @@ const resolveBaseUpdatedAt = async (
 };
 
 
-type AutosaveConflictPayload = {
+type AutosaveConflictPayload = Record<string, unknown> & {
   remoteUpdatedAt?: string;
 };
 
-const parseAutosaveConflictRemoteUpdatedAt = (
+const parseAutosaveConflictPayload = (
   responseBody: string | null,
-): string | null => {
+): { remoteUpdatedAt: string | null; metadata?: Record<string, unknown> } => {
   if (!responseBody) {
-    return null;
+    return { remoteUpdatedAt: null };
   }
 
   try {
     const payload = JSON.parse(responseBody) as AutosaveConflictPayload;
-    return typeof payload.remoteUpdatedAt === "string"
-      ? payload.remoteUpdatedAt
-      : null;
+    const { remoteUpdatedAt, ...metadata } = payload;
+
+    return {
+      remoteUpdatedAt: typeof remoteUpdatedAt === "string" ? remoteUpdatedAt : null,
+      metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+    };
   } catch {
-    return null;
+    return { remoteUpdatedAt: null };
   }
 };
 
@@ -218,7 +234,7 @@ export const putAutosave = async (
 ): Promise<AutosaveSummary> => {
   const baseUpdatedAt = await resolveBaseUpdatedAt(options);
 
-  let response = await putAutosaveRequest(draft, baseUpdatedAt);
+  const response = await putAutosaveRequest(draft, baseUpdatedAt);
 
   if (!response.ok) {
     let responseBody: string | null = null;
@@ -237,26 +253,22 @@ export const putAutosave = async (
     });
 
     if (response.status === 409) {
-      const remoteUpdatedAt = parseAutosaveConflictRemoteUpdatedAt(responseBody);
+      const { remoteUpdatedAt, metadata } = parseAutosaveConflictPayload(
+        responseBody,
+      );
 
       if (remoteUpdatedAt) {
         saveAutosaveSyncMetadata({
           baseUpdatedAt: remoteUpdatedAt,
           sourceTabId: options.sourceTabId,
         });
-
-        response = await putAutosaveRequest(draft, remoteUpdatedAt);
-
-        if (!response.ok) {
-          throw new AutosaveConflictError(
-            options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
-          );
-        }
-      } else {
-        throw new AutosaveConflictError(
-          options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
-        );
       }
+
+      throw new AutosaveConflictError({
+        message: options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE,
+        remoteUpdatedAt,
+        metadata,
+      });
     } else {
       throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
     }

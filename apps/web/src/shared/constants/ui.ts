@@ -126,11 +126,13 @@ export const UI_TEXT = {
       RESTORED_TOAST_MESSAGE: "Borrador remoto restaurado",
     },
     AUTOSAVE_CONFLICT: {
-      TITLE: "¿Con cuál borrador te quedas?",
+      TITLE: "Conflicto de sincronización detectado",
       MESSAGE:
-        "Detectamos cambios distintos en el mismo momento. Elige qué versión mantener.",
-      KEEP_LOCAL_LABEL: "Mantener local",
-      KEEP_REMOTE_LABEL: "Mantener remoto",
+        "Hay cambios en servidor y en tu borrador actual. Elige cómo quieres continuar.",
+      UPDATE_FIRST_LABEL: "Actualizar desde servidor y reaplicar mi nuevo producto",
+      KEEP_LOCAL_LABEL: "Mantener mis cambios locales y seguir con el borrador",
+      PENDING_SYNC_MESSAGE:
+        "Tienes cambios locales pendientes de sincronizar por conflicto de autosave.",
     },
     DETAIL_ACTIONS: {
       EDIT: "Editar",
