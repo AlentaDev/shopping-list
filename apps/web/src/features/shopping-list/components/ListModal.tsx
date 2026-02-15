@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useId, useRef } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { z } from "zod";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ListModalProps = {
@@ -9,7 +10,16 @@ type ListModalProps = {
   isReadyToShopDisabled?: boolean;
   children: ReactNode;
   title?: string;
+  onTitleSubmit?: (title: string) => void;
 };
+
+const TITLE_SCHEMA = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(3, UI_TEXT.LIST_MODAL.EDIT_TITLE.VALIDATION_ERROR)
+    .max(35, UI_TEXT.LIST_MODAL.EDIT_TITLE.VALIDATION_ERROR),
+});
 
 const ListModal = ({
   isOpen,
@@ -19,9 +29,24 @@ const ListModal = ({
   isReadyToShopDisabled = false,
   children,
   title,
+  onTitleSubmit,
 }: ListModalProps) => {
   const titleId = useId();
   const previousOverflow = useRef<string | null>(null);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [titleError, setTitleError] = useState<string | null>(null);
+
+  const resetTitleEditor = () => {
+    setIsEditingTitle(false);
+    setTitleError(null);
+    setDraftTitle(title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE);
+  };
+
+  const handleDismissModal = () => {
+    resetTitleEditor();
+    onClose();
+  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -43,7 +68,7 @@ const ListModal = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        handleDismissModal();
       }
     };
 
@@ -52,7 +77,7 @@ const ListModal = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, title]);
 
   if (!isOpen) {
     return null;
@@ -61,13 +86,32 @@ const ListModal = ({
   const isEmptyList = itemCount === 0;
   const shouldDisableReadyToShop = isReadyToShopDisabled || isEmptyList;
 
+  const handleStartEditingTitle = () => {
+    setDraftTitle(title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE);
+    setTitleError(null);
+    setIsEditingTitle(true);
+  };
+
+  const handleSubmitTitle = () => {
+    const result = TITLE_SCHEMA.safeParse({ title: draftTitle });
+
+    if (!result.success) {
+      setTitleError(result.error.issues[0]?.message ?? null);
+      return;
+    }
+
+    onTitleSubmit?.(result.data.title);
+    setTitleError(null);
+    setIsEditingTitle(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       <button
         type="button"
         data-testid="list-modal-backdrop"
         className="fixed inset-0 bg-black/40"
-        onClick={onClose}
+        onClick={handleDismissModal}
         aria-label={UI_TEXT.LIST_MODAL.CLOSE_MODAL_LABEL}
       />
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center p-4">
@@ -77,10 +121,74 @@ const ListModal = ({
           aria-labelledby={titleId}
           className="pointer-events-auto w-full max-w-lg rounded-2xl bg-white shadow-xl"
         >
-          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-            <h2 id={titleId} className="text-xl font-semibold text-slate-900">
-              {title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE}
-            </h2>
+          <div className="border-b border-slate-200 px-6 py-4">
+            <div className="flex items-start justify-between gap-3">
+              {isEditingTitle ? (
+                <div className="flex flex-1 items-center gap-2">
+                  <label htmlFor={titleId} className="sr-only">
+                    {UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL}
+                  </label>
+                  <input
+                    id={titleId}
+                    type="text"
+                    value={draftTitle}
+                    onChange={(event) => {
+                      setDraftTitle(event.target.value);
+                      setTitleError(null);
+                    }}
+                    aria-label={UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL}
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSubmitTitle}
+                    aria-label={UI_TEXT.LIST_MODAL.EDIT_TITLE.SUBMIT_LABEL}
+                    className="rounded-full border border-slate-300 p-2 text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path d="M5 12h14" />
+                      <path d="m13 5 7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <h2 id={titleId} className="text-xl font-semibold text-slate-900">
+                  {title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE}
+                </h2>
+              )}
+              {onTitleSubmit && !isEditingTitle ? (
+                <button
+                  type="button"
+                  onClick={handleStartEditingTitle}
+                  aria-label={UI_TEXT.LIST_MODAL.EDIT_TITLE.BUTTON_LABEL}
+                  className="rounded-full border border-slate-300 p-2 text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+            {titleError ? (
+              <p className="mt-2 text-sm text-red-600">{titleError}</p>
+            ) : null}
           </div>
           <div className="px-6 py-4">{children}</div>
           <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">

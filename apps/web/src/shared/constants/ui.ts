@@ -159,6 +159,12 @@ export const UI_TEXT = {
     SAVE_DRAFT_LABEL: "Guardar borrador",
     READY_TO_SHOP_LABEL: "Finalizar lista",
     READY_TO_SHOP_EMPTY_MESSAGE: "Añade al menos un producto para finalizar.",
+    EDIT_TITLE: {
+      BUTTON_LABEL: "Editar título",
+      INPUT_LABEL: "Título de la lista",
+      SUBMIT_LABEL: "Guardar título",
+      VALIDATION_ERROR: "El título debe tener entre 3 y 35 caracteres.",
+    },
   },
   LISTS: {
     TITLE: "Mis listas",

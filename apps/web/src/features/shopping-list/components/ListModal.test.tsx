@@ -136,4 +136,63 @@ describe("ListModal", () => {
 
     expect(onReadyToShop).toHaveBeenCalledTimes(1);
   });
+
+  it("permite editar el título inline cuando se habilita la edición", async () => {
+    const onTitleSubmit = vi.fn();
+
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        onTitleSubmit={onTitleSubmit}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Editar título" }),
+    );
+
+    const input = screen.getByRole("textbox", { name: "Título de la lista" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "Compra semanal");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Guardar título" }),
+    );
+
+    expect(onTitleSubmit).toHaveBeenCalledWith("Compra semanal");
+  });
+
+  it("muestra validación con zod si el título tiene menos de 3 caracteres", async () => {
+    const onTitleSubmit = vi.fn();
+
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        onTitleSubmit={onTitleSubmit}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Editar título" }),
+    );
+
+    const input = screen.getByRole("textbox", { name: "Título de la lista" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "ab");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Guardar título" }),
+    );
+
+    expect(
+      screen.getByText("El título debe tener entre 3 y 35 caracteres."),
+    ).toBeInTheDocument();
+    expect(onTitleSubmit).not.toHaveBeenCalled();
+  });
 });

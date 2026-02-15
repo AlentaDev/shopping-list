@@ -233,6 +233,29 @@ describe("ShoppingList", () => {
     );
   });
 
+  it("permite editar el título en listas draft", async () => {
+    renderShoppingList({
+      authenticated: true,
+      listStatus: "DRAFT",
+      listTitle: "Mi lista inicial",
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Editar título" }),
+    );
+
+    const input = screen.getByRole("textbox", { name: "Título de la lista" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "Lista renombrada");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Guardar título" }),
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Lista renombrada" }),
+    ).toBeInTheDocument();
+  });
+
   it("muestra acciones de detalle para listas activas", () => {
     sessionStorage.setItem("lists.autosaveChecked", "true");
 

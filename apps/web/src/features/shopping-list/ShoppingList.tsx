@@ -330,6 +330,8 @@ const ShoppingList = ({
     Boolean(authUser) && Boolean(listId) && (isActiveList || isCompletedList);
   const isReadOnlyMobile = isActiveList && listIsEditing && isMobile;
   const isActionsDisabled = isLoading || detailActionLoading !== null;
+  const canEditTitle =
+    listStatus === LIST_STATUS.LOCAL_DRAFT || listStatus === LIST_STATUS.DRAFT;
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
@@ -528,6 +530,11 @@ const ShoppingList = ({
       });
   };
 
+  const handleTitleSubmit = useCallback((nextTitle: string) => {
+    setListName(nextTitle);
+    setListTitle(nextTitle);
+  }, []);
+
   const handleReadyToShop = useCallback(async () => {
     if (!authUser || !canActivateList(listStatus)) {
       return;
@@ -550,6 +557,7 @@ const ShoppingList = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={listTitle}
+      onTitleSubmit={canEditTitle ? handleTitleSubmit : undefined}
       onReadyToShop={canShowReadyToShop ? handleReadyToShop : undefined}
       itemCount={sortedItems.length}
       isReadyToShopDisabled={isReadyToShopDisabled}
