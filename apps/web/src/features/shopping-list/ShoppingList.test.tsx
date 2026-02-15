@@ -1,13 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
@@ -98,7 +92,6 @@ describe("ShoppingList", () => {
     listId,
     listStatus,
     listTitle,
-    listIsEditing,
     isLoading,
     onClose = vi.fn(),
     onAddMoreProducts = vi.fn(),
@@ -108,7 +101,6 @@ describe("ShoppingList", () => {
     listId?: string | null;
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
-    listIsEditing?: boolean;
     isLoading?: boolean;
     onClose?: () => void;
     onAddMoreProducts?: () => void;
@@ -129,7 +121,6 @@ describe("ShoppingList", () => {
               initialListId={listId}
               initialListStatus={listStatus}
               initialListTitle={listTitle}
-              initialListIsEditing={listIsEditing}
               isLoading={isLoading}
             />
             <Toast />
@@ -267,14 +258,14 @@ describe("ShoppingList", () => {
 
     expect(
       screen.getByRole("button", {
-        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
+      }),
+    ).toBeNull();
   });
 
   it("muestra acciones de detalle para listas completadas", () => {
@@ -416,7 +407,9 @@ describe("ShoppingList", () => {
     expect(screen.getByTestId("shopping-list-skeleton")).toBeInTheDocument();
   });
 
-  it("deshabilita acciones mientras se edita", async () => {
+  it("cierra el modal y navega al catálogo al finalizar lista", async () => {
+    const onClose = vi.fn();
+    const onAddMoreProducts = vi.fn();
     const fetchMock = vi.fn<
       (
         input: RequestInfo,
@@ -425,75 +418,53 @@ describe("ShoppingList", () => {
         ok: boolean;
         json: () => Promise<unknown>;
       }>
-    >(() => new Promise<FetchResponse>(() => {}));
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/activate")) {
+        return {
+          ok: true,
+          json: async () => ({ id: "list-100", status: "ACTIVE" }),
+        };
+      }
+
+      if (init?.method === "PUT") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return { ok: true, json: async () => null };
+    });
 
     vi.stubGlobal("fetch", fetchMock);
 
     renderShoppingList({
       authenticated: true,
-      listId: "list-20",
-      listStatus: "ACTIVE",
+      listId: "list-100",
+      listStatus: "DRAFT",
+      onClose,
+      onAddMoreProducts,
     });
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", {
-          name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
-        }),
-      );
-    });
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/lists/list-20/editing",
-      expect.objectContaining({
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isEditing: true }),
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
       }),
     );
 
-    expect(
-      await screen.findByRole("button", {
-        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS_LOADING.EDIT,
-      }),
-    ).toBeDisabled();
-  });
-
-  it("bloquea la edición en móvil cuando la lista activa está en edición", async () => {
-    const originalMatchMedia = window.matchMedia;
-
-    window.matchMedia = vi.fn().mockImplementation((query) => ({
-      matches: query.includes("max-width"),
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-
-    sessionStorage.setItem("lists.autosaveChecked", "true");
-
-    await act(async () => {
-      renderShoppingList({
-        authenticated: true,
-        listId: "list-10",
-        listStatus: "ACTIVE",
-        listIsEditing: true,
-      });
-    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-100/activate",
+      expect.objectContaining({ method: "PATCH" }),
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
 
     expect(
-      screen.getByRole("button", {
-        name: `Incrementar cantidad de ${appleName}`,
-      }),
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
-    ).toBeDisabled();
+      screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
+    ).toBeInTheDocument();
 
-    window.matchMedia = originalMatchMedia;
+    const storedLocalDraft = localStorage.getItem("lists.localDraft");
+    expect(storedLocalDraft).not.toBeNull();
+    expect(JSON.parse(storedLocalDraft ?? "{}")).toEqual(
+      expect.objectContaining({ items: [] }),
+    );
   });
 
   it("updates total when incrementing quantity", async () => {
