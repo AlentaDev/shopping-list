@@ -287,7 +287,7 @@ describe("AutosaveService", () => {
     warnSpy.mockRestore();
   });
 
-  it("reintenta autosave una vez usando remoteUpdatedAt cuando recibe 409", async () => {
+  it("lanza conflicto estructurado sin reintento automático cuando recibe 409", async () => {
     const fetchMock = vi
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
       .mockResolvedValueOnce({
@@ -310,34 +310,26 @@ describe("AutosaveService", () => {
             error: "autosave_version_conflict",
             remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
           }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: "autosave-1",
-          title: "Lista semanal",
-          updatedAt: "2024-01-01T00:00:03.000Z",
-        }),
       });
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toEqual({
-      id: "autosave-1",
-      title: "Lista semanal",
-      updatedAt: "2024-01-01T00:00:03.000Z",
-    });
+    const conflictError = await putAutosave(SAMPLE_DRAFT).catch(
+      (error) => error as AutosaveConflictError,
+    );
 
+    expect(conflictError).toBeInstanceOf(AutosaveConflictError);
+    expect(conflictError).toMatchObject({
+      remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
+      metadata: {
+        error: "autosave_version_conflict",
+      },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenNthCalledWith(
-      3,
+      2,
       "/api/lists/autosave",
-      expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({
-          ...SAMPLE_DRAFT,
-          baseUpdatedAt: "2024-01-01T00:00:02.000Z",
-        }),
-      }),
+      expect.objectContaining({ method: "PUT" }),
     );
   });
 

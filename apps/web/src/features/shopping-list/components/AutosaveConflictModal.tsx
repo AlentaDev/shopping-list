@@ -2,14 +2,14 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 
 type AutosaveConflictModalProps = {
   isOpen: boolean;
+  onUpdateFirst: () => void;
   onKeepLocal: () => void;
-  onKeepRemote: () => void;
 };
 
 const AutosaveConflictModal = ({
   isOpen,
+  onUpdateFirst,
   onKeepLocal,
-  onKeepRemote,
 }: AutosaveConflictModalProps) => {
   if (!isOpen) {
     return null;
@@ -31,17 +31,17 @@ const AutosaveConflictModal = ({
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            onClick={onKeepLocal}
+            onClick={onUpdateFirst}
             className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
           >
-            {UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.KEEP_LOCAL_LABEL}
+            {UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.UPDATE_FIRST_LABEL}
           </button>
           <button
             type="button"
-            onClick={onKeepRemote}
+            onClick={onKeepLocal}
             className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
           >
-            {UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.KEEP_REMOTE_LABEL}
+            {UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.KEEP_LOCAL_LABEL}
           </button>
         </div>
       </div>

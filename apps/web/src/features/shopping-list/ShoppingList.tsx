@@ -365,10 +365,18 @@ const ShoppingList = ({
     },
   );
 
-  const { conflict, handleKeepLocal, handleKeepRemote } = useAutosaveRecovery({
+  const {
+    conflict,
+    hasPendingConflict,
+    handleUpdateFromServerFirst,
+    handleKeepLocalDraft,
+  } = useAutosaveRecovery({
     enabled: Boolean(authUser),
     onRehydrate: handleRehydrate,
     onAutoRestore: handleAutoRestore,
+    onKeepLocalConflict: () => {
+      setListStatus(LIST_STATUS.DRAFT);
+    },
   });
 
   useEffect(() => {
@@ -546,6 +554,11 @@ const ShoppingList = ({
       itemCount={sortedItems.length}
       isReadyToShopDisabled={isReadyToShopDisabled}
     >
+      {hasPendingConflict ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.PENDING_SYNC_MESSAGE}
+        </div>
+      ) : null}
       <ShoppingListListView
         showDetailActions={showDetailActions}
         isActiveList={isActiveList}
@@ -565,8 +578,8 @@ const ShoppingList = ({
       />
       <AutosaveConflictModal
         isOpen={Boolean(conflict)}
-        onKeepLocal={handleKeepLocal}
-        onKeepRemote={handleKeepRemote}
+        onUpdateFirst={handleUpdateFromServerFirst}
+        onKeepLocal={handleKeepLocalDraft}
       />
       {pendingRemoval ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
