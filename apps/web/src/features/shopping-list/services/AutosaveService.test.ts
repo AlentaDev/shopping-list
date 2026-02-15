@@ -497,4 +497,33 @@ describe("AutosaveService", () => {
       })
     );
   });
+  it("guarda sourceTabId en metadata de sync cuando hay autosave remoto", async () => {
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-03-01T10:00:01.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await putAutosave(SAMPLE_DRAFT, { sourceTabId: "tab-a" });
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({
+        baseUpdatedAt: "2024-03-01T10:00:01.000Z",
+        sourceTabId: "tab-a",
+      }),
+    );
+  });
+
 });

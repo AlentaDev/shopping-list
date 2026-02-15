@@ -360,7 +360,7 @@ const ShoppingList = ({
   useAutosaveDraft(
     { title: draftTitle, items },
     {
-      enabled: items.length > 0 && Boolean(authUser),
+      enabled: Boolean(authUser),
       onRehydrate: handleRehydrate,
     },
   );
