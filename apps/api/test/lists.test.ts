@@ -585,12 +585,18 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({ isEditing: true });
 
+    const autosaveSeed = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveSeed.status).toBe(200);
+
     await request(app)
       .put("/api/lists/autosave")
       .set("Cookie", cookie)
       .send({
         title: "Weekly updated",
-        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        baseUpdatedAt: autosaveSeed.body.updatedAt,
         items: [
           {
             id: "autosave-item-1",
@@ -674,8 +680,6 @@ describe("lists endpoints", () => {
       }),
     );
   });
-
-
 
   it("PUT /api/lists/autosave returns 409 when baseUpdatedAt does not match remote draft", async () => {
     const app = createApp();
@@ -791,7 +795,6 @@ describe("lists endpoints", () => {
       }),
     );
   });
-
 
   it("POST /api/lists/:id/reuse duplicates a completed list", async () => {
     const app = createAppWithCatalogProvider(catalogProvider);

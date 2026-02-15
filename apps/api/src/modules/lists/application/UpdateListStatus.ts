@@ -80,7 +80,7 @@ export class UpdateListStatus {
       id: this.idGenerator.generate(),
       ownerUserId: activeList.ownerUserId,
       title: activeList.title,
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       items: [],
       isEditing: false,

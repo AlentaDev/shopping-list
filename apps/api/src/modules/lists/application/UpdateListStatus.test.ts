@@ -217,7 +217,7 @@ describe("UpdateListStatus", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       activatedAt: undefined,
       isEditing: false,
@@ -257,7 +257,7 @@ describe("UpdateListStatus", () => {
 
     const lists = await listRepository.listByOwner("user-1");
     const draft = lists.find(
-      (savedList) => savedList.status === "DRAFT" && !savedList.isAutosaveDraft,
+      (savedList) => savedList.status === "DRAFT" && savedList.isAutosaveDraft,
     );
 
     expect(draft).toMatchObject({
@@ -265,7 +265,7 @@ describe("UpdateListStatus", () => {
       ownerUserId: "user-1",
       title: "Weekly groceries",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       items: [],
       isEditing: false,
       createdAt: now,
