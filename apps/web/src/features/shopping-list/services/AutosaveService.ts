@@ -24,11 +24,13 @@ const DEFAULT_AUTOSAVE_ERROR_MESSAGE = "Unable to save autosave.";
 
 type AutosaveServiceOptions = {
   errorMessage?: string;
+  sourceTabId?: string;
 };
 
 
 type AutosaveSyncMetadata = {
   baseUpdatedAt: string | null;
+  sourceTabId?: string;
 };
 
 const loadAutosaveSyncMetadata = (): AutosaveSyncMetadata => {
@@ -42,7 +44,11 @@ const loadAutosaveSyncMetadata = (): AutosaveSyncMetadata => {
     const parsed = JSON.parse(stored) as Partial<AutosaveSyncMetadata>;
 
     if (typeof parsed.baseUpdatedAt === "string") {
-      return { baseUpdatedAt: parsed.baseUpdatedAt };
+      return {
+        baseUpdatedAt: parsed.baseUpdatedAt,
+        sourceTabId:
+          typeof parsed.sourceTabId === "string" ? parsed.sourceTabId : undefined,
+      };
     }
 
     return { baseUpdatedAt: null };
@@ -63,13 +69,17 @@ const saveAutosaveSyncMetadata = (metadata: AutosaveSyncMetadata): void => {
   }
 };
 
-const updateAutosaveSyncMetadata = (updatedAt?: string): void => {
+const updateAutosaveSyncMetadata = (
+  updatedAt?: string,
+  sourceTabId?: string,
+): void => {
   if (!updatedAt) {
     return;
   }
 
   saveAutosaveSyncMetadata({
     baseUpdatedAt: updatedAt,
+    sourceTabId,
   });
 };
 
@@ -136,7 +146,7 @@ export const getAutosave = async (
   const payload = await response.json();
   const autosaveDraft = adaptAutosaveResponse(payload);
 
-  updateAutosaveSyncMetadata(autosaveDraft?.updatedAt);
+  updateAutosaveSyncMetadata(autosaveDraft?.updatedAt, options.sourceTabId);
 
   return autosaveDraft;
 };
@@ -230,7 +240,10 @@ export const putAutosave = async (
       const remoteUpdatedAt = parseAutosaveConflictRemoteUpdatedAt(responseBody);
 
       if (remoteUpdatedAt) {
-        saveAutosaveSyncMetadata({ baseUpdatedAt: remoteUpdatedAt });
+        saveAutosaveSyncMetadata({
+          baseUpdatedAt: remoteUpdatedAt,
+          sourceTabId: options.sourceTabId,
+        });
 
         response = await putAutosaveRequest(draft, remoteUpdatedAt);
 
@@ -253,7 +266,7 @@ export const putAutosave = async (
   const autosaveSummary = adaptAutosaveSummaryResponse(payload);
 
 
-  updateAutosaveSyncMetadata(autosaveSummary.updatedAt);
+  updateAutosaveSyncMetadata(autosaveSummary.updatedAt, options.sourceTabId);
 
   return autosaveSummary;
 };
@@ -270,7 +283,10 @@ export const deleteAutosave = async (
     throw new Error(options.errorMessage ?? "Unable to delete autosave.");
   }
 
-  saveAutosaveSyncMetadata({ baseUpdatedAt: null });
+  saveAutosaveSyncMetadata({
+    baseUpdatedAt: null,
+    sourceTabId: options.sourceTabId,
+  });
 };
 
 type AutosaveScheduler = {
@@ -279,7 +295,11 @@ type AutosaveScheduler = {
 };
 
 export const createAutosaveScheduler = (
-  options: { debounceMs?: number; persistLocal?: boolean } = {}
+  options: {
+    debounceMs?: number;
+    persistLocal?: boolean;
+    sourceTabId?: string;
+  } = {}
 ): AutosaveScheduler => {
   const debounceMs = options.debounceMs ?? DEFAULT_AUTOSAVE_DEBOUNCE_MS;
   const persistLocal = options.persistLocal ?? true;
@@ -298,7 +318,7 @@ export const createAutosaveScheduler = (
 
     timeoutId = setTimeout(() => {
       if (latestDraft) {
-        void putAutosave(latestDraft);
+        void putAutosave(latestDraft, { sourceTabId: options.sourceTabId });
       }
     }, debounceMs);
   };

@@ -96,6 +96,10 @@ describe("useAutosaveDraft", () => {
   });
 
   afterEach(() => {
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
     cleanup();
     vi.useRealTimers();
   });
@@ -279,4 +283,105 @@ describe("useAutosaveDraft", () => {
       expect(screen.getByTestId("remote-flag")).toHaveTextContent("remote");
     });
   });
+  it("no pisa un borrador previo con estado vacío al refrescar", async () => {
+    const existingDraft = {
+      title: "Lista previa",
+      items: [
+        {
+          id: "item-prev",
+          kind: "catalog",
+          name: "Huevos",
+          qty: 2,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-prev",
+        },
+      ],
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(existingDraft));
+
+    render(<Harness enabled={false} />);
+
+    await waitFor(() => {
+      const stored = localStorage.getItem("lists.localDraft");
+      expect(stored).toBeTruthy();
+      const parsed = JSON.parse(stored ?? "{}");
+      expect(parsed.title).toBe("Lista previa");
+      expect(parsed.items).toHaveLength(1);
+      expect(parsed.items[0].name).toBe("Huevos");
+    });
+  });
+
+  it("no hace autosave remoto cuando la pestaña no está activa", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    render(<Harness enabled={true} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("hace autosave remoto cuando la pestaña activa recupera foco", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "hidden",
+    });
+
+    render(<Harness enabled={true} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event("focus"));
+    });
+
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });
+
 });

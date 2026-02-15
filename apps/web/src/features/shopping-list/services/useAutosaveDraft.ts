@@ -5,9 +5,7 @@ import {
   loadLocalDraft,
   saveLocalDraft,
 } from "./AutosaveService";
-import {
-  createAutosaveTabSyncService,
-} from "./AutosaveTabSyncService";
+import { createAutosaveTabSyncService } from "./AutosaveTabSyncService";
 import type { AutosaveCatalogItemInput, AutosaveDraftInput } from "./types";
 
 type UseAutosaveDraftOptions = {
@@ -24,9 +22,7 @@ type UseAutosaveDraftParams = {
 
 type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
 
-const mapListItemToAutosave = (
-  item: ListItem,
-): AutosaveCatalogItemInput => ({
+const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
   id: item.id,
   kind: "catalog",
   name: item.name,
@@ -70,21 +66,33 @@ const areDraftsEqual = (
 
 const createTabId = () => `tab-${Date.now()}`;
 
+const getIsTabActive = () => {
+  if (typeof document === "undefined") {
+    return true;
+  }
+
+  return document.visibilityState !== "hidden";
+};
+
 export const useAutosaveDraft = (
   { title, items }: UseAutosaveDraftParams,
   options: UseAutosaveDraftOptions = {},
 ) => {
   const { enabled = true, debounceMs, onRehydrate, persistLocal = true } =
     options;
+
   const schedulerRef = useRef<AutosaveScheduler | null>(null);
   const hasRehydratedRef = useRef(false);
   const baseDraftRef = useRef<AutosaveDraftInput | null>(null);
   const draftRef = useRef<AutosaveDraftInput | null>(null);
   const tabIdRef = useRef<string>(createTabId());
+  const skipFirstPersistRef = useRef(true);
+  const isApplyingRemoteDraftRef = useRef(false);
+
   const [remoteChangesAvailable, setRemoteChangesAvailable] = useState(false);
+  const [isTabActive, setIsTabActive] = useState(getIsTabActive);
 
   const draft = useMemo(() => buildAutosaveDraft(title, items), [title, items]);
-
 
   useEffect(() => {
     draftRef.current = draft;
@@ -93,14 +101,15 @@ export const useAutosaveDraft = (
   useEffect(() => {
     schedulerRef.current = createAutosaveScheduler({
       debounceMs,
-      persistLocal,
+      persistLocal: false,
+      sourceTabId: tabIdRef.current,
     });
 
     return () => {
       schedulerRef.current?.cancel();
       schedulerRef.current = null;
     };
-  }, [debounceMs, persistLocal]);
+  }, [debounceMs]);
 
   useEffect(() => {
     if (hasRehydratedRef.current) {
@@ -112,6 +121,7 @@ export const useAutosaveDraft = (
     if (localDraft) {
       const normalizedDraft = mapLocalDraftToInput(localDraft);
       baseDraftRef.current = normalizedDraft;
+      isApplyingRemoteDraftRef.current = true;
 
       if (onRehydrate) {
         onRehydrate(normalizedDraft);
@@ -122,6 +132,22 @@ export const useAutosaveDraft = (
 
     hasRehydratedRef.current = true;
   }, [onRehydrate]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabActive(getIsTabActive());
+    };
+
+    window.addEventListener("focus", handleVisibilityChange);
+    window.addEventListener("blur", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleVisibilityChange);
+      window.removeEventListener("blur", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     const tabSyncService = createAutosaveTabSyncService({
@@ -140,6 +166,7 @@ export const useAutosaveDraft = (
       }
 
       if (remoteDraft && onRehydrate) {
+        isApplyingRemoteDraftRef.current = true;
         onRehydrate(remoteDraft);
       }
 
@@ -166,15 +193,31 @@ export const useAutosaveDraft = (
   }, [onRehydrate]);
 
   useEffect(() => {
-    if (!enabled) {
-      if (persistLocal) {
-        saveLocalDraft(draft);
-      }
+    if (!persistLocal || !hasRehydratedRef.current) {
+      return;
+    }
+
+    if (skipFirstPersistRef.current) {
+      skipFirstPersistRef.current = false;
+      return;
+    }
+
+    if (isApplyingRemoteDraftRef.current) {
+      isApplyingRemoteDraftRef.current = false;
+      return;
+    }
+
+    saveLocalDraft(draft);
+  }, [draft, persistLocal]);
+
+  useEffect(() => {
+    if (!enabled || !isTabActive || draft.items.length === 0) {
+      schedulerRef.current?.cancel();
       return;
     }
 
     schedulerRef.current?.schedule(draft);
-  }, [draft, enabled, persistLocal]);
+  }, [draft, enabled, isTabActive]);
 
   return {
     remoteChangesAvailable,
