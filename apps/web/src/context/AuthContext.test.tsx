@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
@@ -30,6 +30,51 @@ import {
   refreshSession,
   AuthServiceError,
 } from "@src/features/auth/services/AuthService";
+
+type AuthSyncEvent = {
+  type: "login" | "register" | "logout";
+  timestamp: number;
+  sourceTabId: string;
+};
+
+class BroadcastChannelMock {
+  static readonly instances: BroadcastChannelMock[] = [];
+
+  name: string;
+  messages: AuthSyncEvent[] = [];
+  onmessage: ((event: MessageEvent<AuthSyncEvent>) => void) | null = null;
+  private listeners = new Set<(event: MessageEvent<AuthSyncEvent>) => void>();
+  close = vi.fn();
+
+  constructor(name: string) {
+    this.name = name;
+    BroadcastChannelMock.instances.push(this);
+  }
+
+  postMessage(message: AuthSyncEvent) {
+    this.messages.push(message);
+  }
+
+  addEventListener(
+    eventName: "message",
+    listener: (event: MessageEvent<AuthSyncEvent>) => void,
+  ) {
+    if (eventName === "message") {
+      this.listeners.add(listener);
+    }
+  }
+
+  emitMessage(message: AuthSyncEvent) {
+    const event = { data: message } as MessageEvent<AuthSyncEvent>;
+    this.onmessage?.(event);
+    this.listeners.forEach((listener) => listener(event));
+  }
+
+  static reset() {
+    BroadcastChannelMock.instances.length = 0;
+  }
+}
+
 const TEST_EMAIL = "test@example.com";
 const TEST_PASSWORD = "password"; // nosem
 const TEST_POSTAL_CODE = "28001";
@@ -85,13 +130,18 @@ function TestComponent() {
 }
 
 describe("AuthProvider", () => {
+  const originalBroadcastChannel = globalThis.BroadcastChannel;
+
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(refreshSession).mockRejectedValue(new Error("No refresh"));
+    BroadcastChannelMock.reset();
+    globalThis.BroadcastChannel = BroadcastChannelMock as never;
   });
 
   afterEach(() => {
     vi.resetAllMocks();
+    globalThis.BroadcastChannel = originalBroadcastChannel;
   });
 
   it("throws error when useAuth is used without AuthProvider", () => {
@@ -300,5 +350,150 @@ describe("AuthProvider", () => {
 
     await user.click(toggleButton);
     expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+  });
+
+  it("publishes auth sync events on login, register and logout", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    const mockUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    vi.mocked(registerUser).mockResolvedValueOnce(mockUser);
+    vi.mocked(loginUser).mockResolvedValueOnce(mockUser);
+    vi.mocked(logoutUser).mockResolvedValueOnce(undefined);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Register" }));
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    await user.click(screen.getByRole("button", { name: "Logout" }));
+
+    const publisherChannels = BroadcastChannelMock.instances.filter(
+      (instance) => instance.messages.length > 0,
+    );
+
+    expect(publisherChannels).toHaveLength(3);
+    expect(publisherChannels.map((instance) => instance.messages[0].type)).toEqual(
+      ["register", "login", "logout"],
+    );
+    for (const instance of publisherChannels) {
+      expect(instance.messages[0].timestamp).toEqual(expect.any(Number));
+      expect(instance.messages[0].sourceTabId).toEqual(expect.any(String));
+    }
+  });
+
+  it("updates auth state when receives sync events from another tab", async () => {
+    const initialUser = {
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    };
+    const updatedUser = {
+      ...initialUser,
+      email: "updated@example.com",
+    };
+
+    vi.mocked(getCurrentUser)
+      .mockResolvedValueOnce(initialUser)
+      .mockResolvedValueOnce(updatedUser);
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+    });
+
+    await user.click(screen.getByRole("button", { name: "Toggle Menu" }));
+    expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("true");
+
+    const subscriberChannel = BroadcastChannelMock.instances[0];
+
+    act(() => {
+      subscriberChannel.emitMessage({
+        type: "login",
+        timestamp: Date.now(),
+        sourceTabId: "other-tab",
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "updated@example.com",
+      );
+    });
+
+    act(() => {
+      subscriberChannel.emitMessage({
+        type: "logout",
+        timestamp: Date.now(),
+        sourceTabId: "other-tab",
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+      expect(screen.getByTestId("isUserMenuOpen")).toHaveTextContent("false");
+    });
+  });
+
+  it("uses localStorage fallback when BroadcastChannel is unavailable", async () => {
+    globalThis.BroadcastChannel = undefined as never;
+    vi.mocked(getCurrentUser)
+      .mockResolvedValueOnce({
+        id: "1",
+        name: TEST_NAME,
+        email: TEST_EMAIL,
+        postalCode: TEST_POSTAL_CODE,
+      })
+      .mockResolvedValueOnce({
+        id: "1",
+        name: TEST_NAME,
+        email: "fallback@example.com",
+        postalCode: TEST_POSTAL_CODE,
+      });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "auth.tabSync",
+          newValue: JSON.stringify({
+            type: "login",
+            timestamp: Date.now(),
+            sourceTabId: "other-tab",
+          }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(
+        "fallback@example.com",
+      );
+    });
   });
 });
