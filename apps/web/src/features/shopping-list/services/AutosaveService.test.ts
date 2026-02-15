@@ -111,13 +111,89 @@ describe("AutosaveService", () => {
       expect.objectContaining({
         method: "PUT",
         credentials: "include",
+        body: expect.stringMatching(/"baseUpdatedAt":".+"/),
+      })
+    );
+  });
+
+
+
+  it("envía baseUpdatedAt con fecha ISO cuando no hay metadata previa y no hay remoto", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-02-01T10:00:00.000Z"));
+
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-02-01T10:00:01.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await putAutosave(SAMPLE_DRAFT);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
         body: JSON.stringify({
           ...SAMPLE_DRAFT,
-          baseUpdatedAt: null,
+          baseUpdatedAt: "2024-02-01T10:00:00.000Z",
         }),
       })
     );
   });
+
+  it("usa updatedAt remoto como baseUpdatedAt cuando no hay metadata local", async () => {
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          items: [],
+          updatedAt: "2024-02-01T10:00:00.000Z",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-02-01T10:00:01.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await putAutosave(SAMPLE_DRAFT);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: "2024-02-01T10:00:00.000Z",
+        }),
+      })
+    );
+  });
+
 
   it("tolera respuesta null al guardar autosave remoto", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
@@ -209,6 +285,60 @@ describe("AutosaveService", () => {
     );
 
     warnSpy.mockRestore();
+  });
+
+  it("reintenta autosave una vez usando remoteUpdatedAt cuando recibe 409", async () => {
+    const fetchMock = vi
+      .fn<(input: RequestInfo) => Promise<FetchResponse>>()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          items: [],
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        statusText: "Conflict",
+        json: async () => ({}),
+        text: async () =>
+          JSON.stringify({
+            error: "autosave_version_conflict",
+            remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista semanal",
+          updatedAt: "2024-01-01T00:00:03.000Z",
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toEqual({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T00:00:03.000Z",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api/lists/autosave",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ...SAMPLE_DRAFT,
+          baseUpdatedAt: "2024-01-01T00:00:02.000Z",
+        }),
+      }),
+    );
   });
 
   it("lanza error de conflicto cuando el autosave responde 409", async () => {
@@ -347,15 +477,23 @@ describe("AutosaveService", () => {
     scheduler.schedule(secondDraft);
     await vi.advanceTimersByTimeAsync(1500);
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
       expect.objectContaining({
         credentials: "include",
-        body: JSON.stringify({
-          ...secondDraft,
-          baseUpdatedAt: null,
-        }),
+        body: expect.any(String),
+      })
+    );
+
+    const sentBody = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body ?? "{}")
+    ) as AutosaveDraftInput & { baseUpdatedAt?: string };
+
+    expect(sentBody).toEqual(
+      expect.objectContaining({
+        ...secondDraft,
+        baseUpdatedAt: expect.any(String),
       })
     );
   });

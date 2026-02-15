@@ -5,6 +5,7 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {
   ok: boolean;
+  status?: number;
   json: () => Promise<unknown>;
 };
 
@@ -57,6 +58,11 @@ describe("LocalDraftSyncService", () => {
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
       .mockResolvedValueOnce({
         ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({
           id: "autosave-1",
           title: "Compra semanal",
@@ -72,15 +78,21 @@ describe("LocalDraftSyncService", () => {
     });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
+      2,
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
-        body: JSON.stringify({
-          title: "Compra semanal",
-          items: SAMPLE_DRAFT.items,
-          baseUpdatedAt: null,
-        }),
+        body: expect.any(String),
+      }),
+    );
+    const sentBody = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body ?? "{}")
+    ) as AutosaveDraftInput & { baseUpdatedAt?: string };
+    expect(sentBody).toEqual(
+      expect.objectContaining({
+        title: "Compra semanal",
+        items: SAMPLE_DRAFT.items,
+        baseUpdatedAt: expect.any(String),
       }),
     );
     expect(localStorage.getItem("lists.localDraft")).toBeNull();
@@ -108,6 +120,11 @@ describe("LocalDraftSyncService", () => {
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
       .mockResolvedValueOnce({
         ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({
           id: "autosave-1",
           title: "Compra catálogo",
@@ -126,10 +143,17 @@ describe("LocalDraftSyncService", () => {
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
-        body: JSON.stringify({
-          ...catalogDraft,
-          baseUpdatedAt: null,
-        }),
+        body: expect.any(String),
+      }),
+    );
+
+    const sentCatalogBody = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body ?? "{}")
+    ) as AutosaveDraftInput & { baseUpdatedAt?: string };
+    expect(sentCatalogBody).toEqual(
+      expect.objectContaining({
+        ...catalogDraft,
+        baseUpdatedAt: expect.any(String),
       }),
     );
   });
@@ -166,6 +190,11 @@ describe("LocalDraftSyncService", () => {
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
       .mockResolvedValueOnce({
         ok: true,
+        status: 204,
+        json: async () => null,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
         json: async () => ({
           id: "autosave-1",
           title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
@@ -181,15 +210,22 @@ describe("LocalDraftSyncService", () => {
     });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
-      1,
+      2,
       "/api/lists/autosave",
       expect.objectContaining({
         method: "PUT",
-        body: JSON.stringify({
-          title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
-          items: SAMPLE_DRAFT.items,
-          baseUpdatedAt: null,
-        }),
+        body: expect.any(String),
+      }),
+    );
+
+    const sentDefaultTitleBody = JSON.parse(
+      String(fetchMock.mock.calls[1]?.[1]?.body ?? "{}")
+    ) as AutosaveDraftInput & { baseUpdatedAt?: string };
+    expect(sentDefaultTitleBody).toEqual(
+      expect.objectContaining({
+        title: UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
+        items: SAMPLE_DRAFT.items,
+        baseUpdatedAt: expect.any(String),
       }),
     );
   });

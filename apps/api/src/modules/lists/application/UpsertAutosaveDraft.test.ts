@@ -170,4 +170,37 @@ describe("UpsertAutosaveDraft", () => {
     const persistedDraft = await listRepository.findById("list-2");
     expect(persistedDraft).toEqual(latestDraft);
   });
+
+
+
+  it("stores autosave catalog item ids scoped by list to avoid global collisions", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "list-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [
+        {
+          id: "4749",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "4749",
+        },
+      ],
+    });
+
+    const savedList = await listRepository.findById("list-1");
+    expect(savedList?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "list-1:4749",
+        sourceProductId: "4749",
+      }),
+    );
+  });
 });

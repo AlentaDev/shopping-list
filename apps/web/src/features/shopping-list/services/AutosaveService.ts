@@ -26,6 +26,7 @@ type AutosaveServiceOptions = {
   errorMessage?: string;
 };
 
+
 type AutosaveSyncMetadata = {
   baseUpdatedAt: string | null;
 };
@@ -140,11 +141,56 @@ export const getAutosave = async (
   return autosaveDraft;
 };
 
-export const putAutosave = async (
+
+const resolveBaseUpdatedAt = async (
+  options: AutosaveServiceOptions,
+): Promise<string> => {
+  const localBaseUpdatedAt = loadAutosaveSyncMetadata().baseUpdatedAt;
+  if (localBaseUpdatedAt) {
+    return localBaseUpdatedAt;
+  }
+
+  try {
+    const remoteDraft = await getAutosave(options);
+    if (remoteDraft?.updatedAt) {
+      return remoteDraft.updatedAt;
+    }
+  } catch (error) {
+    console.warn("No se pudo inicializar baseUpdatedAt desde autosave remoto.", error);
+  }
+
+  const now = new Date().toISOString();
+
+  return now;
+};
+
+
+type AutosaveConflictPayload = {
+  remoteUpdatedAt?: string;
+};
+
+const parseAutosaveConflictRemoteUpdatedAt = (
+  responseBody: string | null,
+): string | null => {
+  if (!responseBody) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(responseBody) as AutosaveConflictPayload;
+    return typeof payload.remoteUpdatedAt === "string"
+      ? payload.remoteUpdatedAt
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const putAutosaveRequest = async (
   draft: AutosaveDraftInput,
-  options: AutosaveServiceOptions = {}
-): Promise<AutosaveSummary> => {
-  const response = await fetch(AUTOSAVE_ENDPOINT, {
+  baseUpdatedAt: string,
+) =>
+  fetch(AUTOSAVE_ENDPOINT, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -152,9 +198,17 @@ export const putAutosave = async (
     credentials: "include",
     body: JSON.stringify({
       ...draft,
-      baseUpdatedAt: loadAutosaveSyncMetadata().baseUpdatedAt,
+      baseUpdatedAt,
     }),
   });
+
+export const putAutosave = async (
+  draft: AutosaveDraftInput,
+  options: AutosaveServiceOptions = {}
+): Promise<AutosaveSummary> => {
+  const baseUpdatedAt = await resolveBaseUpdatedAt(options);
+
+  let response = await putAutosaveRequest(draft, baseUpdatedAt);
 
   if (!response.ok) {
     let responseBody: string | null = null;
@@ -173,16 +227,31 @@ export const putAutosave = async (
     });
 
     if (response.status === 409) {
-      throw new AutosaveConflictError(
-        options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
-      );
-    }
+      const remoteUpdatedAt = parseAutosaveConflictRemoteUpdatedAt(responseBody);
 
-    throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
+      if (remoteUpdatedAt) {
+        saveAutosaveSyncMetadata({ baseUpdatedAt: remoteUpdatedAt });
+
+        response = await putAutosaveRequest(draft, remoteUpdatedAt);
+
+        if (!response.ok) {
+          throw new AutosaveConflictError(
+            options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
+          );
+        }
+      } else {
+        throw new AutosaveConflictError(
+          options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE
+        );
+      }
+    } else {
+      throw new Error(options.errorMessage ?? DEFAULT_AUTOSAVE_ERROR_MESSAGE);
+    }
   }
 
   const payload = await response.json();
   const autosaveSummary = adaptAutosaveSummaryResponse(payload);
+
 
   updateAutosaveSyncMetadata(autosaveSummary.updatedAt);
 

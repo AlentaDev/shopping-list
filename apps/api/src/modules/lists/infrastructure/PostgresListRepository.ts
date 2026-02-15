@@ -123,11 +123,11 @@ function mapListWithItems(
     isAutosaveDraft: Boolean(listRow.is_autosave_draft),
     status,
     activatedAt: listRow.activated_at
-      ? new Date(String(listRow.activated_at))
+      ? parsePgDate(listRow.activated_at)
       : undefined,
     isEditing: Boolean(listRow.is_editing),
-    createdAt: new Date(String(listRow.created_at)),
-    updatedAt: new Date(String(listRow.updated_at)),
+    createdAt: parsePgDate(listRow.created_at),
+    updatedAt: parsePgDate(listRow.updated_at),
     items: itemRows.map(mapItemRow),
   };
 }
@@ -177,9 +177,13 @@ function mapItemRow(row: Record<string, unknown>): ListItem {
     isApproxSizeSnapshot: Boolean(row.is_approx_size_snapshot),
     qty: Number(row.qty),
     checked: Boolean(row.checked),
-    createdAt: new Date(String(row.created_at)),
-    updatedAt: new Date(String(row.updated_at)),
+    createdAt: parsePgDate(row.created_at),
+    updatedAt: parsePgDate(row.updated_at),
   };
+}
+
+function parsePgDate(value: unknown): Date {
+  return value instanceof Date ? value : new Date(String(value));
 }
 
 function buildItemValues(item: ListItem): Array<unknown> {
