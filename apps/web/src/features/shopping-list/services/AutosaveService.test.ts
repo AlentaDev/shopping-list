@@ -354,6 +354,67 @@ describe("AutosaveService", () => {
     );
   });
 
+  it("refresca sesión antes del autosave cuando el refresh previo está próximo a expirar", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-01-01T10:01:00.000Z"));
+    localStorage.setItem("auth.sessionRefreshedAt", String(Date.now() - 56_000));
+
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockImplementation(async (input, init) => {
+        if (input === "/api/lists/autosave" && !init?.method) {
+          return {
+            ok: true,
+            status: 204,
+            json: async () => null,
+          };
+        }
+
+        if (input === "/api/auth/refresh") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ ok: true }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista semanal",
+            updatedAt: "2024-01-01T10:01:00.000Z",
+          }),
+        };
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toMatchObject({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T10:01:00.000Z",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/auth/refresh",
+      expect.objectContaining({ method: "POST", credentials: "include" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" }),
+    );
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input, init]) => input === "/api/lists/autosave" && init?.method === "PUT",
+      ),
+    ).toHaveLength(1);
+  });
+
+
   it("lanza conflicto estructurado sin reintento automático cuando recibe 409", async () => {
     const fetchMock = vi
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
