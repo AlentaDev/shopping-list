@@ -294,7 +294,7 @@ describe("useAutosaveDraft", () => {
     });
   });
 
-  it("no sobrescribe cambios locales pendientes y marca bandera remota", async () => {
+  it("aplica cambios remotos incluso si hubo una edición local previa", async () => {
     render(<TabSyncHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit local" }));
@@ -324,9 +324,9 @@ describe("useAutosaveDraft", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("title")).toHaveTextContent("Lista semanal");
+      expect(screen.getByTestId("title")).toHaveTextContent("Lista remota");
       expect(screen.getByTestId("count")).toHaveTextContent("1");
-      expect(screen.getByTestId("remote-flag")).toHaveTextContent("remote");
+      expect(screen.getByTestId("remote-flag")).toHaveTextContent("clean");
     });
   });
   it("no pisa un borrador previo con estado vacío al refrescar", async () => {
@@ -497,7 +497,7 @@ describe("useAutosaveDraft", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("preserva ediciones locales sin guardar cuando llega cambio remoto en pestaña secundaria", async () => {
+  it("sincroniza la pestaña secundaria cuando llega un cambio remoto más reciente", async () => {
     render(<SecondaryTabHarness enabled={false} />);
 
     fireEvent.click(
@@ -530,11 +530,11 @@ describe("useAutosaveDraft", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("secondary-title")).toHaveTextContent(
-        "Lista secundaria",
+        "Lista remota externa",
       );
       expect(screen.getByTestId("secondary-count")).toHaveTextContent("1");
       expect(screen.getByTestId("secondary-remote-flag")).toHaveTextContent(
-        "remote",
+        "clean",
       );
     });
   });

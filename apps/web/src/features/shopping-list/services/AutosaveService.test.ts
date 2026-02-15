@@ -287,6 +287,118 @@ describe("AutosaveService", () => {
     warnSpy.mockRestore();
   });
 
+  it("reintenta autosave tras refrescar sesión cuando el primer intento devuelve 401", async () => {
+    let hasFailedPut = false;
+
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockImplementation(async (input, init) => {
+        if (input === "/api/lists/autosave" && !init?.method) {
+          return {
+            ok: true,
+            status: 204,
+            json: async () => null,
+          };
+        }
+
+        if (
+          input === "/api/lists/autosave" &&
+          init?.method === "PUT" &&
+          !hasFailedPut
+        ) {
+          hasFailedPut = true;
+          return {
+            ok: false,
+            status: 401,
+            statusText: "Unauthorized",
+            json: async () => ({}),
+            text: async () => "unauthorized",
+          };
+        }
+
+        if (input === "/api/auth/refresh") {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ ok: true }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista semanal",
+            updatedAt: "2024-01-01T00:00:01.000Z",
+          }),
+        };
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toMatchObject({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T00:00:01.000Z",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      4,
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/refresh",
+      expect.objectContaining({ method: "POST", credentials: "include" }),
+    );
+  });
+
+  it("no refresca sesión de forma preventiva antes del primer autosave", async () => {
+    localStorage.setItem("auth.sessionRefreshedAt", String(Date.now() - 56_000));
+
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockImplementation(async (input, init) => {
+        if (input === "/api/lists/autosave" && !init?.method) {
+          return {
+            ok: true,
+            status: 204,
+            json: async () => null,
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista semanal",
+            updatedAt: "2024-01-01T10:01:00.000Z",
+          }),
+        };
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toMatchObject({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T10:01:00.000Z",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/auth/refresh",
+      expect.anything(),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" }),
+    );
+  });
+
+
   it("lanza conflicto estructurado sin reintento automático cuando recibe 409", async () => {
     const fetchMock = vi
       .fn<(input: RequestInfo) => Promise<FetchResponse>>()
