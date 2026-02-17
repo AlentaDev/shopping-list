@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
+
+vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+  fetchWithAuth: vi.fn(),
+}));
+
+const fetchWithAuthMock = vi.mocked(fetchWithAuth);
 
 type FetchResponse = {
   ok: boolean;
@@ -22,10 +29,10 @@ describe("CatalogService", () => {
       })
     );
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getRootCategories()).resolves.toEqual(responsePayload);
-    expect(fetchMock).toHaveBeenCalledWith("/api/catalog/categories");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/catalog/categories");
   });
 
   it("requests the category detail endpoint", async () => {
@@ -59,7 +66,7 @@ describe("CatalogService", () => {
       })
     );
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getCategoryDetail("child-1")).resolves.toEqual({
       categoryName: "Bollería",
@@ -82,7 +89,7 @@ describe("CatalogService", () => {
         },
       ],
     });
-    expect(fetchMock).toHaveBeenCalledWith("/api/catalog/categories/child-1");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/catalog/categories/child-1");
   });
 
   it("throws error when getRootCategories fails", async () => {
@@ -93,7 +100,7 @@ describe("CatalogService", () => {
       })
     );
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getRootCategories()).rejects.toThrow(
       "Unable to load categories."
@@ -108,7 +115,7 @@ describe("CatalogService", () => {
       })
     );
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getCategoryDetail("child-1")).rejects.toThrow(
       "Unable to load category detail."

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import {
   AuthServiceError,
   getCurrentUser,
@@ -13,6 +14,12 @@ const FINGERPRINT = "test-device-fingerprint";
 vi.mock("@src/shared/utils/deviceFingerprint", () => ({
   getDeviceFingerprint: vi.fn(() => FINGERPRINT),
 }));
+
+vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+  fetchWithAuth: vi.fn(),
+}));
+
+const fetchWithAuthMock = vi.mocked(fetchWithAuth);
 
 type FetchResponse = {
   ok: boolean;
@@ -51,13 +58,13 @@ describe("AuthService", () => {
       json: async () => RESPONSE_PAYLOAD,
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(registerUser(REGISTER_INPUT)).resolves.toEqual(
       RESPONSE_PAYLOAD,
     );
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/auth/register", {
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...REGISTER_INPUT, fingerprint: FINGERPRINT }),
@@ -72,11 +79,11 @@ describe("AuthService", () => {
       json: async () => RESPONSE_PAYLOAD,
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(loginUser(LOGIN_INPUT)).resolves.toEqual(RESPONSE_PAYLOAD);
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...LOGIN_INPUT, fingerprint: FINGERPRINT }),
@@ -91,7 +98,7 @@ describe("AuthService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(registerUser(REGISTER_INPUT)).rejects.toThrow(
       "Unable to register",
@@ -106,7 +113,7 @@ describe("AuthService", () => {
       json: async () => ({ error: "duplicate_email" }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(registerUser(REGISTER_INPUT)).rejects.toBeInstanceOf(
       AuthServiceError,
@@ -124,7 +131,7 @@ describe("AuthService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(loginUser(LOGIN_INPUT)).rejects.toThrow("Unable to login");
   });
@@ -137,11 +144,11 @@ describe("AuthService", () => {
       json: async () => ({ ok: true }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(logoutUser()).resolves.toEqual({ ok: true });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", {
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/auth/logout", {
       method: "POST",
     });
   });
@@ -160,7 +167,9 @@ describe("AuthService", () => {
 
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/refresh", {
       method: "POST",
+      credentials: "include",
     });
+    expect(fetchWithAuthMock).not.toHaveBeenCalledWith("/api/auth/refresh", expect.anything());
   });
 
   it("loads the current user", async () => {
@@ -171,11 +180,11 @@ describe("AuthService", () => {
       json: async () => RESPONSE_PAYLOAD,
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getCurrentUser()).resolves.toEqual(RESPONSE_PAYLOAD);
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/users/me");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/users/me");
   });
 
   it("throws when loading the current user fails", async () => {
@@ -186,7 +195,7 @@ describe("AuthService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getCurrentUser()).rejects.toThrow(
       "Unable to load current user",
@@ -201,7 +210,7 @@ describe("AuthService", () => {
       json: async () => ({ ok: false }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(logoutUser()).rejects.toThrow("Unable to logout");
   });

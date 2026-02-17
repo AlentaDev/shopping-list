@@ -6,6 +6,7 @@ import {
   adaptListSummaryResponse,
 } from "./adapters/ListAdapter";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import type {
   ListCollection,
   ListDetail,
@@ -20,7 +21,7 @@ type ListsServiceOptions = {
 export const getLists = async (
   options: ListsServiceOptions = {}
 ): Promise<ListCollection> => {
-  const response = await fetch("/api/lists");
+  const response = await fetchWithAuth("/api/lists");
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load lists.");
@@ -35,7 +36,7 @@ export const getListDetail = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListDetail> => {
-  const response = await fetch(`/api/lists/${listId}`);
+  const response = await fetchWithAuth(`/api/lists/${listId}`);
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load list detail.");
@@ -50,7 +51,7 @@ export const reuseList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListDetail> => {
-  const response = await fetch(`/api/lists/${listId}/reuse`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/reuse`, {
     method: "POST",
   });
 
@@ -67,7 +68,7 @@ export const deleteList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<void> => {
-  const response = await fetch(`/api/lists/${listId}`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}`, {
     method: "DELETE",
   });
 
@@ -80,7 +81,7 @@ export const activateList = async (
   listId: string,
   options: ListsServiceOptions = {}
 ): Promise<ListStatusSummary> => {
-  const response = await fetch(`/api/lists/${listId}/activate`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/activate`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -106,7 +107,7 @@ export const completeList = async (
   input: CompleteListInput,
   options: ListsServiceOptions = {}
 ): Promise<void> => {
-  const response = await fetch(`/api/lists/${listId}/complete`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/complete`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -125,7 +126,7 @@ export const createList = async (
   title: string = UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   options: ListsServiceOptions = {}
 ): Promise<ListSummary> => {
-  const response = await fetch("/api/lists", {
+  const response = await fetchWithAuth("/api/lists", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

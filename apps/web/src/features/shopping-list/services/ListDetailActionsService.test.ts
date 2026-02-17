@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import {
   deleteList,
   reuseList,
   startListEditing,
 } from "./ListDetailActionsService";
+
+vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+  fetchWithAuth: vi.fn(),
+}));
+
+const fetchWithAuthMock = vi.mocked(fetchWithAuth);
 
 type FetchResponse = {
   ok: boolean;
@@ -23,11 +30,11 @@ describe("ListDetailActionsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(startListEditing("list-1")).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-1/editing",
       expect.objectContaining({
         method: "PATCH",
@@ -59,7 +66,7 @@ describe("ListDetailActionsService", () => {
       json: async () => response,
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(reuseList("list-2")).resolves.toEqual({
       id: "list-2",
@@ -85,7 +92,7 @@ describe("ListDetailActionsService", () => {
       ],
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-2/reuse",
       expect.objectContaining({ method: "POST" }),
     );
@@ -99,11 +106,11 @@ describe("ListDetailActionsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(deleteList("list-3")).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-3",
       expect.objectContaining({ method: "DELETE" }),
     );
@@ -117,7 +124,7 @@ describe("ListDetailActionsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       startListEditing("list-9", { errorMessage: "Boom" }),
@@ -132,7 +139,7 @@ describe("ListDetailActionsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       reuseList("list-10", { errorMessage: "No reuse" }),
@@ -147,7 +154,7 @@ describe("ListDetailActionsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       deleteList("list-11", { errorMessage: "No delete" }),

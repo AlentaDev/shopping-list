@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import { activateList } from "./ListStatusService";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
@@ -6,6 +7,12 @@ import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 vi.mock("./LocalDraftSyncService", () => ({
   syncLocalDraftToRemoteList: vi.fn(),
 }));
+
+vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+  fetchWithAuth: vi.fn(),
+}));
+
+const fetchWithAuthMock = vi.mocked(fetchWithAuth);
 
 type FetchResponse = {
   ok: boolean;
@@ -39,7 +46,7 @@ describe("ListStatusService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       activateList({ status: LIST_STATUS.LOCAL_DRAFT, listId: null }),
@@ -61,7 +68,7 @@ describe("ListStatusService", () => {
     );
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-1/activate",
       expect.objectContaining({
         method: "PATCH",
@@ -87,7 +94,7 @@ describe("ListStatusService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       activateList({ status: LIST_STATUS.DRAFT, listId: "list-2" }),
@@ -103,7 +110,7 @@ describe("ListStatusService", () => {
     });
 
     expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-2/activate",
       expect.objectContaining({
         method: "PATCH",
@@ -129,7 +136,7 @@ describe("ListStatusService", () => {
       JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
     );
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await activateList({ status: LIST_STATUS.DRAFT, listId: "list-3" });
 
@@ -143,7 +150,7 @@ describe("ListStatusService", () => {
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >();
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       activateList({ status: LIST_STATUS.DRAFT, listId: null }),

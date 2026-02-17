@@ -8,6 +8,7 @@ import {
   adaptAutosaveResponse,
   adaptAutosaveSummaryResponse,
 } from "./adapters/AutosaveAdapter";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 
 
 export class AutosaveConflictError extends Error {
@@ -144,9 +145,7 @@ export const clearLocalDraft = (): void => {
 export const getAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveDraft | null> => {
-  const response = await fetch(AUTOSAVE_ENDPOINT, {
-    credentials: "include",
-  });
+  const response = await fetchWithAuth(AUTOSAVE_ENDPOINT);
 
   if (response.status === 204) {
     return null;
@@ -216,7 +215,7 @@ const putAutosaveRequest = async (
   draft: AutosaveDraftInput,
   baseUpdatedAt: string,
 ) =>
-  fetch(AUTOSAVE_ENDPOINT, {
+  fetchWithAuth(AUTOSAVE_ENDPOINT, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -228,18 +227,6 @@ const putAutosaveRequest = async (
     }),
   });
 
-const refreshAutosaveSession = async (): Promise<boolean> => {
-  try {
-    const response = await fetch("/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-
-    return response.ok;
-  } catch {
-    return false;
-  }
-};
 
 export const putAutosave = async (
   draft: AutosaveDraftInput,
@@ -247,15 +234,8 @@ export const putAutosave = async (
 ): Promise<AutosaveSummary> => {
   const baseUpdatedAt = await resolveBaseUpdatedAt(options);
 
-  let response = await putAutosaveRequest(draft, baseUpdatedAt);
+  const response = await putAutosaveRequest(draft, baseUpdatedAt);
 
-  if (response.status === 401) {
-    const refreshed = await refreshAutosaveSession();
-
-    if (refreshed) {
-      response = await putAutosaveRequest(draft, baseUpdatedAt);
-    }
-  }
 
   if (!response.ok) {
     let responseBody: string | null = null;
@@ -307,9 +287,8 @@ export const putAutosave = async (
 export const deleteAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<void> => {
-  const response = await fetch(AUTOSAVE_ENDPOINT, {
+  const response = await fetchWithAuth(AUTOSAVE_ENDPOINT, {
     method: "DELETE",
-    credentials: "include",
   });
 
   if (!response.ok) {
