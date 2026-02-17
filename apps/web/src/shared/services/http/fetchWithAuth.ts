@@ -7,6 +7,7 @@ import {
   type Auth401RetryPolicyOptions,
   shouldRetryOnAuth401,
 } from "./retryAuthPolicy";
+import { ERROR_DISPLAY_MATRIX } from "./errorDisplayMatrix";
 
 const AUTH_REFRESH_ENDPOINT = "/api/auth/refresh";
 
@@ -89,6 +90,7 @@ const fetchWithAuthInternal = async (
       requestUrl,
       method: init.method,
       status: response.status,
+      userVisible: ERROR_DISPLAY_MATRIX.terminalAuthFailure.userVisible,
     });
 
     return response;
@@ -98,6 +100,7 @@ const fetchWithAuthInternal = async (
     requestUrl,
     method: init.method,
     status: response.status,
+    userVisible: ERROR_DISPLAY_MATRIX.intermediateAuth401Recovered.userVisible,
   });
 
   const refreshResponse = await fetchWithAuthInternal(
@@ -116,6 +119,7 @@ const fetchWithAuthInternal = async (
       method: init.method,
       status: response.status,
       refreshStatus: refreshResponse.status,
+      userVisible: ERROR_DISPLAY_MATRIX.terminalAuthFailure.userVisible,
     });
 
     return response;
@@ -126,6 +130,7 @@ const fetchWithAuthInternal = async (
     method: init.method,
     status: response.status,
     refreshStatus: refreshResponse.status,
+    userVisible: ERROR_DISPLAY_MATRIX.intermediateAuth401Recovered.userVisible,
   });
 
   const retriedResponse = await executeRequest(input, init);
@@ -136,6 +141,7 @@ const fetchWithAuthInternal = async (
       method: init.method,
       status: retriedResponse.status,
       refreshStatus: refreshResponse.status,
+      userVisible: ERROR_DISPLAY_MATRIX.terminalAuthFailure.userVisible,
     });
 
     return retriedResponse;
