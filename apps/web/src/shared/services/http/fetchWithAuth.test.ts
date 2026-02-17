@@ -126,4 +126,111 @@ describe("fetchWithAuth", () => {
     expect(result).toBe(unauthorized);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("coordinates a single refresh request for concurrent 401 responses", async () => {
+    const requestAttempts = new Map<string, number>();
+
+    let resolveRefresh: (response: Response) => void;
+    const refreshPromise = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const requestUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.pathname
+            : input.url;
+
+      if (requestUrl === "/api/auth/refresh") {
+        return refreshPromise;
+      }
+
+      const attempt = (requestAttempts.get(requestUrl) ?? 0) + 1;
+      requestAttempts.set(requestUrl, attempt);
+
+      if (attempt === 1) {
+        return new Response(null, { status: 401 });
+      }
+
+      return new Response(null, { status: 200 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const pendingRequests = [
+      fetchWithAuth("/api/lists/1", { method: "GET" }),
+      fetchWithAuth("/api/lists/2", { method: "GET" }),
+      fetchWithAuth("/api/lists/3", { method: "GET" }),
+    ];
+
+    await Promise.resolve();
+
+    expect(fetchMock.mock.calls).toHaveLength(4);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/auth/refresh")
+    ).toHaveLength(1);
+
+    resolveRefresh!(new Response(null, { status: 200 }));
+
+    const responses = await Promise.all(pendingRequests);
+
+    expect(responses.map((response) => response.status)).toEqual([200, 200, 200]);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/auth/refresh")
+    ).toHaveLength(1);
+    expect(requestAttempts.get("/api/lists/1")).toBe(2);
+    expect(requestAttempts.get("/api/lists/2")).toBe(2);
+    expect(requestAttempts.get("/api/lists/3")).toBe(2);
+  });
+
+  it("fails concurrent pending requests consistently and resets lock after rejected refresh", async () => {
+    const requestAttempts = new Map<string, number>();
+    let refreshCallCount = 0;
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const requestUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.pathname
+            : input.url;
+
+      if (requestUrl === "/api/auth/refresh") {
+        refreshCallCount += 1;
+
+        if (refreshCallCount === 1) {
+          throw new Error("network");
+        }
+
+        return new Response(null, { status: 200 });
+      }
+
+      const attempt = (requestAttempts.get(requestUrl) ?? 0) + 1;
+      requestAttempts.set(requestUrl, attempt);
+
+      if (attempt === 1) {
+        return new Response(null, { status: 401 });
+      }
+
+      return new Response(null, { status: 200 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const failedBatch = await Promise.all([
+      fetchWithAuth("/api/lists/a", { method: "GET" }),
+      fetchWithAuth("/api/lists/b", { method: "GET" }),
+      fetchWithAuth("/api/lists/c", { method: "GET" }),
+    ]);
+
+    expect(failedBatch.map((response) => response.status)).toEqual([401, 401, 401]);
+    expect(refreshCallCount).toBe(1);
+
+    const recovered = await fetchWithAuth("/api/lists/d", { method: "GET" });
+
+    expect(recovered.status).toBe(200);
+    expect(refreshCallCount).toBe(2);
+  });
 });
