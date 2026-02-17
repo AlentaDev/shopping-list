@@ -4,6 +4,9 @@ import { AUTH_401_RETRY_PRESETS, fetchWithAuth } from "./fetchWithAuth";
 describe("fetchWithAuth", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   it("returns the original response when status is not 401", async () => {
