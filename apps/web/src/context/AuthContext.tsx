@@ -144,10 +144,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       window.addEventListener("storage", onStorage);
     }
 
-    void runInitialSync();
+    const initialSyncTimeoutId = window.setTimeout(() => {
+      void runInitialSync();
+    }, 0);
 
     return () => {
       isActive = false;
+      window.clearTimeout(initialSyncTimeoutId);
       channel?.close();
       window.removeEventListener("storage", onStorage);
     };

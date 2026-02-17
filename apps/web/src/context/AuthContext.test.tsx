@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -198,6 +199,28 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
+  });
+
+
+  it("deduplica el sync inicial en StrictMode para evitar llamadas duplicadas", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(
+      new AuthServiceError("not_authenticated"),
+    );
+
+    render(
+      <StrictMode>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      </StrictMode>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+    });
+
+    expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    expect(refreshSession).not.toHaveBeenCalled();
   });
 
   it("no reintenta refresh manual cuando current user devuelve not_authenticated", async () => {
