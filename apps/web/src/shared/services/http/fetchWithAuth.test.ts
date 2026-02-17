@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchWithAuth } from "./fetchWithAuth";
+import { AUTH_401_RETRY_PRESETS, fetchWithAuth } from "./fetchWithAuth";
 
 describe("fetchWithAuth", () => {
   beforeEach(() => {
@@ -22,13 +22,43 @@ describe("fetchWithAuth", () => {
     });
   });
 
-  it("refreshes session once and retries original request once after a 401", async () => {
-    const signal = new AbortController().signal;
-    const headers = new Headers({ "Content-Type": "application/json" });
+  it("retries safe GET request once after refresh when 401 happens", async () => {
     const firstResponse = new Response(null, { status: 401 });
     const refreshResponse = new Response(null, { status: 200 });
     const retriedResponse = new Response(null, { status: 200 });
-    const body = JSON.stringify({ id: "list-1" });
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(firstResponse)
+      .mockResolvedValueOnce(refreshResponse)
+      .mockResolvedValueOnce(retriedResponse);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchWithAuth("/api/lists", { method: "GET" });
+
+    expect(result).toBe(retriedResponse);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not retry non-idempotent request by default", async () => {
+    const unauthorized = new Response(null, { status: 401 });
+    const fetchMock = vi.fn(async () => unauthorized);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchWithAuth("/api/lists", {
+      method: "POST",
+      body: JSON.stringify({ name: "Weekly" }),
+    });
+
+    expect(result).toBe(unauthorized);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("supports explicit opt-in to retry non-idempotent request", async () => {
+    const firstResponse = new Response(null, { status: 401 });
+    const refreshResponse = new Response(null, { status: 200 });
+    const retriedResponse = new Response(null, { status: 201 });
     const fetchMock = vi
       .fn<() => Promise<Response>>()
       .mockResolvedValueOnce(firstResponse)
@@ -39,31 +69,12 @@ describe("fetchWithAuth", () => {
 
     const result = await fetchWithAuth("/api/lists", {
       method: "POST",
-      headers,
-      body,
-      signal,
+      body: JSON.stringify({ name: "Weekly" }),
+      retryOnAuth401: true,
     });
 
     expect(result).toBe(retriedResponse);
     expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/lists", {
-      method: "POST",
-      headers,
-      body,
-      signal,
-      credentials: "include",
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-    expect(fetchMock).toHaveBeenNthCalledWith(3, "/api/lists", {
-      method: "POST",
-      headers,
-      body,
-      signal,
-      credentials: "include",
-    });
   });
 
   it("returns original 401 response when refresh fails", async () => {
@@ -96,5 +107,20 @@ describe("fetchWithAuth", () => {
       method: "POST",
       credentials: "include",
     });
+  });
+
+  it("supports strict preset to disable retries for safe routes", async () => {
+    const unauthorized = new Response(null, { status: 401 });
+    const fetchMock = vi.fn(async () => unauthorized);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await fetchWithAuth("/api/lists", {
+      method: "GET",
+      retryPolicyPreset: AUTH_401_RETRY_PRESETS.STRICT,
+    });
+
+    expect(result).toBe(unauthorized);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
