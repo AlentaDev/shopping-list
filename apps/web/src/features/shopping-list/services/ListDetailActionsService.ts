@@ -40,6 +40,7 @@ export const startListEditing = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ isEditing: true }),
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {
@@ -55,6 +56,7 @@ export const reuseList = async (
 ): Promise<ReuseListResponse> => {
   const response = await fetchWithAuth(`/api/lists/${listId}/reuse`, {
     method: "POST",
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {
@@ -77,6 +79,7 @@ export const deleteList = async (
 ): Promise<void> => {
   const response = await fetchWithAuth(`/api/lists/${listId}`, {
     method: "DELETE",
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {

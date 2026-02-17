@@ -86,7 +86,11 @@ describe("AutosaveService", () => {
     await expect(getAutosave()).resolves.toBeNull();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ credentials: "include" })
+      expect.objectContaining({
+        method: "GET",
+        retryOnAuth401: true,
+        credentials: "include",
+      })
     );
   });
 
@@ -293,7 +297,7 @@ describe("AutosaveService", () => {
     const fetchMock = vi
       .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
       .mockImplementation(async (input, init) => {
-        if (input === "/api/lists/autosave" && !init?.method) {
+        if (input === "/api/lists/autosave" && init?.method === "GET") {
           return {
             ok: true,
             status: 204,
@@ -352,6 +356,9 @@ describe("AutosaveService", () => {
       "/api/auth/refresh",
       expect.objectContaining({ method: "POST", credentials: "include" }),
     );
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/auth/refresh"),
+    ).toHaveLength(1);
   });
 
   it("no refresca sesión de forma preventiva antes del primer autosave", async () => {
@@ -360,7 +367,7 @@ describe("AutosaveService", () => {
     const fetchMock = vi
       .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
       .mockImplementation(async (input, init) => {
-        if (input === "/api/lists/autosave" && !init?.method) {
+        if (input === "/api/lists/autosave" && init?.method === "GET") {
           return {
             ok: true,
             status: 204,
@@ -476,7 +483,11 @@ describe("AutosaveService", () => {
     await expect(deleteAutosave()).resolves.toBeUndefined();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/lists/autosave",
-      expect.objectContaining({ method: "DELETE", credentials: "include" })
+      expect.objectContaining({
+        method: "DELETE",
+        retryOnAuth401: true,
+        credentials: "include",
+      })
     );
   });
 

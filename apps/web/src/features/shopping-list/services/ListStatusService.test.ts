@@ -72,6 +72,7 @@ describe("ListStatusService", () => {
       "/api/lists/list-1/activate",
       expect.objectContaining({
         method: "PATCH",
+        retryOnAuth401: true,
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
       }),
     );
@@ -114,6 +115,7 @@ describe("ListStatusService", () => {
       "/api/lists/list-2/activate",
       expect.objectContaining({
         method: "PATCH",
+        retryOnAuth401: true,
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
       }),
     );

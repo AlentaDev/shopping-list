@@ -48,6 +48,7 @@ export const activateList = async ({
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {

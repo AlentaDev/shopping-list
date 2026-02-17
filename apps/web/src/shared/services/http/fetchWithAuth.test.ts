@@ -112,6 +112,27 @@ describe("fetchWithAuth", () => {
     });
   });
 
+
+
+  it("does not emit expected refresh logs in quiet mode", async () => {
+    const firstResponse = new Response(null, { status: 401 });
+    const refreshResponse = new Response(null, { status: 200 });
+    const retriedResponse = new Response(null, { status: 200 });
+    const fetchMock = vi
+      .fn<() => Promise<Response>>()
+      .mockResolvedValueOnce(firstResponse)
+      .mockResolvedValueOnce(refreshResponse)
+      .mockResolvedValueOnce(retriedResponse);
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchWithAuth("/api/users/me", { method: "GET", authLogMode: "quiet" });
+
+    expect(console.info).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
   it("supports strict preset to disable retries for safe routes", async () => {
     const unauthorized = new Response(null, { status: 401 });
     const fetchMock = vi.fn(async () => unauthorized);

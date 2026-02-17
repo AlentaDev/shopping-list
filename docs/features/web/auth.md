@@ -15,6 +15,28 @@ Permitir a los usuarios registrarse e iniciar sesión desde la interfaz web.
 - Los errores se muestran por campo al hacer blur y al enviar, con hint visible solo en contraseña de registro.
 - `fetchWithAuth` emite logs estructurados con etiqueta `[AUTH_HTTP]` para facilitar filtros en consola.
 
+## Checklist de migración auth client (incremental)
+
+### Fase 1 — Auth context + `/api/users/me`
+- [x] `AuthContext` depende del flujo de sesión centralizado vía `getCurrentUser`.
+- [x] `/api/users/me` usa `fetchWithAuth` con retry controlado en `401`.
+- [x] Tests locales de fase ejecutados (context + service + auth http client).
+
+**Criterios de aceptación (Fase 1)**
+- [x] En modo `quiet` no hay ruido de consola por flujo esperado `401 -> refresh -> retry`.
+- [x] Si el refresh token es válido, el retry completa correctamente.
+- [x] No hay loops de retry infinitos en `refresh` ni en request original.
+
+### Fase 2 — Shopping-list acciones críticas
+- [x] `activate`, `delete`, `edit`, `reuse` usan cliente auth centralizado con retry explícito en `401`.
+- [x] Autosave crítico (`GET/PUT/DELETE`) usa cliente auth centralizado con retry explícito.
+- [x] Tests locales de fase ejecutados (services de shopping-list impactados).
+
+**Criterios de aceptación (Fase 2)**
+- [x] En modo `quiet` se evitan logs de refresh esperados (sin ruido inesperado).
+- [x] Con refresh token válido, las acciones críticas recuperan sesión y reintentan con éxito.
+- [x] Se mantiene tope de reintento (sin bucles de reintento).
+
 ## Auth debug logging mode
 
 ### Variable
