@@ -287,7 +287,7 @@ describe("AutosaveService", () => {
     warnSpy.mockRestore();
   });
 
-  it("lanza error sin refresh ad-hoc cuando putAutosave devuelve 401", async () => {
+  it("reintenta autosave vía fetchWithAuth cuando el primer PUT devuelve 401", async () => {
     let hasFailedPut = false;
 
     const fetchMock = vi
@@ -337,18 +337,20 @@ describe("AutosaveService", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(putAutosave(SAMPLE_DRAFT)).rejects.toThrow(
-      "Unable to save autosave.",
-    );
+    await expect(putAutosave(SAMPLE_DRAFT)).resolves.toMatchObject({
+      id: "autosave-1",
+      title: "Lista semanal",
+      updatedAt: "2024-01-01T00:00:01.000Z",
+    });
 
     expect(fetchMock).toHaveBeenNthCalledWith(
-      2,
+      4,
       "/api/lists/autosave",
       expect.objectContaining({ method: "PUT" }),
     );
-    expect(fetchMock).not.toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       "/api/auth/refresh",
-      expect.anything(),
+      expect.objectContaining({ method: "POST", credentials: "include" }),
     );
   });
 

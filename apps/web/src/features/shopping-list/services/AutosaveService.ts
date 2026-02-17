@@ -220,7 +220,7 @@ const putAutosaveRequest = async (
     headers: {
       "Content-Type": "application/json",
     },
-    credentials: "include",
+    retryOnAuth401: true,
     body: JSON.stringify({
       ...draft,
       baseUpdatedAt,
