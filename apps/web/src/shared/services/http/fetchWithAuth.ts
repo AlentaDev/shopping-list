@@ -20,6 +20,8 @@ type InternalOptions = {
   isRefreshRequest: boolean;
 };
 
+let inFlightRefreshPromise: Promise<Response> | null = null;
+
 const resolveRequestUrl = (input: RequestInfo | URL): string => {
   if (typeof input === "string") {
     return input;
@@ -71,6 +73,24 @@ const logBusinessErrorIfNeeded = (
   }
 };
 
+const executeRefreshOnce = (authLogMode?: AuthLogMode): Promise<Response> => {
+  if (!inFlightRefreshPromise) {
+    inFlightRefreshPromise = fetchWithAuthInternal(
+      AUTH_REFRESH_ENDPOINT,
+      {
+        method: "POST",
+        retryPolicyPreset: AUTH_401_RETRY_PRESETS.STRICT,
+        authLogMode,
+      },
+      { isRefreshRequest: true }
+    ).finally(() => {
+      inFlightRefreshPromise = null;
+    });
+  }
+
+  return inFlightRefreshPromise;
+};
+
 const fetchWithAuthInternal = async (
   input: RequestInfo | URL,
   init: FetchWithAuthOptions = {},
@@ -103,15 +123,19 @@ const fetchWithAuthInternal = async (
     userVisible: ERROR_DISPLAY_MATRIX.intermediateAuth401Recovered.userVisible,
   });
 
-  const refreshResponse = await fetchWithAuthInternal(
-    AUTH_REFRESH_ENDPOINT,
-    {
-      method: "POST",
-      retryPolicyPreset: AUTH_401_RETRY_PRESETS.STRICT,
-      authLogMode: init.authLogMode,
-    },
-    { isRefreshRequest: true }
-  );
+  let refreshResponse: Response;
+
+  try {
+    refreshResponse = await executeRefreshOnce(init.authLogMode);
+  } catch {
+    logger.logUnexpectedAuthFailure("refresh_failed", {
+      requestUrl,
+      method: init.method,
+      status: response.status,
+    });
+
+    return response;
+  }
 
   if (!refreshResponse.ok) {
     logger.logUnexpectedAuthFailure("refresh_failed", {
