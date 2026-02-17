@@ -8,12 +8,22 @@ describe("ListStatusAdapter", () => {
       id: "list-1",
       status: LIST_STATUS.ACTIVE,
       updatedAt: "2024-02-01T10:00:00.000Z",
+      autosaveDraft: {
+        id: "draft-1",
+        title: "Tu Lista",
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      },
     };
 
     expect(adaptListStatusResponse(payload)).toEqual({
       id: "list-1",
       status: LIST_STATUS.ACTIVE,
       updatedAt: "2024-02-01T10:00:00.000Z",
+      autosaveDraft: {
+        id: "draft-1",
+        title: "Tu Lista",
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      },
     });
   });
 
@@ -22,6 +32,25 @@ describe("ListStatusAdapter", () => {
       id: "",
       status: LIST_STATUS.DRAFT,
       updatedAt: "",
+    });
+  });
+
+  it("descarta autosaveDraft inválido", () => {
+    expect(
+      adaptListStatusResponse({
+        id: "list-1",
+        status: LIST_STATUS.ACTIVE,
+        updatedAt: "2024-02-01T10:00:00.000Z",
+        autosaveDraft: {
+          id: "draft-1",
+          updatedAt: "2024-02-01T10:00:00.000Z",
+        },
+      }),
+    ).toEqual({
+      id: "list-1",
+      status: LIST_STATUS.ACTIVE,
+      updatedAt: "2024-02-01T10:00:00.000Z",
+      autosaveDraft: undefined,
     });
   });
 });

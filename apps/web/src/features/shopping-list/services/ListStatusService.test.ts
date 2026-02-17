@@ -31,6 +31,11 @@ describe("ListStatusService", () => {
         id: "list-1",
         status: LIST_STATUS.ACTIVE,
         updatedAt: "2024-02-01T10:00:00.000Z",
+        autosaveDraft: {
+          id: "draft-1",
+          title: "Tu Lista",
+          updatedAt: "2024-02-01T10:00:00.000Z",
+        },
       }),
     }));
 
@@ -42,7 +47,18 @@ describe("ListStatusService", () => {
       id: "list-1",
       status: LIST_STATUS.ACTIVE,
       updatedAt: "2024-02-01T10:00:00.000Z",
+      autosaveDraft: {
+        id: "draft-1",
+        title: "Tu Lista",
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      },
     });
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({
+        baseUpdatedAt: "2024-02-01T10:00:00.000Z",
+      }),
+    );
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledWith(
@@ -63,6 +79,11 @@ describe("ListStatusService", () => {
         id: "list-2",
         status: LIST_STATUS.ACTIVE,
         updatedAt: "2024-02-02T10:00:00.000Z",
+        autosaveDraft: {
+          id: "draft-2",
+          title: "Tu Lista",
+          updatedAt: "2024-02-02T10:00:00.000Z",
+        },
       }),
     }));
 
@@ -74,6 +95,11 @@ describe("ListStatusService", () => {
       id: "list-2",
       status: LIST_STATUS.ACTIVE,
       updatedAt: "2024-02-02T10:00:00.000Z",
+      autosaveDraft: {
+        id: "draft-2",
+        title: "Tu Lista",
+        updatedAt: "2024-02-02T10:00:00.000Z",
+      },
     });
 
     expect(syncLocalDraftToRemoteList).not.toHaveBeenCalled();
@@ -83,6 +109,32 @@ describe("ListStatusService", () => {
         method: "PATCH",
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
       }),
+    );
+  });
+
+  it("no pisa metadata si activate no devuelve autosaveDraft", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "list-3",
+        status: LIST_STATUS.ACTIVE,
+        updatedAt: "2024-02-03T10:00:00.000Z",
+      }),
+    }));
+
+    localStorage.setItem(
+      "lists.localDraftSync",
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await activateList({ status: LIST_STATUS.DRAFT, listId: "list-3" });
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
     );
   });
 

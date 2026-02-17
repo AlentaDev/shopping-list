@@ -46,4 +46,9 @@ export type ListStatusSummary = {
   id: string;
   status: ListStatus;
   updatedAt: string;
+  autosaveDraft?: {
+    id: string;
+    title: string;
+    updatedAt: string;
+  };
 };
