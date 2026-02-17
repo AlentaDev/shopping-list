@@ -224,11 +224,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 function resolveAuthErrorMessage(error: unknown): string {
   if (error instanceof AuthServiceError) {
+    if (!error.userVisible) {
+      return UI_TEXT.AUTH.ERROR_MESSAGE;
+    }
+
     const errorMessages: Record<string, string> = {
       duplicate_email: UI_TEXT.AUTH.ERRORS.DUPLICATE_EMAIL,
       invalid_credentials: UI_TEXT.AUTH.ERRORS.INVALID_CREDENTIALS,
       validation_error: UI_TEXT.AUTH.ERRORS.VALIDATION_ERROR,
-      not_authenticated: UI_TEXT.AUTH.ERRORS.NOT_AUTHENTICATED,
+      not_authenticated: UI_TEXT.AUTH.ERRORS.SESSION_EXPIRED,
+      network_error: UI_TEXT.AUTH.ERRORS.NETWORK_ERROR,
       internal_server_error: UI_TEXT.AUTH.ERRORS.SERVER_ERROR,
     };
 

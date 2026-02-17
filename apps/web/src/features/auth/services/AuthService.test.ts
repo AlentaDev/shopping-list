@@ -136,6 +136,20 @@ describe("AuthService", () => {
     await expect(loginUser(LOGIN_INPUT)).rejects.toThrow("Unable to login");
   });
 
+
+  it("normaliza errores de red como AuthServiceError visible", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(loginUser(LOGIN_INPUT)).rejects.toMatchObject({
+      code: "network_error",
+      userVisible: true,
+    });
+  });
+
   it("logs out a user", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>

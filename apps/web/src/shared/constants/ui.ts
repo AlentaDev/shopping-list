@@ -26,6 +26,8 @@ export const UI_TEXT = {
       INVALID_CREDENTIALS: "Email o contraseña incorrectos.",
       VALIDATION_ERROR: "Revisa los datos e inténtalo de nuevo.",
       NOT_AUTHENTICATED: "Necesitas iniciar sesión para continuar.",
+      SESSION_EXPIRED: "Tu sesión ha caducado. Vuelve a iniciar sesión.",
+      NETWORK_ERROR: "Sin conexión. Revisa tu red e inténtalo de nuevo.",
       SERVER_ERROR: "Ha ocurrido un error en el servidor. Inténtalo más tarde.",
     },
     ALREADY_LOGGED_IN: {

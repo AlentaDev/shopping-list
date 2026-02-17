@@ -274,7 +274,7 @@ describe("AuthProvider", () => {
   it("shows a descriptive error when register fails with duplicate email", async () => {
     vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
     vi.mocked(registerUser).mockRejectedValueOnce(
-      new AuthServiceError("duplicate_email"),
+      new AuthServiceError("duplicate_email", true),
     );
 
     const user = userEvent.setup();
@@ -291,6 +291,53 @@ describe("AuthProvider", () => {
     await waitFor(() => {
       expect(screen.getByTestId("authError")).toHaveTextContent(
         UI_TEXT.AUTH.ERRORS.DUPLICATE_EMAIL,
+      );
+    });
+  });
+
+
+  it("muestra mensaje de red cuando el servicio devuelve network_error visible", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    vi.mocked(loginUser).mockRejectedValueOnce(
+      new AuthServiceError("network_error", true),
+    );
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authError")).toHaveTextContent(
+        UI_TEXT.AUTH.ERRORS.NETWORK_ERROR,
+      );
+    });
+  });
+
+  it("no expone mensajes internos cuando el error no es visible para usuario", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(new Error("Not logged in"));
+    vi.mocked(loginUser).mockRejectedValueOnce(
+      new AuthServiceError("received_401_without_retry", false),
+    );
+
+    const user = userEvent.setup();
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Login" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authError")).toHaveTextContent(
+        UI_TEXT.AUTH.ERROR_MESSAGE,
       );
     });
   });
