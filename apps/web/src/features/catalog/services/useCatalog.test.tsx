@@ -154,9 +154,18 @@ describe("useCatalog", () => {
     expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(rootCategoriesUrl);
-      expect(fetchMock).toHaveBeenCalledWith(categoryDetailUrl("child-1"));
-      expect(fetchMock).toHaveBeenCalledWith(categoryDetailUrl("child-2"));
+      expect(fetchMock).toHaveBeenCalledWith(
+        rootCategoriesUrl,
+        expect.objectContaining({ credentials: "include" }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        categoryDetailUrl("child-1"),
+        expect.objectContaining({ credentials: "include" }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        categoryDetailUrl("child-2"),
+        expect.objectContaining({ credentials: "include" }),
+      );
     });
   });
 
@@ -376,7 +385,10 @@ describe("useCatalog", () => {
     render(<NoSelectionHarness />);
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(rootCategoriesUrl);
+      expect(fetchMock).toHaveBeenCalledWith(
+        rootCategoriesUrl,
+        expect.objectContaining({ credentials: "include" }),
+      );
     });
 
     const callsBefore = fetchMock.mock.calls.length;

@@ -287,7 +287,7 @@ describe("AutosaveService", () => {
     warnSpy.mockRestore();
   });
 
-  it("reintenta autosave tras refrescar sesión cuando el primer intento devuelve 401", async () => {
+  it("reintenta autosave vía fetchWithAuth cuando el primer PUT devuelve 401", async () => {
     let hasFailedPut = false;
 
     const fetchMock = vi

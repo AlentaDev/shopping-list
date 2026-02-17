@@ -133,9 +133,13 @@ describe("AppShell", () => {
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(rootCategoriesUrl);
+      expect(fetchMock).toHaveBeenCalledWith(
+        rootCategoriesUrl,
+        expect.objectContaining({ credentials: "include" }),
+      );
       expect(fetchMock).toHaveBeenCalledWith(
         categoryDetailUrl(CHILD_CATEGORY_ID),
+        expect.objectContaining({ credentials: "include" }),
       );
     });
   });

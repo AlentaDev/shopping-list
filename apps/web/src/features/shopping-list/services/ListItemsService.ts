@@ -1,3 +1,4 @@
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 type DeleteListItemInput = {
   listId: string;
   itemId: string;
@@ -11,7 +12,7 @@ export const deleteListItem = async (
   { listId, itemId }: DeleteListItemInput,
   options: ListItemsServiceOptions = {},
 ): Promise<void> => {
-  const response = await fetch(`/api/lists/${listId}/items/${itemId}`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/items/${itemId}`, {
     method: "DELETE",
   });
 

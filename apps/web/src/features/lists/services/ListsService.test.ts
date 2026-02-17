@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import {
   activateList,
   completeList,
@@ -10,6 +11,12 @@ import {
 } from "./ListsService";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { UI_TEXT } from "@src/shared/constants/ui";
+
+vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+  fetchWithAuth: vi.fn(),
+}));
+
+const fetchWithAuthMock = vi.mocked(fetchWithAuth);
 
 type FetchResponse = {
   ok: boolean;
@@ -41,7 +48,7 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getLists()).resolves.toEqual({
       lists: [
@@ -57,7 +64,7 @@ describe("ListsService", () => {
       ],
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/lists");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/lists");
   });
 
   it("throws when lists request fails", async () => {
@@ -68,7 +75,7 @@ describe("ListsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getLists()).rejects.toThrow("Unable to load lists.");
   });
@@ -89,7 +96,7 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(getListDetail("list-2")).resolves.toEqual({
       id: "list-2",
@@ -102,7 +109,7 @@ describe("ListsService", () => {
       status: undefined,
     });
 
-    expect(fetchMock).toHaveBeenCalledWith("/api/lists/list-2");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/lists/list-2");
   });
 
   it("reuses lists with POST", async () => {
@@ -122,7 +129,7 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(reuseList("list-3")).resolves.toEqual({
       id: "list-3",
@@ -135,7 +142,7 @@ describe("ListsService", () => {
       status: LIST_STATUS.DRAFT,
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-3/reuse",
       expect.objectContaining({ method: "POST" })
     );
@@ -149,11 +156,11 @@ describe("ListsService", () => {
       json: async () => ({ ok: true }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(deleteList("list-4")).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-4",
       expect.objectContaining({ method: "DELETE" })
     );
@@ -171,7 +178,7 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(activateList("list-5")).resolves.toEqual({
       id: "list-5",
@@ -179,7 +186,7 @@ describe("ListsService", () => {
       updatedAt: "2024-02-04T10:00:00.000Z",
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-5/activate",
       expect.objectContaining({
         method: "PATCH",
@@ -202,13 +209,13 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(
       completeList("list-6", { checkedItemIds: ["item-1", "item-2"] })
     ).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-6/complete",
       expect.objectContaining({
         method: "POST",
@@ -234,7 +241,7 @@ describe("ListsService", () => {
       }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(createList()).resolves.toEqual({
       id: "list-7",
@@ -246,7 +253,7 @@ describe("ListsService", () => {
       status: LIST_STATUS.DRAFT,
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists",
       expect.objectContaining({
         method: "POST",
@@ -264,7 +271,7 @@ describe("ListsService", () => {
       json: async () => ({}),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(createList("Mercado")).rejects.toThrow(
       "Unable to create list."

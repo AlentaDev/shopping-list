@@ -1,5 +1,6 @@
 import type { ShoppingListItem } from "../types";
 import { adaptShoppingListItems } from "./adapters/ShoppingListItemAdapter";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 
 type ListActionOptions = {
   errorMessage?: string;
@@ -33,7 +34,7 @@ export const startListEditing = async (
   listId: string,
   options: ListActionOptions = {},
 ): Promise<void> => {
-  const response = await fetch(`/api/lists/${listId}/editing`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/editing`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -52,7 +53,7 @@ export const reuseList = async (
   listId: string,
   options: ListActionOptions = {},
 ): Promise<ReuseListResponse> => {
-  const response = await fetch(`/api/lists/${listId}/reuse`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}/reuse`, {
     method: "POST",
   });
 
@@ -74,7 +75,7 @@ export const deleteList = async (
   listId: string,
   options: ListActionOptions = {},
 ): Promise<void> => {
-  const response = await fetch(`/api/lists/${listId}`, {
+  const response = await fetchWithAuth(`/api/lists/${listId}`, {
     method: "DELETE",
   });
 

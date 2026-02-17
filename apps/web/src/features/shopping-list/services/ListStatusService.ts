@@ -4,6 +4,7 @@ import { canActivateList } from "./listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
 import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
+import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 
 const LISTS_ENDPOINT = "/api/lists";
 
@@ -41,7 +42,7 @@ export const activateList = async ({
   }
 
   const targetListId = await resolveListIdForActivation(status, listId);
-  const response = await fetch(`${LISTS_ENDPOINT}/${targetListId}/activate`, {
+  const response = await fetchWithAuth(`${LISTS_ENDPOINT}/${targetListId}/activate`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",

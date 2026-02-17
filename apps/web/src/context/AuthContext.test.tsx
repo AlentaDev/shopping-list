@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -200,17 +201,32 @@ describe("AuthProvider", () => {
     expect(getCurrentUser).toHaveBeenCalled();
   });
 
-  it("refreshes session and retries current user when initial load fails", async () => {
-    const mockUser = {
-      id: "1",
-      name: TEST_NAME,
-      email: TEST_EMAIL,
-      postalCode: TEST_POSTAL_CODE,
-    };
-    vi.mocked(getCurrentUser)
-      .mockRejectedValueOnce(new Error("Not logged in"))
-      .mockResolvedValueOnce(mockUser);
-    vi.mocked(refreshSession).mockResolvedValueOnce({ ok: true });
+
+  it("deduplica el sync inicial en StrictMode para evitar llamadas duplicadas", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(
+      new AuthServiceError("not_authenticated"),
+    );
+
+    render(
+      <StrictMode>
+        <AuthProvider>
+          <TestComponent />
+        </AuthProvider>
+      </StrictMode>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
+    });
+
+    expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    expect(refreshSession).not.toHaveBeenCalled();
+  });
+
+  it("no reintenta refresh manual cuando current user devuelve not_authenticated", async () => {
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(
+      new AuthServiceError("not_authenticated"),
+    );
 
     render(
       <AuthProvider>
@@ -219,13 +235,11 @@ describe("AuthProvider", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("authUser")).toHaveTextContent(
-        "test@example.com",
-      );
+      expect(screen.getByTestId("authUser")).toHaveTextContent("No user");
     });
 
-    expect(getCurrentUser).toHaveBeenCalledTimes(2);
-    expect(refreshSession).toHaveBeenCalled();
+    expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    expect(refreshSession).not.toHaveBeenCalled();
   });
 
   it("handles register and authenticates user", async () => {
