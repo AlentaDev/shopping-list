@@ -187,6 +187,23 @@ describe("AuthService", () => {
     expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/users/me");
   });
 
+
+  it("throws typed error when current user responds with auth error code", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({ error: "not_authenticated" }),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(getCurrentUser()).rejects.toBeInstanceOf(AuthServiceError);
+    await expect(getCurrentUser()).rejects.toMatchObject({
+      code: "not_authenticated",
+    });
+  });
+
   it("throws when loading the current user fails", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>

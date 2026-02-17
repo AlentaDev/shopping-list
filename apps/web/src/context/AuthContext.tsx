@@ -12,7 +12,6 @@ import {
   loginUser,
   logoutUser,
   registerUser,
-  refreshSession,
   AuthServiceError,
   type LoginInput,
   type RegisterInput,
@@ -78,21 +77,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setAuthError(resolveAuthErrorMessage(error));
         return;
       }
-    }
 
-    try {
-      await refreshSession();
-      const refreshedUser = await getCurrentUser();
-      setAuthUser(refreshedUser);
-    } catch (refreshError) {
-      if (
-        refreshError instanceof AuthServiceError &&
-        refreshError.code === "not_authenticated"
-      ) {
-        setAuthUser(null);
-        setIsUserMenuOpen(false);
-        setAuthError(resolveAuthErrorMessage(refreshError));
-      }
+      setAuthError(resolveAuthErrorMessage(error));
     }
   }, []);
 

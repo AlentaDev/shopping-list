@@ -67,7 +67,7 @@ export async function getCurrentUser(): Promise<AuthUser> {
   const response = await fetchWithAuth("/api/users/me");
 
   if (!response.ok) {
-    throw new Error("Unable to load current user");
+    await throwAuthErrorFromResponse(response, "Unable to load current user");
   }
 
   return (await response.json()) as AuthUser;
