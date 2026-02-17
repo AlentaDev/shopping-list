@@ -13,6 +13,25 @@ Permitir a los usuarios registrarse e iniciar sesión desde la interfaz web.
 - Los textos UI se centralizan en `UI_TEXT.AUTH`.
 - Los formularios validan con Zod y usan Value Objects para normalizar (email en minúsculas, nombre con trim).
 - Los errores se muestran por campo al hacer blur y al enviar, con hint visible solo en contraseña de registro.
+- `fetchWithAuth` emite logs estructurados con etiqueta `[AUTH_HTTP]` para facilitar filtros en consola.
+
+## Auth debug logging mode
+
+### Variable
+- `VITE_AUTH_LOG_MODE`
+
+### Modos soportados
+- `verbose`: registra el flujo esperado `401 -> refresh -> retry` (eventos `expected_auth_refresh`).
+- `quiet` (default): oculta los eventos esperados y deja solo fallos terminales.
+
+### Clasificación de logs
+- `expected_auth_refresh`: eventos esperados de renovación de sesión.
+- `unexpected_auth_failure`: fallos de auth no esperados o terminales (ej. refresh fallido).
+- `business_validation_error`: errores funcionales/validación (`4xx` no-auth).
+
+### Uso recomendado
+- **Debug local**: ejecutar el frontend con `VITE_AUTH_LOG_MODE=verbose`.
+- **Producción**: usar `VITE_AUTH_LOG_MODE=quiet` para reducir ruido en consola.
 
 ## Notas de implementación
 - La navegación es simple (basada en `window.history`) y se resuelve en `App.tsx`.
