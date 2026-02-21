@@ -159,6 +159,45 @@ const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
 
+
+
+type ReadOnlyDetailItemsProps = {
+  items: ListDetail["items"];
+};
+
+const ReadOnlyDetailItems = ({ items }: ReadOnlyDetailItemsProps) => (
+  <div className="max-h-[55vh] overflow-auto pr-1">
+    <ul className="space-y-4">
+      {items.map((item) => (
+        <li
+          key={item.id}
+          data-testid={`list-detail-item-${item.id}`}
+          className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
+        >
+          {item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              alt={item.name}
+              className="h-12 w-12 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-xl bg-slate-100" aria-hidden="true" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+            <p className="text-xs text-slate-500">
+              {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {item.qty}
+            </p>
+          </div>
+          <span className="text-sm font-semibold text-slate-700">
+            {formatPrice((item.price ?? 0) * item.qty)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
 const ACTION_LABELS: Record<ListActionKey, string> = {
   edit: UI_TEXT.LISTS.ACTIONS.EDIT,
   activate: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
@@ -349,20 +388,12 @@ const ListsScreen = ({
             </>
           }
         >
-          <ul className="mt-4 space-y-2">
-            {selectedListDetail.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center justify-between text-sm text-slate-700"
-              >
-                <span>{`${item.name} x${item.qty}`}</span>
-                <span>{formatPrice((item.price ?? 0) * item.qty)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-right text-sm font-semibold text-slate-800">
-            {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
-          </p>
+          <ReadOnlyDetailItems items={selectedListDetail.items} />
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <p className="text-right text-2xl font-semibold text-slate-900">
+              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
+            </p>
+          </div>
         </ListModal>
       ) : null}
       {pendingDelete ? (

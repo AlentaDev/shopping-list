@@ -136,8 +136,10 @@ describe("ListsScreen", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
     expect(screen.getByTestId("list-modal-backdrop")).toBeInTheDocument();
-    expect(within(dialog).getByText("Leche x2")).toBeInTheDocument();
+    expect(within(dialog).getByText("Leche")).toBeInTheDocument();
+    expect(within(dialog).getByText("Productos: 2")).toBeInTheDocument();
     expect(within(dialog).getAllByText(/2,40\s*€/)).toHaveLength(2);
+    expect(within(dialog).getByTestId("list-detail-item-item-1")).toBeInTheDocument();
     expect(
       within(dialog).queryByRole("button", { name: "Añadir más productos" }),
     ).not.toBeInTheDocument();

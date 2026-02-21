@@ -177,7 +177,8 @@ describe("ListsContainer", () => {
     await userEvent.click(activeCard);
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Leche x1")).toBeInTheDocument();
+    expect(screen.getByText("Leche")).toBeInTheDocument();
+    expect(screen.getByText("Productos: 1")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL }),
