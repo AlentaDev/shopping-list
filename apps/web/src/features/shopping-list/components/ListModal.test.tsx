@@ -165,6 +165,24 @@ describe("ListModal", () => {
     expect(onTitleSubmit).toHaveBeenCalledWith("Compra semanal");
   });
 
+
+  it("renderiza acciones personalizadas en el footer", () => {
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        footerContent={<button type="button">Acción custom</button>}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Acción custom" }),
+    ).toBeInTheDocument();
+  });
+
   it("muestra validación con zod si el título tiene menos de 3 caracteres", async () => {
     const onTitleSubmit = vi.fn();
 

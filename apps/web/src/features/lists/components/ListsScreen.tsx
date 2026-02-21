@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import ListModal from "@src/features/shopping-list/components/ListModal";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { formatPrice } from "@src/shared/utils/formatPrice";
 import {
@@ -93,7 +94,7 @@ const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps
   return (
     <div
       data-testid={`list-card-${list.id}`}
-      className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+      className={`flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between ${canOpenDetail ? "cursor-pointer" : ""}`}
       role={canOpenDetail ? "button" : undefined}
       tabIndex={canOpenDetail ? 0 : undefined}
       onClick={handleCardClick}
@@ -157,6 +158,45 @@ const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
   ACTIVE: UI_TEXT.LISTS.EMPTY_STATE.ACTIVE_TITLE,
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
+
+
+
+type ReadOnlyDetailItemsProps = {
+  items: ListDetail["items"];
+};
+
+const ReadOnlyDetailItems = ({ items }: ReadOnlyDetailItemsProps) => (
+  <div className="max-h-[55vh] overflow-auto pr-1">
+    <ul className="space-y-4">
+      {items.map((item) => (
+        <li
+          key={item.id}
+          data-testid={`list-detail-item-${item.id}`}
+          className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
+        >
+          {item.thumbnail ? (
+            <img
+              src={item.thumbnail}
+              alt={item.name}
+              className="h-12 w-12 rounded-xl object-cover"
+            />
+          ) : (
+            <div className="h-12 w-12 rounded-xl bg-slate-100" aria-hidden="true" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
+            <p className="text-xs text-slate-500">
+              {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {item.qty}
+            </p>
+          </div>
+          <span className="text-sm font-semibold text-slate-700">
+            {formatPrice((item.price ?? 0) * item.qty)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 const ACTION_LABELS: Record<ListActionKey, string> = {
   edit: UI_TEXT.LISTS.ACTIONS.EDIT,
@@ -323,30 +363,12 @@ const ListsScreen = ({
 
       {renderListsContent()}
       {selectedList && selectedListDetail ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
-          >
-            <h3 className="text-lg font-semibold text-slate-900">
-              {selectedListDetail.title}
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {selectedListDetail.items.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between text-sm text-slate-700"
-                >
-                  <span>{`${item.name} x${item.qty}`}</span>
-                  <span>{formatPrice((item.price ?? 0) * item.qty)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-right text-sm font-semibold text-slate-800">
-              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <ListModal
+          isOpen
+          onClose={onCloseDetail}
+          title={selectedListDetail.title}
+          footerContent={
+            <>
               {detailActions.map((action) => (
                 <ListActionButton
                   key={action}
@@ -363,9 +385,16 @@ const ListsScreen = ({
               >
                 {UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL}
               </button>
-            </div>
+            </>
+          }
+        >
+          <ReadOnlyDetailItems items={selectedListDetail.items} />
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <p className="text-right text-2xl font-semibold text-slate-900">
+              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
+            </p>
           </div>
-        </div>
+        </ListModal>
       ) : null}
       {pendingDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
