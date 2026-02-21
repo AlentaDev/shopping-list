@@ -23,6 +23,28 @@ type ListsContainerProps = {
   hasDraftItems?: boolean;
 };
 
+const isEmptyLocalDraftPayload = (value: string | null): boolean => {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as {
+      title?: unknown;
+      items?: unknown;
+    };
+
+    return (
+      typeof parsed.title === "string" &&
+      parsed.title.trim() === "" &&
+      Array.isArray(parsed.items) &&
+      parsed.items.length === 0
+    );
+  } catch {
+    return false;
+  }
+};
+
 const clearLocalDraftForAllTabs = () => {
   localStorage.setItem(
     "lists.localDraft",
@@ -61,6 +83,26 @@ const ListsContainer = ({
       onListActivated: refreshLists,
     });
   }, [sourceTabId]);
+
+  useEffect(() => {
+    const onStorage = (storageEvent: StorageEvent) => {
+      if (storageEvent.key !== "lists.localDraft") {
+        return;
+      }
+
+      if (!isEmptyLocalDraftPayload(storageEvent.newValue)) {
+        return;
+      }
+
+      refreshLists();
+    };
+
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   const handleCloseDetail = () => {
     setSelectedList(null);

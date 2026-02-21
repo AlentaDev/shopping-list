@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ListsContainer from "./ListsContainer";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -279,6 +279,62 @@ describe("ListsContainer", () => {
     expect(JSON.parse(storedDraft ?? "{}")).toMatchObject({
       title: "",
       items: [],
+    });
+  });
+
+
+  it("refresca listas al recibir sincronización de borrador vacío desde otra pestaña", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "draft-remote",
+                title: "Pendiente",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: null,
+                itemCount: 1,
+                isEditing: false,
+                status: LIST_STATUS.DRAFT,
+              },
+            ],
+          }),
+        };
+      }
+
+      return {
+        ok: false,
+        json: async () => ({}),
+      };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    await screen.findByText("Pendiente");
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraft",
+          newValue: JSON.stringify({ title: "", items: [] }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      const listFetchCalls = fetchMock.mock.calls.filter(
+        ([input]) => (typeof input === "string" ? input : input.url) === "/api/lists",
+      );
+
+      expect(listFetchCalls.length).toBeGreaterThanOrEqual(2);
     });
   });
 
