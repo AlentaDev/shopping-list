@@ -7,6 +7,14 @@ export type ListTabSyncEvent = {
 export const LIST_TAB_SYNC_KEY = "lists.tabSync";
 export const LIST_TAB_SYNC_CHANNEL = "lists";
 
+export const createListTabSyncSourceId = (): string => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `tab-${Date.now()}`;
+};
+
 type PublishListTabSyncEventInput = {
   type: ListTabSyncEvent["type"];
   sourceTabId: string;

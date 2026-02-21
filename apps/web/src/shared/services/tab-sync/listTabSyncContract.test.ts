@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  createListTabSyncSourceId,
   LIST_TAB_SYNC_CHANNEL,
   LIST_TAB_SYNC_KEY,
   parseListTabSyncEvent,
@@ -18,6 +19,22 @@ describe("listTabSyncContract", () => {
   it("mantiene las claves del contrato estables", () => {
     expect(LIST_TAB_SYNC_KEY).toBe("lists.tabSync");
     expect(LIST_TAB_SYNC_CHANNEL).toBe("lists");
+  });
+
+  it("crea sourceTabId usando crypto.randomUUID cuando está disponible", () => {
+    const randomUUID = vi.fn(() => "tab-uuid");
+    vi.stubGlobal("crypto", { randomUUID });
+
+    expect(createListTabSyncSourceId()).toBe("tab-uuid");
+  });
+
+  it("crea sourceTabId con fallback cuando crypto.randomUUID no existe", () => {
+    const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(123456);
+    vi.stubGlobal("crypto", {});
+
+    expect(createListTabSyncSourceId()).toBe("tab-123456");
+
+    dateNowSpy.mockRestore();
   });
 
   it("parsea eventos list-activated válidos", () => {
