@@ -11,10 +11,10 @@ import {
   getListDetail,
 } from "./services/ListsService";
 import {
-  createListTabId,
+  createListTabSyncSourceId,
   publishListTabSyncEvent,
   subscribeToListTabSyncEvents,
-} from "./services/ListTabSyncService";
+} from "@src/shared/services/tab-sync/listTabSyncContract";
 import Lists from "./Lists";
 
 type ListsContainerProps = {
@@ -62,7 +62,7 @@ const ListsContainer = ({
   hasDraftItems = false,
 }: ListsContainerProps) => {
   const { showToast } = useToast();
-  const sourceTabId = useMemo(() => createListTabId(), []);
+  const sourceTabId = useMemo(() => createListTabSyncSourceId(), []);
   const [actionLoading, setActionLoading] = useState<{
     listId: string;
     action: ListActionKey;
