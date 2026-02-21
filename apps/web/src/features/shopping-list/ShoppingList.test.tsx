@@ -10,6 +10,22 @@ import { AuthContext, type AuthContextType } from "@src/context/AuthContext";
 import { ToastProvider } from "@src/context/ToastContext";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import Toast from "@src/shared/components/toast/Toast";
+import {
+  createListTabSyncSourceId,
+  subscribeToListTabSyncEvents,
+} from "@src/shared/services/tab-sync/listTabSyncContract";
+
+vi.mock("@src/shared/services/tab-sync/listTabSyncContract", async () => {
+  const actual = await vi.importActual<
+    typeof import("@src/shared/services/tab-sync/listTabSyncContract")
+  >("@src/shared/services/tab-sync/listTabSyncContract");
+
+  return {
+    ...actual,
+    createListTabSyncSourceId: vi.fn(() => "current-tab"),
+    subscribeToListTabSyncEvents: vi.fn(() => vi.fn()),
+  };
+});
 
 type FetchResponse = {
   ok: boolean;
@@ -61,6 +77,7 @@ describe("ShoppingList", () => {
   });
 
   beforeEach(() => {
+    vi.clearAllMocks();
     localStorage.clear();
     sessionStorage.clear();
     sessionStorage.setItem("lists.autosaveChecked", "true");
@@ -514,8 +531,13 @@ describe("ShoppingList", () => {
 
 
   it("sincroniza reseteo de borrador cuando otra pestaña activa una lista", async () => {
-    const originalBroadcastChannel = globalThis.BroadcastChannel;
-    globalThis.BroadcastChannel = undefined as never;
+    let emitRemoteActivation: (() => void) | null = null;
+    vi.mocked(subscribeToListTabSyncEvents).mockImplementation(
+      ({ onListActivated }) => {
+        emitRemoteActivation = onListActivated;
+        return vi.fn();
+      },
+    );
 
     renderShoppingList({
       authenticated: true,
@@ -527,17 +549,14 @@ describe("ShoppingList", () => {
 
     expect(screen.getByText(initialItems[0].name)).toBeInTheDocument();
 
+    expect(createListTabSyncSourceId).toHaveBeenCalled();
+    expect(subscribeToListTabSyncEvents).toHaveBeenCalledWith({
+      sourceTabId: "current-tab",
+      onListActivated: expect.any(Function),
+    });
+
     act(() => {
-      window.dispatchEvent(
-        new StorageEvent("storage", {
-          key: "lists.tabSync",
-          newValue: JSON.stringify({
-            type: "list-activated",
-            sourceTabId: "other-tab",
-            timestamp: Date.now(),
-          }),
-        }),
-      );
+      emitRemoteActivation?.();
     });
 
     await waitFor(() => {
@@ -545,8 +564,6 @@ describe("ShoppingList", () => {
         screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
       ).toBeInTheDocument();
     });
-
-    globalThis.BroadcastChannel = originalBroadcastChannel;
   });
 
   it("restaura el autosave remoto y muestra un toast si el local está vacío", async () => {

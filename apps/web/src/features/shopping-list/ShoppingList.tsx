@@ -18,6 +18,10 @@ import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdap
 import { deleteList, reuseList } from "./services/ListDetailActionsService";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./services/listStatus";
+import {
+  createListTabSyncSourceId,
+  subscribeToListTabSyncEvents,
+} from "@src/shared/services/tab-sync/listTabSyncContract";
 
 type ShoppingListProps = {
   isOpen: boolean;
@@ -47,49 +51,6 @@ const getDetailActionClassName = (
   }`;
 
 
-
-const LIST_TAB_SYNC_STORAGE_KEY = "lists.tabSync";
-const LIST_TAB_SYNC_CHANNEL = "lists";
-
-type ListTabSyncEvent = {
-  type: "list-activated";
-  timestamp: number;
-  sourceTabId: string;
-};
-
-const createListTabId = (): string => {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-
-  return `tab-${Date.now()}`;
-};
-
-const parseListTabSyncEvent = (value: string | null): ListTabSyncEvent | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(value) as Partial<ListTabSyncEvent>;
-
-    if (
-      parsed.type !== "list-activated" ||
-      typeof parsed.sourceTabId !== "string" ||
-      typeof parsed.timestamp !== "number"
-    ) {
-      return null;
-    }
-
-    return {
-      type: parsed.type,
-      sourceTabId: parsed.sourceTabId,
-      timestamp: parsed.timestamp,
-    };
-  } catch {
-    return null;
-  }
-};
 
 type DetailActionsProps = {
   isActive: boolean;
@@ -309,7 +270,7 @@ const ShoppingList = ({
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { showToast } = useToast();
-  const sourceTabId = useMemo(() => createListTabId(), []);
+  const sourceTabId = useMemo(() => createListTabSyncSourceId(), []);
   const { items, total, updateQuantity, removeItem, setItems } = useList();
   const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
@@ -346,49 +307,10 @@ const ShoppingList = ({
       setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
     };
 
-    const onSyncEvent = (syncEvent: ListTabSyncEvent) => {
-      if (syncEvent.sourceTabId === sourceTabId) {
-        return;
-      }
-
-      if (syncEvent.type === "list-activated") {
-        resetDraftAfterActivation();
-      }
-    };
-
-    const onStorage = (storageEvent: StorageEvent) => {
-      if (storageEvent.key !== LIST_TAB_SYNC_STORAGE_KEY) {
-        return;
-      }
-
-      const syncEvent = parseListTabSyncEvent(storageEvent.newValue);
-
-      if (!syncEvent) {
-        return;
-      }
-
-      onSyncEvent(syncEvent);
-    };
-
-    if (typeof BroadcastChannel !== "undefined") {
-      const channel = new BroadcastChannel(LIST_TAB_SYNC_CHANNEL);
-      const onMessage = (messageEvent: MessageEvent<ListTabSyncEvent>) => {
-        onSyncEvent(messageEvent.data);
-      };
-
-      channel.addEventListener("message", onMessage as EventListener);
-
-      return () => {
-        channel.removeEventListener("message", onMessage as EventListener);
-        channel.close();
-      };
-    }
-
-    window.addEventListener("storage", onStorage);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-    };
+    return subscribeToListTabSyncEvents({
+      sourceTabId,
+      onListActivated: resetDraftAfterActivation,
+    });
   }, [setItems, sourceTabId]);
 
   const handleRehydrate = useCallback(
