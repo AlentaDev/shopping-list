@@ -162,7 +162,7 @@ describe("ListsService", () => {
 
     expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-4",
-      expect.objectContaining({ method: "DELETE" })
+      expect.objectContaining({ method: "DELETE", retryOnAuth401: true })
     );
   });
 

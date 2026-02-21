@@ -70,6 +70,7 @@ export const deleteList = async (
 ): Promise<void> => {
   const response = await fetchWithAuth(`/api/lists/${listId}`, {
     method: "DELETE",
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {
