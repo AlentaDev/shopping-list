@@ -31,7 +31,10 @@ vi.mock("@src/shared/services/tab-sync/listTabSyncContract", async () => {
 
 type FetchResponse = {
   ok: boolean;
+  status?: number;
+  statusText?: string;
   json: () => Promise<unknown>;
+  text?: () => Promise<string>;
 };
 
 describe("ShoppingList", () => {
@@ -578,6 +581,142 @@ describe("ShoppingList", () => {
         items: [],
       }),
     );
+  });
+
+  it("evita conflicto stale en autosave tras activación remota desde otra pestaña", async () => {
+    let emitRemoteActivation: (() => void) | null = null;
+    const expectedBaseUpdatedAt = "2024-04-01T10:00:00.000Z";
+
+    vi.mocked(subscribeToListTabSyncEvents).mockImplementation(
+      ({ onListActivated }) => {
+        emitRemoteActivation = onListActivated;
+        return vi.fn();
+      },
+    );
+
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (input !== "/api/lists/autosave" || init?.method !== "PUT") {
+        return {
+          ok: true,
+          json: async () => null,
+        };
+      }
+
+      const parsedBody = JSON.parse(String(init.body)) as {
+        baseUpdatedAt?: string;
+      };
+
+      if (parsedBody.baseUpdatedAt !== expectedBaseUpdatedAt) {
+        return {
+          ok: false,
+          status: 409,
+          statusText: "Conflict",
+          text: async () =>
+            JSON.stringify({ remoteUpdatedAt: expectedBaseUpdatedAt }),
+          json: async () => null,
+        };
+      }
+
+      return {
+        ok: true,
+        json: async () => ({
+          id: "autosave-1",
+          title: "Lista sincronizada",
+          updatedAt: expectedBaseUpdatedAt,
+        }),
+      };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-remote",
+      listStatus: "DRAFT",
+      listTitle: "Borrador remoto",
+      items: [initialItems[0]],
+    });
+
+    expect(screen.getByText(initialItems[0].name)).toBeInTheDocument();
+
+    localStorage.setItem(
+      "lists.localDraftSync",
+      JSON.stringify({
+        baseUpdatedAt: expectedBaseUpdatedAt,
+        sourceTabId: "tab-a",
+      }),
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraftSync",
+          newValue: localStorage.getItem("lists.localDraftSync"),
+        }),
+      );
+      emitRemoteActivation?.();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(initialItems[0].name)).not.toBeInTheDocument();
+
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Lista tab B",
+        items: [
+          {
+            id: "item-tab-b",
+            kind: "catalog",
+            name: "Arroz redondo",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "item-tab-b",
+          },
+        ],
+        updatedAt: "2024-04-01T10:01:00.000Z",
+      }),
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.localDraft",
+          newValue: localStorage.getItem("lists.localDraft"),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Arroz redondo")).toBeInTheDocument();
+    });
+
+    await waitFor(
+      () => {
+        expect(fetchMock).toHaveBeenCalledWith(
+          "/api/lists/autosave",
+          expect.objectContaining({
+            method: "PUT",
+            body: expect.stringContaining(
+              `"baseUpdatedAt":"${expectedBaseUpdatedAt}"`,
+            ),
+          }),
+        );
+      },
+      { timeout: 3000 },
+    );
+
+    expect(
+      screen.queryByText(UI_TEXT.SHOPPING_LIST.AUTOSAVE_CONFLICT.PENDING_SYNC_MESSAGE),
+    ).not.toBeInTheDocument();
   });
 
   it("restaura el autosave remoto y muestra un toast si el local está vacío", async () => {
