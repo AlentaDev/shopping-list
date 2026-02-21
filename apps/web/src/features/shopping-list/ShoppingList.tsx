@@ -20,6 +20,7 @@ import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./services/listStatus";
 import {
   createListTabSyncSourceId,
+  publishListTabSyncEvent,
   subscribeToListTabSyncEvents,
 } from "@src/shared/services/tab-sync/listTabSyncContract";
 
@@ -298,20 +299,24 @@ const ShoppingList = ({
   const canEditTitle =
     listStatus === LIST_STATUS.LOCAL_DRAFT || listStatus === LIST_STATUS.DRAFT;
 
-  useEffect(() => {
-    const resetDraftAfterActivation = () => {
-      setItems([]);
-      setListId(null);
-      setListStatus(LIST_STATUS.LOCAL_DRAFT);
-      setListName("");
-      setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
-    };
+  const handleResetToEmptyLocalDraft = useCallback(() => {
+    setItems([]);
+    setListId(null);
+    setListStatus(LIST_STATUS.LOCAL_DRAFT);
+    setListName("");
+    setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
+    saveLocalDraft({
+      title: "",
+      items: [],
+    });
+  }, [setItems]);
 
+  useEffect(() => {
     return subscribeToListTabSyncEvents({
       sourceTabId,
-      onListActivated: resetDraftAfterActivation,
+      onListActivated: handleResetToEmptyLocalDraft,
     });
-  }, [setItems, sourceTabId]);
+  }, [handleResetToEmptyLocalDraft, sourceTabId]);
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
@@ -473,18 +478,6 @@ const ShoppingList = ({
       });
   };
 
-  const handleResetToEmptyLocalDraft = useCallback(() => {
-    setItems([]);
-    setListId(null);
-    setListStatus(LIST_STATUS.LOCAL_DRAFT);
-    setListName("");
-    setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
-    saveLocalDraft({
-      title: "",
-      items: [],
-    });
-  }, [setItems]);
-
   const handleTitleSubmit = useCallback((nextTitle: string) => {
     setListName(nextTitle);
     setListTitle(nextTitle);
@@ -499,6 +492,10 @@ const ShoppingList = ({
       await activateList({
         status: listStatus,
         listId,
+      });
+      publishListTabSyncEvent({
+        type: "list-activated",
+        sourceTabId,
       });
       showToast({
         message: UI_TEXT.LIST_MODAL.READY_TO_SHOP_TOAST_MESSAGE,
@@ -519,6 +516,7 @@ const ShoppingList = ({
     listStatus,
     listTitle,
     onAddMoreProducts,
+    sourceTabId,
     showToast,
   ]);
 

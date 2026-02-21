@@ -12,6 +12,7 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 import Toast from "@src/shared/components/toast/Toast";
 import {
   createListTabSyncSourceId,
+  publishListTabSyncEvent,
   subscribeToListTabSyncEvents,
 } from "@src/shared/services/tab-sync/listTabSyncContract";
 
@@ -23,6 +24,7 @@ vi.mock("@src/shared/services/tab-sync/listTabSyncContract", async () => {
   return {
     ...actual,
     createListTabSyncSourceId: vi.fn(() => "current-tab"),
+    publishListTabSyncEvent: vi.fn(),
     subscribeToListTabSyncEvents: vi.fn(() => vi.fn()),
   };
 });
@@ -478,6 +480,10 @@ describe("ShoppingList", () => {
     ).toBeGreaterThan(0);
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
+    expect(publishListTabSyncEvent).toHaveBeenCalledWith({
+      type: "list-activated",
+      sourceTabId: "current-tab",
+    });
 
     expect(
       screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
@@ -564,6 +570,14 @@ describe("ShoppingList", () => {
         screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
       ).toBeInTheDocument();
     });
+
+    const storedLocalDraft = localStorage.getItem("lists.localDraft");
+    expect(storedLocalDraft).not.toBeNull();
+    expect(JSON.parse(storedLocalDraft ?? "{}")).toEqual(
+      expect.objectContaining({
+        items: [],
+      }),
+    );
   });
 
   it("restaura el autosave remoto y muestra un toast si el local está vacío", async () => {
