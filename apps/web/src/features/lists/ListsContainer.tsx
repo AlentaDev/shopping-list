@@ -23,6 +23,17 @@ type ListsContainerProps = {
   hasDraftItems?: boolean;
 };
 
+const clearLocalDraftForAllTabs = () => {
+  localStorage.setItem(
+    "lists.localDraft",
+    JSON.stringify({
+      title: "",
+      items: [],
+      updatedAt: new Date().toISOString(),
+    }),
+  );
+};
+
 const ListsContainer = ({
   onOpenList,
   onStartOpenList,
@@ -82,6 +93,7 @@ const ListsContainer = ({
     try {
       if (action === "activate") {
         await activateList(list.id);
+        clearLocalDraftForAllTabs();
         publishListTabSyncEvent({
           type: "list-activated",
           sourceTabId,

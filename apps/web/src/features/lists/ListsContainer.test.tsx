@@ -208,4 +208,78 @@ describe("ListsContainer", () => {
       expect.anything(),
     );
   });
+
+  it("al activar una lista limpia el borrador local para sincronizar otras pestañas", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "draft-1",
+                title: "Compra semanal",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: null,
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.DRAFT,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/draft-1/activate" && init?.method === "PATCH") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-1",
+            status: LIST_STATUS.ACTIVE,
+          }),
+        };
+      }
+
+      return {
+        ok: false,
+        json: async () => ({}),
+      };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Compra semanal",
+        items: [{ id: "item-1", kind: "catalog", name: "Leche", qty: 2 }],
+      }),
+    );
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/draft-1/activate",
+        expect.objectContaining({ method: "PATCH" }),
+      );
+    });
+
+    const storedDraft = localStorage.getItem("lists.localDraft");
+    expect(storedDraft).toBeTruthy();
+
+    expect(JSON.parse(storedDraft ?? "{}")).toMatchObject({
+      title: "",
+      items: [],
+    });
+  });
+
 });
