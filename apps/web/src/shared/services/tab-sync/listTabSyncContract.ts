@@ -1,5 +1,5 @@
 export type ListTabSyncEvent = {
-  type: "list-activated";
+  type: "list-activated" | "list-deleted";
   timestamp: number;
   sourceTabId: string;
 };
@@ -23,6 +23,7 @@ type PublishListTabSyncEventInput = {
 type SubscribeToListTabSyncEventsInput = {
   sourceTabId: string;
   onListActivated: () => void;
+  onListDeleted?: () => void;
 };
 
 export const parseListTabSyncEvent = (
@@ -32,7 +33,7 @@ export const parseListTabSyncEvent = (
     const parsed = JSON.parse(value) as Partial<ListTabSyncEvent>;
 
     if (
-      parsed.type !== "list-activated" ||
+      (parsed.type !== "list-activated" && parsed.type !== "list-deleted") ||
       typeof parsed.sourceTabId !== "string" ||
       typeof parsed.timestamp !== "number"
     ) {
@@ -72,6 +73,7 @@ export const publishListTabSyncEvent = ({
 export const subscribeToListTabSyncEvents = ({
   sourceTabId,
   onListActivated,
+  onListDeleted,
 }: SubscribeToListTabSyncEventsInput): (() => void) => {
   const onSyncEvent = (event: ListTabSyncEvent) => {
     if (event.sourceTabId === sourceTabId) {
@@ -80,6 +82,11 @@ export const subscribeToListTabSyncEvents = ({
 
     if (event.type === "list-activated") {
       onListActivated();
+      return;
+    }
+
+    if (event.type === "list-deleted") {
+      onListDeleted?.();
     }
   };
 

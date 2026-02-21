@@ -81,6 +81,7 @@ const ListsContainer = ({
     return subscribeToListTabSyncEvents({
       sourceTabId,
       onListActivated: refreshLists,
+      onListDeleted: refreshLists,
     });
   }, [sourceTabId]);
 
@@ -163,6 +164,10 @@ const ListsContainer = ({
 
       if (action === "delete") {
         await deleteList(list.id);
+        publishListTabSyncEvent({
+          type: "list-deleted",
+          sourceTabId,
+        });
         refreshLists();
         handleCloseDetail();
         return;

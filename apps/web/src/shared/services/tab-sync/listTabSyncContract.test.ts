@@ -37,21 +37,24 @@ describe("listTabSyncContract", () => {
     dateNowSpy.mockRestore();
   });
 
-  it("parsea eventos list-activated válidos", () => {
-    const parsed = parseListTabSyncEvent(
-      JSON.stringify({
-        type: "list-activated",
+  it.each(["list-activated", "list-deleted"] as const)(
+    "parsea eventos %s válidos",
+    (type) => {
+      const parsed = parseListTabSyncEvent(
+        JSON.stringify({
+          type,
+          sourceTabId: "tab-a",
+          timestamp: 123,
+        }),
+      );
+
+      expect(parsed).toEqual({
+        type,
         sourceTabId: "tab-a",
         timestamp: 123,
-      }),
-    );
-
-    expect(parsed).toEqual({
-      type: "list-activated",
-      sourceTabId: "tab-a",
-      timestamp: 123,
-    });
-  });
+      });
+    },
+  );
 
   it("retorna null para payload inválido", () => {
     expect(parseListTabSyncEvent("{invalid")).toBeNull();
@@ -106,6 +109,38 @@ describe("listTabSyncContract", () => {
     );
 
     expect(onListActivated).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    globalThis.BroadcastChannel = originalBroadcastChannel;
+  });
+
+  it("ejecuta onListDeleted al recibir un list-deleted remoto", () => {
+    const originalBroadcastChannel = globalThis.BroadcastChannel;
+    globalThis.BroadcastChannel = undefined as never;
+    const onListActivated = vi.fn();
+    const onListDeleted = vi.fn();
+
+    const unsubscribe = subscribeToListTabSyncEvents({
+      sourceTabId: "tab-a",
+      onListActivated,
+      onListDeleted,
+    });
+
+    const syncEvent: ListTabSyncEvent = {
+      type: "list-deleted",
+      sourceTabId: "tab-b",
+      timestamp: Date.now(),
+    };
+
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: LIST_TAB_SYNC_KEY,
+        newValue: JSON.stringify(syncEvent),
+      }),
+    );
+
+    expect(onListDeleted).toHaveBeenCalledTimes(1);
+    expect(onListActivated).not.toHaveBeenCalled();
 
     unsubscribe();
     globalThis.BroadcastChannel = originalBroadcastChannel;
