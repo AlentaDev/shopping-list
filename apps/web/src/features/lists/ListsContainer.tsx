@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@src/context/useToast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import type { ListActionKey } from "./services/listActions";
@@ -10,6 +10,11 @@ import {
   reuseList,
   getListDetail,
 } from "./services/ListsService";
+import {
+  createListTabId,
+  publishListTabSyncEvent,
+  subscribeToListTabSyncEvents,
+} from "./services/ListTabSyncService";
 import Lists from "./Lists";
 
 type ListsContainerProps = {
@@ -18,12 +23,46 @@ type ListsContainerProps = {
   hasDraftItems?: boolean;
 };
 
+const isEmptyLocalDraftPayload = (value: string | null): boolean => {
+  if (!value) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as {
+      title?: unknown;
+      items?: unknown;
+    };
+
+    return (
+      typeof parsed.title === "string" &&
+      parsed.title.trim() === "" &&
+      Array.isArray(parsed.items) &&
+      parsed.items.length === 0
+    );
+  } catch {
+    return false;
+  }
+};
+
+const clearLocalDraftForAllTabs = () => {
+  localStorage.setItem(
+    "lists.localDraft",
+    JSON.stringify({
+      title: "",
+      items: [],
+      updatedAt: new Date().toISOString(),
+    }),
+  );
+};
+
 const ListsContainer = ({
   onOpenList,
   onStartOpenList,
   hasDraftItems = false,
 }: ListsContainerProps) => {
   const { showToast } = useToast();
+  const sourceTabId = useMemo(() => createListTabId(), []);
   const [actionLoading, setActionLoading] = useState<{
     listId: string;
     action: ListActionKey;
@@ -37,6 +76,33 @@ const ListsContainer = ({
   const refreshLists = () => {
     setRefreshToken((prev) => prev + 1);
   };
+
+  useEffect(() => {
+    return subscribeToListTabSyncEvents({
+      sourceTabId,
+      onListActivated: refreshLists,
+    });
+  }, [sourceTabId]);
+
+  useEffect(() => {
+    const onStorage = (storageEvent: StorageEvent) => {
+      if (storageEvent.key !== "lists.localDraft") {
+        return;
+      }
+
+      if (!isEmptyLocalDraftPayload(storageEvent.newValue)) {
+        return;
+      }
+
+      refreshLists();
+    };
+
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   const handleCloseDetail = () => {
     setSelectedList(null);
@@ -69,6 +135,11 @@ const ListsContainer = ({
     try {
       if (action === "activate") {
         await activateList(list.id);
+        clearLocalDraftForAllTabs();
+        publishListTabSyncEvent({
+          type: "list-activated",
+          sourceTabId,
+        });
         refreshLists();
         return;
       }

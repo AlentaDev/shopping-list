@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ShoppingList from "./ShoppingList";
 import { ListProvider } from "@src/context/ListContext";
@@ -510,6 +510,43 @@ describe("ShoppingList", () => {
         "Añade algo del catálogo y empezamos a llenar la cesta.",
       ),
     ).toBeInTheDocument();
+  });
+
+
+  it("sincroniza reseteo de borrador cuando otra pestaña activa una lista", async () => {
+    const originalBroadcastChannel = globalThis.BroadcastChannel;
+    globalThis.BroadcastChannel = undefined as never;
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-remote",
+      listStatus: "DRAFT",
+      items: [initialItems[0]],
+      listTitle: "Borrador remoto",
+    });
+
+    expect(screen.getByText(initialItems[0].name)).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "lists.tabSync",
+          newValue: JSON.stringify({
+            type: "list-activated",
+            sourceTabId: "other-tab",
+            timestamp: Date.now(),
+          }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
+      ).toBeInTheDocument();
+    });
+
+    globalThis.BroadcastChannel = originalBroadcastChannel;
   });
 
   it("restaura el autosave remoto y muestra un toast si el local está vacío", async () => {
