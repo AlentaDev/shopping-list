@@ -11,6 +11,7 @@ type ListModalProps = {
   children: ReactNode;
   title?: string;
   onTitleSubmit?: (title: string) => void;
+  footerContent?: ReactNode;
 };
 
 const TITLE_SCHEMA = z.object({
@@ -30,6 +31,7 @@ const ListModal = ({
   children,
   title,
   onTitleSubmit,
+  footerContent,
 }: ListModalProps) => {
   const titleId = useId();
   const previousOverflow = useRef<string | null>(null);
@@ -192,6 +194,7 @@ const ListModal = ({
           </div>
           <div className="px-6 py-4">{children}</div>
           <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 px-6 py-4">
+            {footerContent}
             {onReadyToShop ? (
               <div className="flex flex-col items-end gap-2 text-right">
                 <button

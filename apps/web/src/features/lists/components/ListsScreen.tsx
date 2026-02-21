@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import ListModal from "@src/features/shopping-list/components/ListModal";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { formatPrice } from "@src/shared/utils/formatPrice";
 import {
@@ -93,7 +94,7 @@ const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps
   return (
     <div
       data-testid={`list-card-${list.id}`}
-      className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+      className={`flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between ${canOpenDetail ? "cursor-pointer" : ""}`}
       role={canOpenDetail ? "button" : undefined}
       tabIndex={canOpenDetail ? 0 : undefined}
       onClick={handleCardClick}
@@ -323,30 +324,12 @@ const ListsScreen = ({
 
       {renderListsContent()}
       {selectedList && selectedListDetail ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
-          >
-            <h3 className="text-lg font-semibold text-slate-900">
-              {selectedListDetail.title}
-            </h3>
-            <ul className="mt-4 space-y-2">
-              {selectedListDetail.items.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between text-sm text-slate-700"
-                >
-                  <span>{`${item.name} x${item.qty}`}</span>
-                  <span>{formatPrice((item.price ?? 0) * item.qty)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-right text-sm font-semibold text-slate-800">
-              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
-            </p>
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
+        <ListModal
+          isOpen
+          onClose={onCloseDetail}
+          title={selectedListDetail.title}
+          footerContent={
+            <>
               {detailActions.map((action) => (
                 <ListActionButton
                   key={action}
@@ -363,9 +346,24 @@ const ListsScreen = ({
               >
                 {UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <ul className="mt-4 space-y-2">
+            {selectedListDetail.items.map((item) => (
+              <li
+                key={item.id}
+                className="flex items-center justify-between text-sm text-slate-700"
+              >
+                <span>{`${item.name} x${item.qty}`}</span>
+                <span>{formatPrice((item.price ?? 0) * item.qty)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-right text-sm font-semibold text-slate-800">
+            {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
+          </p>
+        </ListModal>
       ) : null}
       {pendingDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">

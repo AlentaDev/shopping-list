@@ -96,6 +96,10 @@ describe("ListsScreen", () => {
     );
 
     const activeCard = screen.getByTestId("list-card-active-1");
+    const draftCard = screen.getByTestId("list-card-draft-1");
+
+    expect(activeCard).toHaveClass("cursor-pointer");
+    expect(draftCard).not.toHaveClass("cursor-pointer");
 
     expect(
       within(activeCard as HTMLElement).getByRole("button", {
@@ -131,8 +135,15 @@ describe("ListsScreen", () => {
 
     const dialog = screen.getByRole("dialog");
     expect(dialog).toBeInTheDocument();
+    expect(screen.getByTestId("list-modal-backdrop")).toBeInTheDocument();
     expect(within(dialog).getByText("Leche x2")).toBeInTheDocument();
     expect(within(dialog).getAllByText(/2,40\s*€/)).toHaveLength(2);
+    expect(
+      within(dialog).queryByRole("button", { name: "Añadir más productos" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Finalizar lista" }),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(
       within(dialog).getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT }),
