@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@src/context/useToast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import type { ListActionKey } from "./services/listActions";
@@ -10,6 +10,11 @@ import {
   reuseList,
   getListDetail,
 } from "./services/ListsService";
+import {
+  createListTabId,
+  publishListTabSyncEvent,
+  subscribeToListTabSyncEvents,
+} from "./services/ListTabSyncService";
 import Lists from "./Lists";
 
 type ListsContainerProps = {
@@ -24,6 +29,7 @@ const ListsContainer = ({
   hasDraftItems = false,
 }: ListsContainerProps) => {
   const { showToast } = useToast();
+  const sourceTabId = useMemo(() => createListTabId(), []);
   const [actionLoading, setActionLoading] = useState<{
     listId: string;
     action: ListActionKey;
@@ -37,6 +43,13 @@ const ListsContainer = ({
   const refreshLists = () => {
     setRefreshToken((prev) => prev + 1);
   };
+
+  useEffect(() => {
+    return subscribeToListTabSyncEvents({
+      sourceTabId,
+      onListActivated: refreshLists,
+    });
+  }, [sourceTabId]);
 
   const handleCloseDetail = () => {
     setSelectedList(null);
@@ -69,6 +82,10 @@ const ListsContainer = ({
     try {
       if (action === "activate") {
         await activateList(list.id);
+        publishListTabSyncEvent({
+          type: "list-activated",
+          sourceTabId,
+        });
         refreshLists();
         return;
       }
