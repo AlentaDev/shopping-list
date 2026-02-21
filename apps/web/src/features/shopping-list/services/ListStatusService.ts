@@ -4,6 +4,7 @@ import { canActivateList } from "./listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
 import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
+import { saveAlignedEmptyLocalDraft } from "./AutosaveService";
 import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 
 const LISTS_ENDPOINT = "/api/lists";
@@ -61,6 +62,7 @@ export const activateList = async ({
 
   if (statusSummary.autosaveDraft?.updatedAt) {
     saveAutosaveSyncMetadata(statusSummary.autosaveDraft.updatedAt);
+    saveAlignedEmptyLocalDraft(statusSummary.autosaveDraft.updatedAt);
   }
 
   return statusSummary;

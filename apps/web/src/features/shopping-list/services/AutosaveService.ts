@@ -97,11 +97,14 @@ const updateAutosaveSyncMetadata = (
   });
 };
 
-export const saveLocalDraft = (draft: AutosaveDraftInput): void => {
+const saveLocalDraftWithUpdatedAt = (
+  draft: AutosaveDraftInput,
+  updatedAt: string,
+): void => {
   try {
     const storedDraft: LocalDraft = {
       ...draft,
-      updatedAt: new Date().toISOString(),
+      updatedAt,
     };
     localStorage.setItem(
       LOCAL_DRAFT_STORAGE_KEY,
@@ -110,6 +113,20 @@ export const saveLocalDraft = (draft: AutosaveDraftInput): void => {
   } catch (error) {
     console.warn("No se pudo guardar el borrador local.", error);
   }
+};
+
+export const saveLocalDraft = (draft: AutosaveDraftInput): void => {
+  saveLocalDraftWithUpdatedAt(draft, new Date().toISOString());
+};
+
+export const saveAlignedEmptyLocalDraft = (updatedAt: string): void => {
+  saveLocalDraftWithUpdatedAt(
+    {
+      title: "",
+      items: [],
+    },
+    updatedAt,
+  );
 };
 
 export const loadLocalDraft = (): LocalDraft | null => {
