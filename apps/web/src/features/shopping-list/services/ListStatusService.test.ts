@@ -66,6 +66,13 @@ describe("ListStatusService", () => {
         baseUpdatedAt: "2024-02-01T10:00:00.000Z",
       }),
     );
+    expect(localStorage.getItem("lists.localDraft")).toBe(
+      JSON.stringify({
+        title: "",
+        items: [],
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      }),
+    );
 
     expect(syncLocalDraftToRemoteList).toHaveBeenCalledTimes(1);
     expect(fetchWithAuthMock).toHaveBeenCalledWith(
@@ -144,6 +151,51 @@ describe("ListStatusService", () => {
 
     expect(localStorage.getItem("lists.localDraftSync")).toBe(
       JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
+    );
+  });
+
+  it("no pisa metadata ni borrador local cuando autosaveDraft no incluye updatedAt", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "list-4",
+        status: LIST_STATUS.ACTIVE,
+        updatedAt: "2024-02-04T10:00:00.000Z",
+        autosaveDraft: {
+          id: "draft-4",
+          title: "Tu Lista",
+        },
+      }),
+    }));
+
+    localStorage.setItem(
+      "lists.localDraftSync",
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
+    );
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Persistir",
+        items: [],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    );
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await activateList({ status: LIST_STATUS.DRAFT, listId: "list-4" });
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T00:00:00.000Z" }),
+    );
+    expect(localStorage.getItem("lists.localDraft")).toBe(
+      JSON.stringify({
+        title: "Persistir",
+        items: [],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
     );
   });
 

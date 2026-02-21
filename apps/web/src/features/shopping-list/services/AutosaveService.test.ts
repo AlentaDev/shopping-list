@@ -6,6 +6,7 @@ import {
   loadLocalDraft,
   putAutosave,
   saveLocalDraft,
+  saveAlignedEmptyLocalDraft,
   deleteAutosave,
 } from "./AutosaveService";
 import type { AutosaveDraftInput } from "./types";
@@ -54,6 +55,19 @@ describe("AutosaveService", () => {
 
     expect(parsed).toMatchObject(SAMPLE_DRAFT);
     expect(parsed.updatedAt).toEqual(expect.any(String));
+  });
+
+
+  it("guarda un borrador local vacío alineado con updatedAt remoto", () => {
+    saveAlignedEmptyLocalDraft("2024-02-01T10:00:00.000Z");
+
+    expect(localStorage.getItem("lists.localDraft")).toBe(
+      JSON.stringify({
+        title: "",
+        items: [],
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      })
+    );
   });
 
   it("recupera el borrador local desde localStorage", () => {
