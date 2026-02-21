@@ -79,7 +79,10 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
 
 export async function getCurrentUser(): Promise<AuthUser> {
   try {
-    const response = await fetchWithAuth("/api/users/me");
+    const response = await fetchWithAuth("/api/users/me", {
+      method: "GET",
+      retryOnAuth401: true,
+    });
 
     if (!response.ok) {
       await throwAuthErrorFromResponse(response, "Unable to load current user");

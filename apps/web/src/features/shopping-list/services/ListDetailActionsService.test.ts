@@ -38,6 +38,7 @@ describe("ListDetailActionsService", () => {
       "/api/lists/list-1/editing",
       expect.objectContaining({
         method: "PATCH",
+        retryOnAuth401: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isEditing: true }),
       }),
@@ -94,7 +95,7 @@ describe("ListDetailActionsService", () => {
 
     expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-2/reuse",
-      expect.objectContaining({ method: "POST" }),
+      expect.objectContaining({ method: "POST", retryOnAuth401: true }),
     );
   });
 
@@ -112,7 +113,7 @@ describe("ListDetailActionsService", () => {
 
     expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-3",
-      expect.objectContaining({ method: "DELETE" }),
+      expect.objectContaining({ method: "DELETE", retryOnAuth401: true }),
     );
   });
 

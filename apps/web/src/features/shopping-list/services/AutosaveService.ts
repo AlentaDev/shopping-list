@@ -145,7 +145,10 @@ export const clearLocalDraft = (): void => {
 export const getAutosave = async (
   options: AutosaveServiceOptions = {}
 ): Promise<AutosaveDraft | null> => {
-  const response = await fetchWithAuth(AUTOSAVE_ENDPOINT);
+  const response = await fetchWithAuth(AUTOSAVE_ENDPOINT, {
+    method: "GET",
+    retryOnAuth401: true,
+  });
 
   if (response.status === 204) {
     return null;
@@ -289,6 +292,7 @@ export const deleteAutosave = async (
 ): Promise<void> => {
   const response = await fetchWithAuth(AUTOSAVE_ENDPOINT, {
     method: "DELETE",
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {

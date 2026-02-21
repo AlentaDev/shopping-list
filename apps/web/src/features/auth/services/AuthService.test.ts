@@ -198,7 +198,12 @@ describe("AuthService", () => {
 
     await expect(getCurrentUser()).resolves.toEqual(RESPONSE_PAYLOAD);
 
-    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/users/me");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/users/me",
+      expect.objectContaining({
+        method: "GET",
+      }),
+    );
   });
 
 
