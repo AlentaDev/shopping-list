@@ -326,6 +326,202 @@ describe("ShoppingList", () => {
     ).toBeNull();
   });
 
+  it("permite mostrar control para editar título en sesión de edición ACTIVE", () => {
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-title-1",
+      listStatus: "ACTIVE",
+      listTitle: "Lista activa",
+      items: [],
+      isEditing: true,
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.BUTTON_LABEL,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("persiste título editado en borrador local y autosave remoto durante edición ACTIVE", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      if (typeof input === "string" && input === "/api/lists/autosave") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista activa renombrada",
+            updatedAt: "2024-04-10T10:00:00.000Z",
+          }),
+        };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-title-2",
+      listStatus: "ACTIVE",
+      listTitle: "Lista activa",
+      items: [initialItems[0]],
+      isEditing: true,
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.BUTTON_LABEL,
+      }),
+    );
+
+    await user.clear(
+      screen.getByRole("textbox", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL,
+      }),
+    );
+    await user.type(
+      screen.getByRole("textbox", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL,
+      }),
+      "Lista activa renombrada",
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.SUBMIT_LABEL,
+      }),
+    );
+
+    await waitFor(() => {
+      const stored = localStorage.getItem("lists.localDraft");
+      expect(stored).not.toBeNull();
+      expect(JSON.parse(stored ?? "{}")).toEqual(
+        expect.objectContaining({
+          title: "Lista activa renombrada",
+        }),
+      );
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/autosave",
+        expect.objectContaining({
+          method: "PUT",
+          body: expect.stringContaining('"title":"Lista activa renombrada"'),
+        }),
+      );
+    });
+  });
+
+  it("rehidrata el título editado tras recarga y finish-edit usa ese título", async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (typeof input === "string" && input === "/api/lists/autosave") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Lista editada persistida",
+            updatedAt: "2024-04-10T10:00:00.000Z",
+          }),
+        };
+      }
+
+      if (typeof input === "string" && input.endsWith("/finish-edit")) {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (
+        typeof input === "string" &&
+        input === "/api/lists/autosave" &&
+        init?.method === "DELETE"
+      ) {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const firstRender = renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-title-3",
+      listStatus: "ACTIVE",
+      listTitle: "Lista activa",
+      items: [initialItems[0]],
+      isEditing: true,
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.BUTTON_LABEL,
+      }),
+    );
+    await user.clear(
+      screen.getByRole("textbox", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL,
+      }),
+    );
+    await user.type(
+      screen.getByRole("textbox", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL,
+      }),
+      "Lista editada persistida",
+    );
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.LIST_MODAL.EDIT_TITLE.SUBMIT_LABEL,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Lista editada persistida" }),
+      ).toBeInTheDocument();
+    });
+
+    firstRender.unmount();
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-title-3",
+      listStatus: "ACTIVE",
+      listTitle: "Lista activa",
+      items: [initialItems[0]],
+      isEditing: true,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Lista editada persistida" }),
+      ).toBeInTheDocument();
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Lista editada persistida" }),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("finaliza edición activa, navega a catálogo y muestra toast", async () => {
     const onClose = vi.fn();
     const onAddMoreProducts = vi.fn();
