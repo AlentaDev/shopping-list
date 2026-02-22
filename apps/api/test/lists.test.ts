@@ -648,6 +648,87 @@ describe("lists endpoints", () => {
     );
   });
 
+  it("PUT /api/lists/autosave keeps isEditing=true while active edit session is in progress", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", cookie)
+      .send({ isEditing: true });
+
+    const autosaveSeed = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveSeed.status).toBe(200);
+    expect(autosaveSeed.body).toEqual(
+      expect.objectContaining({
+        isEditing: true,
+      }),
+    );
+
+    const putAutosaveResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly editing",
+        baseUpdatedAt: autosaveSeed.body.updatedAt,
+        items: [
+          {
+            id: "autosave-item-1",
+            kind: "catalog",
+            name: "Whole Milk",
+            qty: 2,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "123",
+          },
+        ],
+      });
+
+    expect(putAutosaveResponse.status).toBe(200);
+
+    const autosaveResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveResponse.status).toBe(200);
+    expect(autosaveResponse.body).toEqual(
+      expect.objectContaining({
+        title: "Weekly editing",
+        isEditing: true,
+      }),
+    );
+
+    const detailResponse = await request(app)
+      .get(`/api/lists/${listResponse.body.id}`)
+      .set("Cookie", cookie);
+
+    expect(detailResponse.status).toBe(200);
+    expect(detailResponse.body).toEqual(
+      expect.objectContaining({
+        status: "ACTIVE",
+        isEditing: true,
+      }),
+    );
+  });
+
 
 
   it("POST /api/lists/:id/finish-edit applies autosave draft to active list", async () => {

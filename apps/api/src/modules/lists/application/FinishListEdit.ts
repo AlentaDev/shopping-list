@@ -64,6 +64,7 @@ export class FinishListEdit {
 
     latestAutosave.title = "";
     latestAutosave.items = [];
+    latestAutosave.isEditing = false;
     latestAutosave.updatedAt = now;
 
     await this.listRepository.save(list);

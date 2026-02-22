@@ -115,6 +115,7 @@ describe("ShoppingList", () => {
     listStatus,
     listTitle,
     isLoading,
+    isEditing = false,
     onClose = vi.fn(),
     onAddMoreProducts = vi.fn(),
   }: {
@@ -124,6 +125,7 @@ describe("ShoppingList", () => {
     listStatus?: "LOCAL_DRAFT" | "DRAFT" | "ACTIVE" | "COMPLETED";
     listTitle?: string;
     isLoading?: boolean;
+    isEditing?: boolean;
     onClose?: () => void;
     onAddMoreProducts?: () => void;
   } = {}) =>
@@ -144,6 +146,7 @@ describe("ShoppingList", () => {
               initialListStatus={listStatus}
               initialListTitle={listTitle}
               isLoading={isLoading}
+              initialIsEditing={isEditing}
             />
             <Toast />
           </ListProvider>
@@ -288,6 +291,145 @@ describe("ShoppingList", () => {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.EDIT,
       }),
     ).toBeNull();
+  });
+
+
+  it("muestra acciones explícitas al editar una lista activa", () => {
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-1",
+      listStatus: "ACTIVE",
+      listTitle: "Lista en edición",
+      items: [],
+      isEditing: true,
+    });
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
+      }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", {
+        name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
+      }),
+    ).toBeNull();
+  });
+
+  it("finaliza edición activa, navega a catálogo y muestra toast", async () => {
+    const onClose = vi.fn();
+    const onAddMoreProducts = vi.fn();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/finish-edit")) {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (typeof input === "string" && input === "/api/lists/autosave" && init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (typeof input === "string" && input === "/api/lists/autosave") {
+        return { ok: true, json: async () => null };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-2",
+      listStatus: "ACTIVE",
+      listTitle: "Lista semanal",
+      items: [],
+      isEditing: true,
+      onClose,
+      onAddMoreProducts,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH,
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-edit-2/finish-edit",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText(UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE),
+    ).toBeInTheDocument();
+  });
+
+  it("cancela edición activa descartando borrador y cerrando modal", async () => {
+    const onClose = vi.fn();
+    const onAddMoreProducts = vi.fn();
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/editing") && init?.method === "PATCH") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (typeof input === "string" && input === "/api/lists/autosave" && init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (typeof input === "string" && input === "/api/lists/autosave") {
+        return { ok: true, json: async () => null };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "list-edit-3",
+      listStatus: "ACTIVE",
+      listTitle: "Lista semanal",
+      items: [],
+      isEditing: true,
+      onClose,
+      onAddMoreProducts,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL,
+      }),
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/list-edit-3/editing",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ isEditing: false }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
   });
 
   it("muestra acciones de detalle para listas completadas", () => {

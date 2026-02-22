@@ -50,6 +50,43 @@ export const startListEditing = async (
   await response.json();
 };
 
+
+export const cancelListEditing = async (
+  listId: string,
+  options: ListActionOptions = {},
+): Promise<void> => {
+  const response = await fetchWithAuth(`/api/lists/${listId}/editing`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ isEditing: false }),
+    retryOnAuth401: true,
+  });
+
+  if (!response.ok) {
+    throw new Error(options.errorMessage ?? "Unable to cancel list editing.");
+  }
+
+  await response.json();
+};
+
+export const finishListEditing = async (
+  listId: string,
+  options: ListActionOptions = {},
+): Promise<void> => {
+  const response = await fetchWithAuth(`/api/lists/${listId}/finish-edit`, {
+    method: "POST",
+    retryOnAuth401: true,
+  });
+
+  if (!response.ok) {
+    throw new Error(options.errorMessage ?? "Unable to finish list editing.");
+  }
+
+  await response.json();
+};
+
 export const reuseList = async (
   listId: string,
   options: ListActionOptions = {},
