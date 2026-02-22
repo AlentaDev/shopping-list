@@ -7,8 +7,20 @@ import ListsContainer from "./ListsContainer";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 
-const { showToastMock } = vi.hoisted(() => ({
+const {
+  showToastMock,
+  publishListTabSyncEventMock,
+  subscribeToListTabSyncEventsMock,
+} = vi.hoisted(() => ({
   showToastMock: vi.fn(),
+  publishListTabSyncEventMock: vi.fn(),
+  subscribeToListTabSyncEventsMock: vi.fn(() => vi.fn()),
+}));
+
+vi.mock("@src/shared/services/tab-sync/listTabSyncContract", () => ({
+  createListTabSyncSourceId: () => "tab-test",
+  publishListTabSyncEvent: publishListTabSyncEventMock,
+  subscribeToListTabSyncEvents: subscribeToListTabSyncEventsMock,
 }));
 
 vi.mock("@src/context/useToast", () => ({
@@ -23,6 +35,18 @@ type FetchResponse = {
 };
 
 describe("ListsContainer", () => {
+  it("se suscribe a sincronización de activación y borrado de listas", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    expect(subscribeToListTabSyncEventsMock).toHaveBeenCalledWith({
+      sourceTabId: "tab-test",
+      onListActivated: expect.any(Function),
+      onListDeleted: expect.any(Function),
+    });
+  });
+
   it("bloquea la activación de listas vacías y muestra feedback", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -335,6 +359,63 @@ describe("ListsContainer", () => {
       );
 
       expect(listFetchCalls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it("publica sincronización al borrar una lista desde acciones", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "completed-1",
+                title: "Navidad",
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 4,
+                isEditing: false,
+                status: LIST_STATUS.COMPLETED,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-1" && init?.method === "DELETE") {
+        return {
+          ok: true,
+          json: async () => ({ ok: true }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    publishListTabSyncEventMock.mockClear();
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.DELETE }));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.DELETE_CONFIRMATION.CONFIRM_LABEL }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/completed-1",
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+
+    expect(publishListTabSyncEventMock).toHaveBeenCalledWith({
+      type: "list-deleted",
+      sourceTabId: "tab-test",
     });
   });
 
