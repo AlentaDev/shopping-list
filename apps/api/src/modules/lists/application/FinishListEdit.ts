@@ -112,11 +112,11 @@ const cloneItemForList = (
   }
 
   return {
-    id: item.id,
+    id: buildScopedCatalogItemId(listId, item.id),
     listId,
     kind: "catalog",
     source: item.source,
-    sourceProductId: item.sourceProductId,
+    sourceProductId: normalizeProductId(item.sourceProductId),
     nameSnapshot: item.nameSnapshot,
     thumbnailSnapshot: item.thumbnailSnapshot,
     priceSnapshot: item.priceSnapshot,
@@ -129,4 +129,15 @@ const cloneItemForList = (
     createdAt: now,
     updatedAt: now,
   };
+};
+
+const buildScopedCatalogItemId = (listId: string, itemId: string): string => {
+  const normalizedItemId = normalizeProductId(itemId);
+
+  return `${listId}:${normalizedItemId}`;
+};
+
+const normalizeProductId = (value: string): string => {
+  const segments = value.split(":");
+  return segments[segments.length - 1] ?? value;
 };

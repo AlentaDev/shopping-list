@@ -92,7 +92,7 @@ describe("FinishListEdit", () => {
       isEditing: false,
       items: [
         expect.objectContaining({
-          id: "item-2",
+          id: "list-1:item-2",
           listId: "list-1",
           checked: false,
         }),
@@ -248,5 +248,65 @@ describe("FinishListEdit", () => {
     await expect(
       useCase.execute({ userId: "user-2", listId: "list-1" }),
     ).rejects.toBeInstanceOf(ListForbiddenError);
+  });
+
+  it("normalizes nested autosave ids when applying draft to active list", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+
+    await listRepository.save({
+      id: "active-1",
+      ownerUserId: "user-1",
+      title: "Activa",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "autosave-1",
+      ownerUserId: "user-1",
+      title: "Activa editada",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      items: [
+        {
+          id: "autosave-1:active-1:4241",
+          listId: "autosave-1",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "active-1:4241",
+          nameSnapshot: "Aceite",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    await useCase.execute({ userId: "user-1", listId: "active-1" });
+
+    const updatedActive = await listRepository.findById("active-1");
+    expect(updatedActive?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "active-1:4241",
+        sourceProductId: "4241",
+      }),
+    );
   });
 });

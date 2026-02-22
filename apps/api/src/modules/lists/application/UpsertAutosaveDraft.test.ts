@@ -246,4 +246,35 @@ describe("UpsertAutosaveDraft", () => {
       }),
     );
   });
+
+  it("does not keep chaining prefixes when autosave receives an already-prefixed item id", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "autosave-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [
+        {
+          id: "active-1:4241",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "active-1:4241",
+        },
+      ],
+    });
+
+    const savedList = await listRepository.findById("autosave-1");
+    expect(savedList?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "autosave-1:4241",
+        sourceProductId: "4241",
+      }),
+    );
+  });
 });
