@@ -158,6 +158,26 @@ describe("ListsScreen", () => {
     expect(onCloseDetail).toHaveBeenCalled();
   });
 
+  it("muestra estado de carga en acción editar del modal detalle", () => {
+    render(
+      <ListsScreen
+        lists={sampleLists}
+        onAction={vi.fn()}
+        selectedList={sampleLists[0]}
+        selectedListDetail={selectedDetail}
+        onOpenDetail={vi.fn()}
+        onCloseDetail={vi.fn()}
+        actionLoading={{ listId: "active-1", action: "edit" }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: UI_TEXT.LISTS.ACTIONS_LOADING.edit,
+      }),
+    ).toBeDisabled();
+  });
+
   it("muestra acciones reuse/delete/close para completadas", async () => {
     const onAction = vi.fn();
 

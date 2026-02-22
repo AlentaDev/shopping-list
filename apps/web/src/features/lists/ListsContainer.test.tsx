@@ -418,5 +418,163 @@ describe("ListsContainer", () => {
       sourceTabId: "tab-test",
     });
   });
+  it("en editar lista activa ejecuta start-edit antes de abrir el modal", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "active-edit-1",
+                title: "Despensa",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: "2024-02-01T10:30:00.000Z",
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.ACTIVE,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-edit-1") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "active-edit-1",
+            title: "Despensa",
+            updatedAt: "2024-02-01T11:00:00.000Z",
+            activatedAt: "2024-02-01T10:30:00.000Z",
+            itemCount: 2,
+            isEditing: true,
+            status: LIST_STATUS.ACTIVE,
+            items: [],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-edit-1/editing" && init?.method === "PATCH") {
+        return {
+          ok: true,
+          json: async () => ({ ok: true }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onOpenList = vi.fn();
+    const onStartOpenList = vi.fn();
+
+    render(
+      <ListsContainer onOpenList={onOpenList} onStartOpenList={onStartOpenList} />,
+    );
+
+    await userEvent.click(await screen.findByText("Despensa"));
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT }),
+    );
+
+    await waitFor(() => {
+      expect(onOpenList).toHaveBeenCalledTimes(1);
+    });
+
+    const calls = fetchMock.mock.calls.map(([input]) =>
+      typeof input === "string" ? input : input.url,
+    );
+
+    expect(calls.indexOf("/api/lists/active-edit-1/editing")).toBeLessThan(
+      calls.lastIndexOf("/api/lists/active-edit-1"),
+    );
+
+    expect(onStartOpenList).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "active-edit-1" }),
+    );
+    expect(onOpenList).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "active-edit-1", isEditing: true }),
+    );
+  });
+
+  it("muestra toast de error cuando falla start-edit", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "active-edit-error",
+                title: "Despensa",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: "2024-02-01T10:30:00.000Z",
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.ACTIVE,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-edit-error") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "active-edit-error",
+            title: "Despensa",
+            updatedAt: "2024-02-01T11:00:00.000Z",
+            activatedAt: "2024-02-01T10:30:00.000Z",
+            itemCount: 2,
+            isEditing: false,
+            status: LIST_STATUS.ACTIVE,
+            items: [],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/active-edit-error/editing" && init?.method === "PATCH") {
+        return {
+          ok: false,
+          json: async () => ({ ok: false }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    showToastMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} />);
+
+    await userEvent.click(await screen.findByText("Despensa"));
+    await userEvent.click(
+      screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT }),
+    );
+
+    await waitFor(() => {
+      expect(showToastMock).toHaveBeenCalledWith({
+        message: "Unable to start list editing.",
+        productName: "Despensa",
+      });
+    });
+
+    expect(onOpenList).not.toHaveBeenCalled();
+  });
+
 
 });

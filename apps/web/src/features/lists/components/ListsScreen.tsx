@@ -369,15 +369,25 @@ const ListsScreen = ({
           title={selectedListDetail.title}
           footerContent={
             <>
-              {detailActions.map((action) => (
-                <ListActionButton
-                  key={action}
-                  action={action}
-                  label={ACTION_LABELS[action]}
-                  isDisabled={false}
-                  onClick={() => handleAction(selectedList, action)}
-                />
-              ))}
+              {detailActions.map((action) => {
+                const isLoadingAction =
+                  actionLoading?.listId === selectedList.id &&
+                  actionLoading.action === action;
+
+                return (
+                  <ListActionButton
+                    key={action}
+                    action={action}
+                    label={
+                      isLoadingAction
+                        ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
+                        : ACTION_LABELS[action]
+                    }
+                    isDisabled={actionLoading?.listId === selectedList.id}
+                    onClick={() => handleAction(selectedList, action)}
+                  />
+                );
+              })}
               <button
                 type="button"
                 onClick={onCloseDetail}
