@@ -29,6 +29,10 @@ cantidades, eliminar líneas y ver el total.
 - Al marcar "Finalizar lista", la lista pasa a `ACTIVE` reutilizando el mismo registro.
 - Tras finalizar, se limpia el autosave del `DRAFT` actual y se crea un `DRAFT` vacío para mantener el borrador único.
 - El borrado de productos es directo (sin modal de confirmación) y muestra toast.
+- Durante edición de una lista `ACTIVE`, `isEditing=true` aplica al conjunto (`ACTIVE` + `DRAFT` de edición).
+- Si hay recarga (`reload/refresh`) durante esa edición activa, la app debe restaurar ese contexto y continuar en modo edición.
+- Esa restauración no puede degradar a un flujo de `DRAFT` normal desacoplado de la `ACTIVE`.
+- En edición activa: **Cancelar** desactiva `isEditing` y limpia `DRAFT`; **Finalizar** aplica cambios a `ACTIVE`, desactiva `isEditing` y limpia `DRAFT`.
 
 ### Decision rationale
 
