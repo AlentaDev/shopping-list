@@ -137,6 +137,49 @@ describe("UpsertAutosaveDraft", () => {
     expect(savedOlder?.title).toBe("Older autosave");
   });
 
+  it("preserves isEditing=true when updating an autosave draft from active editing", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "list-new" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+    const latestDraft: List = {
+      id: "autosave-editing",
+      ownerUserId: "user-1",
+      title: "Autosave editing",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T11:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T11:10:00.000Z"),
+    };
+
+    await listRepository.save(latestDraft);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave editing updated",
+      baseUpdatedAt: "2024-01-01T11:10:00.000Z",
+      items: [
+        {
+          id: "item-3",
+          kind: "manual",
+          name: "Huevos",
+          qty: 1,
+          checked: false,
+        },
+      ],
+    });
+
+    const persistedDraft = await listRepository.findById("autosave-editing");
+    expect(persistedDraft).toEqual(
+      expect.objectContaining({
+        isEditing: true,
+        status: "DRAFT",
+      }),
+    );
+  });
+
   it("throws conflict when baseUpdatedAt does not match latest autosave version", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: () => "list-new" };

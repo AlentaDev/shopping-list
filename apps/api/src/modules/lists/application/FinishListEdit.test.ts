@@ -42,7 +42,7 @@ describe("FinishListEdit", () => {
       isAutosaveDraft: true,
       status: "DRAFT",
       activatedAt: undefined,
-      isEditing: false,
+      isEditing: true,
       items: [
         {
           id: "item-2",
@@ -103,6 +103,7 @@ describe("FinishListEdit", () => {
       id: "draft-1",
       isAutosaveDraft: true,
       title: "",
+      isEditing: false,
       items: [],
       updatedAt: now,
     });

@@ -9,13 +9,18 @@ import { useToast } from "@src/context/useToast";
 import type { ShoppingListItem } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useAutosaveDraft } from "./services/useAutosaveDraft";
-import { saveLocalDraft } from "./services/AutosaveService";
+import { deleteAutosave, saveLocalDraft } from "./services/AutosaveService";
 import { useAutosaveRecovery } from "./services/useAutosaveRecovery";
 import type { AutosaveDraftInput } from "./services/types";
 import { activateList } from "./services/ListStatusService";
 import { deleteListItem } from "./services/ListItemsService";
 import { adaptShoppingListItems } from "./services/adapters/ShoppingListItemAdapter";
-import { deleteList, reuseList } from "./services/ListDetailActionsService";
+import {
+  cancelListEditing,
+  deleteList,
+  finishListEditing,
+  reuseList,
+} from "./services/ListDetailActionsService";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./services/listStatus";
 import {
@@ -31,6 +36,7 @@ type ShoppingListProps = {
   initialListId?: string | null;
   initialListStatus?: ListStatus;
   initialListTitle?: string;
+  initialIsEditing?: boolean;
   isLoading?: boolean;
 };
 
@@ -268,6 +274,7 @@ const ShoppingList = ({
   initialListTitle,
   isLoading = false,
   onAddMoreProducts,
+  initialIsEditing = false,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { showToast } = useToast();
@@ -284,6 +291,8 @@ const ShoppingList = ({
   const [detailActionLoading, setDetailActionLoading] = useState<
     "reuse" | "delete" | null
   >(null);
+  const [isEditingSession, setIsEditingSession] =
+    useState(initialIsEditing);
   const [pendingRemoval, setPendingRemoval] =
     useState<ShoppingListItem | null>(null);
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
@@ -293,8 +302,12 @@ const ShoppingList = ({
   const draftTitle = listName.trim() || listTitle;
   const isActiveList = listStatus === LIST_STATUS.ACTIVE;
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
+  const isActiveEditingSession =
+    Boolean(authUser) && Boolean(listId) && isActiveList && isEditingSession;
   const showDetailActions =
-    Boolean(authUser) && Boolean(listId) && (isActiveList || isCompletedList);
+    Boolean(authUser) &&
+    Boolean(listId) &&
+    (isCompletedList || (isActiveList && !isEditingSession));
   const isActionsDisabled = isLoading || detailActionLoading !== null;
   const canEditTitle =
     listStatus === LIST_STATUS.LOCAL_DRAFT || listStatus === LIST_STATUS.DRAFT;
@@ -317,6 +330,10 @@ const ShoppingList = ({
       onListActivated: handleResetToEmptyLocalDraft,
     });
   }, [handleResetToEmptyLocalDraft, sourceTabId]);
+
+  useEffect(() => {
+    setIsEditingSession(initialIsEditing);
+  }, [initialIsEditing]);
 
   const handleRehydrate = useCallback(
     (draft: AutosaveDraftInput) => {
@@ -483,6 +500,50 @@ const ShoppingList = ({
     setListTitle(nextTitle);
   }, []);
 
+  const handleFinishEditing = useCallback(async () => {
+    if (!listId || !isActiveEditingSession) {
+      return;
+    }
+
+    try {
+      await finishListEditing(listId);
+      await deleteAutosave();
+      setIsEditingSession(false);
+      showToast({
+        message: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE,
+        productName: listTitle,
+        thumbnail: null,
+      });
+      handleClose();
+      onAddMoreProducts?.();
+    } catch (error) {
+      console.warn("No se pudo finalizar la edición de la lista.", error);
+    }
+  }, [
+    handleClose,
+    isActiveEditingSession,
+    listId,
+    listTitle,
+    onAddMoreProducts,
+    showToast,
+  ]);
+
+  const handleCancelEditing = useCallback(async () => {
+    if (!listId || !isActiveEditingSession) {
+      return;
+    }
+
+    try {
+      await cancelListEditing(listId);
+      await deleteAutosave();
+      setIsEditingSession(false);
+      handleClose();
+      onAddMoreProducts?.();
+    } catch (error) {
+      console.warn("No se pudo cancelar la edición de la lista.", error);
+    }
+  }, [handleClose, isActiveEditingSession, listId, onAddMoreProducts]);
+
   const handleReadyToShop = useCallback(async () => {
     if (!authUser || !canActivateList(listStatus)) {
       return;
@@ -527,8 +588,29 @@ const ShoppingList = ({
       title={listTitle}
       onTitleSubmit={canEditTitle ? handleTitleSubmit : undefined}
       onReadyToShop={canShowReadyToShop ? handleReadyToShop : undefined}
+      hideDefaultReadyToShopAction={isActiveEditingSession}
       itemCount={sortedItems.length}
       isReadyToShopDisabled={isReadyToShopDisabled}
+      footerContent={
+        isActiveEditingSession ? (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleCancelEditing}
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+            >
+              {UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL}
+            </button>
+            <button
+              type="button"
+              onClick={handleFinishEditing}
+              className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            >
+              {UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH}
+            </button>
+          </div>
+        ) : null
+      }
     >
       {hasPendingConflict ? (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">

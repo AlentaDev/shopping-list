@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
 import {
+  cancelListEditing,
   deleteList,
+  finishListEditing,
   reuseList,
   startListEditing,
 } from "./ListDetailActionsService";
@@ -117,6 +119,47 @@ describe("ListDetailActionsService", () => {
     );
   });
 
+  it("finaliza la edición activa aplicando el borrador", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({}),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(finishListEditing("list-4")).resolves.toBeUndefined();
+
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/lists/list-4/finish-edit",
+      expect.objectContaining({ method: "POST", retryOnAuth401: true }),
+    );
+  });
+
+  it("cancela la edición activa descartando borrador", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({}),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(cancelListEditing("list-5")).resolves.toBeUndefined();
+
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/lists/list-5/editing",
+      expect.objectContaining({
+        method: "PATCH",
+        retryOnAuth401: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isEditing: false }),
+      }),
+    );
+  });
+
   it("lanza un error si la edición remota falla", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -160,5 +203,35 @@ describe("ListDetailActionsService", () => {
     await expect(
       deleteList("list-11", { errorMessage: "No delete" }),
     ).rejects.toThrow("No delete");
+  });
+
+  it("lanza un error si finalizar edición remota falla", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(
+      finishListEditing("list-12", { errorMessage: "No finish" }),
+    ).rejects.toThrow("No finish");
+  });
+
+  it("lanza un error si cancelar edición remota falla", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: false,
+      json: async () => ({}),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(
+      cancelListEditing("list-13", { errorMessage: "No cancel" }),
+    ).rejects.toThrow("No cancel");
   });
 });
