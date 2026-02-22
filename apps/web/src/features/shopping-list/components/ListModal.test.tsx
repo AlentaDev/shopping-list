@@ -166,6 +166,37 @@ describe("ListModal", () => {
   });
 
 
+
+  it("prioriza acciones explícitas de edición activa en el footer", () => {
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        footerContent={
+          <>
+            <button type="button">Finalizar edición</button>
+            <button type="button">Cancelar edición</button>
+          </>
+        }
+        onReadyToShop={vi.fn()}
+        hideDefaultReadyToShopAction
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Finalizar edición" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cancelar edición" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Finalizar lista" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renderiza acciones personalizadas en el footer", () => {
     render(
       <ListModal

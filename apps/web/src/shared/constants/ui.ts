@@ -147,6 +147,12 @@ export const UI_TEXT = {
       REUSE: "Reusando...",
       DELETE: "Borrando...",
     },
+    EDITING_ACTIONS: {
+      FINISH: "Finalizar edición",
+      CANCEL: "Cancelar edición",
+      FINISH_TOAST_MESSAGE:
+        "Ya puedes usar tu lista en el móvil para hacer tu compra sin olvidarte nada.",
+    },
     DELETE_LIST_CONFIRMATION: {
       TITLE: DELETE_LIST_TITLE,
       MESSAGE: DELETE_LIST_MESSAGE,

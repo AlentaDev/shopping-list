@@ -28,6 +28,7 @@ export const AppShell = () => {
   const [currentListStatus, setCurrentListStatus] =
     useState<ShoppingListStatus>(LIST_STATUS.LOCAL_DRAFT);
   const [isListLoading, setIsListLoading] = useState(false);
+  const [currentListIsEditing, setCurrentListIsEditing] = useState(false);
   const [currentListTitle, setCurrentListTitle] = useState<string>(
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
@@ -114,6 +115,7 @@ export const AppShell = () => {
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
     setIsListLoading(false);
+    setCurrentListIsEditing(list.isEditing);
     setIsCartOpen(true);
   };
 
@@ -122,6 +124,7 @@ export const AppShell = () => {
     setCurrentListStatus(resolveShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
     setIsListLoading(true);
+    setCurrentListIsEditing(list.isEditing);
     setIsCartOpen(true);
   };
 
@@ -173,6 +176,7 @@ export const AppShell = () => {
         onClose={() => {
           setIsCartOpen(false);
           setIsListLoading(false);
+          setCurrentListIsEditing(false);
         }}
         onAddMoreProducts={() => {
           if (currentPath !== CATALOG_PATH) {
@@ -182,6 +186,7 @@ export const AppShell = () => {
         initialListId={currentListId}
         initialListStatus={currentListStatus}
         initialListTitle={currentListTitle}
+        initialIsEditing={currentListIsEditing}
         isLoading={isListLoading}
       />
       <Toast />
