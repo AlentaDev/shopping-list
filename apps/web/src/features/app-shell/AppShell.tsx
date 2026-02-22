@@ -176,7 +176,6 @@ export const AppShell = () => {
         onClose={() => {
           setIsCartOpen(false);
           setIsListLoading(false);
-          setCurrentListIsEditing(false);
         }}
         onAddMoreProducts={() => {
           if (currentPath !== CATALOG_PATH) {
