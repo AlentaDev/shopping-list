@@ -107,8 +107,33 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 - Se crea un **DRAFT paralelo editable** con el contenido actual de la lista activa.
 - Si ya existía `DRAFT`, se reemplaza (tras el aviso). El `DRAFT` único puede quedar vacío cuando se descarta.
 - En móvil, una lista activa en edición se muestra solo lectura con aviso fijo.
+
+##### Semántica canónica de `isEditing` (edición activa)
+
+Durante una edición iniciada sobre una lista `ACTIVE`, `isEditing=true` aplica de forma conjunta a:
+
+- la lista `ACTIVE` origen, y
+- el `DRAFT` que contiene los cambios de esa edición.
+
+Esta combinación representa una sesión de edición activa (no un flujo de borrador normal desacoplado de la lista `ACTIVE`).
+
+##### Refresh / reload durante edición activa
+
+- Tras recargar la app con una edición activa en curso, se debe restaurar el modo edición.
+- La UI debe recuperar el contexto de la lista `ACTIVE` en edición.
+- No debe degradar a un flujo de `DRAFT` plano sin vínculo con la `ACTIVE`.
+
 - Si el usuario cancela la edición, el `DRAFT` se reinicia a vacío y se vuelve a `isEditing=false` (sin eliminar la entidad draft).
 - Si el usuario termina la edición, `POST /api/lists/:id/finish-edit` aplica el DRAFT a la lista activa y el `DRAFT` se reinicia a vacío (sin eliminar la entidad draft).
+
+##### Semántica finish / cancel (ACTIVE y DRAFT)
+
+- **ACTIVE en edición (`isEditing=true`) + DRAFT de edición**
+  - **Cancelar:** `PATCH /api/lists/:id/editing` desactiva edición (`isEditing=false`) y limpia el `DRAFT`.
+  - **Finalizar:** `POST /api/lists/:id/finish-edit` aplica cambios en `ACTIVE`, desactiva edición (`isEditing=false`) y limpia el `DRAFT`.
+- **DRAFT normal (autosave, sin ACTIVE en edición)**
+  - Se mantiene como borrador persistente reutilizable.
+  - `DELETE /api/lists/autosave` limpia contenido, sin eliminar la entidad `DRAFT`.
 
 ### Historial (listado)
 

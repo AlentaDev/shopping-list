@@ -118,6 +118,17 @@ Ejemplo conciso de recuperación (reuse/edit):
     2. Con `baseUpdatedAt` desfasado, la API devuelve `409` con `error=autosave_version_conflict` y `remoteUpdatedAt`.
     3. Tras un `409`, una lectura `GET /api/lists/autosave` confirma que el contenido remoto no fue sobreescrito por el payload en conflicto.
 
+## Nota breve: ciclo de edición activa persistido
+
+Cuando una lista `ACTIVE` entra en edición, `isEditing=true` representa un estado de sesión compartido entre la propia `ACTIVE` y su `DRAFT` de trabajo.
+
+Reglas de contrato:
+
+- Tras `reload/refresh`, el cliente debe restaurar esa sesión de edición activa (no degradar a flujo de `DRAFT` normal).
+- `POST /api/lists/:id/finish-edit`: aplica cambios a `ACTIVE`, desactiva edición y limpia contenido del `DRAFT`.
+- `PATCH /api/lists/:id/editing` (cancelación): desactiva edición y limpia contenido del `DRAFT`.
+- En ambos casos, la entidad `DRAFT` se conserva según la política de draft único persistente.
+
 ## Endpoints
 
 ### POST /api/lists
