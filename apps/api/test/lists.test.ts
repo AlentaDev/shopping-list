@@ -561,6 +561,95 @@ describe("lists endpoints", () => {
     expect(itemResponse.body.id).toBeDefined();
   });
 
+  it("PATCH /api/lists/:id/editing returns 403 for other user", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const ownerCookie = await loginUser(app, defaultUser);
+    const otherCookie = await loginUser(app, {
+      name: "Bob",
+      email: "bob-editing@example.com",
+      password: "Password12!A",
+      postalCode: "54321",
+      fingerprint: "device-2",
+    });
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", ownerCookie)
+      .send({ title: "Weekly" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", ownerCookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", ownerCookie)
+      .send({ status: "ACTIVE" });
+
+    const response = await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", otherCookie)
+      .send({ isEditing: true });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toEqual({ error: "forbidden" });
+  });
+
+  it("PATCH /api/lists/:id/editing creates autosave draft when missing and keeps state persisted", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    await request(app).delete("/api/lists/autosave").set("Cookie", cookie);
+
+    const response = await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", cookie)
+      .send({ isEditing: true });
+
+    expect(response.status).toBe(200);
+
+    const autosaveResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveResponse.status).toBe(200);
+    expect(autosaveResponse.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        isEditing: true,
+      }),
+    );
+
+    const detailResponse = await request(app)
+      .get(`/api/lists/${listResponse.body.id}`)
+      .set("Cookie", cookie);
+
+    expect(detailResponse.status).toBe(200);
+    expect(detailResponse.body).toEqual(
+      expect.objectContaining({
+        isEditing: true,
+      }),
+    );
+  });
+
+
+
   it("POST /api/lists/:id/finish-edit applies autosave draft to active list", async () => {
     const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
@@ -645,6 +734,7 @@ describe("lists endpoints", () => {
     expect(autosaveResponse.body).toEqual({
       id: expect.any(String),
       title: "",
+      isEditing: false,
       items: [],
       updatedAt: expect.any(String),
     });
