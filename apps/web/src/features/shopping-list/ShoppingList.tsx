@@ -310,7 +310,9 @@ const ShoppingList = ({
     (isCompletedList || (isActiveList && !isEditingSession));
   const isActionsDisabled = isLoading || detailActionLoading !== null;
   const canEditTitle =
-    listStatus === LIST_STATUS.LOCAL_DRAFT || listStatus === LIST_STATUS.DRAFT;
+    listStatus === LIST_STATUS.LOCAL_DRAFT ||
+    listStatus === LIST_STATUS.DRAFT ||
+    isActiveEditingSession;
 
   const handleResetToEmptyLocalDraft = useCallback(() => {
     setItems([]);
