@@ -1,5 +1,12 @@
+export type ListTabSyncEventType =
+  | "list-activated"
+  | "list-deleted"
+  | "editing-started"
+  | "editing-finished"
+  | "editing-cancelled";
+
 export type ListTabSyncEvent = {
-  type: "list-activated" | "list-deleted";
+  type: ListTabSyncEventType;
   timestamp: number;
   sourceTabId: string;
 };
@@ -24,7 +31,18 @@ type SubscribeToListTabSyncEventsInput = {
   sourceTabId: string;
   onListActivated: () => void;
   onListDeleted?: () => void;
+  onEditingStarted?: () => void;
+  onEditingFinished?: () => void;
+  onEditingCancelled?: () => void;
 };
+
+const LIST_TAB_SYNC_EVENT_TYPES: ListTabSyncEventType[] = [
+  "list-activated",
+  "list-deleted",
+  "editing-started",
+  "editing-finished",
+  "editing-cancelled",
+];
 
 export const parseListTabSyncEvent = (
   value: string,
@@ -33,7 +51,7 @@ export const parseListTabSyncEvent = (
     const parsed = JSON.parse(value) as Partial<ListTabSyncEvent>;
 
     if (
-      (parsed.type !== "list-activated" && parsed.type !== "list-deleted") ||
+      !LIST_TAB_SYNC_EVENT_TYPES.includes(parsed.type as ListTabSyncEventType) ||
       typeof parsed.sourceTabId !== "string" ||
       typeof parsed.timestamp !== "number"
     ) {
@@ -44,7 +62,7 @@ export const parseListTabSyncEvent = (
       type: parsed.type,
       sourceTabId: parsed.sourceTabId,
       timestamp: parsed.timestamp,
-    };
+    } as ListTabSyncEvent;
   } catch {
     return null;
   }
@@ -74,6 +92,9 @@ export const subscribeToListTabSyncEvents = ({
   sourceTabId,
   onListActivated,
   onListDeleted,
+  onEditingStarted,
+  onEditingFinished,
+  onEditingCancelled,
 }: SubscribeToListTabSyncEventsInput): (() => void) => {
   const onSyncEvent = (event: ListTabSyncEvent) => {
     if (event.sourceTabId === sourceTabId) {
@@ -87,6 +108,21 @@ export const subscribeToListTabSyncEvents = ({
 
     if (event.type === "list-deleted") {
       onListDeleted?.();
+      return;
+    }
+
+    if (event.type === "editing-started") {
+      onEditingStarted?.();
+      return;
+    }
+
+    if (event.type === "editing-finished") {
+      onEditingFinished?.();
+      return;
+    }
+
+    if (event.type === "editing-cancelled") {
+      onEditingCancelled?.();
     }
   };
 

@@ -328,6 +328,15 @@ const ShoppingList = ({
     return subscribeToListTabSyncEvents({
       sourceTabId,
       onListActivated: handleResetToEmptyLocalDraft,
+      onEditingStarted: () => {
+        setIsEditingSession(true);
+      },
+      onEditingFinished: () => {
+        setIsEditingSession(false);
+      },
+      onEditingCancelled: () => {
+        setIsEditingSession(false);
+      },
     });
   }, [handleResetToEmptyLocalDraft, sourceTabId]);
 
@@ -509,6 +518,10 @@ const ShoppingList = ({
       await finishListEditing(listId);
       await deleteAutosave();
       setIsEditingSession(false);
+      publishListTabSyncEvent({
+        type: "editing-finished",
+        sourceTabId,
+      });
       showToast({
         message: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE,
         productName: listTitle,
@@ -537,6 +550,10 @@ const ShoppingList = ({
       await cancelListEditing(listId);
       await deleteAutosave();
       setIsEditingSession(false);
+      publishListTabSyncEvent({
+        type: "editing-cancelled",
+        sourceTabId,
+      });
       handleClose();
       onAddMoreProducts?.();
     } catch (error) {

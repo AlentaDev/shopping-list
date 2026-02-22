@@ -44,6 +44,9 @@ describe("ListsContainer", () => {
       sourceTabId: "tab-test",
       onListActivated: expect.any(Function),
       onListDeleted: expect.any(Function),
+      onEditingStarted: expect.any(Function),
+      onEditingFinished: expect.any(Function),
+      onEditingCancelled: expect.any(Function),
     });
   });
 
@@ -307,6 +310,60 @@ describe("ListsContainer", () => {
   });
 
 
+
+  it("refresca listas cuando otra pestaña inicia edición", async () => {
+    let emitEditingStarted: (() => void) | null = null;
+    subscribeToListTabSyncEventsMock.mockImplementation(({ onEditingStarted }) => {
+      emitEditingStarted = onEditingStarted;
+      return vi.fn();
+    });
+
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "active-remote-edit",
+                title: "Activa",
+                updatedAt: "2024-02-01T11:00:00.000Z",
+                activatedAt: "2024-02-01T10:30:00.000Z",
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.ACTIVE,
+              },
+            ],
+          }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ListsContainer onOpenList={vi.fn()} />);
+
+    await screen.findByText("Activa");
+
+    act(() => {
+      emitEditingStarted?.();
+    });
+
+    await waitFor(() => {
+      const listFetchCalls = fetchMock.mock.calls.filter(
+        ([input]) => (typeof input === "string" ? input : input.url) === "/api/lists",
+      );
+
+      expect(listFetchCalls.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   it("refresca listas al recibir sincronización de borrador vacío desde otra pestaña", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -498,6 +555,10 @@ describe("ListsContainer", () => {
     expect(onStartOpenList).toHaveBeenCalledWith(
       expect.objectContaining({ id: "active-edit-1" }),
     );
+    expect(publishListTabSyncEventMock).toHaveBeenCalledWith({
+      type: "editing-started",
+      sourceTabId: "tab-test",
+    });
     expect(onOpenList).toHaveBeenCalledWith(
       expect.objectContaining({ id: "active-edit-1", isEditing: true }),
     );
