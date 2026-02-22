@@ -37,7 +37,13 @@ describe("listTabSyncContract", () => {
     dateNowSpy.mockRestore();
   });
 
-  it.each(["list-activated", "list-deleted"] as const)(
+  it.each([
+    "list-activated",
+    "list-deleted",
+    "editing-started",
+    "editing-finished",
+    "editing-cancelled",
+  ] as const)(
     "parsea eventos %s válidos",
     (type) => {
       const parsed = parseListTabSyncEvent(
@@ -140,6 +146,58 @@ describe("listTabSyncContract", () => {
     );
 
     expect(onListDeleted).toHaveBeenCalledTimes(1);
+    expect(onListActivated).not.toHaveBeenCalled();
+
+    unsubscribe();
+    globalThis.BroadcastChannel = originalBroadcastChannel;
+  });
+
+  it("ejecuta callbacks de edición al recibir eventos remotos por storage", () => {
+    const originalBroadcastChannel = globalThis.BroadcastChannel;
+    globalThis.BroadcastChannel = undefined as never;
+    const onListActivated = vi.fn();
+    const onEditingStarted = vi.fn();
+    const onEditingFinished = vi.fn();
+    const onEditingCancelled = vi.fn();
+
+    const unsubscribe = subscribeToListTabSyncEvents({
+      sourceTabId: "tab-a",
+      onListActivated,
+      onEditingStarted,
+      onEditingFinished,
+      onEditingCancelled,
+    });
+
+    const events: ListTabSyncEvent[] = [
+      {
+        type: "editing-started",
+        sourceTabId: "tab-b",
+        timestamp: Date.now(),
+      },
+      {
+        type: "editing-finished",
+        sourceTabId: "tab-b",
+        timestamp: Date.now(),
+      },
+      {
+        type: "editing-cancelled",
+        sourceTabId: "tab-b",
+        timestamp: Date.now(),
+      },
+    ];
+
+    for (const syncEvent of events) {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: LIST_TAB_SYNC_KEY,
+          newValue: JSON.stringify(syncEvent),
+        }),
+      );
+    }
+
+    expect(onEditingStarted).toHaveBeenCalledTimes(1);
+    expect(onEditingFinished).toHaveBeenCalledTimes(1);
+    expect(onEditingCancelled).toHaveBeenCalledTimes(1);
     expect(onListActivated).not.toHaveBeenCalled();
 
     unsubscribe();

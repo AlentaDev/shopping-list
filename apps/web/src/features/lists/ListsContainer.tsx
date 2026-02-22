@@ -84,6 +84,9 @@ const ListsContainer = ({
       sourceTabId,
       onListActivated: refreshLists,
       onListDeleted: refreshLists,
+      onEditingStarted: refreshLists,
+      onEditingFinished: refreshLists,
+      onEditingCancelled: refreshLists,
     });
   }, [sourceTabId]);
 
@@ -182,6 +185,11 @@ const ListsContainer = ({
 
       if (action === "edit") {
         await startListEditing(list.id);
+        publishListTabSyncEvent({
+          type: "editing-started",
+          sourceTabId,
+        });
+        refreshLists();
         onStartOpenList?.(list);
         const listDetail = await getListDetail(list.id);
         onOpenList({

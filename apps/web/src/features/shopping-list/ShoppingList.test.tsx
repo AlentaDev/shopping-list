@@ -571,6 +571,10 @@ describe("ShoppingList", () => {
     expect(
       screen.getByText(UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE),
     ).toBeInTheDocument();
+    expect(publishListTabSyncEvent).toHaveBeenCalledWith({
+      type: "editing-finished",
+      sourceTabId: "current-tab",
+    });
   });
 
   it("cancela edición activa descartando borrador y cerrando modal", async () => {
@@ -626,6 +630,10 @@ describe("ShoppingList", () => {
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
+    expect(publishListTabSyncEvent).toHaveBeenCalledWith({
+      type: "editing-cancelled",
+      sourceTabId: "current-tab",
+    });
   });
 
   it("muestra acciones de detalle para listas completadas", () => {
@@ -900,6 +908,9 @@ describe("ShoppingList", () => {
     expect(subscribeToListTabSyncEvents).toHaveBeenCalledWith({
       sourceTabId: "current-tab",
       onListActivated: expect.any(Function),
+      onEditingStarted: expect.any(Function),
+      onEditingFinished: expect.any(Function),
+      onEditingCancelled: expect.any(Function),
     });
 
     act(() => {
@@ -919,6 +930,75 @@ describe("ShoppingList", () => {
         items: [],
       }),
     );
+  });
+
+
+  it("sale de modo edición al recibir editing-finished remoto", async () => {
+    let emitRemoteEditingFinished: (() => void) | null = null;
+
+    vi.mocked(subscribeToListTabSyncEvents).mockImplementation(
+      ({ onEditingFinished }) => {
+        emitRemoteEditingFinished = onEditingFinished;
+        return vi.fn();
+      },
+    );
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "active-editing",
+      listStatus: "ACTIVE",
+      isEditing: true,
+      items: [initialItems[0]],
+      listTitle: "Lista activa",
+    });
+
+    expect(
+      screen.getByRole("button", { name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      emitRemoteEditingFinished?.();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it("sale de modo edición al recibir editing-cancelled remoto", async () => {
+    let emitRemoteEditingCancelled: (() => void) | null = null;
+
+    vi.mocked(subscribeToListTabSyncEvents).mockImplementation(
+      ({ onEditingCancelled }) => {
+        emitRemoteEditingCancelled = onEditingCancelled;
+        return vi.fn();
+      },
+    );
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "active-editing",
+      listStatus: "ACTIVE",
+      isEditing: true,
+      items: [initialItems[0]],
+      listTitle: "Lista activa",
+    });
+
+    expect(
+      screen.getByRole("button", { name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH }),
+    ).toBeInTheDocument();
+
+    act(() => {
+      emitRemoteEditingCancelled?.();
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("evita conflicto stale en autosave tras activación remota desde otra pestaña", async () => {
