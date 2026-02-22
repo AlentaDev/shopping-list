@@ -72,6 +72,7 @@ describe("GetAutosaveDraft", () => {
     await expect(useCase.execute("user-1")).resolves.toEqual({
       id: "list-2",
       title: "Autosave latest",
+      isEditing: false,
       items: [],
       updatedAt: "2024-01-01T11:10:00.000Z",
     });
@@ -98,6 +99,34 @@ describe("GetAutosaveDraft", () => {
     await expect(useCase.execute("user-1")).resolves.toEqual({
       id: "list-1",
       title: "",
+      isEditing: false,
+      items: [],
+      updatedAt: "2024-01-01T10:01:00.000Z",
+    });
+  });
+
+  it("returns editing state from latest autosave draft", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new GetAutosaveDraft(listRepository);
+    const editingAutosave: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Autosave editing",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+
+    await listRepository.save(editingAutosave);
+
+    await expect(useCase.execute("user-1")).resolves.toEqual({
+      id: "list-1",
+      title: "Autosave editing",
+      isEditing: true,
       items: [],
       updatedAt: "2024-01-01T10:01:00.000Z",
     });

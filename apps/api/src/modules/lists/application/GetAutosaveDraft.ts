@@ -4,6 +4,7 @@ import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 type AutosaveDraft = {
   id: string;
   title: string;
+  isEditing: boolean;
   items: ListItemDto[];
   updatedAt: string;
 };
@@ -26,6 +27,7 @@ export class GetAutosaveDraft {
     return {
       id: latestAutosave.id,
       title: latestAutosave.title,
+      isEditing: latestAutosave.isEditing,
       items: latestAutosave.items.map((item) => toListItemDto(item)),
       updatedAt: latestAutosave.updatedAt.toISOString(),
     };

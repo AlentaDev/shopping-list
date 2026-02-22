@@ -55,6 +55,15 @@ describe("StartListEditing", () => {
       updatedAt: now,
     });
 
+    await expect(listRepository.listByOwner("user-1")).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          isAutosaveDraft: true,
+          isEditing: true,
+        }),
+      ]),
+    );
+
     vi.useRealTimers();
   });
 
@@ -149,5 +158,147 @@ describe("StartListEditing", () => {
     });
 
     vi.useRealTimers();
+  });
+
+  it("creates an autosave draft when starting editing and none exists", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new StartListEditing(listRepository);
+    const list: List = {
+      id: "active-list",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+
+    await listRepository.save(list);
+
+    await useCase.execute({
+      userId: "user-1",
+      listId: "active-list",
+      isEditing: true,
+    });
+
+    await expect(listRepository.listByOwner("user-1")).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: expect.any(String),
+          isAutosaveDraft: true,
+          isEditing: true,
+          status: "DRAFT",
+        }),
+      ]),
+    );
+  });
+
+
+  it("reuses the existing autosave draft instead of creating a new one", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new StartListEditing(listRepository);
+    const activeList: List = {
+      id: "active-list",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+    const existingDraft: List = {
+      id: "autosave-existing",
+      ownerUserId: "user-1",
+      title: "Autosave",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+
+    await listRepository.save(activeList);
+    await listRepository.save(existingDraft);
+
+    await useCase.execute({
+      userId: "user-1",
+      listId: "active-list",
+      isEditing: true,
+    });
+
+    const userDrafts = (await listRepository.listByOwner("user-1")).filter(
+      (list) => list.isAutosaveDraft,
+    );
+
+    expect(userDrafts).toHaveLength(1);
+    expect(userDrafts[0]).toMatchObject({
+      id: "autosave-existing",
+      isEditing: true,
+    });
+  });
+
+  it("keeps only the latest autosave draft while syncing editing state", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new StartListEditing(listRepository);
+    const activeList: List = {
+      id: "active-list",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+    const olderDraft: List = {
+      id: "autosave-old",
+      ownerUserId: "user-1",
+      title: "Old",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+    const latestDraft: List = {
+      id: "autosave-latest",
+      ownerUserId: "user-1",
+      title: "Latest",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:02:00.000Z"),
+    };
+
+    await listRepository.save(activeList);
+    await listRepository.save(olderDraft);
+    await listRepository.save(latestDraft);
+
+    await useCase.execute({
+      userId: "user-1",
+      listId: "active-list",
+      isEditing: true,
+    });
+
+    const userLists = await listRepository.listByOwner("user-1");
+    expect(userLists.find((list) => list.id === "autosave-old")).toBeUndefined();
+    expect(userLists.find((list) => list.id === "autosave-latest")).toMatchObject({
+      isEditing: true,
+    });
   });
 });
