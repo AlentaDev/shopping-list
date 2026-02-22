@@ -99,6 +99,27 @@ export const activateList = async (
   return adaptListStatusSummaryResponse(payload);
 };
 
+
+export const startListEditing = async (
+  listId: string,
+  options: ListsServiceOptions = {}
+): Promise<void> => {
+  const response = await fetchWithAuth(`/api/lists/${listId}/editing`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ isEditing: true }),
+    retryOnAuth401: true,
+  });
+
+  if (!response.ok) {
+    throw new Error(options.errorMessage ?? "Unable to start list editing.");
+  }
+
+  await response.json();
+};
+
 type CompleteListInput = {
   checkedItemIds: string[];
 };

@@ -8,6 +8,7 @@ import {
   reuseList,
   getListDetail,
   getLists,
+  startListEditing,
 } from "./ListsService";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -192,6 +193,29 @@ describe("ListsService", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: LIST_STATUS.ACTIVE }),
+      })
+    );
+  });
+
+  it("inicia edición de lista activa con PATCH", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({ ok: true }),
+    }));
+
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
+
+    await expect(startListEditing("list-8")).resolves.toBeUndefined();
+
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/lists/list-8/editing",
+      expect.objectContaining({
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isEditing: true }),
+        retryOnAuth401: true,
       })
     );
   });

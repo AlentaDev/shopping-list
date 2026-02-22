@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@src/context/useToast";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type { ListActionKey } from "./services/listActions";
 import type { ListDetail, ListSummary } from "./services/types";
 import {
@@ -9,6 +10,7 @@ import {
   deleteList,
   reuseList,
   getListDetail,
+  startListEditing,
 } from "./services/ListsService";
 import {
   createListTabSyncSourceId,
@@ -179,11 +181,25 @@ const ListsContainer = ({
       }
 
       if (action === "edit") {
+        await startListEditing(list.id);
         onStartOpenList?.(list);
         const listDetail = await getListDetail(list.id);
-        onOpenList(listDetail);
+        onOpenList({
+          ...listDetail,
+          status: LIST_STATUS.DRAFT,
+          isEditing: true,
+        });
         handleCloseDetail();
+        return;
       }
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : "No se pudo ejecutar la acción de lista.",
+        productName: list.title,
+      });
     } finally {
       setActionLoading(null);
     }
