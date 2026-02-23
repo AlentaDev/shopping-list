@@ -13,8 +13,7 @@ describe("ReuseList", () => {
       generate: vi
         .fn()
         .mockReturnValueOnce("list-2")
-        .mockReturnValueOnce("item-3")
-        .mockReturnValueOnce("item-4"),
+        .mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const list: List = {
@@ -84,7 +83,7 @@ describe("ReuseList", () => {
           updatedAt: fixedDate.toISOString(),
         },
         {
-          id: "item-4",
+          id: "list-2:sku-1",
           kind: "catalog",
           name: "Bread",
           qty: 2,
@@ -120,7 +119,7 @@ describe("ReuseList", () => {
           updatedAt: fixedDate,
         }),
         expect.objectContaining({
-          id: "item-4",
+          id: "list-2:sku-1",
           listId: "list-2",
           kind: "catalog",
           checked: false,
@@ -177,10 +176,7 @@ describe("ReuseList", () => {
   it("overwrites an existing draft when reusing a list", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = {
-      generate: vi
-        .fn()
-        .mockReturnValueOnce("item-3")
-        .mockReturnValueOnce("item-4"),
+      generate: vi.fn().mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const now = new Date("2024-01-05T10:00:00.000Z");
@@ -275,7 +271,7 @@ describe("ReuseList", () => {
           updatedAt: now.toISOString(),
         },
         {
-          id: "item-4",
+          id: "draft-1:sku-1",
           kind: "catalog",
           name: "Bread",
           qty: 2,
@@ -306,7 +302,7 @@ describe("ReuseList", () => {
           checked: false,
         }),
         expect.objectContaining({
-          id: "item-4",
+          id: "draft-1:sku-1",
           listId: "draft-1",
           checked: false,
         }),
@@ -315,7 +311,7 @@ describe("ReuseList", () => {
       updatedAt: now,
     });
 
-    expect(idGenerator.generate).toHaveBeenCalledTimes(2);
+    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
   });
@@ -384,7 +380,7 @@ describe("ReuseList", () => {
     await expect(listRepository.findById("autosave-1")).resolves.toMatchObject({
       id: "autosave-1",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       items: [
         expect.objectContaining({
           id: "item-3",
