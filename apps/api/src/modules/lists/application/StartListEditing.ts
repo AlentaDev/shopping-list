@@ -6,6 +6,7 @@ import {
 } from "./errors.js";
 import type { List, ListItem } from "../domain/list.js";
 import { buildDraftItemId, normalizeSourceProductId } from "./itemIdNormalization.js";
+import { ResetAutosaveDraft } from "./ResetAutosaveDraft.js";
 
 type StartListEditingInput = {
   userId: string;
@@ -56,16 +57,38 @@ export class StartListEditing {
             current.updatedAt > latest.updatedAt ? current : latest,
           );
 
-    latestAutosave.isEditing = input.isEditing;
-    latestAutosave.editingTargetListId = input.isEditing ? list.id : null;
-    latestAutosave.updatedAt = now;
+    if (!input.isEditing) {
+      await this.listRepository.save(list);
 
-    if (input.isEditing) {
-      latestAutosave.title = list.title;
-      latestAutosave.items = list.items.map((item) =>
-        cloneItemForDraft(item, latestAutosave.id),
-      );
+      if (autosaveDrafts.length === 0) {
+        await this.listRepository.save(latestAutosave);
+      }
+
+      const resetAutosaveDraft = new ResetAutosaveDraft(this.listRepository);
+      await resetAutosaveDraft.execute({
+        userId: input.userId,
+        targetDraftId: latestAutosave.id,
+      });
+
+      const cleanedAutosave = await this.listRepository.findById(latestAutosave.id);
+
+      return {
+        id: list.id,
+        isEditing: list.isEditing,
+        updatedAt: list.updatedAt.toISOString(),
+        autosaveUpdatedAt: (
+          cleanedAutosave?.updatedAt ?? now
+        ).toISOString(),
+      };
     }
+
+    latestAutosave.isEditing = true;
+    latestAutosave.editingTargetListId = list.id;
+    latestAutosave.updatedAt = now;
+    latestAutosave.title = list.title;
+    latestAutosave.items = list.items.map((item) =>
+      cloneItemForDraft(item, latestAutosave.id),
+    );
 
     await this.listRepository.save(list);
     await this.listRepository.save(latestAutosave);
