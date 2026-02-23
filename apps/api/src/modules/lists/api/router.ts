@@ -12,7 +12,7 @@ import { RemoveItem } from "../application/RemoveItem.js";
 import { UpdateItem } from "../application/UpdateItem.js";
 import { UpdateListStatus } from "../application/UpdateListStatus.js";
 import { GetAutosaveDraft } from "../application/GetAutosaveDraft.js";
-import { DiscardAutosaveDraft } from "../application/DiscardAutosaveDraft.js";
+import { ResetAutosaveDraft } from "../application/ResetAutosaveDraft.js";
 import { CompleteList } from "../application/CompleteList.js";
 import { ReuseList } from "../application/ReuseList.js";
 import { UpsertAutosaveDraft } from "../application/UpsertAutosaveDraft.js";
@@ -45,7 +45,7 @@ type ListsRouterDependencies = {
   startListEditing: StartListEditing;
   finishListEdit: FinishListEdit;
   getAutosaveDraft: GetAutosaveDraft;
-  discardAutosaveDraft: DiscardAutosaveDraft;
+  resetAutosaveDraft: ResetAutosaveDraft;
   upsertAutosaveDraft: UpsertAutosaveDraft;
   requireAuth: RequestHandler;
 };
@@ -119,7 +119,7 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
   router.delete("/autosave", async (req, res, next) => {
     try {
       const userId = getUserId(req);
-      await deps.discardAutosaveDraft.execute(userId);
+      await deps.resetAutosaveDraft.execute({ userId });
 
       res.status(204).end();
     } catch (error) {
