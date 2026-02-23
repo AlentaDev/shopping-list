@@ -29,7 +29,7 @@ const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
   qty: item.quantity,
   checked: false,
   source: "mercadona",
-  sourceProductId: item.id,
+  sourceProductId: item.sourceProductId ?? item.id,
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
 });

@@ -10,6 +10,7 @@ import { useAutosaveDraft } from "./useAutosaveDraft";
 
 const sampleItem: ListItem = {
   id: "item-1",
+  sourceProductId: "4706",
   name: "Leche",
   category: "Bebidas",
   thumbnail: null,
@@ -184,7 +185,7 @@ describe("useAutosaveDraft", () => {
           qty: 2,
           checked: false,
           source: "mercadona",
-          sourceProductId: "item-1",
+          sourceProductId: "4706",
           thumbnail: null,
           price: 1.5,
         },

@@ -90,6 +90,7 @@ describe("ListDetailActionsService", () => {
           thumbnail: "https://example.com/pan.png",
           price: 1.2,
           quantity: 2,
+          sourceProductId: "item-1",
         },
         {
           id: "",
@@ -98,6 +99,7 @@ describe("ListDetailActionsService", () => {
           thumbnail: null,
           price: null,
           quantity: 0,
+          sourceProductId: "",
         },
       ],
     });
