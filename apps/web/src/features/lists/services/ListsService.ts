@@ -84,6 +84,7 @@ export const reuseList = async (
 ): Promise<ListDetail> => {
   const response = await fetchWithAuth(`/api/lists/${listId}/reuse`, {
     method: "POST",
+    retryOnAuth401: true,
   });
 
   if (!response.ok) {
