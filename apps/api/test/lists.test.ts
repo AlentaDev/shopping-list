@@ -546,6 +546,7 @@ describe("lists endpoints", () => {
       id: listResponse.body.id,
       isEditing: true,
       updatedAt: expect.any(String),
+      autosaveUpdatedAt: expect.any(String),
     });
 
     const detailResponse = await request(app)

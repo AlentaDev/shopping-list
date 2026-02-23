@@ -16,6 +16,7 @@ type StartListEditingResult = {
   id: string;
   isEditing: boolean;
   updatedAt: string;
+  autosaveUpdatedAt: string;
 };
 
 export class StartListEditing {
@@ -74,6 +75,7 @@ export class StartListEditing {
       id: list.id,
       isEditing: list.isEditing,
       updatedAt: list.updatedAt.toISOString(),
+      autosaveUpdatedAt: latestAutosave.updatedAt.toISOString(),
     };
   }
 

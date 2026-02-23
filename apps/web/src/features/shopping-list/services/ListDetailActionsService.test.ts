@@ -32,6 +32,7 @@ describe("ListDetailActionsService", () => {
       ok: true,
       json: async () => ({
         updatedAt: "2024-01-01T10:00:00.000Z",
+        autosaveUpdatedAt: "2024-01-01T10:00:05.000Z",
       }),
     }));
 
@@ -50,7 +51,7 @@ describe("ListDetailActionsService", () => {
     );
 
     expect(localStorage.getItem("lists.localDraftSync")).toBe(
-      JSON.stringify({ baseUpdatedAt: "2024-01-01T10:00:00.000Z" }),
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T10:00:05.000Z" }),
     );
   });
 

@@ -48,10 +48,15 @@ export const startListEditing = async (
     throw new Error(options.errorMessage ?? "Unable to start list editing.");
   }
 
-  const payload = (await response.json()) as { updatedAt?: string };
+  const payload = (await response.json()) as {
+    updatedAt?: string;
+    autosaveUpdatedAt?: string;
+  };
 
-  if (payload.updatedAt) {
-    saveAutosaveSyncMetadata(payload.updatedAt);
+  const baseUpdatedAt = payload.autosaveUpdatedAt ?? payload.updatedAt;
+
+  if (baseUpdatedAt) {
+    saveAutosaveSyncMetadata(baseUpdatedAt);
   }
 };
 
