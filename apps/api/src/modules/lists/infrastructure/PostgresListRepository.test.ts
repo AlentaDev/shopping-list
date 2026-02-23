@@ -10,6 +10,7 @@ const baseList = {
   status: "DRAFT",
   activatedAt: new Date("2024-01-01T09:30:00.000Z"),
   isEditing: false,
+  editingTargetListId: null,
   createdAt: new Date("2024-01-01T10:00:00.000Z"),
   updatedAt: new Date("2024-01-02T10:00:00.000Z"),
 } as const;
@@ -72,6 +73,7 @@ describe("PostgresListRepository", () => {
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
               is_editing: baseList.isEditing,
+              editing_target_list_id: baseList.editingTargetListId,
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -122,6 +124,7 @@ describe("PostgresListRepository", () => {
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
               is_editing: baseList.isEditing,
+              editing_target_list_id: baseList.editingTargetListId,
               created_at: baseList.createdAt,
               updated_at: updatedAt,
             },
@@ -160,6 +163,7 @@ describe("PostgresListRepository", () => {
               is_autosave_draft: false,
               activated_at: baseList.activatedAt,
               is_editing: false,
+              editing_target_list_id: null,
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -171,6 +175,7 @@ describe("PostgresListRepository", () => {
               is_autosave_draft: false,
               activated_at: null,
               is_editing: true,
+              editing_target_list_id: null,
               created_at: baseList.createdAt,
               updated_at: baseList.updatedAt,
             },
@@ -230,6 +235,7 @@ describe("PostgresListRepository", () => {
         status: "ACTIVE",
         activatedAt: undefined,
         isEditing: true,
+        editingTargetListId: null,
         createdAt: baseList.createdAt,
         updatedAt: baseList.updatedAt,
         items: [
@@ -268,7 +274,7 @@ describe("PostgresListRepository", () => {
     expect(pool.query).toHaveBeenNthCalledWith(1, "BEGIN");
     expect(pool.query).toHaveBeenNthCalledWith(
       2,
-      "INSERT INTO lists (id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+      "INSERT INTO lists (id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, editing_target_list_id = EXCLUDED.editing_target_list_id, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
       [
         list.id,
         list.ownerUserId,
@@ -277,6 +283,7 @@ describe("PostgresListRepository", () => {
         list.isAutosaveDraft,
         list.activatedAt ?? null,
         list.isEditing,
+        list.editingTargetListId,
         list.createdAt,
         list.updatedAt,
       ],
