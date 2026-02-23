@@ -327,6 +327,32 @@ type AutosaveScheduler = {
   cancel: () => void;
 };
 
+const executeAutosaveWithConflictRecovery = async (
+  draft: AutosaveDraftInput,
+  options: {
+    sourceTabId?: string;
+  },
+): Promise<void> => {
+  try {
+    await putAutosave(draft, { sourceTabId: options.sourceTabId });
+  } catch (error) {
+    if (error instanceof AutosaveConflictError) {
+      try {
+        await putAutosave(draft, { sourceTabId: options.sourceTabId });
+        return;
+      } catch (retryError) {
+        console.warn(
+          "No se pudo reintentar autosave tras conflicto de versión.",
+          retryError,
+        );
+        return;
+      }
+    }
+
+    console.warn("No se pudo sincronizar autosave remoto.", error);
+  }
+};
+
 export const createAutosaveScheduler = (
   options: {
     debounceMs?: number;
@@ -351,7 +377,9 @@ export const createAutosaveScheduler = (
 
     timeoutId = setTimeout(() => {
       if (latestDraft) {
-        void putAutosave(latestDraft, { sourceTabId: options.sourceTabId });
+        void executeAutosaveWithConflictRecovery(latestDraft, {
+          sourceTabId: options.sourceTabId,
+        });
       }
     }, debounceMs);
   };
