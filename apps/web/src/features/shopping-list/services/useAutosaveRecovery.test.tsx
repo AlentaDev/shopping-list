@@ -37,6 +37,7 @@ type HarnessProps = {
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
+  onRecoverEditSession?: (listId: string) => void;
 };
 
 const Harness = ({
@@ -44,6 +45,7 @@ const Harness = ({
   onRehydrate,
   onAutoRestore,
   onKeepLocalConflict,
+  onRecoverEditSession,
 }: HarnessProps) => {
   const {
     conflict,
@@ -55,6 +57,7 @@ const Harness = ({
     onRehydrate,
     onAutoRestore,
     onKeepLocalConflict,
+    onRecoverEditSession,
   });
 
   return (
@@ -464,6 +467,41 @@ describe("useAutosaveRecovery", () => {
     });
 
     expect(localStorage.getItem("lists.editSession")).toBeNull();
+  });
+
+
+  it("recupera sesión de edición activa aunque autosaveChecked ya esté en true", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-checked", isEditing: true }),
+    );
+    const onRecoverEditSession = vi.fn();
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: true,
+          editingTargetListId: "active-list-checked",
+          updatedAt: "2024-06-01T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness onRecoverEditSession={onRecoverEditSession} />);
+
+    await waitFor(() => {
+      expect(onRecoverEditSession).toHaveBeenCalledWith("active-list-checked");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "GET" }),
+    );
   });
 
 });

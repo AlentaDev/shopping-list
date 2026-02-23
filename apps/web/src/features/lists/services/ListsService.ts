@@ -18,6 +18,21 @@ type ListsServiceOptions = {
   errorMessage?: string;
 };
 
+
+const LOCAL_DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
+
+const saveStartEditingSyncMetadata = (updatedAt: string) => {
+  try {
+    localStorage.setItem(
+      LOCAL_DRAFT_SYNC_STORAGE_KEY,
+      JSON.stringify({ baseUpdatedAt: updatedAt }),
+    );
+  } catch (error) {
+    console.warn("No se pudo guardar baseUpdatedAt al iniciar edición.", error);
+  }
+};
+
+
 export const getLists = async (
   options: ListsServiceOptions = {}
 ): Promise<ListCollection> => {
@@ -117,7 +132,16 @@ export const startListEditing = async (
     throw new Error(options.errorMessage ?? "Unable to start list editing.");
   }
 
-  await response.json();
+  const payload = (await response.json()) as {
+    updatedAt?: string;
+    autosaveUpdatedAt?: string;
+  };
+
+  const baseUpdatedAt = payload.autosaveUpdatedAt ?? payload.updatedAt;
+
+  if (baseUpdatedAt) {
+    saveStartEditingSyncMetadata(baseUpdatedAt);
+  }
 };
 
 type CompleteListInput = {
@@ -141,7 +165,16 @@ export const completeList = async (
     throw new Error(options.errorMessage ?? "Unable to complete list.");
   }
 
-  await response.json();
+  const payload = (await response.json()) as {
+    updatedAt?: string;
+    autosaveUpdatedAt?: string;
+  };
+
+  const baseUpdatedAt = payload.autosaveUpdatedAt ?? payload.updatedAt;
+
+  if (baseUpdatedAt) {
+    saveStartEditingSyncMetadata(baseUpdatedAt);
+  }
 };
 
 export const createList = async (
