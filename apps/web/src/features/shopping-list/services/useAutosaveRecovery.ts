@@ -19,6 +19,7 @@ type UseAutosaveRecoveryOptions = {
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
   onRecoverEditSession?: (listId: string) => void;
+  checkEditSessionOnBootstrap?: boolean;
 };
 
 const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
@@ -308,6 +309,7 @@ export const useAutosaveRecovery = (
     onAutoRestore,
     onKeepLocalConflict,
     onRecoverEditSession,
+    checkEditSessionOnBootstrap = false,
   } = options;
   const [conflict, setConflict] = useState<AutosaveConflict | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -325,7 +327,8 @@ export const useAutosaveRecovery = (
     const loadAutosave = async () => {
       const autosaveChecked = getAutosaveChecked();
       const shouldSyncCheckedEditSession =
-        autosaveChecked && hasStoredEditSessionMarker();
+        autosaveChecked &&
+        (hasStoredEditSessionMarker() || checkEditSessionOnBootstrap);
       let shouldMarkChecked = !autosaveChecked;
       try {
         const localDraft = loadLocalDraft();
@@ -391,7 +394,13 @@ export const useAutosaveRecovery = (
     return () => {
       isActive = false;
     };
-  }, [enabled, onAutoRestore, onRecoverEditSession, onRehydrate]);
+  }, [
+    checkEditSessionOnBootstrap,
+    enabled,
+    onAutoRestore,
+    onRecoverEditSession,
+    onRehydrate,
+  ]);
 
   const handleUpdateFromServerFirst = useCallback(async () => {
     if (!conflict) {

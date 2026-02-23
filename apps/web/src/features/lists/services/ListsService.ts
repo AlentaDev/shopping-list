@@ -21,6 +21,22 @@ type ListsServiceOptions = {
 
 const LOCAL_DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
 
+const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
+
+const saveStartEditingMarker = (listId: string) => {
+  try {
+    localStorage.setItem(
+      EDIT_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        listId,
+        isEditing: true,
+      }),
+    );
+  } catch (error) {
+    console.warn("No se pudo guardar el marcador local de edición al iniciar.", error);
+  }
+};
+
 const saveStartEditingSyncMetadata = (updatedAt: string) => {
   try {
     localStorage.setItem(
@@ -142,6 +158,8 @@ export const startListEditing = async (
   if (baseUpdatedAt) {
     saveStartEditingSyncMetadata(baseUpdatedAt);
   }
+
+  saveStartEditingMarker(listId);
 };
 
 type CompleteListInput = {
@@ -175,6 +193,8 @@ export const completeList = async (
   if (baseUpdatedAt) {
     saveStartEditingSyncMetadata(baseUpdatedAt);
   }
+
+  saveStartEditingMarker(listId);
 };
 
 export const createList = async (

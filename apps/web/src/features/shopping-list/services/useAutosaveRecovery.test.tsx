@@ -38,6 +38,7 @@ type HarnessProps = {
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
   onRecoverEditSession?: (listId: string) => void;
+  checkEditSessionOnBootstrap?: boolean;
 };
 
 const Harness = ({
@@ -46,6 +47,7 @@ const Harness = ({
   onAutoRestore,
   onKeepLocalConflict,
   onRecoverEditSession,
+  checkEditSessionOnBootstrap = false,
 }: HarnessProps) => {
   const {
     conflict,
@@ -58,6 +60,7 @@ const Harness = ({
     onAutoRestore,
     onKeepLocalConflict,
     onRecoverEditSession,
+    checkEditSessionOnBootstrap,
   });
 
   return (
@@ -469,6 +472,42 @@ describe("useAutosaveRecovery", () => {
     expect(localStorage.getItem("lists.editSession")).toBeNull();
   });
 
+
+
+  it("recupera edición con autosaveChecked=true aunque no exista marcador local cuando se fuerza bootstrap", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    const onRecoverEditSession = vi.fn();
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: true,
+          editingTargetListId: "active-list-bootstrap",
+          updatedAt: "2024-06-02T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <Harness
+        onRecoverEditSession={onRecoverEditSession}
+        checkEditSessionOnBootstrap
+      />,
+    );
+
+    await waitFor(() => {
+      expect(onRecoverEditSession).toHaveBeenCalledWith("active-list-bootstrap");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
 
   it("recupera sesión de edición activa aunque autosaveChecked ya esté en true", async () => {
     sessionStorage.setItem("lists.autosaveChecked", "true");

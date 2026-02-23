@@ -400,7 +400,7 @@ const ShoppingList = ({
     handleUpdateFromServerFirst,
     handleKeepLocalDraft,
   } = useAutosaveRecovery({
-    enabled: Boolean(authUser),
+    enabled: Boolean(authUser) && isOpen,
     onRehydrate: handleRehydrate,
     onAutoRestore: handleAutoRestore,
     onKeepLocalConflict: () => {
@@ -411,6 +411,7 @@ const ShoppingList = ({
       setListStatus(LIST_STATUS.ACTIVE);
       setIsEditingSession(true);
     },
+    checkEditSessionOnBootstrap: isOpen,
   });
 
   const handleClose = () => {

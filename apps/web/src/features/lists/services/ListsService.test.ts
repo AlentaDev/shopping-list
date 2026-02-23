@@ -228,6 +228,9 @@ describe("ListsService", () => {
     expect(localStorage.getItem("lists.localDraftSync")).toBe(
       JSON.stringify({ baseUpdatedAt: "2024-06-01T09:00:05.000Z" }),
     );
+    expect(localStorage.getItem("lists.editSession")).toBe(
+      JSON.stringify({ listId: "list-8", isEditing: true }),
+    );
   });
 
   it("completes list with POST", async () => {

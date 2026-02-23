@@ -648,6 +648,74 @@ describe("ShoppingList", () => {
     );
   });
 
+
+
+  it("recupera sesión de edición tras refresh con autosaveChecked=true", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    localStorage.removeItem("lists.editSession");
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Lista refresh",
+        items: [
+          {
+            id: "item-refresh",
+            kind: "catalog",
+            name: "Yogur natural",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "item-refresh",
+          },
+        ],
+        updatedAt: "2024-06-02T09:00:00.000Z",
+      }),
+    );
+
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (input === "/api/lists/autosave" && (!init || init.method === "GET")) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-refresh",
+            title: "Remoto refresh",
+            isEditing: true,
+            editingTargetListId: "active-refresh-1",
+            updatedAt: "2024-06-02T10:00:00.000Z",
+            items: [],
+          }),
+        };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      items: [],
+      listStatus: "DRAFT",
+      listTitle: "Borrador",
+      isEditing: false,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Yogur natural")).toBeInTheDocument();
+    expect(localStorage.getItem("lists.editSession")).toBe(
+      JSON.stringify({ listId: "active-refresh-1", isEditing: true }),
+    );
+  });
+
   it("resetea borrador local al finalizar edición activa", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
