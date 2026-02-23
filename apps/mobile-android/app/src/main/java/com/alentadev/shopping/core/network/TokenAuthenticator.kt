@@ -9,13 +9,16 @@ import okhttp3.Response
 import okhttp3.Route
 
 private const val TAG = "TokenAuthenticator"
+private const val AUTH_REFRESH_PATH = "/api/auth/refresh"
+private val SAFE_METHODS = setOf("GET", "HEAD", "OPTIONS")
 
 /**
- * Authenticator que refresca automáticamente el token cuando recibe 401
- * Usa AuthApi.refreshToken() respetando la arquitectura
+ * Authenticator que refresca automáticamente el token cuando recibe 401.
  *
- * NOTA: Recibe un Lazy<AuthApi> para evitar dependencia circular:
- * TokenAuthenticator -> AuthApi -> Retrofit -> OkHttpClient -> TokenAuthenticator
+ * Política actual (alineada con web):
+ * - Solo reintenta en rutas de lectura seguras.
+ * - Nunca intenta refrescar el propio endpoint de refresh.
+ * - Hace single-flight del refresh para evitar múltiples refresh concurrentes.
  */
 class TokenAuthenticator(
     private val cookieJar: PersistentCookieJar,
@@ -36,38 +39,80 @@ class TokenAuthenticator(
             return null
         }
 
+        val path = response.request.url.encodedPath
+
         // Evitar refresh del refresh
-        if (response.request.url.encodedPath.endsWith("/api/auth/refresh")) {
+        if (path == AUTH_REFRESH_PATH) {
             Log.w(TAG, "Refresh falló, limpiando cookies")
             cookieJar.clear()
             return null
         }
 
-        return try {
-            Log.d(TAG, "Token expirado (401), refrescando...")
+        // Política SAFE: no reintentar automáticamente requests no seguras
+        if (!shouldRetryOnAuth401(response.request)) {
+            Log.d(TAG, "401 en request no segura (${response.request.method} $path), sin auto-refresh")
+            return null
+        }
 
-            // Obtener AuthApi del provider (lazy)
-            val authApi = authApiProvider()
-
-            // Llamar al endpoint de refresh usando AuthApi (respetando arquitectura)
-            runBlocking {
-                val refreshResponse = authApi.refreshToken()
-                Log.d(TAG, "Refresh exitoso: ${refreshResponse.ok}")
-            }
-
-            // El backend devuelve nuevo access_token en Set-Cookie
-            // PersistentCookieJar lo guarda automáticamente
+        return if (refreshSessionSingleFlight()) {
             Log.d(TAG, "Token refrescado, reintentando request original")
-
-            // Reintentar el request original con el nuevo token
             response.request.newBuilder().build()
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Error al refrescar token: ${e.message}", e)
-            // Si el refresh falla, limpiar cookies (usuario debe re-loguearse)
+        } else {
+            Log.w(TAG, "No se pudo refrescar token, limpiando cookies")
             cookieJar.clear()
             null
         }
+    }
+
+    private fun shouldRetryOnAuth401(request: Request): Boolean {
+        val method = request.method.uppercase()
+        if (!SAFE_METHODS.contains(method)) {
+            return false
+        }
+
+        val path = request.url.encodedPath
+        return path == "/api/lists" ||
+            path.startsWith("/api/lists/") ||
+            path == "/api/lists/autosave" ||
+            path == "/api/users/me"
+    }
+
+    private fun refreshSessionSingleFlight(): Boolean {
+        synchronized(refreshLock) {
+            if (refreshInProgress) {
+                while (refreshInProgress) {
+                    try {
+                        refreshLock.wait()
+                    } catch (ie: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        return false
+                    }
+                }
+                return lastRefreshSucceeded
+            }
+
+            refreshInProgress = true
+        }
+
+        val refreshSucceeded = try {
+            Log.d(TAG, "Token expirado (401), refrescando...")
+            val authApi = authApiProvider()
+            runBlocking {
+                authApi.refreshToken()
+            }
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al refrescar token: ${e.message}", e)
+            false
+        }
+
+        synchronized(refreshLock) {
+            lastRefreshSucceeded = refreshSucceeded
+            refreshInProgress = false
+            refreshLock.notifyAll()
+        }
+
+        return refreshSucceeded
     }
 
     /**
@@ -82,5 +127,22 @@ class TokenAuthenticator(
             prior = prior.priorResponse
         }
         return count
+    }
+
+    internal companion object {
+        private val refreshLock = Object()
+
+        @Volatile
+        private var refreshInProgress: Boolean = false
+
+        @Volatile
+        private var lastRefreshSucceeded: Boolean = false
+
+        fun resetStateForTests() {
+            synchronized(refreshLock) {
+                refreshInProgress = false
+                lastRefreshSucceeded = false
+            }
+        }
     }
 }
