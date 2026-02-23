@@ -29,4 +29,25 @@ describe("AutosaveAdapter", () => {
       updatedAt: "",
     });
   });
+
+  it("mapea metadata de sesión de edición en el autosave remoto", () => {
+    expect(
+      adaptAutosaveResponse({
+        id: "autosave-edit-1",
+        title: "Lista en edición",
+        isEditing: true,
+        editingTargetListId: "active-list-1",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        items: [],
+      }),
+    ).toEqual({
+      id: "autosave-edit-1",
+      title: "Lista en edición",
+      isEditing: true,
+      editingTargetListId: "active-list-1",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      items: [],
+    });
+  });
+
 });

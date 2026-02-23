@@ -11,6 +11,7 @@ import type {
   LocalDraft,
 } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
 type UseAutosaveRecoveryOptions = {
   enabled?: boolean;
@@ -20,6 +21,7 @@ type UseAutosaveRecoveryOptions = {
 };
 
 const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
+const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
 
 const getAutosaveChecked = () => {
   try {
@@ -35,6 +37,29 @@ const setAutosaveChecked = () => {
     sessionStorage.setItem(AUTOSAVE_CHECKED_KEY, "true");
   } catch (error) {
     console.warn("No se pudo guardar el estado del autosave.", error);
+  }
+};
+
+
+const saveEditSessionMarker = (listId: string) => {
+  try {
+    localStorage.setItem(
+      EDIT_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        listId,
+        isEditing: true,
+      }),
+    );
+  } catch (error) {
+    console.warn("No se pudo guardar el marcador local de edición.", error);
+  }
+};
+
+const clearEditSessionMarker = () => {
+  try {
+    localStorage.removeItem(EDIT_SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.warn("No se pudo limpiar el marcador local de edición.", error);
   }
 };
 
@@ -171,6 +196,10 @@ const resolveDecisionForBothDrafts = (
   localInput: AutosaveDraftInput,
   remoteInput: AutosaveDraftInput
 ): RecoveryDecision => {
+  if (remoteDraft.isEditing && remoteDraft.editingTargetListId) {
+    return buildRestoreRemoteDecision(localInput, false);
+  }
+
   const localUpdatedAt = parseUpdatedAt(localDraft.updatedAt);
   const remoteUpdatedAt = parseUpdatedAt(remoteDraft.updatedAt);
   const hasUpdatedAtDifference =
@@ -261,6 +290,15 @@ export const useAutosaveRecovery = (
         }
 
         const decision = resolveRecoveryDecision(localDraft, remoteDraft);
+
+        if (remoteDraft?.isEditing && remoteDraft.editingTargetListId) {
+          saveEditSessionMarker(remoteDraft.editingTargetListId);
+          if (remoteDraft.updatedAt) {
+            saveAutosaveSyncMetadata(remoteDraft.updatedAt);
+          }
+        } else {
+          clearEditSessionMarker();
+        }
 
         if (decision.type === DECISION_RESTORE_REMOTE) {
           onRehydrate?.(decision.draft);

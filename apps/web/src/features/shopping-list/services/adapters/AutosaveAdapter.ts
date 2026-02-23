@@ -20,6 +20,8 @@ type AutosaveItemPayload = {
 type AutosavePayload = {
   id?: string;
   title?: string;
+  isEditing?: boolean;
+  editingTargetListId?: string | null;
   items?: AutosaveItemPayload[];
   updatedAt?: string;
 };
@@ -84,6 +86,9 @@ export const adaptAutosaveResponse = (
   return {
     id: data.id ?? "",
     title: data.title ?? "",
+    isEditing: data.isEditing === true,
+    editingTargetListId:
+      typeof data.editingTargetListId === "string" ? data.editingTargetListId : null,
     items: Array.isArray(data.items) ? data.items.map(adaptAutosaveItem) : [],
     updatedAt: data.updatedAt ?? "",
   };
