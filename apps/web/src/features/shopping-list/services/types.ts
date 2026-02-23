@@ -32,6 +32,8 @@ export type AutosaveItem = AutosaveCatalogItemInput & {
 export type AutosaveDraft = {
   id: string;
   title: string;
+  isEditing: boolean;
+  editingTargetListId: string | null;
   items: AutosaveItem[];
   updatedAt: string;
 };

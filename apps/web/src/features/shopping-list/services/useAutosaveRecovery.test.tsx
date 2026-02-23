@@ -37,6 +37,8 @@ type HarnessProps = {
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
+  onRecoverEditSession?: (listId: string) => void;
+  checkEditSessionOnBootstrap?: boolean;
 };
 
 const Harness = ({
@@ -44,6 +46,8 @@ const Harness = ({
   onRehydrate,
   onAutoRestore,
   onKeepLocalConflict,
+  onRecoverEditSession,
+  checkEditSessionOnBootstrap = false,
 }: HarnessProps) => {
   const {
     conflict,
@@ -55,6 +59,8 @@ const Harness = ({
     onRehydrate,
     onAutoRestore,
     onKeepLocalConflict,
+    onRecoverEditSession,
+    checkEditSessionOnBootstrap,
   });
 
   return (
@@ -364,4 +370,177 @@ describe("useAutosaveRecovery", () => {
     expect(onRehydrate).not.toHaveBeenCalled();
     expect(sessionStorage.getItem("lists.autosaveChecked")).not.toBe("true");
   });
+
+  it("rehidrata borrador local + contexto de edición cuando hay sesión remota activa", async () => {
+    const onRehydrate = vi.fn();
+    const localDraft: LocalDraft = {
+      title: "Lista local runtime",
+      items: [
+        {
+          id: "item-local-runtime",
+          kind: "catalog",
+          name: "Huevos",
+          qty: 2,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "item-local-runtime",
+        },
+      ],
+      updatedAt: "2024-02-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({
+        listId: "active-list-99",
+        isEditing: false,
+      }),
+    );
+
+    const remoteUpdatedAt = "2024-03-01T10:00:00.000Z";
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: true,
+          editingTargetListId: "active-list-99",
+          updatedAt: remoteUpdatedAt,
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness onRehydrate={onRehydrate} />);
+
+    await waitFor(() => {
+      expect(onRehydrate).toHaveBeenCalledWith({
+        title: "Lista local runtime",
+        items: [
+          {
+            id: "item-local-runtime",
+            kind: "catalog",
+            name: "Huevos",
+            qty: 2,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "item-local-runtime",
+          },
+        ],
+      });
+    });
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: remoteUpdatedAt }),
+    );
+    expect(localStorage.getItem("lists.editSession")).toBe(
+      JSON.stringify({
+        listId: "active-list-99",
+        isEditing: true,
+      }),
+    );
+  });
+
+  it("limpia marcadores locales de edición cuando no hay sesión remota activa", async () => {
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-42", isEditing: true }),
+    );
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: false,
+          editingTargetListId: null,
+          updatedAt: "2024-04-01T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness />);
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
+    });
+
+    expect(localStorage.getItem("lists.editSession")).toBeNull();
+  });
+
+
+
+  it("recupera edición con autosaveChecked=true aunque no exista marcador local cuando se fuerza bootstrap", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    const onRecoverEditSession = vi.fn();
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: true,
+          editingTargetListId: "active-list-bootstrap",
+          updatedAt: "2024-06-02T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <Harness
+        onRecoverEditSession={onRecoverEditSession}
+        checkEditSessionOnBootstrap
+      />,
+    );
+
+    await waitFor(() => {
+      expect(onRecoverEditSession).toHaveBeenCalledWith("active-list-bootstrap");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("recupera sesión de edición activa aunque autosaveChecked ya esté en true", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-checked", isEditing: true }),
+    );
+    const onRecoverEditSession = vi.fn();
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          isEditing: true,
+          editingTargetListId: "active-list-checked",
+          updatedAt: "2024-06-01T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness onRecoverEditSession={onRecoverEditSession} />);
+
+    await waitFor(() => {
+      expect(onRecoverEditSession).toHaveBeenCalledWith("active-list-checked");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
 });

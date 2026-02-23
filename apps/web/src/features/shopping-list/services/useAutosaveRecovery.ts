@@ -11,15 +11,19 @@ import type {
   LocalDraft,
 } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
 type UseAutosaveRecoveryOptions = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
+  onRecoverEditSession?: (listId: string) => void;
+  checkEditSessionOnBootstrap?: boolean;
 };
 
 const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
+const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
 
 const getAutosaveChecked = () => {
   try {
@@ -35,6 +39,49 @@ const setAutosaveChecked = () => {
     sessionStorage.setItem(AUTOSAVE_CHECKED_KEY, "true");
   } catch (error) {
     console.warn("No se pudo guardar el estado del autosave.", error);
+  }
+};
+
+
+const saveEditSessionMarker = (listId: string) => {
+  try {
+    localStorage.setItem(
+      EDIT_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        listId,
+        isEditing: true,
+      }),
+    );
+  } catch (error) {
+    console.warn("No se pudo guardar el marcador local de edición.", error);
+  }
+};
+
+const clearEditSessionMarker = () => {
+  try {
+    localStorage.removeItem(EDIT_SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.warn("No se pudo limpiar el marcador local de edición.", error);
+  }
+};
+
+
+const hasStoredEditSessionMarker = () => {
+  try {
+    const stored = localStorage.getItem(EDIT_SESSION_STORAGE_KEY);
+
+    if (!stored) {
+      return false;
+    }
+
+    const parsed = JSON.parse(stored) as {
+      listId?: unknown;
+      isEditing?: unknown;
+    };
+
+    return typeof parsed.listId === "string" && parsed.listId.length > 0;
+  } catch {
+    return false;
   }
 };
 
@@ -171,6 +218,10 @@ const resolveDecisionForBothDrafts = (
   localInput: AutosaveDraftInput,
   remoteInput: AutosaveDraftInput
 ): RecoveryDecision => {
+  if (remoteDraft.isEditing && remoteDraft.editingTargetListId) {
+    return buildRestoreRemoteDecision(localInput, false);
+  }
+
   const localUpdatedAt = parseUpdatedAt(localDraft.updatedAt);
   const remoteUpdatedAt = parseUpdatedAt(remoteDraft.updatedAt);
   const hasUpdatedAtDifference =
@@ -191,6 +242,26 @@ const resolveDecisionForBothDrafts = (
   }
 
   return { type: DECISION_NONE };
+};
+
+
+const syncEditSessionWithRemoteDraft = ({
+  remoteDraft,
+  onRecoverEditSession,
+}: {
+  remoteDraft: AutosaveDraft | null;
+  onRecoverEditSession?: (listId: string) => void;
+}) => {
+  if (remoteDraft?.isEditing && remoteDraft.editingTargetListId) {
+    saveEditSessionMarker(remoteDraft.editingTargetListId);
+    onRecoverEditSession?.(remoteDraft.editingTargetListId);
+    if (remoteDraft.updatedAt) {
+      saveAutosaveSyncMetadata(remoteDraft.updatedAt);
+    }
+    return;
+  }
+
+  clearEditSessionMarker();
 };
 
 const resolveRecoveryDecision = (
@@ -232,13 +303,20 @@ const resolveRecoveryDecision = (
 export const useAutosaveRecovery = (
   options: UseAutosaveRecoveryOptions = {},
 ) => {
-  const { enabled = true, onRehydrate, onAutoRestore, onKeepLocalConflict } = options;
+  const {
+    enabled = true,
+    onRehydrate,
+    onAutoRestore,
+    onKeepLocalConflict,
+    onRecoverEditSession,
+    checkEditSessionOnBootstrap = false,
+  } = options;
   const [conflict, setConflict] = useState<AutosaveConflict | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasPendingConflict, setHasPendingConflict] = useState(false);
 
   useEffect(() => {
-    if (!enabled || getAutosaveChecked()) {
+    if (!enabled) {
       setConflict(null);
       return;
     }
@@ -247,16 +325,33 @@ export const useAutosaveRecovery = (
     setIsLoading(true);
 
     const loadAutosave = async () => {
-      let shouldMarkChecked = true;
+      const autosaveChecked = getAutosaveChecked();
+      const shouldSyncCheckedEditSession =
+        autosaveChecked &&
+        (hasStoredEditSessionMarker() || checkEditSessionOnBootstrap);
+      let shouldMarkChecked = !autosaveChecked;
       try {
         const localDraft = loadLocalDraft();
         setConflict(null);
         setHasPendingConflict(false);
+        if (autosaveChecked && !shouldSyncCheckedEditSession) {
+          return;
+        }
+
         const remoteDraft = await getAutosave({
           errorMessage: "No se pudo recuperar el borrador.",
         });
 
         if (!isActive) {
+          return;
+        }
+
+        syncEditSessionWithRemoteDraft({
+          remoteDraft,
+          onRecoverEditSession,
+        });
+
+        if (autosaveChecked) {
           return;
         }
 
@@ -299,7 +394,13 @@ export const useAutosaveRecovery = (
     return () => {
       isActive = false;
     };
-  }, [enabled, onAutoRestore, onRehydrate]);
+  }, [
+    checkEditSessionOnBootstrap,
+    enabled,
+    onAutoRestore,
+    onRecoverEditSession,
+    onRehydrate,
+  ]);
 
   const handleUpdateFromServerFirst = useCallback(async () => {
     if (!conflict) {

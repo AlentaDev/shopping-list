@@ -27,6 +27,7 @@ type FetchResponse = {
 describe("ListsService", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
   it("fetches and adapts list collection", async () => {
@@ -197,12 +198,16 @@ describe("ListsService", () => {
     );
   });
 
-  it("inicia edición de lista activa con PATCH", async () => {
+  it("inicia edición de lista activa con PATCH y guarda baseUpdatedAt del draft", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async () => ({
       ok: true,
-      json: async () => ({ ok: true }),
+      json: async () => ({
+        ok: true,
+        updatedAt: "2024-06-01T09:00:00.000Z",
+        autosaveUpdatedAt: "2024-06-01T09:00:05.000Z",
+      }),
     }));
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
@@ -217,6 +222,14 @@ describe("ListsService", () => {
         body: JSON.stringify({ isEditing: true }),
         retryOnAuth401: true,
       })
+    );
+
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: "2024-06-01T09:00:05.000Z" }),
+    );
+    expect(localStorage.getItem("lists.editSession")).toBe(
+      JSON.stringify({ listId: "list-8", isEditing: true }),
     );
   });
 
