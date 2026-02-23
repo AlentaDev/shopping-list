@@ -1,4 +1,8 @@
 import { AutosaveVersionConflictError } from "./errors.js";
+import {
+  buildDraftItemId,
+  normalizeSourceProductId,
+} from "./itemIdNormalization.js";
 import type { List, ListItem } from "../domain/list.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 
@@ -112,12 +116,14 @@ function toListItem(
     };
   }
 
+  const canonicalSourceProductId = normalizeSourceProductId(item.sourceProductId);
+
   return {
-    id: buildAutosaveCatalogItemId(listId, item.id),
+    id: buildDraftItemId(listId, canonicalSourceProductId),
     listId,
     kind: "catalog",
     source: item.source,
-    sourceProductId: item.sourceProductId,
+    sourceProductId: canonicalSourceProductId,
     nameSnapshot: item.name,
     thumbnailSnapshot: item.thumbnail ?? null,
     priceSnapshot: item.price ?? null,
@@ -132,7 +138,3 @@ function toListItem(
   };
 }
 
-
-function buildAutosaveCatalogItemId(listId: string, itemId: string): string {
-  return `${listId}:${itemId}`;
-}

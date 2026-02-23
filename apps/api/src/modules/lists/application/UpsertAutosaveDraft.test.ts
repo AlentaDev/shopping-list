@@ -312,7 +312,7 @@ describe("UpsertAutosaveDraft", () => {
     );
   });
 
-  it("keeps item identity stable when autosave receives an already-prefixed item id", async () => {
+  it("normalizes catalog ids to use canonical source product id", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: () => "autosave-1" };
     const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
@@ -337,13 +337,13 @@ describe("UpsertAutosaveDraft", () => {
     const savedList = await listRepository.findById("autosave-1");
     expect(savedList?.items[0]).toEqual(
       expect.objectContaining({
-        id: "autosave-1:active-1:4241",
-        sourceProductId: "active-1:4241",
+        id: "autosave-1:4241",
+        sourceProductId: "4241",
       }),
     );
   });
 
-  it("preserves uniqueness when item ids include both raw and prefixed product values", async () => {
+  it("normalizes nested ids to the canonical source product id", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: () => "autosave-1" };
     const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
@@ -354,32 +354,23 @@ describe("UpsertAutosaveDraft", () => {
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
-          id: "active-1:4850",
+          id: "draft-1:active-1:4850",
           kind: "catalog",
           name: "Aceite",
           qty: 1,
           checked: false,
           source: "mercadona",
-          sourceProductId: "active-1:4850",
-        },
-        {
-          id: "4850",
-          kind: "catalog",
-          name: "Aceite",
-          qty: 1,
-          checked: false,
-          source: "mercadona",
-          sourceProductId: "4850",
+          sourceProductId: "draft-1:active-1:4850",
         },
       ],
     });
 
     const savedList = await listRepository.findById("autosave-1");
-    expect(savedList?.items).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: "autosave-1:active-1:4850" }),
-        expect.objectContaining({ id: "autosave-1:4850" }),
-      ]),
+    expect(savedList?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "autosave-1:4850",
+        sourceProductId: "4850",
+      }),
     );
   });
 });
