@@ -48,6 +48,7 @@ const DETAIL_ACTION_ENABLED_CLASS =
   "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900";
 const DETAIL_ACTION_DELETE_CLASS =
   "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50";
+const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
 
 const getDetailActionClassName = (
   isDisabled: boolean,
@@ -169,6 +170,15 @@ const ShoppingListSkeleton = () => (
     <div className="mt-4 h-10 w-full animate-pulse rounded-2xl bg-slate-200" />
   </div>
 );
+
+
+const clearEditSessionMarker = () => {
+  try {
+    localStorage.removeItem(EDIT_SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.warn("No se pudo limpiar el marcador local de edición.", error);
+  }
+};
 
 const ShoppingListTotalSkeleton = () => (
   <div
@@ -335,9 +345,13 @@ const ShoppingList = ({
       },
       onEditingFinished: () => {
         setIsEditingSession(false);
+        clearEditSessionMarker();
+        handleResetToEmptyLocalDraft();
       },
       onEditingCancelled: () => {
         setIsEditingSession(false);
+        clearEditSessionMarker();
+        handleResetToEmptyLocalDraft();
       },
     });
   }, [handleResetToEmptyLocalDraft, sourceTabId]);
@@ -391,6 +405,11 @@ const ShoppingList = ({
     onAutoRestore: handleAutoRestore,
     onKeepLocalConflict: () => {
       setListStatus(LIST_STATUS.DRAFT);
+    },
+    onRecoverEditSession: (editingTargetListId: string) => {
+      setListId(editingTargetListId);
+      setListStatus(LIST_STATUS.ACTIVE);
+      setIsEditingSession(true);
     },
   });
 
@@ -520,6 +539,8 @@ const ShoppingList = ({
       await finishListEditing(listId);
       await deleteAutosave();
       setIsEditingSession(false);
+      clearEditSessionMarker();
+      handleResetToEmptyLocalDraft();
       publishListTabSyncEvent({
         type: "editing-finished",
         sourceTabId,
@@ -536,11 +557,13 @@ const ShoppingList = ({
     }
   }, [
     handleClose,
+    handleResetToEmptyLocalDraft,
     isActiveEditingSession,
     listId,
     listTitle,
     onAddMoreProducts,
     showToast,
+    sourceTabId,
   ]);
 
   const handleCancelEditing = useCallback(async () => {
@@ -552,6 +575,8 @@ const ShoppingList = ({
       await cancelListEditing(listId);
       await deleteAutosave();
       setIsEditingSession(false);
+      clearEditSessionMarker();
+      handleResetToEmptyLocalDraft();
       publishListTabSyncEvent({
         type: "editing-cancelled",
         sourceTabId,
@@ -561,7 +586,14 @@ const ShoppingList = ({
     } catch (error) {
       console.warn("No se pudo cancelar la edición de la lista.", error);
     }
-  }, [handleClose, isActiveEditingSession, listId, onAddMoreProducts]);
+  }, [
+    handleClose,
+    handleResetToEmptyLocalDraft,
+    isActiveEditingSession,
+    listId,
+    onAddMoreProducts,
+    sourceTabId,
+  ]);
 
   const handleReadyToShop = useCallback(async () => {
     if (!authUser || !canActivateList(listStatus)) {

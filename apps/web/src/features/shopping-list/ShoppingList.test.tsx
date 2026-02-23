@@ -419,7 +419,7 @@ describe("ShoppingList", () => {
     });
   });
 
-  it("rehidrata el título editado tras recarga y finish-edit usa ese título", async () => {
+  it("rehidrata el título editado tras recarga y finish-edit limpia draft local", async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
@@ -517,7 +517,7 @@ describe("ShoppingList", () => {
         screen.getByText(UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH_TOAST_MESSAGE),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("heading", { name: "Lista editada persistida" }),
+        screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
       ).toBeInTheDocument();
     });
   });
@@ -574,6 +574,120 @@ describe("ShoppingList", () => {
     expect(publishListTabSyncEvent).toHaveBeenCalledWith({
       type: "editing-finished",
       sourceTabId: "current-tab",
+    });
+  });
+
+
+
+  it("recupera contexto de edición activa al bootstrapping con autosave remoto en edición", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "false");
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Lista activa en edición",
+        items: [
+          {
+            id: "item-local-editing",
+            kind: "catalog",
+            name: "Tomate pera",
+            qty: 2,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "item-local-editing",
+          },
+        ],
+        updatedAt: "2024-05-01T09:00:00.000Z",
+      }),
+    );
+
+    const remoteUpdatedAt = "2024-05-01T10:00:00.000Z";
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (input === "/api/lists/autosave" && (!init || init.method === "GET")) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-1",
+            title: "Remoto",
+            isEditing: true,
+            editingTargetListId: "active-list-1",
+            updatedAt: remoteUpdatedAt,
+            items: [],
+          }),
+        };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      items: [],
+      listStatus: "DRAFT",
+      listTitle: "Borrador",
+      isEditing: false,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("Tomate pera")).toBeInTheDocument();
+    expect(localStorage.getItem("lists.editSession")).toBe(
+      JSON.stringify({ listId: "active-list-1", isEditing: true }),
+    );
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: remoteUpdatedAt }),
+    );
+  });
+
+  it("resetea borrador local al finalizar edición activa", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (typeof input === "string" && input.endsWith("/finish-edit")) {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (input === "/api/lists/autosave" && init?.method === "DELETE") {
+        return { ok: true, json: async () => ({}) };
+      }
+
+      if (input === "/api/lists/autosave") {
+        return { ok: true, json: async () => null };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "active-list-1",
+      listStatus: "ACTIVE",
+      isEditing: true,
+      listTitle: "Lista activa",
+      items: [initialItems[0]],
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(UI_TEXT.SHOPPING_LIST.EMPTY_LIST_TITLE),
+      ).toBeInTheDocument();
     });
   });
 

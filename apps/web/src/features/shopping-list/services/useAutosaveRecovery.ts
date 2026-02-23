@@ -18,6 +18,7 @@ type UseAutosaveRecoveryOptions = {
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   onAutoRestore?: (draft: AutosaveDraftInput) => void;
   onKeepLocalConflict?: () => void;
+  onRecoverEditSession?: (listId: string) => void;
 };
 
 const AUTOSAVE_CHECKED_KEY = "lists.autosaveChecked";
@@ -261,7 +262,13 @@ const resolveRecoveryDecision = (
 export const useAutosaveRecovery = (
   options: UseAutosaveRecoveryOptions = {},
 ) => {
-  const { enabled = true, onRehydrate, onAutoRestore, onKeepLocalConflict } = options;
+  const {
+    enabled = true,
+    onRehydrate,
+    onAutoRestore,
+    onKeepLocalConflict,
+    onRecoverEditSession,
+  } = options;
   const [conflict, setConflict] = useState<AutosaveConflict | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasPendingConflict, setHasPendingConflict] = useState(false);
@@ -293,6 +300,7 @@ export const useAutosaveRecovery = (
 
         if (remoteDraft?.isEditing && remoteDraft.editingTargetListId) {
           saveEditSessionMarker(remoteDraft.editingTargetListId);
+          onRecoverEditSession?.(remoteDraft.editingTargetListId);
           if (remoteDraft.updatedAt) {
             saveAutosaveSyncMetadata(remoteDraft.updatedAt);
           }
@@ -337,7 +345,7 @@ export const useAutosaveRecovery = (
     return () => {
       isActive = false;
     };
-  }, [enabled, onAutoRestore, onRehydrate]);
+  }, [enabled, onAutoRestore, onRecoverEditSession, onRehydrate]);
 
   const handleUpdateFromServerFirst = useCallback(async () => {
     if (!conflict) {
