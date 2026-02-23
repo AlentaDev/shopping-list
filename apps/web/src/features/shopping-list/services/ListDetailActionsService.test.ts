@@ -22,6 +22,7 @@ type FetchResponse = {
 describe("ListDetailActionsService", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
   it("activa la edición remota de una lista", async () => {
@@ -29,7 +30,9 @@ describe("ListDetailActionsService", () => {
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async () => ({
       ok: true,
-      json: async () => ({}),
+      json: async () => ({
+        updatedAt: "2024-01-01T10:00:00.000Z",
+      }),
     }));
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
@@ -44,6 +47,10 @@ describe("ListDetailActionsService", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isEditing: true }),
       }),
+    );
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T10:00:00.000Z" }),
     );
   });
 
