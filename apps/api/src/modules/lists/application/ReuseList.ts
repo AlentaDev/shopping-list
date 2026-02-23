@@ -1,5 +1,6 @@
 import type { List, ListItem } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
+import { buildDraftItemId } from "./itemIdNormalization.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 import {
   ListForbiddenError,
@@ -51,7 +52,7 @@ export class ReuseList {
       id: newListId,
       ownerUserId: list.ownerUserId,
       title: list.title,
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       items: reusedItems,
       isEditing: false,
@@ -91,7 +92,7 @@ function reuseItem(
   }
 
   return {
-    id: idGenerator.generate(),
+    id: buildDraftItemId(listId, item.sourceProductId),
     listId,
     kind: "catalog",
     source: item.source,
@@ -111,9 +112,7 @@ function reuseItem(
 }
 
 function findLatestDraft(lists: List[]): List | null {
-  const drafts = lists.filter(
-    (candidate) => candidate.status === "DRAFT" && !candidate.isAutosaveDraft,
-  );
+  const drafts = lists.filter((candidate) => candidate.status === "DRAFT");
   if (drafts.length === 0) {
     return null;
   }

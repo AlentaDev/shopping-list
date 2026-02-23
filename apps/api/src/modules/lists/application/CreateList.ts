@@ -30,7 +30,7 @@ export class CreateList {
       id: existingDraft?.id ?? this.idGenerator.generate(),
       ownerUserId: input.userId,
       title: input.title,
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       items: [],
       isEditing: false,
@@ -53,9 +53,7 @@ export class CreateList {
 }
 
 function findLatestDraft(lists: List[]): List | null {
-  const drafts = lists.filter(
-    (list) => list.status === "DRAFT" && !list.isAutosaveDraft,
-  );
+  const drafts = lists.filter((list) => list.status === "DRAFT");
   if (drafts.length === 0) {
     return null;
   }

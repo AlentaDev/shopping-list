@@ -146,7 +146,7 @@ describe("ListsService", () => {
 
     expect(fetchWithAuthMock).toHaveBeenCalledWith(
       "/api/lists/list-3/reuse",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({ method: "POST", retryOnAuth401: true })
     );
   });
 

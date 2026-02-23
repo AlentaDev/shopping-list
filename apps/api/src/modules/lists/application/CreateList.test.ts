@@ -4,7 +4,7 @@ import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository
 import { CreateList } from "./CreateList.js";
 
 describe("CreateList", () => {
-  it("creates a new draft list when no draft exists", async () => {
+  it("creates a new autosave draft list when no draft exists", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: vi.fn().mockReturnValue("list-1") };
     const useCase = new CreateList(listRepository, idGenerator);
@@ -30,7 +30,7 @@ describe("CreateList", () => {
       ownerUserId: "user-1",
       title: "Weekly groceries",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       items: [],
       isEditing: false,
       createdAt: now,
@@ -50,7 +50,7 @@ describe("CreateList", () => {
       id: "draft-1",
       ownerUserId: "user-1",
       title: "Old title",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       activatedAt: undefined,
       isEditing: true,
@@ -93,7 +93,7 @@ describe("CreateList", () => {
       ownerUserId: "user-1",
       title: "Weekly groceries",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       items: [],
       isEditing: false,
       createdAt: existingDraft.createdAt,
@@ -105,7 +105,7 @@ describe("CreateList", () => {
     vi.useRealTimers();
   });
 
-  it("ignores autosave drafts when creating a new list", async () => {
+  it("reuses autosave drafts when creating a new list", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: vi.fn().mockReturnValue("list-2") };
     const useCase = new CreateList(listRepository, idGenerator);
@@ -131,21 +131,21 @@ describe("CreateList", () => {
     await expect(
       useCase.execute({ userId: "user-1", title: "Weekly groceries" }),
     ).resolves.toMatchObject({
-      id: "list-2",
+      id: "autosave-1",
       title: "Weekly groceries",
       itemCount: 0,
       status: "DRAFT",
     });
 
-    await expect(listRepository.findById("list-2")).resolves.toMatchObject({
-      id: "list-2",
+    await expect(listRepository.findById("autosave-1")).resolves.toMatchObject({
+      id: "autosave-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
     });
 
-    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
+    expect(idGenerator.generate).not.toHaveBeenCalled();
 
     vi.useRealTimers();
   });

@@ -13,15 +13,14 @@ describe("ReuseList", () => {
       generate: vi
         .fn()
         .mockReturnValueOnce("list-2")
-        .mockReturnValueOnce("item-3")
-        .mockReturnValueOnce("item-4"),
+        .mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const list: List = {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "COMPLETED",
       activatedAt: undefined,
       isEditing: false,
@@ -84,7 +83,7 @@ describe("ReuseList", () => {
           updatedAt: fixedDate.toISOString(),
         },
         {
-          id: "item-4",
+          id: "list-2:sku-1",
           kind: "catalog",
           name: "Bread",
           qty: 2,
@@ -106,7 +105,7 @@ describe("ReuseList", () => {
       id: "list-2",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       createdAt: fixedDate,
       updatedAt: fixedDate,
@@ -120,7 +119,7 @@ describe("ReuseList", () => {
           updatedAt: fixedDate,
         }),
         expect.objectContaining({
-          id: "item-4",
+          id: "list-2:sku-1",
           listId: "list-2",
           kind: "catalog",
           checked: false,
@@ -155,7 +154,7 @@ describe("ReuseList", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "ACTIVE",
       activatedAt: undefined,
       isEditing: false,
@@ -177,10 +176,7 @@ describe("ReuseList", () => {
   it("overwrites an existing draft when reusing a list", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = {
-      generate: vi
-        .fn()
-        .mockReturnValueOnce("item-3")
-        .mockReturnValueOnce("item-4"),
+      generate: vi.fn().mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const now = new Date("2024-01-05T10:00:00.000Z");
@@ -188,7 +184,7 @@ describe("ReuseList", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "COMPLETED",
       activatedAt: undefined,
       isEditing: false,
@@ -229,7 +225,7 @@ describe("ReuseList", () => {
       id: "draft-1",
       ownerUserId: "user-1",
       title: "Old title",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       activatedAt: undefined,
       isEditing: true,
@@ -275,7 +271,7 @@ describe("ReuseList", () => {
           updatedAt: now.toISOString(),
         },
         {
-          id: "item-4",
+          id: "draft-1:sku-1",
           kind: "catalog",
           name: "Bread",
           qty: 2,
@@ -297,7 +293,7 @@ describe("ReuseList", () => {
       id: "draft-1",
       title: "Weekly groceries",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       isEditing: false,
       items: [
         expect.objectContaining({
@@ -306,7 +302,7 @@ describe("ReuseList", () => {
           checked: false,
         }),
         expect.objectContaining({
-          id: "item-4",
+          id: "draft-1:sku-1",
           listId: "draft-1",
           checked: false,
         }),
@@ -315,18 +311,15 @@ describe("ReuseList", () => {
       updatedAt: now,
     });
 
-    expect(idGenerator.generate).toHaveBeenCalledTimes(2);
+    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
   });
 
-  it("creates a new draft when only autosave drafts exist", async () => {
+  it("reuses existing draft even when it is an autosave draft", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = {
-      generate: vi
-        .fn()
-        .mockReturnValueOnce("list-2")
-        .mockReturnValueOnce("item-3"),
+      generate: vi.fn().mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const now = new Date("2024-01-06T10:00:00.000Z");
@@ -334,7 +327,7 @@ describe("ReuseList", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       status: "COMPLETED",
       activatedAt: undefined,
       isEditing: false,
@@ -378,25 +371,25 @@ describe("ReuseList", () => {
         listId: "list-1",
       }),
     ).resolves.toMatchObject({
-      id: "list-2",
+      id: "autosave-1",
       title: "Weekly groceries",
       status: "DRAFT",
       updatedAt: now.toISOString(),
     });
 
-    await expect(listRepository.findById("list-2")).resolves.toMatchObject({
-      id: "list-2",
+    await expect(listRepository.findById("autosave-1")).resolves.toMatchObject({
+      id: "autosave-1",
       status: "DRAFT",
-      isAutosaveDraft: false,
+      isAutosaveDraft: true,
       items: [
         expect.objectContaining({
           id: "item-3",
-          listId: "list-2",
+          listId: "autosave-1",
         }),
       ],
     });
 
-    expect(idGenerator.generate).toHaveBeenCalledTimes(2);
+    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
   });
