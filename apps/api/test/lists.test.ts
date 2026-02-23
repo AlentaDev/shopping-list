@@ -1075,9 +1075,11 @@ describe("lists endpoints", () => {
       status: "DRAFT",
       items: [
         expect.objectContaining({
+          id: `${response.body.id}:123`,
           kind: "catalog",
           name: "Whole Milk",
           checked: false,
+          sourceProductId: "123",
         }),
       ],
       updatedAt: expect.any(String),

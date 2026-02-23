@@ -161,8 +161,13 @@ const ListsContainer = ({
       }
 
       if (action === "reuse") {
-        await reuseList(list.id);
+        const reusedList = await reuseList(list.id);
+        publishListTabSyncEvent({
+          type: "list-activated",
+          sourceTabId,
+        });
         refreshLists();
+        onOpenList(reusedList);
         handleCloseDetail();
         return;
       }

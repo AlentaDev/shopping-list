@@ -38,7 +38,9 @@ describe("ListsContainer", () => {
   it("se suscribe a sincronización de activación y borrado de listas", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
 
-    render(<ListsContainer onOpenList={vi.fn()} />);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     expect(subscribeToListTabSyncEventsMock).toHaveBeenCalledWith({
       sourceTabId: "tab-test",
@@ -84,7 +86,9 @@ describe("ListsContainer", () => {
     showToastMock.mockClear();
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<ListsContainer onOpenList={vi.fn()} />);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     await userEvent.click(
       await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
@@ -179,7 +183,26 @@ describe("ListsContainer", () => {
       if (url === "/api/lists/completed-1/reuse") {
         return {
           ok: true,
-          json: async () => ({ id: "duplicated-1" }),
+          json: async () => ({
+            id: "duplicated-1",
+            title: "Navidad",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
+            items: [
+              {
+                id: "duplicated-1:123",
+                kind: "catalog",
+                name: "Leche",
+                qty: 1,
+                checked: false,
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                sourceProductId: "123",
+              },
+            ],
+          }),
         };
       }
 
@@ -198,7 +221,9 @@ describe("ListsContainer", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<ListsContainer onOpenList={vi.fn()} />);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     const activeCard = await screen.findByText("Despensa");
     await userEvent.click(activeCard);
@@ -230,6 +255,16 @@ describe("ListsContainer", () => {
       );
     });
 
+    expect(onOpenList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "duplicated-1",
+        status: LIST_STATUS.DRAFT,
+      }),
+    );
+    expect(publishListTabSyncEventMock).toHaveBeenCalledWith({
+      type: "list-activated",
+      sourceTabId: "tab-test",
+    });
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/lists/completed-1/close",
       expect.anything(),
