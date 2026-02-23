@@ -9,6 +9,28 @@ type ShoppingListItemPayload = {
   price?: number | null;
 };
 
+const normalizeSourceProductId = ({
+  id,
+  sourceProductId,
+}: {
+  id: string;
+  sourceProductId?: string;
+}): string => {
+  const normalizedSourceProductId = sourceProductId?.trim();
+
+  if (!normalizedSourceProductId) {
+    return id;
+  }
+
+  const prefixedId = `${id}:`;
+
+  if (normalizedSourceProductId.startsWith(prefixedId)) {
+    return normalizedSourceProductId.slice(prefixedId.length);
+  }
+
+  return normalizedSourceProductId;
+};
+
 export const adaptShoppingListItems = (
   items: ShoppingListItemPayload[] | null | undefined,
 ): ShoppingListItem[] => {
@@ -18,7 +40,10 @@ export const adaptShoppingListItems = (
 
   return items.map((item) => ({
     id: item.id ?? "",
-    sourceProductId: item.sourceProductId ?? item.id ?? "",
+    sourceProductId: normalizeSourceProductId({
+      id: item.id ?? "",
+      sourceProductId: item.sourceProductId,
+    }),
     name: item.name ?? "",
     category: "",
     thumbnail: item.thumbnail ?? null,

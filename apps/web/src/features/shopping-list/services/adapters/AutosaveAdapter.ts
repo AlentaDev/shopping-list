@@ -30,6 +30,28 @@ type AutosaveSummaryPayload = {
   updatedAt?: string;
 };
 
+const normalizeSourceProductId = ({
+  id,
+  sourceProductId,
+}: {
+  id: string;
+  sourceProductId?: string;
+}): string => {
+  const normalizedSourceProductId = sourceProductId?.trim();
+
+  if (!normalizedSourceProductId) {
+    return id;
+  }
+
+  const prefixedId = `${id}:`;
+
+  if (normalizedSourceProductId.startsWith(prefixedId)) {
+    return normalizedSourceProductId.slice(prefixedId.length);
+  }
+
+  return normalizedSourceProductId;
+};
+
 const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   id: item.id ?? "",
   kind: item.kind ?? "catalog",
@@ -38,7 +60,10 @@ const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   checked: item.checked ?? false,
   updatedAt: item.updatedAt ?? "",
   source: item.source ?? "mercadona",
-  sourceProductId: item.sourceProductId ?? item.id ?? "",
+  sourceProductId: normalizeSourceProductId({
+    id: item.id ?? "",
+    sourceProductId: item.sourceProductId,
+  }),
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
   unitSize: item.unitSize ?? null,

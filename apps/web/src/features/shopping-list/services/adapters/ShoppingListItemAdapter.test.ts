@@ -52,6 +52,17 @@ describe("ShoppingListItemAdapter", () => {
     ]);
   });
 
+  it("normaliza sourceProductId prefijado con id técnico", () => {
+    const items = adaptShoppingListItems([
+      {
+        id: "active-1:4706",
+        sourceProductId: "active-1:4706:4706",
+      },
+    ]);
+
+    expect(items[0]?.sourceProductId).toBe("4706");
+  });
+
   it("devuelve una lista vacía cuando no hay items", () => {
     expect(adaptShoppingListItems(undefined)).toEqual([]);
   });

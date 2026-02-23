@@ -95,6 +95,40 @@ const TabSyncHarness = () => {
   );
 };
 
+
+const DirtySourceProductHarness = () => {
+  const [items, setItems] = useState<ListItem[]>([]);
+
+  useAutosaveDraft(
+    {
+      title: "Lista semanal",
+      items,
+    },
+    { enabled: true },
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setItems([
+          {
+            id: "active-1:4706",
+            sourceProductId: "active-1:4706:4706",
+            name: "Leche",
+            category: "Bebidas",
+            thumbnail: null,
+            price: 1.5,
+            quantity: 2,
+          },
+        ])
+      }
+    >
+      Add dirty item
+    </button>
+  );
+};
+
 const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
   const [items, setItems] = useState<ListItem[]>([]);
   const [title, setTitle] = useState("Lista secundaria");
@@ -237,6 +271,35 @@ describe("useAutosaveDraft", () => {
         },
       ],
     });
+  });
+
+
+  it("normaliza sourceProductId antes de enviar autosave remoto", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<DirtySourceProductHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add dirty item" }));
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    const putCall = fetchMock.mock.calls.find((call) => call[1]?.method === "PUT");
+    const body = putCall?.[1]?.body;
+
+    expect(typeof body).toBe("string");
+    expect(body).toContain('"sourceProductId":"4706"');
   });
 
   it("solo guarda en localStorage cuando está deshabilitado", async () => {

@@ -22,6 +22,22 @@ type UseAutosaveDraftParams = {
 
 type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
 
+const normalizeSourceProductId = (item: ListItem): string => {
+  const sourceProductId = item.sourceProductId?.trim();
+
+  if (!sourceProductId) {
+    return item.id;
+  }
+
+  const prefixedItemId = `${item.id}:`;
+
+  if (sourceProductId.startsWith(prefixedItemId)) {
+    return sourceProductId.slice(prefixedItemId.length);
+  }
+
+  return sourceProductId;
+};
+
 const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
   id: item.id,
   kind: "catalog",
@@ -29,7 +45,7 @@ const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
   qty: item.quantity,
   checked: false,
   source: "mercadona",
-  sourceProductId: item.sourceProductId ?? item.id,
+  sourceProductId: normalizeSourceProductId(item),
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
 });
