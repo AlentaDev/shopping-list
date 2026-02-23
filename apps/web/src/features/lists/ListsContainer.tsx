@@ -84,6 +84,7 @@ const ListsContainer = ({
       sourceTabId,
       onListActivated: refreshLists,
       onListDeleted: refreshLists,
+      onListReused: refreshLists,
       onEditingStarted: refreshLists,
       onEditingFinished: refreshLists,
       onEditingCancelled: refreshLists,
@@ -163,7 +164,7 @@ const ListsContainer = ({
       if (action === "reuse") {
         const reusedList = await reuseList(list.id);
         publishListTabSyncEvent({
-          type: "list-activated",
+          type: "list-reused",
           sourceTabId,
         });
         refreshLists();

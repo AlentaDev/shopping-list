@@ -39,6 +39,7 @@ describe("listTabSyncContract", () => {
 
   it.each([
     "list-activated",
+    "list-reused",
     "list-deleted",
     "editing-started",
     "editing-finished",
@@ -198,6 +199,39 @@ describe("listTabSyncContract", () => {
     expect(onEditingStarted).toHaveBeenCalledTimes(1);
     expect(onEditingFinished).toHaveBeenCalledTimes(1);
     expect(onEditingCancelled).toHaveBeenCalledTimes(1);
+    expect(onListActivated).not.toHaveBeenCalled();
+
+    unsubscribe();
+    globalThis.BroadcastChannel = originalBroadcastChannel;
+  });
+
+
+  it("ejecuta onListReused al recibir un list-reused remoto", () => {
+    const originalBroadcastChannel = globalThis.BroadcastChannel;
+    globalThis.BroadcastChannel = undefined as never;
+    const onListActivated = vi.fn();
+    const onListReused = vi.fn();
+
+    const unsubscribe = subscribeToListTabSyncEvents({
+      sourceTabId: "tab-a",
+      onListActivated,
+      onListReused,
+    });
+
+    const syncEvent: ListTabSyncEvent = {
+      type: "list-reused",
+      sourceTabId: "tab-b",
+      timestamp: Date.now(),
+    };
+
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: LIST_TAB_SYNC_KEY,
+        newValue: JSON.stringify(syncEvent),
+      }),
+    );
+
+    expect(onListReused).toHaveBeenCalledTimes(1);
     expect(onListActivated).not.toHaveBeenCalled();
 
     unsubscribe();

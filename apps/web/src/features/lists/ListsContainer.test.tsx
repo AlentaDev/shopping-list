@@ -46,6 +46,7 @@ describe("ListsContainer", () => {
       sourceTabId: "tab-test",
       onListActivated: expect.any(Function),
       onListDeleted: expect.any(Function),
+      onListReused: expect.any(Function),
       onEditingStarted: expect.any(Function),
       onEditingFinished: expect.any(Function),
       onEditingCancelled: expect.any(Function),
@@ -262,7 +263,7 @@ describe("ListsContainer", () => {
       }),
     );
     expect(publishListTabSyncEventMock).toHaveBeenCalledWith({
-      type: "list-activated",
+      type: "list-reused",
       sourceTabId: "tab-test",
     });
     expect(fetchMock).not.toHaveBeenCalledWith(

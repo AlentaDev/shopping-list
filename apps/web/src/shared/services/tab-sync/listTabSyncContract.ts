@@ -1,6 +1,7 @@
 export type ListTabSyncEventType =
   | "list-activated"
   | "list-deleted"
+  | "list-reused"
   | "editing-started"
   | "editing-finished"
   | "editing-cancelled";
@@ -31,6 +32,7 @@ type SubscribeToListTabSyncEventsInput = {
   sourceTabId: string;
   onListActivated: () => void;
   onListDeleted?: () => void;
+  onListReused?: () => void;
   onEditingStarted?: () => void;
   onEditingFinished?: () => void;
   onEditingCancelled?: () => void;
@@ -39,6 +41,7 @@ type SubscribeToListTabSyncEventsInput = {
 const LIST_TAB_SYNC_EVENT_TYPES: ListTabSyncEventType[] = [
   "list-activated",
   "list-deleted",
+  "list-reused",
   "editing-started",
   "editing-finished",
   "editing-cancelled",
@@ -92,6 +95,7 @@ export const subscribeToListTabSyncEvents = ({
   sourceTabId,
   onListActivated,
   onListDeleted,
+  onListReused,
   onEditingStarted,
   onEditingFinished,
   onEditingCancelled,
@@ -108,6 +112,11 @@ export const subscribeToListTabSyncEvents = ({
 
     if (event.type === "list-deleted") {
       onListDeleted?.();
+      return;
+    }
+
+    if (event.type === "list-reused") {
+      onListReused?.();
       return;
     }
 
