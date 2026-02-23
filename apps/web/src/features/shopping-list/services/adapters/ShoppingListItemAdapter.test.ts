@@ -8,6 +8,7 @@ describe("ShoppingListItemAdapter", () => {
         id: "item-1",
         name: "Pan",
         qty: 2,
+        sourceProductId: "4706",
         thumbnail: "https://example.com/pan.png",
         price: 1.2,
       },
@@ -28,6 +29,7 @@ describe("ShoppingListItemAdapter", () => {
         thumbnail: "https://example.com/pan.png",
         price: 1.2,
         quantity: 2,
+        sourceProductId: "4706",
       },
       {
         id: "item-2",
@@ -36,6 +38,7 @@ describe("ShoppingListItemAdapter", () => {
         thumbnail: null,
         price: null,
         quantity: 1,
+        sourceProductId: "item-2",
       },
       {
         id: "",
@@ -44,8 +47,20 @@ describe("ShoppingListItemAdapter", () => {
         thumbnail: null,
         price: null,
         quantity: 0,
+        sourceProductId: "",
       },
     ]);
+  });
+
+  it("normaliza sourceProductId prefijado con id técnico", () => {
+    const items = adaptShoppingListItems([
+      {
+        id: "active-1:4706",
+        sourceProductId: "active-1:4706:4706",
+      },
+    ]);
+
+    expect(items[0]?.sourceProductId).toBe("4706");
   });
 
   it("devuelve una lista vacía cuando no hay items", () => {

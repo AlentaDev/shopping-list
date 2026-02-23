@@ -48,6 +48,7 @@ describe("StartListEditing", () => {
       id: "list-1",
       isEditing: true,
       updatedAt: now.toISOString(),
+      autosaveUpdatedAt: now.toISOString(),
     });
 
     await expect(listRepository.findById("list-1")).resolves.toMatchObject({
@@ -150,6 +151,7 @@ describe("StartListEditing", () => {
       id: "list-1",
       isEditing: false,
       updatedAt: now.toISOString(),
+      autosaveUpdatedAt: now.toISOString(),
     });
 
     await expect(listRepository.findById("list-1")).resolves.toMatchObject({

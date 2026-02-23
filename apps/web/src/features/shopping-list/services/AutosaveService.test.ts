@@ -541,6 +541,124 @@ describe("AutosaveService", () => {
     );
   });
 
+  it("reintenta una vez el autosave programado cuando recibe 409", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockImplementation(async (_input, init) => {
+        if (init?.method === "GET") {
+          return {
+            ok: true,
+            status: 204,
+            json: async () => null,
+          };
+        }
+
+        if (init?.method === "PUT") {
+          const putCalls = fetchMock.mock.calls.filter(
+            ([, currentInit]) => currentInit?.method === "PUT"
+          ).length;
+
+          if (putCalls === 1) {
+            return {
+              ok: false,
+              status: 409,
+              statusText: "Conflict",
+              json: async () => ({}),
+              text: async () =>
+                JSON.stringify({
+                  error: "autosave_version_conflict",
+                  remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
+                }),
+            };
+          }
+
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              id: "autosave-1",
+              title: "Lista semanal",
+              updatedAt: "2024-01-01T00:00:03.000Z",
+            }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const scheduler = createAutosaveScheduler();
+    scheduler.schedule(SAMPLE_DRAFT);
+
+    await vi.advanceTimersByTimeAsync(1500);
+    await vi.runAllTimersAsync();
+
+    const putCalls = fetchMock.mock.calls.filter(
+      ([, init]) => init?.method === "PUT"
+    );
+    expect(putCalls).toHaveLength(2);
+  });
+
+  it("no rompe el flujo si el reintento tras 409 también falla", async () => {
+    vi.useFakeTimers();
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchMock = vi
+      .fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>()
+      .mockImplementation(async (_input, init) => {
+        if (init?.method === "GET") {
+          return {
+            ok: true,
+            status: 204,
+            json: async () => null,
+          };
+        }
+
+        if (init?.method === "PUT") {
+          return {
+            ok: false,
+            status: 409,
+            statusText: "Conflict",
+            json: async () => ({}),
+            text: async () =>
+              JSON.stringify({
+                error: "autosave_version_conflict",
+                remoteUpdatedAt: "2024-01-01T00:00:02.000Z",
+              }),
+          };
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({}),
+        };
+      });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const scheduler = createAutosaveScheduler();
+    scheduler.schedule(SAMPLE_DRAFT);
+
+    await vi.advanceTimersByTimeAsync(1500);
+    await vi.runAllTimersAsync();
+
+    expect(
+      fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")
+    ).toHaveLength(2);
+    expect(warnSpy).toHaveBeenCalledWith(
+      "No se pudo reintentar autosave tras conflicto de versión.",
+      expect.any(AutosaveConflictError)
+    );
+
+    warnSpy.mockRestore();
+  });
+
   it("omite el guardado local cuando persistLocal es false", async () => {
     vi.useFakeTimers();
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(

@@ -137,6 +137,71 @@ describe("UpsertAutosaveDraft", () => {
     expect(savedOlder?.title).toBe("Older autosave");
   });
 
+  it("updates the autosave draft matching baseUpdatedAt when multiple drafts exist", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "list-new" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+    const matchingDraft: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Matching autosave",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+    const latestDraft: List = {
+      id: "list-2",
+      ownerUserId: "user-1",
+      title: "Latest autosave",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T11:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T11:10:00.000Z"),
+    };
+
+    await listRepository.save(matchingDraft);
+    await listRepository.save(latestDraft);
+
+    const response = await useCase.execute({
+      userId: "user-1",
+      title: "Updated autosave",
+      baseUpdatedAt: "2024-01-01T10:01:00.000Z",
+      items: [
+        {
+          id: "item-2",
+          kind: "manual",
+          name: "Bread",
+          qty: 1,
+          checked: false,
+        },
+      ],
+    });
+
+    expect(response).toEqual({
+      id: "list-1",
+      title: "Updated autosave",
+      updatedAt: expect.any(String),
+    });
+
+    const updatedMatchingDraft = await listRepository.findById("list-1");
+    expect(updatedMatchingDraft).toEqual(
+      expect.objectContaining({
+        id: "list-1",
+        title: "Updated autosave",
+      }),
+    );
+
+    const untouchedLatestDraft = await listRepository.findById("list-2");
+    expect(untouchedLatestDraft?.title).toBe("Latest autosave");
+  });
+
   it("preserves isEditing=true when updating an autosave draft from active editing", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: () => "list-new" };
@@ -244,6 +309,77 @@ describe("UpsertAutosaveDraft", () => {
         id: "list-1:4749",
         sourceProductId: "4749",
       }),
+    );
+  });
+
+  it("keeps item identity stable when autosave receives an already-prefixed item id", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "autosave-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [
+        {
+          id: "active-1:4241",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "active-1:4241",
+        },
+      ],
+    });
+
+    const savedList = await listRepository.findById("autosave-1");
+    expect(savedList?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "autosave-1:active-1:4241",
+        sourceProductId: "active-1:4241",
+      }),
+    );
+  });
+
+  it("preserves uniqueness when item ids include both raw and prefixed product values", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "autosave-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [
+        {
+          id: "active-1:4850",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "active-1:4850",
+        },
+        {
+          id: "4850",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "4850",
+        },
+      ],
+    });
+
+    const savedList = await listRepository.findById("autosave-1");
+    expect(savedList?.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "autosave-1:active-1:4850" }),
+        expect.objectContaining({ id: "autosave-1:4850" }),
+      ]),
     );
   });
 });

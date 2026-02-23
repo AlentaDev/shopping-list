@@ -2,6 +2,7 @@ import { createContext } from "react";
 
 export type ListItem = {
   id: string;
+  sourceProductId?: string;
   name: string;
   category: string;
   thumbnail?: string | null;

@@ -1,6 +1,7 @@
 import type { ShoppingListItem } from "../types";
 import { adaptShoppingListItems } from "./adapters/ShoppingListItemAdapter";
 import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
 type ListActionOptions = {
   errorMessage?: string;
@@ -47,7 +48,16 @@ export const startListEditing = async (
     throw new Error(options.errorMessage ?? "Unable to start list editing.");
   }
 
-  await response.json();
+  const payload = (await response.json()) as {
+    updatedAt?: string;
+    autosaveUpdatedAt?: string;
+  };
+
+  const baseUpdatedAt = payload.autosaveUpdatedAt ?? payload.updatedAt;
+
+  if (baseUpdatedAt) {
+    saveAutosaveSyncMetadata(baseUpdatedAt);
+  }
 };
 
 

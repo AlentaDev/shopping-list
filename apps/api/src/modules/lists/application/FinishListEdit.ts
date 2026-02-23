@@ -112,7 +112,7 @@ const cloneItemForList = (
   }
 
   return {
-    id: item.id,
+    id: buildScopedCatalogItemId(listId, item.id),
     listId,
     kind: "catalog",
     source: item.source,
@@ -129,4 +129,8 @@ const cloneItemForList = (
     createdAt: now,
     updatedAt: now,
   };
+};
+
+const buildScopedCatalogItemId = (listId: string, itemId: string): string => {
+  return `${listId}:${itemId}`;
 };

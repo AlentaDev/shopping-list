@@ -22,6 +22,7 @@ type FetchResponse = {
 describe("ListDetailActionsService", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    localStorage.clear();
   });
 
   it("activa la edición remota de una lista", async () => {
@@ -29,7 +30,10 @@ describe("ListDetailActionsService", () => {
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async () => ({
       ok: true,
-      json: async () => ({}),
+      json: async () => ({
+        updatedAt: "2024-01-01T10:00:00.000Z",
+        autosaveUpdatedAt: "2024-01-01T10:00:05.000Z",
+      }),
     }));
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
@@ -44,6 +48,10 @@ describe("ListDetailActionsService", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isEditing: true }),
       }),
+    );
+
+    expect(localStorage.getItem("lists.localDraftSync")).toBe(
+      JSON.stringify({ baseUpdatedAt: "2024-01-01T10:00:05.000Z" }),
     );
   });
 
@@ -83,6 +91,7 @@ describe("ListDetailActionsService", () => {
           thumbnail: "https://example.com/pan.png",
           price: 1.2,
           quantity: 2,
+          sourceProductId: "item-1",
         },
         {
           id: "",
@@ -91,6 +100,7 @@ describe("ListDetailActionsService", () => {
           thumbnail: null,
           price: null,
           quantity: 0,
+          sourceProductId: "",
         },
       ],
     });

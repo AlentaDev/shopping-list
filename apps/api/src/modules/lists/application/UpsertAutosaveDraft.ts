@@ -56,7 +56,13 @@ export class UpsertAutosaveDraft {
             current.updatedAt > latest.updatedAt ? current : latest,
           );
 
+    const matchingAutosave = autosaveDrafts.find(
+      (draft) => draft.updatedAt.toISOString() === input.baseUpdatedAt,
+    );
+    const targetAutosave = matchingAutosave ?? latestAutosave;
+
     if (
+      !matchingAutosave &&
       latestAutosave &&
       latestAutosave.updatedAt.toISOString() !== input.baseUpdatedAt
     ) {
@@ -65,7 +71,7 @@ export class UpsertAutosaveDraft {
       );
     }
 
-    const listId = latestAutosave?.id ?? this.idGenerator.generate();
+    const listId = targetAutosave?.id ?? this.idGenerator.generate();
     const list: List = {
       id: listId,
       ownerUserId: input.userId,
@@ -73,8 +79,8 @@ export class UpsertAutosaveDraft {
       isAutosaveDraft: true,
       status: "DRAFT",
       items: input.items.map((item) => toListItem(item, listId, now)),
-      isEditing: latestAutosave?.isEditing ?? false,
-      createdAt: latestAutosave?.createdAt ?? now,
+      isEditing: targetAutosave?.isEditing ?? false,
+      createdAt: targetAutosave?.createdAt ?? now,
       updatedAt: now,
     };
 
