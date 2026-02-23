@@ -46,7 +46,9 @@ export class FinishListEdit {
 
     const autosaveDrafts = (
       await this.listRepository.listByOwner(input.userId)
-    ).filter((candidate) => candidate.isAutosaveDraft);
+    ).filter((candidate) =>
+        candidate.isAutosaveDraft && candidate.status === "DRAFT",
+    );
 
     if (autosaveDrafts.length === 0) {
       throw new ListStatusTransitionError();
@@ -69,6 +71,7 @@ export class FinishListEdit {
     latestAutosave.title = "";
     latestAutosave.items = [];
     latestAutosave.isEditing = false;
+    latestAutosave.editingTargetListId = null;
     latestAutosave.updatedAt = now;
 
     await this.listRepository.save(list);

@@ -9,7 +9,7 @@ export class DiscardAutosaveDraft {
 
   async execute(userId: string): Promise<DiscardAutosaveDraftResult> {
     const lists = await this.listRepository.listByOwner(userId);
-    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft);
+    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft && list.status === "DRAFT");
 
     if (autosaveDrafts.length === 0) {
       return { ok: true };

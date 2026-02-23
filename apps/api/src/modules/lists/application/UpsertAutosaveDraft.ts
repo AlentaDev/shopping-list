@@ -51,7 +51,7 @@ export class UpsertAutosaveDraft {
 
   async execute(input: UpsertAutosaveDraftInput): Promise<AutosaveDraftSummary> {
     const lists = await this.listRepository.listByOwner(input.userId);
-    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft);
+    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft && list.status === "DRAFT");
     const now = new Date();
     const latestAutosave =
       autosaveDrafts.length === 0
@@ -84,6 +84,7 @@ export class UpsertAutosaveDraft {
       status: "DRAFT",
       items: input.items.map((item) => toListItem(item, listId, now)),
       isEditing: targetAutosave?.isEditing ?? false,
+      editingTargetListId: targetAutosave?.editingTargetListId ?? null,
       createdAt: targetAutosave?.createdAt ?? now,
       updatedAt: now,
     };
