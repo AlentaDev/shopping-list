@@ -52,7 +52,7 @@ export class ReuseList {
       id: newListId,
       ownerUserId: list.ownerUserId,
       title: list.title,
-      isAutosaveDraft: existingDraft?.isAutosaveDraft ?? false,
+      isAutosaveDraft: true,
       status: "DRAFT",
       items: reusedItems,
       isEditing: false,
