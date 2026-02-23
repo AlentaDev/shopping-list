@@ -11,7 +11,15 @@ data class ListSummaryDto(
     val id: String,
     val title: String,
     val status: String,  // "ACTIVE", "DRAFT", "COMPLETED"
-    val updatedAt: Long,
+    val updatedAt: String,
     val itemCount: Int = 0
 )
 
+/**
+ * DTO de respuesta para listado de listas.
+ * La API backend responde con objeto envoltorio { lists: [...] }
+ */
+@Serializable
+data class ListsResponseDto(
+    val lists: List<ListSummaryDto>
+)

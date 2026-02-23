@@ -1,6 +1,7 @@
 package com.alentadev.shopping.feature.lists.data.remote
 
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
+import com.alentadev.shopping.feature.lists.data.dto.ListsResponseDto
 import com.alentadev.shopping.feature.lists.data.dto.ListSummaryDto
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -22,24 +23,25 @@ class ListsRemoteDataSourceTest {
     @Test
     fun `getActiveLists calls API and maps DTOs to domain`() = runTest {
         // Arrange
-        val dtos = listOf(
+        val response = ListsResponseDto(
+            lists = listOf(
             ListSummaryDto(
                 id = "list-1",
                 title = "Supermercado",
                 status = "ACTIVE",
-                updatedAt = 1000L,
+                updatedAt = "2026-01-10T11:00:00.000Z",
                 itemCount = 5
             ),
             ListSummaryDto(
                 id = "list-2",
                 title = "Farmacia",
                 status = "ACTIVE",
-                updatedAt = 2000L,
+                updatedAt = "2026-01-10T12:00:00.000Z",
                 itemCount = 3
             )
-        )
+        ))
 
-        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns dtos
+        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns response
 
         // Act
         val result = remoteDataSource.getActiveLists()
@@ -54,7 +56,7 @@ class ListsRemoteDataSourceTest {
     @Test
     fun `getActiveLists handles empty list`() = runTest {
         // Arrange
-        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns emptyList()
+        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns ListsResponseDto(emptyList())
 
         // Act
         val result = remoteDataSource.getActiveLists()
@@ -70,7 +72,7 @@ class ListsRemoteDataSourceTest {
             id = "list-123",
             title = "Mi lista",
             status = "ACTIVE",
-            updatedAt = 1500L,
+            updatedAt = "2026-01-10T11:00:00.000Z",
             itemCount = 10
         )
 
@@ -88,13 +90,15 @@ class ListsRemoteDataSourceTest {
     @Test
     fun `getActiveLists maps status correctly`() = runTest {
         // Arrange
-        val dtos = listOf(
-            ListSummaryDto(id = "1", title = "L1", status = "ACTIVE", updatedAt = 1000L),
-            ListSummaryDto(id = "2", title = "L2", status = "DRAFT", updatedAt = 1000L),
-            ListSummaryDto(id = "3", title = "L3", status = "COMPLETED", updatedAt = 1000L)
+        val response = ListsResponseDto(
+            lists = listOf(
+                ListSummaryDto(id = "1", title = "L1", status = "ACTIVE", updatedAt = "2026-01-10T11:00:00.000Z"),
+                ListSummaryDto(id = "2", title = "L2", status = "DRAFT", updatedAt = "2026-01-10T11:00:00.000Z"),
+                ListSummaryDto(id = "3", title = "L3", status = "COMPLETED", updatedAt = "2026-01-10T11:00:00.000Z")
+            )
         )
 
-        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns dtos
+        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns response
 
         // Act
         val result = remoteDataSource.getActiveLists()
@@ -104,5 +108,27 @@ class ListsRemoteDataSourceTest {
         assertEquals(ListStatus.DRAFT, result[1].status)
         assertEquals(ListStatus.COMPLETED, result[2].status)
     }
-}
 
+    @Test
+    fun `getActiveLists maps ISO updatedAt to epoch milliseconds`() = runTest {
+        // Arrange
+        val response = ListsResponseDto(
+            lists = listOf(
+                ListSummaryDto(
+                    id = "list-1",
+                    title = "Supermercado",
+                    status = "ACTIVE",
+                    updatedAt = "2026-01-10T11:00:00.000Z",
+                    itemCount = 5
+                )
+            )
+        )
+        coEvery { listsApi.getActiveLists(status = "ACTIVE") } returns response
+
+        // Act
+        val result = remoteDataSource.getActiveLists()
+
+        // Assert
+        assertEquals(1768042800000L, result.first().updatedAt)
+    }
+}
