@@ -111,7 +111,7 @@ function toListItem(
     listId,
     kind: "catalog",
     source: item.source,
-    sourceProductId: normalizeProductId(item.sourceProductId),
+    sourceProductId: item.sourceProductId,
     nameSnapshot: item.name,
     thumbnailSnapshot: item.thumbnail ?? null,
     priceSnapshot: item.price ?? null,
@@ -128,12 +128,5 @@ function toListItem(
 
 
 function buildAutosaveCatalogItemId(listId: string, itemId: string): string {
-  const normalizedItemId = normalizeProductId(itemId);
-
-  return `${listId}:${normalizedItemId}`;
-}
-
-function normalizeProductId(value: string): string {
-  const segments = value.split(":");
-  return segments[segments.length - 1] ?? value;
+  return `${listId}:${itemId}`;
 }
