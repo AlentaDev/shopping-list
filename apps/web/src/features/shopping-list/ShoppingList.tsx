@@ -394,6 +394,12 @@ const ShoppingList = ({
     },
   );
 
+  const handleRecoverEditSession = useCallback((editingTargetListId: string) => {
+    setListId(editingTargetListId);
+    setListStatus(LIST_STATUS.ACTIVE);
+    setIsEditingSession(true);
+  }, []);
+
   const {
     conflict,
     hasPendingConflict,
@@ -406,11 +412,7 @@ const ShoppingList = ({
     onKeepLocalConflict: () => {
       setListStatus(LIST_STATUS.DRAFT);
     },
-    onRecoverEditSession: (editingTargetListId: string) => {
-      setListId(editingTargetListId);
-      setListStatus(LIST_STATUS.ACTIVE);
-      setIsEditingSession(true);
-    },
+    onRecoverEditSession: handleRecoverEditSession,
     checkEditSessionOnBootstrap: isOpen,
   });
 

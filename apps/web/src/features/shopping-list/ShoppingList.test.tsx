@@ -716,6 +716,70 @@ describe("ShoppingList", () => {
     );
   });
 
+
+
+  it("no entra en bucle de GET autosave al recuperar edición con autosaveChecked=true", async () => {
+    sessionStorage.setItem("lists.autosaveChecked", "true");
+    localStorage.removeItem("lists.editSession");
+
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      if (input === "/api/lists/autosave" && (!init || init.method === "GET")) {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "autosave-loop-1",
+            title: "Tu lista",
+            isEditing: true,
+            editingTargetListId: "active-loop-1",
+            updatedAt: "2026-02-23T18:55:59.939Z",
+            items: [
+              {
+                id: "item-loop-1",
+                kind: "catalog",
+                name: "Aceite",
+                qty: 1,
+                checked: false,
+                updatedAt: "2026-02-23T18:55:59.939Z",
+                source: "mercadona",
+                sourceProductId: "item-loop-1",
+              },
+            ],
+          }),
+        };
+      }
+
+      return { ok: true, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      authenticated: true,
+      items: [],
+      listStatus: "DRAFT",
+      listTitle: "Borrador",
+      isEditing: false,
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.CANCEL,
+        }),
+      ).toBeInTheDocument();
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    const autosaveGetCalls = fetchMock.mock.calls.filter(
+      ([input, init]) => input === "/api/lists/autosave" && (!init || init.method === "GET"),
+    );
+
+    expect(autosaveGetCalls).toHaveLength(1);
+  });
+
   it("resetea borrador local al finalizar edición activa", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
