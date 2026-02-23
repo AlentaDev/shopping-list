@@ -229,6 +229,23 @@ describe("ListsContainer", () => {
 
     const onOpenList = vi.fn();
 
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Borrador previo",
+        items: [
+          {
+            id: "old-item",
+            kind: "catalog",
+            name: "Pan",
+            qty: 1,
+            checked: false,
+          },
+        ],
+        updatedAt: "2024-02-01T00:00:00.000Z",
+      }),
+    );
+
     render(<ListsContainer onOpenList={onOpenList} />);
 
     const activeCard = await screen.findByText("Despensa");
@@ -266,6 +283,18 @@ describe("ListsContainer", () => {
           items: [expect.objectContaining({ id: "item-c-1", name: "Turrón" })],
         }),
       );
+
+      const storedDraft = JSON.parse(
+        localStorage.getItem("lists.localDraft") ?? "{}",
+      ) as {
+        title?: string;
+        items?: Array<{ id: string; name: string }>;
+      };
+
+      expect(storedDraft.title).toBe("Borrador actual");
+      expect(storedDraft.items).toEqual([
+        expect.objectContaining({ id: "item-c-1", name: "Turrón" }),
+      ]);
     });
 
     expect(fetchMock).not.toHaveBeenCalledWith(

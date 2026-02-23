@@ -47,12 +47,40 @@ const isEmptyLocalDraftPayload = (value: string | null): boolean => {
   }
 };
 
+const DEFAULT_CATALOG_SOURCE = "mercadona";
+const LOCAL_DRAFT_STORAGE_KEY = "lists.localDraft";
+
 const clearLocalDraftForAllTabs = () => {
   localStorage.setItem(
-    "lists.localDraft",
+    LOCAL_DRAFT_STORAGE_KEY,
     JSON.stringify({
       title: "",
       items: [],
+      updatedAt: new Date().toISOString(),
+    }),
+  );
+};
+
+const saveLocalDraftForAllTabs = (list: ListDetail) => {
+  localStorage.setItem(
+    LOCAL_DRAFT_STORAGE_KEY,
+    JSON.stringify({
+      title: list.title,
+      items: list.items.map((item) => ({
+        id: item.id,
+        kind: item.kind,
+        name: item.name,
+        qty: item.qty,
+        checked: item.checked,
+        source: item.source ?? DEFAULT_CATALOG_SOURCE,
+        sourceProductId: item.sourceProductId ?? item.id,
+        thumbnail: item.thumbnail ?? null,
+        price: item.price ?? null,
+        unitSize: item.unitSize ?? null,
+        unitFormat: item.unitFormat ?? null,
+        unitPrice: item.unitPrice ?? null,
+        isApproxSize: item.isApproxSize ?? false,
+      })),
       updatedAt: new Date().toISOString(),
     }),
   );
@@ -92,7 +120,7 @@ const ListsContainer = ({
 
   useEffect(() => {
     const onStorage = (storageEvent: StorageEvent) => {
-      if (storageEvent.key !== "lists.localDraft") {
+      if (storageEvent.key !== LOCAL_DRAFT_STORAGE_KEY) {
         return;
       }
 
@@ -162,6 +190,7 @@ const ListsContainer = ({
 
       if (action === "reuse") {
         const reusedListDetail = await reuseList(list.id);
+        saveLocalDraftForAllTabs(reusedListDetail);
         onOpenList({
           ...reusedListDetail,
           status: LIST_STATUS.DRAFT,
