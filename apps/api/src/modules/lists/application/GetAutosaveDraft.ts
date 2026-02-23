@@ -15,7 +15,7 @@ export class GetAutosaveDraft {
 
   async execute(userId: string): Promise<AutosaveDraft | null> {
     const lists = await this.listRepository.listByOwner(userId);
-    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft);
+    const autosaveDrafts = lists.filter((list) => list.isAutosaveDraft && list.status === "DRAFT");
 
     if (autosaveDrafts.length === 0) {
       return null;

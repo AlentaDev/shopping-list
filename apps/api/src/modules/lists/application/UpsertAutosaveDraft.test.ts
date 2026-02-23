@@ -373,4 +373,38 @@ describe("UpsertAutosaveDraft", () => {
       }),
     );
   });
+  it("ignores non-draft autosave candidates when checking version conflicts", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "autosave-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    const activeListMarkedAsAutosave: List = {
+      id: "active-1",
+      ownerUserId: "user-1",
+      title: "Lista activa",
+      isAutosaveDraft: true,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T11:00:00.000Z"),
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T11:10:00.000Z"),
+    };
+
+    await listRepository.save(activeListMarkedAsAutosave);
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        title: "Autosave",
+        baseUpdatedAt: "2024-01-01T11:10:00.000Z",
+        items: [],
+      }),
+    ).resolves.toEqual({
+      id: "autosave-1",
+      title: "Autosave",
+      updatedAt: expect.any(String),
+    });
+  });
+
 });
