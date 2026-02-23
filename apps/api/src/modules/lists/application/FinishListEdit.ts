@@ -6,6 +6,10 @@ import {
   ListNotFoundError,
   ListStatusTransitionError,
 } from "./errors.js";
+import {
+  buildActiveItemId,
+  normalizeSourceProductId,
+} from "./itemIdNormalization.js";
 
 type FinishListEditInput = {
   userId: string;
@@ -111,12 +115,14 @@ const cloneItemForList = (
     };
   }
 
+  const canonicalSourceProductId = normalizeSourceProductId(item.sourceProductId);
+
   return {
-    id: buildScopedCatalogItemId(listId, item.id),
+    id: buildActiveItemId(listId, canonicalSourceProductId),
     listId,
     kind: "catalog",
     source: item.source,
-    sourceProductId: item.sourceProductId,
+    sourceProductId: canonicalSourceProductId,
     nameSnapshot: item.nameSnapshot,
     thumbnailSnapshot: item.thumbnailSnapshot,
     priceSnapshot: item.priceSnapshot,
@@ -131,6 +137,3 @@ const cloneItemForList = (
   };
 };
 
-const buildScopedCatalogItemId = (listId: string, itemId: string): string => {
-  return `${listId}:${itemId}`;
-};

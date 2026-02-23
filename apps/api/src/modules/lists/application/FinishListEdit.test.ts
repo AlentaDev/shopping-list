@@ -92,7 +92,7 @@ describe("FinishListEdit", () => {
       isEditing: false,
       items: [
         expect.objectContaining({
-          id: "list-1:item-2",
+          id: "list-1:123",
           listId: "list-1",
           checked: false,
         }),
@@ -304,8 +304,8 @@ describe("FinishListEdit", () => {
     const updatedActive = await listRepository.findById("active-1");
     expect(updatedActive?.items[0]).toEqual(
       expect.objectContaining({
-        id: "active-1:autosave-1:active-1:4241",
-        sourceProductId: "active-1:4241",
+        id: "active-1:4241",
+        sourceProductId: "4241",
       }),
     );
   });
