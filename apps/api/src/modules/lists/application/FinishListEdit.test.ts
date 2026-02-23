@@ -309,4 +309,190 @@ describe("FinishListEdit", () => {
       }),
     );
   });
+
+  it("uses the draft tied to editingTargetListId instead of latest autosave", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+
+    await listRepository.save({
+      id: "active-a",
+      ownerUserId: "user-1",
+      title: "Lista A",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "active-b",
+      ownerUserId: "user-1",
+      title: "Lista B",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-a",
+      ownerUserId: "user-1",
+      title: "Draft A",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      editingTargetListId: "active-a",
+      items: [
+        {
+          id: "draft-a:111",
+          listId: "draft-a",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "111",
+          nameSnapshot: "Leche",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-01T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-b-latest",
+      ownerUserId: "user-1",
+      title: "Draft B",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      editingTargetListId: "active-b",
+      items: [
+        {
+          id: "draft-b:222",
+          listId: "draft-b-latest",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "222",
+          nameSnapshot: "Pan",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    await useCase.execute({ userId: "user-1", listId: "active-a" });
+
+    const activeA = await listRepository.findById("active-a");
+    const activeB = await listRepository.findById("active-b");
+    expect(activeA?.items).toEqual([
+      expect.objectContaining({ sourceProductId: "111", id: "active-a:111" }),
+    ]);
+    expect(activeB?.items).toHaveLength(0);
+  });
+
+  it("is idempotent for equivalent nested catalog source ids", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+
+    await listRepository.save({
+      id: "active-1",
+      ownerUserId: "user-1",
+      title: "Activa",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "autosave-1",
+      ownerUserId: "user-1",
+      title: "Activa editada",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      editingTargetListId: "active-1",
+      items: [
+        {
+          id: "autosave-1:active-1:4241",
+          listId: "autosave-1",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "active-1:4241",
+          nameSnapshot: "Aceite",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+        {
+          id: "autosave-1:4241",
+          listId: "autosave-1",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "4241",
+          nameSnapshot: "Aceite",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    await useCase.execute({ userId: "user-1", listId: "active-1" });
+
+    const updatedActive = await listRepository.findById("active-1");
+    expect(updatedActive?.items).toHaveLength(1);
+    expect(updatedActive?.items[0]).toEqual(
+      expect.objectContaining({
+        id: "active-1:4241",
+        sourceProductId: "4241",
+      }),
+    );
+  });
 });

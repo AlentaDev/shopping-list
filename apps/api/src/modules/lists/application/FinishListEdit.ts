@@ -1,4 +1,5 @@
 import type { ListRepository } from "./ports.js";
+import { ResetAutosaveDraft } from "./ResetAutosaveDraft.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { ListItem } from "../domain/list.js";
 import {
@@ -28,7 +29,13 @@ type FinishListEditResult = {
 };
 
 export class FinishListEdit {
-  constructor(private readonly listRepository: ListRepository) {}
+  private readonly listRepository: ListRepository;
+  private readonly resetAutosaveDraft: ResetAutosaveDraft;
+
+  constructor(listRepository: ListRepository) {
+    this.listRepository = listRepository;
+    this.resetAutosaveDraft = new ResetAutosaveDraft(listRepository);
+  }
 
   async execute(input: FinishListEditInput): Promise<FinishListEditResult> {
     const list = await this.listRepository.findById(input.listId);
@@ -54,38 +61,37 @@ export class FinishListEdit {
       throw new ListStatusTransitionError();
     }
 
-    const latestAutosave = autosaveDrafts.reduce((latest, current) =>
-      current.updatedAt > latest.updatedAt ? current : latest,
+    const autosaveForActiveList = autosaveDrafts.filter(
+      (candidate) => candidate.editingTargetListId === list.id,
     );
+
+    const targetAutosave =
+      autosaveForActiveList.length > 0
+        ? autosaveForActiveList.reduce((latest, current) =>
+            current.updatedAt > latest.updatedAt ? current : latest,
+          )
+        : autosaveDrafts.reduce((latest, current) =>
+            current.updatedAt > latest.updatedAt ? current : latest,
+          );
+
+    if (!targetAutosave) {
+      throw new ListStatusTransitionError();
+    }
 
     const now = new Date();
-    const nextItems = latestAutosave.items.map((item) =>
-      cloneItemForList(item, list.id, now),
-    );
+    const nextItems = mapDraftItemsToActiveItems(targetAutosave.items, list.id, now);
 
-    list.title = latestAutosave.title;
+    list.title = targetAutosave.title;
     list.items = nextItems;
     list.isEditing = false;
+    list.editingTargetListId = null;
     list.updatedAt = now;
 
-    latestAutosave.title = "";
-    latestAutosave.items = [];
-    latestAutosave.isEditing = false;
-    latestAutosave.editingTargetListId = null;
-    latestAutosave.updatedAt = now;
-
     await this.listRepository.save(list);
-    await this.listRepository.save(latestAutosave);
-
-    const staleAutosaveDrafts = autosaveDrafts.filter(
-      (autosaveDraft) => autosaveDraft.id !== latestAutosave.id,
-    );
-
-    await Promise.all(
-      staleAutosaveDrafts.map((autosaveDraft) =>
-        this.listRepository.deleteById(autosaveDraft.id),
-      ),
-    );
+    await this.resetAutosaveDraft.execute({
+      userId: input.userId,
+      targetDraftId: targetAutosave.id,
+    });
 
     return {
       id: list.id,
@@ -140,3 +146,27 @@ const cloneItemForList = (
   };
 };
 
+const mapDraftItemsToActiveItems = (
+  draftItems: ListItem[],
+  listId: string,
+  now: Date,
+): ListItem[] => {
+  const nextItems: ListItem[] = [];
+  const seenCatalogSourceProductIds = new Set<string>();
+
+  for (const item of draftItems) {
+    const nextItem = cloneItemForList(item, listId, now);
+
+    if (nextItem.kind === "catalog") {
+      if (seenCatalogSourceProductIds.has(nextItem.sourceProductId)) {
+        continue;
+      }
+
+      seenCatalogSourceProductIds.add(nextItem.sourceProductId);
+    }
+
+    nextItems.push(nextItem);
+  }
+
+  return nextItems;
+};
