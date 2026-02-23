@@ -100,7 +100,7 @@ describe("ListsContainer", () => {
     });
   });
 
-  it("abre modal de detalle al hacer click y ejecuta acciones canónicas", async () => {
+  it("abre modal de detalle al hacer click y reutiliza COMPLETED sobre el DRAFT existente", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input, init) => {
@@ -171,15 +171,44 @@ describe("ListsContainer", () => {
             itemCount: 4,
             isEditing: false,
             status: LIST_STATUS.COMPLETED,
-            items: [],
+            items: [
+              {
+                id: "item-c-1",
+                kind: "catalog",
+                name: "Turrón",
+                qty: 2,
+                checked: false,
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                price: 3.25,
+              },
+            ],
           }),
         };
       }
 
-      if (url === "/api/lists/completed-1/reuse") {
+      if (url === "/api/lists/completed-1/reuse" && init?.method === "POST") {
         return {
           ok: true,
-          json: async () => ({ id: "duplicated-1" }),
+          json: async () => ({
+            id: "draft-1",
+            title: "Borrador actual",
+            updatedAt: "2024-02-02T11:45:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
+            items: [
+              {
+                id: "item-c-1",
+                kind: "catalog",
+                name: "Turrón",
+                qty: 2,
+                checked: false,
+                updatedAt: "2024-02-02T11:45:00.000Z",
+                price: 3.25,
+              },
+            ],
+          }),
         };
       }
 
@@ -198,14 +227,16 @@ describe("ListsContainer", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<ListsContainer onOpenList={vi.fn()} />);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} />);
 
     const activeCard = await screen.findByText("Despensa");
     await userEvent.click(activeCard);
 
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByText("Leche")).toBeInTheDocument();
-    expect(screen.getByText("Productos: 1")).toBeInTheDocument();
+    expect(screen.getAllByText("Productos: 1").length).toBeGreaterThan(0);
 
     await userEvent.click(
       screen.getByRole("button", { name: UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL }),
@@ -227,6 +258,13 @@ describe("ListsContainer", () => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/completed-1/reuse",
         expect.objectContaining({ method: "POST" }),
+      );
+      expect(onOpenList).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "draft-1",
+          status: LIST_STATUS.DRAFT,
+          items: [expect.objectContaining({ id: "item-c-1", name: "Turrón" })],
+        }),
       );
     });
 
@@ -438,6 +476,32 @@ describe("ListsContainer", () => {
                 itemCount: 4,
                 isEditing: false,
                 status: LIST_STATUS.COMPLETED,
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-1/reuse" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-1",
+            title: "Borrador actual",
+            updatedAt: "2024-02-02T11:45:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
+            items: [
+              {
+                id: "item-c-1",
+                kind: "catalog",
+                name: "Turrón",
+                qty: 2,
+                checked: false,
+                updatedAt: "2024-02-02T11:45:00.000Z",
+                price: 3.25,
               },
             ],
           }),

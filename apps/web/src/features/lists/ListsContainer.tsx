@@ -8,8 +8,8 @@ import {
   activateList,
   completeList,
   deleteList,
-  reuseList,
   getListDetail,
+  reuseList,
   startListEditing,
 } from "./services/ListsService";
 import {
@@ -161,7 +161,11 @@ const ListsContainer = ({
       }
 
       if (action === "reuse") {
-        await reuseList(list.id);
+        const reusedListDetail = await reuseList(list.id);
+        onOpenList({
+          ...reusedListDetail,
+          status: LIST_STATUS.DRAFT,
+        });
         refreshLists();
         handleCloseDetail();
         return;
