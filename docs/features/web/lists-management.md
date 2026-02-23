@@ -204,6 +204,27 @@ Esta combinación representa una sesión de edición activa (no un flujo de borr
 5. **t4:** B conserva su `LOCAL_DRAFT` pendiente, descarga snapshot remoto (`10:01`) y muestra aviso de conflicto.
 6. **t5:** Usuario en B elige “recargar desde servidor” (flujo de recuperación); recién ahí se permite sobrescribir `LOCAL_DRAFT` con remoto y reintentar usando el nuevo `baseUpdatedAt`.
 
+
+## Contrato final de edit-mode
+
+- **Invariantes**
+  - Existe un único `DRAFT` remoto por usuario (puede estar vacío).
+  - Si una `ACTIVE` entra en edición, el sistema mantiene el par atómico `ACTIVE(isEditing=true)` + `DRAFT` asociado hasta `finish` o `cancel`.
+  - Nunca se permite `DRAFT -> ACTIVE` con `items.length = 0`.
+- **Transiciones permitidas**
+  - `start`: `ACTIVE(isEditing=false)` -> `ACTIVE(isEditing=true)` + `DRAFT` de edición.
+  - `finish`: aplica snapshot de `DRAFT` en `ACTIVE`, pasa `isEditing=false` y limpia `DRAFT`.
+  - `cancel`: descarta snapshot de `DRAFT`, pasa `isEditing=false` y limpia `DRAFT`.
+  - `recovery`: tras reload/login, si `isEditing=true`, la UI rehidrata ese edit-mode (no degrada a flujo draft normal).
+- **Regla canónica de item ID**
+  - `itemId` es el identificador estable de línea y único dentro de la lista.
+  - Operaciones de update/delete se resuelven por `itemId` (no por índice).
+  - En reuse/edit se preserva `itemId` para la misma línea; líneas nuevas generan `itemId` nuevo.
+- **Política de timestamp/version reutilizada**
+  - Todos los writes de `DRAFT` (normal, reuse, edit-mode) usan `baseUpdatedAt` vs `updatedAt` remoto.
+  - En mismatch, API responde `409 Conflict` sin persistir.
+  - `updatedAt` es la versión canónica (sin versión paralela).
+
 ## Referencia de transiciones
 
 - Ver la tabla canónica de transiciones en `docs/usecases/list-use-cases.md#tabla-de-transiciones-de-estado` para validar los flujos de reconciliación login/bootstrap, activar desde draft, edición de listas activas, reutilización de historial y finalización desde móvil.
