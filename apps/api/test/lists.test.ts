@@ -649,6 +649,77 @@ describe("lists endpoints", () => {
     );
   });
 
+  it("PATCH /api/lists/:id/editing returns autosaveUpdatedAt usable by first autosave without conflict", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Weekly" });
+
+    await request(app)
+      .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", productId: "123" });
+
+    await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/activate`)
+      .set("Cookie", cookie)
+      .send({ status: "ACTIVE" });
+
+    const startEditingResponse = await request(app)
+      .patch(`/api/lists/${listResponse.body.id}/editing`)
+      .set("Cookie", cookie)
+      .send({ isEditing: true });
+
+    expect(startEditingResponse.status).toBe(200);
+    expect(startEditingResponse.body).toEqual(
+      expect.objectContaining({
+        autosaveUpdatedAt: expect.any(String),
+      }),
+    );
+
+    const firstAutosaveResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Weekly editing",
+        baseUpdatedAt: startEditingResponse.body.autosaveUpdatedAt,
+        items: [
+          {
+            id: "stale-id",
+            kind: "catalog",
+            name: "Whole Milk",
+            qty: 2,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "active-list:123",
+          },
+        ],
+      });
+
+    expect(firstAutosaveResponse.status).toBe(200);
+
+    const autosaveResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(autosaveResponse.status).toBe(200);
+    expect(autosaveResponse.body).toEqual(
+      expect.objectContaining({
+        isEditing: true,
+        editingTargetListId: listResponse.body.id,
+        items: [
+          expect.objectContaining({
+            id: `${autosaveResponse.body.id}:123`,
+            sourceProductId: "123",
+          }),
+        ],
+      }),
+    );
+  });
+
   it("PUT /api/lists/autosave keeps isEditing=true while active edit session is in progress", async () => {
     const app = createAppWithCatalogProvider(catalogProvider);
     const cookie = await loginUser(app, defaultUser);
@@ -817,6 +888,7 @@ describe("lists endpoints", () => {
       id: expect.any(String),
       title: "",
       isEditing: false,
+      editingTargetListId: null,
       items: [],
       updatedAt: expect.any(String),
     });

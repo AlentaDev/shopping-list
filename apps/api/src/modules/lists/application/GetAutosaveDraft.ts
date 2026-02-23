@@ -7,6 +7,7 @@ type AutosaveDraft = {
   isEditing: boolean;
   items: ListItemDto[];
   updatedAt: string;
+  editingTargetListId: string | null;
 };
 
 export class GetAutosaveDraft {
@@ -30,6 +31,7 @@ export class GetAutosaveDraft {
       isEditing: latestAutosave.isEditing,
       items: latestAutosave.items.map((item) => toListItemDto(item)),
       updatedAt: latestAutosave.updatedAt.toISOString(),
+      editingTargetListId: latestAutosave.editingTargetListId ?? null,
     };
   }
 }

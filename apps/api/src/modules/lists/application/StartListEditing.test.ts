@@ -165,6 +165,8 @@ describe("StartListEditing", () => {
   it("creates an autosave draft when starting editing and none exists", async () => {
     const listRepository = new InMemoryListRepository();
     const useCase = new StartListEditing(listRepository);
+    const activeItemCreatedAt = new Date("2024-01-01T10:03:00.000Z");
+    const activeItemUpdatedAt = new Date("2024-01-01T10:04:00.000Z");
     const list: List = {
       id: "active-list",
       ownerUserId: "user-1",
@@ -173,7 +175,36 @@ describe("StartListEditing", () => {
       status: "ACTIVE",
       activatedAt: new Date("2024-01-01T09:00:00.000Z"),
       isEditing: false,
-      items: [],
+      items: [
+        {
+          id: "active-item-1",
+          listId: "active-list",
+          kind: "manual",
+          name: "Milk",
+          qty: 2,
+          checked: false,
+          createdAt: activeItemCreatedAt,
+          updatedAt: activeItemUpdatedAt,
+        },
+        {
+          id: "active-list:123",
+          listId: "active-list",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "active-list:123",
+          nameSnapshot: "Whole Milk",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          qty: 1,
+          checked: false,
+          createdAt: activeItemCreatedAt,
+          updatedAt: activeItemUpdatedAt,
+        },
+      ],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:00:00.000Z"),
     };
@@ -192,7 +223,21 @@ describe("StartListEditing", () => {
           id: expect.any(String),
           isAutosaveDraft: true,
           isEditing: true,
+          editingTargetListId: "active-list",
           status: "DRAFT",
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              id: "active-item-1",
+              listId: expect.any(String),
+              name: "Milk",
+              qty: 2,
+            }),
+            expect.objectContaining({
+              id: expect.stringMatching(/:123$/),
+              listId: expect.any(String),
+              sourceProductId: "123",
+            }),
+          ]),
         }),
       ]),
     );
@@ -244,6 +289,7 @@ describe("StartListEditing", () => {
     expect(userDrafts[0]).toMatchObject({
       id: "autosave-existing",
       isEditing: true,
+      editingTargetListId: "active-list",
     });
   });
 
@@ -301,6 +347,7 @@ describe("StartListEditing", () => {
     expect(userLists.find((list) => list.id === "autosave-old")).toBeUndefined();
     expect(userLists.find((list) => list.id === "autosave-latest")).toMatchObject({
       isEditing: true,
+      editingTargetListId: "active-list",
     });
   });
 });

@@ -4,7 +4,8 @@ import {
   ListNotFoundError,
   ListStatusTransitionError,
 } from "./errors.js";
-import type { List } from "../domain/list.js";
+import type { List, ListItem } from "../domain/list.js";
+import { buildDraftItemId, normalizeSourceProductId } from "./itemIdNormalization.js";
 
 type StartListEditingInput = {
   userId: string;
@@ -56,7 +57,15 @@ export class StartListEditing {
           );
 
     latestAutosave.isEditing = input.isEditing;
+    latestAutosave.editingTargetListId = input.isEditing ? list.id : null;
     latestAutosave.updatedAt = now;
+
+    if (input.isEditing) {
+      latestAutosave.title = list.title;
+      latestAutosave.items = list.items.map((item) =>
+        cloneItemForDraft(item, latestAutosave.id),
+      );
+    }
 
     await this.listRepository.save(list);
     await this.listRepository.save(latestAutosave);
@@ -88,8 +97,27 @@ export class StartListEditing {
       status: "DRAFT",
       items: [],
       isEditing: activeList.isEditing,
+      editingTargetListId: activeList.isEditing ? activeList.id : null,
       createdAt: now,
       updatedAt: now,
     };
   }
+}
+
+function cloneItemForDraft(item: ListItem, draftListId: string): ListItem {
+  if (item.kind === "manual") {
+    return {
+      ...item,
+      listId: draftListId,
+    };
+  }
+
+  const canonicalSourceProductId = normalizeSourceProductId(item.sourceProductId);
+
+  return {
+    ...item,
+    id: buildDraftItemId(draftListId, canonicalSourceProductId),
+    listId: draftListId,
+    sourceProductId: canonicalSourceProductId,
+  };
 }

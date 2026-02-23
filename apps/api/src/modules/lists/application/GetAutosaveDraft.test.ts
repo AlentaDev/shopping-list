@@ -75,6 +75,7 @@ describe("GetAutosaveDraft", () => {
       isEditing: false,
       items: [],
       updatedAt: "2024-01-01T11:10:00.000Z",
+      editingTargetListId: null,
     });
   });
 
@@ -102,6 +103,7 @@ describe("GetAutosaveDraft", () => {
       isEditing: false,
       items: [],
       updatedAt: "2024-01-01T10:01:00.000Z",
+      editingTargetListId: null,
     });
   });
 
@@ -116,6 +118,7 @@ describe("GetAutosaveDraft", () => {
       status: "DRAFT",
       activatedAt: undefined,
       isEditing: true,
+      editingTargetListId: "active-1",
       items: [],
       createdAt: new Date("2024-01-01T10:00:00.000Z"),
       updatedAt: new Date("2024-01-01T10:01:00.000Z"),
@@ -127,6 +130,7 @@ describe("GetAutosaveDraft", () => {
       id: "list-1",
       title: "Autosave editing",
       isEditing: true,
+      editingTargetListId: "active-1",
       items: [],
       updatedAt: "2024-01-01T10:01:00.000Z",
     });
