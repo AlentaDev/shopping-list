@@ -111,9 +111,7 @@ function reuseItem(
 }
 
 function findLatestDraft(lists: List[]): List | null {
-  const drafts = lists.filter(
-    (candidate) => candidate.status === "DRAFT" && !candidate.isAutosaveDraft,
-  );
+  const drafts = lists.filter((candidate) => candidate.status === "DRAFT");
   if (drafts.length === 0) {
     return null;
   }

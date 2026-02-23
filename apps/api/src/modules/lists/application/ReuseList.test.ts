@@ -320,13 +320,10 @@ describe("ReuseList", () => {
     vi.useRealTimers();
   });
 
-  it("creates a new draft when only autosave drafts exist", async () => {
+  it("reuses existing draft even when it is an autosave draft", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = {
-      generate: vi
-        .fn()
-        .mockReturnValueOnce("list-2")
-        .mockReturnValueOnce("item-3"),
+      generate: vi.fn().mockReturnValueOnce("item-3"),
     };
     const useCase = new ReuseList(listRepository, idGenerator);
     const now = new Date("2024-01-06T10:00:00.000Z");
@@ -378,25 +375,25 @@ describe("ReuseList", () => {
         listId: "list-1",
       }),
     ).resolves.toMatchObject({
-      id: "list-2",
+      id: "autosave-1",
       title: "Weekly groceries",
       status: "DRAFT",
       updatedAt: now.toISOString(),
     });
 
-    await expect(listRepository.findById("list-2")).resolves.toMatchObject({
-      id: "list-2",
+    await expect(listRepository.findById("autosave-1")).resolves.toMatchObject({
+      id: "autosave-1",
       status: "DRAFT",
       isAutosaveDraft: false,
       items: [
         expect.objectContaining({
           id: "item-3",
-          listId: "list-2",
+          listId: "autosave-1",
         }),
       ],
     });
 
-    expect(idGenerator.generate).toHaveBeenCalledTimes(2);
+    expect(idGenerator.generate).toHaveBeenCalledTimes(1);
 
     vi.useRealTimers();
   });
