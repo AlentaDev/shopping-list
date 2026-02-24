@@ -1,7 +1,9 @@
 package com.alentadev.shopping.feature.lists.data.remote
 
 import com.alentadev.shopping.feature.lists.data.dto.ListSummaryDto
+import com.alentadev.shopping.feature.lists.data.dto.ListsResponseDto
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -18,7 +20,7 @@ interface ListsApi {
     @GET("api/lists")
     suspend fun getActiveLists(
         @Query("status") status: String = "ACTIVE"
-    ): List<ListSummaryDto>
+    ): ListsResponseDto
 
     /**
      * Obtiene una lista específica por ID con sus items
@@ -27,7 +29,7 @@ interface ListsApi {
      */
     @GET("api/lists/{id}")
     suspend fun getListDetail(
-        @Query("id") listId: String
+        @Path("id") listId: String
     ): ListSummaryDto
 }
 

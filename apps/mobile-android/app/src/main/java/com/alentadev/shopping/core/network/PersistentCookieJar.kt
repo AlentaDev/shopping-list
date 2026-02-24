@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
@@ -20,16 +21,28 @@ private const val TAG = "PersistentCookieJar"
 class PersistentCookieJar(private val context: Context) : CookieJar {
     private val COOKIES_KEY = stringPreferencesKey("saved_cookies")
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val cookieStorage = CookieStorage()
+
+    init {
+        runCatching {
+            val persistedCookies = runBlocking {
+                loadCookies().values.mapNotNull { deserializeCookie(it) }
+            }
+            cookieStorage.save(persistedCookies)
+        }.onFailure {
+            Log.e(TAG, "Error cargando cookies persistidas", it)
+        }
+    }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+        // Guardado inmediato en memoria para que un retry inmediato use cookies nuevas
+        cookieStorage.save(cookies)
+
         scope.launch {
             try {
-                val existingCookies = loadCookies().toMutableMap()
-                cookies.forEach { cookie ->
-                    existingCookies[cookie.name] = serializeCookie(cookie)
-                }
+                val serialized = cookieStorage.snapshot().joinToString(";") { serializeCookie(it) }
                 context.cookieDataStore.edit { prefs ->
-                    prefs[COOKIES_KEY] = existingCookies.values.joinToString(";")
+                    prefs[COOKIES_KEY] = serialized
                 }
                 Log.d(TAG, "Cookies guardadas: ${cookies.size} nuevas cookies")
             } catch (e: Exception) {
@@ -40,21 +53,7 @@ class PersistentCookieJar(private val context: Context) : CookieJar {
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
         return try {
-            // Para OkHttp es necesario usar blocking aquí, pero es en hilo I/O
-            val cookies = mutableListOf<Cookie>()
-            scope.launch {
-                cookies.addAll(
-                    loadCookies().values.mapNotNull { deserializeCookie(it) }
-                )
-            }.let { job ->
-                // Esperar corto - las cookies están en caché
-                if (cookies.isEmpty()) {
-                    // Si está vacío en primer acceso, retornar vacío (mejor que bloquear)
-                    emptyList()
-                } else {
-                    cookies
-                }
-            }
+            cookieStorage.loadFor(url)
         } catch (e: Exception) {
             Log.e(TAG, "Error al cargar cookies", e)
             emptyList()
@@ -62,6 +61,7 @@ class PersistentCookieJar(private val context: Context) : CookieJar {
     }
 
     fun clear() {
+        cookieStorage.clear()
         scope.launch {
             try {
                 context.cookieDataStore.edit { it.clear() }
@@ -112,5 +112,3 @@ class PersistentCookieJar(private val context: Context) : CookieJar {
         }
     }
 }
-
-

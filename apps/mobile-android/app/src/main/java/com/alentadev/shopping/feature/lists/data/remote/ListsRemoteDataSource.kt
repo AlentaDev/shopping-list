@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.lists.data.remote
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
 import com.alentadev.shopping.feature.lists.data.dto.ListSummaryDto
+import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -19,8 +20,8 @@ class ListsRemoteDataSource @Inject constructor(
      * @throws Exception si hay error de red o servidor
      */
     suspend fun getActiveLists(): List<ShoppingList> {
-        val dtos = listsApi.getActiveLists(status = "ACTIVE")
-        return dtos.map { it.toDomain() }
+        val response = listsApi.getActiveLists(status = "ACTIVE")
+        return response.lists.map { it.toDomain() }
     }
 
     /**
@@ -47,9 +48,13 @@ class ListsRemoteDataSource @Inject constructor(
                 "COMPLETED" -> ListStatus.COMPLETED
                 else -> ListStatus.ACTIVE
             },
-            updatedAt = updatedAt,
+            updatedAt = updatedAt.toEpochMillisOrZero(),
             itemCount = itemCount
         )
     }
-}
 
+    private fun String.toEpochMillisOrZero(): Long {
+        return runCatching { Instant.parse(this).toEpochMilli() }
+            .getOrDefault(0L)
+    }
+}
