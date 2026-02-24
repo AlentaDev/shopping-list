@@ -23,6 +23,7 @@
 
     <!-- Lists / Active Lists -->
     <string name="lists_title">Listas Activas</string>
+    <string name="lists_subtitle">Tus compras de hoy</string>
     <string name="lists_empty">No tienes listas activas</string>
     <string name="lists_empty_subtitle">Crea una lista en la web para empezar</string>
     <string name="lists_loading">Cargando listas…</string>
