@@ -14,7 +14,8 @@ private const val TAG = "TokenAuthenticator"
  *
  * La API backend gestiona el refresh y emite cookies nuevas.
  * Desde Android no se fuerza llamada manual a /api/auth/refresh.
- * Ante 401 devolvemos null para que el flujo de auth se gestione aguas arriba.
+ * Ante 401 reintenta una vez la misma request para aprovechar cookies/tokens
+ * potencialmente renovados por la API en la respuesta previa.
  */
 class TokenAuthenticator(
     private val cookieJar: PersistentCookieJar,
@@ -26,10 +27,24 @@ class TokenAuthenticator(
             return null
         }
 
-        Log.d(TAG, "401 recibido. No se ejecuta refresh manual desde Android.")
+        if (responseCount(response) >= 2) {
+            return null
+        }
 
-        // No limpiar cookies aquí para no perder refresh token válido.
-        // No llamar manualmente a /api/auth/refresh desde el cliente Android.
-        return null
+        Log.d(TAG, "401 recibido. Reintentando una vez con cookies actuales.")
+
+        // No limpiar cookies ni forzar refresh manual desde Android.
+        return response.request.newBuilder().build()
     }
+
+    private fun responseCount(response: Response): Int {
+        var count = 1
+        var prior = response.priorResponse
+        while (prior != null) {
+            count++
+            prior = prior.priorResponse
+        }
+        return count
+    }
+
 }
