@@ -75,17 +75,35 @@ class TokenAuthenticatorTest {
             .method(method, methodBody(method))
             .build()
 
-        return Response.Builder()
+        // Para crear prior response válido, OkHttp requiere estructura específica
+        val responseBuilder = Response.Builder()
             .request(request)
             .protocol(Protocol.HTTP_1_1)
             .code(code)
             .message("test")
-            .apply {
-                if (prior != null) {
-                    priorResponse(prior)
-                }
+
+        // Si hay prior, debe estar correctamente formado (OkHttp internals)
+        prior?.let {
+            try {
+                responseBuilder.priorResponse(
+                    it.newBuilder()
+                        .body(null) // Prior response no debe tener body
+                        .build()
+                )
+            } catch (e: Exception) {
+                // Si falla, construir prior simple
+                responseBuilder.priorResponse(
+                    Response.Builder()
+                        .request(it.request)
+                        .protocol(Protocol.HTTP_1_1)
+                        .code(it.code)
+                        .message("prior")
+                        .build()
+                )
             }
-            .build()
+        }
+
+        return responseBuilder.build()
     }
 
     private fun methodBody(method: String) =

@@ -14,12 +14,9 @@ import javax.inject.Singleton
  */
 @Singleton
 class DeviceFingerprintProvider @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
-    /**
-     * Obtiene el fingerprint único del dispositivo
-     * Combina ANDROID_ID con información del build para mayor unicidad
-     */
+
     @SuppressLint("HardwareIds")
     fun getFingerprint(): String {
         val androidId = Secure.getString(
@@ -27,9 +24,7 @@ class DeviceFingerprintProvider @Inject constructor(
             Secure.ANDROID_ID
         ) ?: "unknown"
 
-        // Combinar ANDROID_ID con info del modelo para mayor unicidad
         return "$androidId-${Build.MODEL}".lowercase()
     }
-
 }
 

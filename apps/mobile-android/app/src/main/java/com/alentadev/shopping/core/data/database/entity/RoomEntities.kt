@@ -44,7 +44,8 @@ data class ListEntity(
             childColumns = ["listId"],
             onDelete = androidx.room.ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [androidx.room.Index(value = ["listId"])]
 )
 data class ItemEntity(
     @PrimaryKey

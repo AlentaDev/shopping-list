@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Shopping" parent="android:Theme.Material.Light" />
+    <!-- Tema base simple para actividades - Compose maneja el diseño real -->
+    <style name="Theme.Shopping" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Colores personalizados si es necesario -->
+    </style>
 </resources>
