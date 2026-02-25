@@ -18,7 +18,7 @@ import com.alentadev.shopping.core.data.database.dao.SyncMetadataDao
         ItemEntity::class,
         SyncMetadataEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
