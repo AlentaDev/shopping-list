@@ -2,7 +2,6 @@ package com.alentadev.shopping.core.network
 
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import okhttp3.Protocol
 import okhttp3.Request
@@ -16,39 +15,24 @@ import org.junit.Test
 class TokenAuthenticatorTest {
 
     private val cookieJar = mockk<PersistentCookieJar>(relaxed = true)
-    private val authRetryPolicy = mockk<AuthRetryPolicy>()
     private val refreshCoordinator = mockk<RefreshCoordinator>()
-    private val sessionInvalidationNotifier = mockk<SessionInvalidationNotifier>(relaxed = true)
 
     @Test
     fun `authenticate returns null for non-401 responses`() {
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 500, method = "GET", path = "/api/lists")
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns false
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { cookieJar.clear() }
-        coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }
 
     @Test
     fun `successful refresh retries original request`() {
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.SUCCESS
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
@@ -58,18 +42,11 @@ class TokenAuthenticatorTest {
         assertEquals("GET", result?.method)
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { cookieJar.clear() }
-        coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }
 
     @Test
     fun `second 401 in chain is blocked by policy`() {
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns false
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val first = response(code = 401, method = "GET", path = "/api/lists")
         val second = response(code = 401, method = "GET", path = "/api/lists", prior = first)
 
@@ -78,18 +55,11 @@ class TokenAuthenticatorTest {
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { cookieJar.clear() }
-        coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }
 
     @Test
     fun `refresh endpoint 401 does not recurse`() {
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns false
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "POST", path = "/api/auth/refresh")
 
         val result = authenticator.authenticate(null, response)
@@ -97,45 +67,32 @@ class TokenAuthenticatorTest {
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { cookieJar.clear() }
-        coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }
 
     @Test
-    fun `refresh 401 returns null no retry`() {
+    fun `refresh unauthorized clears cookies and returns null`() {
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_UNAUTHORIZED
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
-        coVerify(exactly = 1) { sessionInvalidationNotifier.notifySessionInvalidated() }
+        coVerify(exactly = 1) { cookieJar.clear() }
     }
 
     @Test
-    fun `refresh network error returns null without invalidating session`() {
+    fun `refresh network failure returns null without clearing cookies`() {
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_NETWORK
-        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
-        val authenticator = TokenAuthenticator(
-            cookieJar = cookieJar,
-            authRetryPolicy = authRetryPolicy,
-            refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
-        coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     private fun response(code: Int, method: String, path: String, prior: Response? = null): Response {
