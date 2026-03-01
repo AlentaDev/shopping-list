@@ -22,6 +22,11 @@ interface ListDetailRepository {
     fun getListDetail(listId: String): Flow<ListDetail>
 
     /**
+     * Obtiene el detalle de una lista desde caché local (sin llamadas remotas)
+     */
+    fun getCachedListDetail(listId: String): Flow<ListDetail>
+
+    /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      *
      * @param listId ID de la lista

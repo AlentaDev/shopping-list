@@ -65,7 +65,7 @@ class DetailViewModelTest {
     fun `init loads list detail successfully`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Test List", 3)
-        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
 
         // Act
         viewModel = DetailViewModel(
@@ -86,13 +86,43 @@ class DetailViewModelTest {
         assertEquals(15.50, state.total, 0.001)
     }
 
+
+
+    @Test
+    fun `init offline loads cached detail and marks fromCache`() = runTest(mainDispatcherRule.testDispatcher) {
+        // Arrange
+        val listDetail = createListDetail("list-123", "Offline List", 2)
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
+
+        // Act
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        // Assert
+        val state = viewModel.uiState.value
+        assertTrue(state is ListDetailUiState.Success)
+        assertTrue((state as ListDetailUiState.Success).fromCache)
+        io.mockk.verify(exactly = 1) { getListDetailUseCase("list-123", true) }
+        io.mockk.verify(exactly = 0) { getListDetailUseCase("list-123", false) }
+    }
+
+
     @Test
     fun `init sets Error when use case throws`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val errorFlow = kotlinx.coroutines.flow.flow<ListDetail> {
             throw Exception("Network error")
         }
-        every { getListDetailUseCase("list-123") } returns errorFlow
+        every { getListDetailUseCase("list-123", any()) } returns errorFlow
 
         // Act
         viewModel = DetailViewModel(
@@ -116,7 +146,7 @@ class DetailViewModelTest {
     fun `loadListDetail refreshes state successfully`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Updated List", 2)
-        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         viewModel = DetailViewModel(
             getListDetailUseCase = getListDetailUseCase,
             checkItemUseCase = checkItemUseCase,
@@ -142,7 +172,7 @@ class DetailViewModelTest {
     fun `toggleItemCheck calls checkItemUseCase with correct parameters`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Test List", 2)
-        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
         coEvery { syncCheckUseCase("list-123", "item-1", true) } returns true
         viewModel = DetailViewModel(
@@ -172,7 +202,7 @@ class DetailViewModelTest {
 
         every { networkMonitor.isConnected } returns connectivityFlow
         every { networkMonitor.isCurrentlyConnected() } returns true
-        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
         coEvery { syncCheckUseCase("list-123", "item-1", true) } returns true
 
@@ -199,7 +229,7 @@ class DetailViewModelTest {
     fun `toggleItemCheck handles error gracefully`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Test List", 2)
-        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } throws Exception("Update failed")
         viewModel = DetailViewModel(
             getListDetailUseCase = getListDetailUseCase,
@@ -255,7 +285,7 @@ class DetailViewModelTest {
             emit(listDetail2)
         }
 
-        every { getListDetailUseCase("list-123") } returns flow
+        every { getListDetailUseCase("list-123", any()) } returns flow
         every { calculateTotalUseCase(listDetail1) } returns 10.0
         every { calculateTotalUseCase(listDetail2) } returns 20.0
 

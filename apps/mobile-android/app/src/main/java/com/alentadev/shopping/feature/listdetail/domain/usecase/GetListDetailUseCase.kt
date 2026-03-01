@@ -26,9 +26,13 @@ class GetListDetailUseCase @Inject constructor(
      * @throws IllegalArgumentException si listId es vacío
      * @throws Exception si hay error al obtener la lista
      */
-    operator fun invoke(listId: String): Flow<ListDetail> {
+    operator fun invoke(listId: String, preferCache: Boolean = false): Flow<ListDetail> {
         require(listId.isNotBlank()) { "El ID de la lista no puede estar vacío" }
-        return repository.getListDetail(listId)
+        return if (preferCache) {
+            repository.getCachedListDetail(listId)
+        } else {
+            repository.getListDetail(listId)
+        }
     }
 }
 

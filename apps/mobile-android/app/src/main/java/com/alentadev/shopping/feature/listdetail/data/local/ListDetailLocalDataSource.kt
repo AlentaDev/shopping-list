@@ -62,6 +62,7 @@ class ListDetailLocalDataSource @Inject constructor(
             title = listDetail.title,
             status = "ACTIVE", // Asumimos ACTIVE para el detalle
             updatedAt = listDetail.updatedAt,
+            itemCount = listDetail.items.size,
             syncedAt = System.currentTimeMillis()
         )
         listDao.insert(listEntity)

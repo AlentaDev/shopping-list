@@ -68,6 +68,27 @@ class ListDetailRepositoryImplTest {
     }
 
     @Test
+    fun `getCachedListDetail returns flow from local without remote sync attempt`() = runTest {
+        val listId = "list-cached"
+        val listDetail = ListDetail(
+            id = listId,
+            title = "Offline",
+            items = emptyList(),
+            updatedAt = "2026-02-25T10:00:00Z"
+        )
+
+        coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(listDetail)
+
+        val result = mutableListOf<ListDetail?>()
+        repository.getCachedListDetail(listId).collect { result.add(it) }
+
+        assertEquals(1, result.size)
+        assertEquals("Offline", result.first()?.title)
+        coVerify(exactly = 0) { remoteDataSource.getListDetail(any()) }
+    }
+
+
+    @Test
     fun `getListDetail saves remote data to local cache`() = runTest {
         // Arrange
         val listId = "list-456"

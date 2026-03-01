@@ -80,7 +80,7 @@ class ListsLocalDataSource @Inject constructor(
                 else -> ListStatus.ACTIVE
             },
             updatedAt = updatedAt.toLongOrNull() ?: 0L,
-            itemCount = 0  // No disponible en la entidad global, usar 0 por defecto
+            itemCount = itemCount
         )
     }
 
@@ -90,6 +90,7 @@ class ListsLocalDataSource @Inject constructor(
             title = title,
             status = status.name,
             updatedAt = updatedAt.toString(),
+            itemCount = itemCount,
             syncedAt = System.currentTimeMillis()
         )
     }

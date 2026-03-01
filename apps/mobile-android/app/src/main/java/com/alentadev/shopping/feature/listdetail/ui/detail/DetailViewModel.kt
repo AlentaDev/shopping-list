@@ -84,7 +84,8 @@ class DetailViewModel @Inject constructor(
     fun loadListDetail() {
         viewModelScope.launch {
             _uiState.value = ListDetailUiState.Loading
-            getListDetailUseCase(listId)
+            val shouldUseCacheOnly = !_isConnected.value
+            getListDetailUseCase(listId, preferCache = shouldUseCacheOnly)
                 .catch { e ->
                     _uiState.value = ListDetailUiState.Error(
                         e.message ?: "Error al cargar la lista"
@@ -95,7 +96,7 @@ class DetailViewModel @Inject constructor(
                     val currentState = _uiState.value
 
                     // Mantener estado de offline y cambios remotos al actualizar
-                    val fromCache = (currentState as? ListDetailUiState.Success)?.fromCache ?: false
+                    val fromCache = (currentState as? ListDetailUiState.Success)?.fromCache ?: shouldUseCacheOnly
                     val hasRemoteChanges = (currentState as? ListDetailUiState.Success)?.hasRemoteChanges ?: false
                     val syncStatus = (currentState as? ListDetailUiState.Success)?.syncStatus ?: SyncStatus.IDLE
 

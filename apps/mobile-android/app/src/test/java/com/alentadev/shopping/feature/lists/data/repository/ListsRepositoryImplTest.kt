@@ -97,6 +97,28 @@ class ListsRepositoryImplTest {
         coVerify { localDataSource.saveLists(lists) }
     }
 
+
+    @Test
+    fun `getCachedActiveLists returns local cache without remote call`() = runTest {
+        val cached = listOf(
+            ShoppingList(
+                id = "list-cache",
+                title = "Lista cache",
+                status = ListStatus.ACTIVE,
+                updatedAt = 1000L,
+                itemCount = 2
+            )
+        )
+        coEvery { localDataSource.getActiveListsOnce() } returns cached
+
+        val result = repository.getCachedActiveLists()
+
+        assertEquals(1, result.size)
+        assertEquals("Lista cache", result.first().title)
+        coVerify(exactly = 1) { localDataSource.getActiveListsOnce() }
+        coVerify(exactly = 0) { remoteDataSource.getActiveLists() }
+    }
+
     @Test
     fun `getListById returns from remote`() = runTest {
         // Arrange
