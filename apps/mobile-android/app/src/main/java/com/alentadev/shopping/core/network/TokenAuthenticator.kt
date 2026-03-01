@@ -23,28 +23,15 @@ class TokenAuthenticator(
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
-        if (response.code != 401) {
-            return null
-        }
-
-        if (responseCount(response) >= 2) {
+        val request = response.request
+        if (!shouldAttemptRefresh(request, response)) {
             return null
         }
 
         Log.d(TAG, "401 recibido. Reintentando una vez con cookies actuales.")
 
         // No limpiar cookies ni forzar refresh manual desde Android.
-        return response.request.newBuilder().build()
-    }
-
-    private fun responseCount(response: Response): Int {
-        var count = 1
-        var prior = response.priorResponse
-        while (prior != null) {
-            count++
-            prior = prior.priorResponse
-        }
-        return count
+        return request.newBuilder().build()
     }
 
 }

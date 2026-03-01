@@ -57,14 +57,13 @@ class TokenAuthenticatorTest {
     }
 
     @Test
-    fun `authenticate retries refresh endpoint once without clearing cookies`() {
+    fun `authenticate blocks refresh endpoint retry`() {
         val authenticator = TokenAuthenticator(cookieJar) { authApi }
         val response = response(code = 401, method = "POST", path = "/api/auth/refresh")
 
         val result = authenticator.authenticate(null, response)
 
-        assertNotNull(result)
-        assertEquals("/api/auth/refresh", result?.url?.encodedPath)
+        assertNull(result)
         coVerify(exactly = 0) { authApi.refreshToken() }
         coVerify(exactly = 0) { cookieJar.clear() }
     }
