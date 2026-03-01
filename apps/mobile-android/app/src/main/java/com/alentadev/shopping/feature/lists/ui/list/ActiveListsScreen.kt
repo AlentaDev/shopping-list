@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.R
+
 @Composable
 fun ActiveListsScreen(
     onNavigateToDetail: (String) -> Unit,
@@ -68,6 +70,7 @@ fun ActiveListsScreen(
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
             }
+
             is ListsUiState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
                     if (state.fromCache) {
@@ -97,6 +100,7 @@ fun ActiveListsScreen(
                     }
                 }
             }
+
             is ListsUiState.Empty -> {
                 Box(
                     modifier = Modifier
@@ -110,20 +114,38 @@ fun ActiveListsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = stringResource(R.string.lists_empty),
+                            text = if (state.isOffline) {
+                                stringResource(R.string.lists_empty_offline)
+                            } else {
+                                stringResource(R.string.lists_empty)
+                            },
                             style = MaterialTheme.typography.titleLarge,
                             textAlign = TextAlign.Center
                         )
                         Text(
-                            text = stringResource(R.string.lists_empty_subtitle),
+                            text = if (state.isOffline) {
+                                stringResource(R.string.lists_empty_offline_subtitle)
+                            } else {
+                                stringResource(R.string.lists_empty_subtitle)
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 8.dp)
                         )
+
+                        if (state.isOffline) {
+                            Button(
+                                onClick = { viewModel.loadLists() },
+                                modifier = Modifier.padding(top = 16.dp)
+                            ) {
+                                Text(text = stringResource(R.string.lists_retry_button))
+                            }
+                        }
                     }
                 }
             }
+
             is ListsUiState.Error -> {
                 Box(
                     modifier = Modifier

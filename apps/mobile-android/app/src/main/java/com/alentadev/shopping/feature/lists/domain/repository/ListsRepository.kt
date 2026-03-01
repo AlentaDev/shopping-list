@@ -38,4 +38,9 @@ interface ListsRepository {
      * @return ActiveListsResult con flag fromCache
      */
     suspend fun getActiveListsWithSource(): com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult
+
+    /**
+     * Obtiene las listas activas desde caché local (sin llamadas de red)
+     */
+    suspend fun getCachedActiveLists(): List<ShoppingList>
 }

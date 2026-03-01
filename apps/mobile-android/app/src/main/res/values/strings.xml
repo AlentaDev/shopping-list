@@ -31,6 +31,9 @@
     <string name="lists_items_count">Items: %1$d</string>
     <string name="lists_updated_at">Actualizado: %1$s</string>
     <string name="lists_offline_banner">Sin conexión. Mostrando datos guardados</string>
+    <string name="lists_empty_offline">No hay listas disponibles sin conexión</string>
+    <string name="lists_empty_offline_subtitle">Conéctate a internet y pulsa reintentar para cargarlas</string>
+    <string name="lists_retry_button">Reintentar</string>
 
     <!-- List Detail -->
     <string name="detail_title">Detalle de Lista</string>

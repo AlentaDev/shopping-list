@@ -8,7 +8,8 @@ sealed class ListsUiState {
         val lists: List<ShoppingList>,
         val fromCache: Boolean = false
     ) : ListsUiState()
-    object Empty : ListsUiState()
+    data class Empty(
+        val isOffline: Boolean = false
+    ) : ListsUiState()
     data class Error(val message: String) : ListsUiState()
 }
-

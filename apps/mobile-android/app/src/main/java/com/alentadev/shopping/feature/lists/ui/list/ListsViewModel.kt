@@ -40,10 +40,22 @@ class ListsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ListsUiState.Loading
             try {
-                // Usar getActiveListsWithSource para saber si viene de cache
+                if (!_isConnected.value) {
+                    val cachedLists = listsRepository.getCachedActiveLists()
+                    _uiState.value = if (cachedLists.isEmpty()) {
+                        ListsUiState.Empty(isOffline = true)
+                    } else {
+                        ListsUiState.Success(
+                            lists = cachedLists,
+                            fromCache = true
+                        )
+                    }
+                    return@launch
+                }
+
                 val result = listsRepository.getActiveListsWithSource()
                 _uiState.value = if (result.lists.isEmpty()) {
-                    ListsUiState.Empty
+                    ListsUiState.Empty(isOffline = false)
                 } else {
                     ListsUiState.Success(
                         lists = result.lists,
@@ -61,7 +73,7 @@ class ListsViewModel @Inject constructor(
             try {
                 val lists = refreshListsUseCase.execute()
                 _uiState.value = if (lists.isEmpty()) {
-                    ListsUiState.Empty
+                    ListsUiState.Empty(isOffline = false)
                 } else {
                     ListsUiState.Success(
                         lists = lists,
@@ -74,4 +86,3 @@ class ListsViewModel @Inject constructor(
         }
     }
 }
-

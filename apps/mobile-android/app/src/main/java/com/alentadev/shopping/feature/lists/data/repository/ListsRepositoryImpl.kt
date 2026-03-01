@@ -68,6 +68,10 @@ class ListsRepositoryImpl @Inject constructor(
      * 2. Si falla, obtiene de la caché local
      * @return Resultado con listas y origen (servidor/caché)
      */
+    override suspend fun getCachedActiveLists(): List<ShoppingList> {
+        return localDataSource.getActiveListsOnce()
+    }
+
     override suspend fun getActiveListsWithSource(): com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult {
         return try {
             val lists = remoteDataSource.getActiveLists()
