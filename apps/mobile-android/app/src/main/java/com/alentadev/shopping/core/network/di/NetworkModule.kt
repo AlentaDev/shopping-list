@@ -4,9 +4,11 @@ import android.content.Context
 import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.AuthRetryPolicy
+import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.core.network.CookieClearingSessionInvalidationNotifier
 import com.alentadev.shopping.core.network.DebugInterceptor
 import com.alentadev.shopping.core.network.DefaultAuthRetryPolicy
+import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.core.network.PersistentCookieJar
 import com.alentadev.shopping.core.network.RefreshCoordinator
 import com.alentadev.shopping.core.network.RetryInterceptor
@@ -70,8 +72,17 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideRefreshCoordinator(retrofit: Lazy<Retrofit>): RefreshCoordinator {
-        return RefreshCoordinator {
+    fun provideConnectivityGate(
+        networkMonitor: NetworkMonitor
+    ): ConnectivityGate = networkMonitor
+
+    @Singleton
+    @Provides
+    fun provideRefreshCoordinator(
+        connectivityGate: ConnectivityGate,
+        retrofit: Lazy<Retrofit>
+    ): RefreshCoordinator {
+        return RefreshCoordinator(connectivityGate) {
             retrofit.get().create(AuthApi::class.java)
         }
     }

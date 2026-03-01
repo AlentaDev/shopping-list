@@ -34,6 +34,7 @@ class DebugInterceptor : Interceptor {
             Log.d(TAG, "║ RESPONSE RECIBIDO")
             Log.d(TAG, "║ Status: ${response.code} ${response.message}")
             Log.d(TAG, "║ Duración: ${duration}ms")
+            Log.d(TAG, "║ priorResponse: ${response.priorResponse?.code} (reintentos)")
             Log.d(TAG, "║ Headers:")
             response.headers.forEach { (name, value) ->
                 Log.d(TAG, "║   $name: $value")
@@ -58,4 +59,3 @@ class DebugInterceptor : Interceptor {
         }
     }
 }
-

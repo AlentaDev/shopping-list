@@ -1,7 +1,6 @@
 package com.alentadev.shopping.core.network
 
 import android.util.Log
-import com.alentadev.shopping.feature.auth.data.remote.AuthApi
 import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
@@ -20,34 +19,42 @@ private const val TAG = "TokenAuthenticator"
  */
 class TokenAuthenticator(
     private val cookieJar: PersistentCookieJar,
-    private val refreshCoordinator: RefreshCoordinator
+    private val authRetryPolicy: AuthRetryPolicy,
+    private val refreshCoordinator: RefreshCoordinator,
+    private val sessionInvalidationNotifier: SessionInvalidationNotifier
 ) : Authenticator {
 
-    constructor(
-        cookieJar: PersistentCookieJar,
-        authApiProvider: () -> AuthApi
-    ) : this(
-        cookieJar = cookieJar,
-        refreshCoordinator = RefreshCoordinator(authApiProvider)
-    )
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
-        if (!shouldAttemptRefresh(request, response)) {
+        Log.d(TAG, "🔐 authenticate() INVOCADO")
+        Log.d(TAG, "  → Método: ${request.method}, URL: ${request.url}")
+        Log.d(TAG, "  → Status: ${response.code}")
+
+        if (!authRetryPolicy.shouldAttemptRefresh(request, response)) {
+            Log.d(TAG, "  ❌ Policy dice NO reintentar")
             return null
         }
+        Log.d(TAG, "  ✅ Policy dice SÍ reintentar")
 
+        Log.d(TAG, "  🔄 Intentando refresh token...")
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
+        Log.d(TAG, "  → Resultado refresh: $refreshResult")
+
         if (refreshResult != RefreshCoordinator.Result.SUCCESS) {
             if (refreshResult == RefreshCoordinator.Result.FAILED_UNAUTHORIZED) {
+                Log.e(TAG, "  🔓 Refresh retornó 401 - Limpiando sesión")
+                runBlocking { sessionInvalidationNotifier.notifySessionInvalidated() }
                 cookieJar.clear()
+            } else {
+                Log.e(TAG, "  ❌ Refresh falló ($refreshResult)")
             }
-            Log.d(TAG, "Refresh falló o no autorizado. No se reintenta request.")
+            Log.d(TAG, "  ❌ No se reintenta request")
             return null
         }
 
-        Log.d(TAG, "Refresh exitoso. Reintentando request original.")
+        Log.d(TAG, "  ✅ Refresh exitoso - Reintentando request con nuevas cookies")
         return request.newBuilder().build()
     }
-
 }
+
