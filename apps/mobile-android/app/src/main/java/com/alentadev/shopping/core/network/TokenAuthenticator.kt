@@ -19,19 +19,17 @@ private const val TAG = "TokenAuthenticator"
  * potencialmente renovados por la API en la respuesta previa.
  */
 class TokenAuthenticator(
+    private val cookieJar: PersistentCookieJar,
     private val refreshCoordinator: RefreshCoordinator
 ) : Authenticator {
 
     constructor(
         cookieJar: PersistentCookieJar,
-        sessionInvalidationNotifier: SessionInvalidationNotifier,
+        connectivityGate: ConnectivityGate,
         authApiProvider: () -> AuthApi
     ) : this(
-        refreshCoordinator = RefreshCoordinator(
-            authApiProvider = authApiProvider,
-            cookieJar = cookieJar,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
-        )
+        cookieJar = cookieJar,
+        refreshCoordinator = RefreshCoordinator(connectivityGate, authApiProvider)
     )
 
     override fun authenticate(route: Route?, response: Response): Request? {
@@ -49,4 +47,5 @@ class TokenAuthenticator(
         Log.d(TAG, "Refresh exitoso. Reintentando request original.")
         return request.newBuilder().build()
     }
+
 }

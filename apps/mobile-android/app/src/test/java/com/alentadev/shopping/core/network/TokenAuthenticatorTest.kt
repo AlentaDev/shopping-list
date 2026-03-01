@@ -14,23 +14,25 @@ import org.junit.Test
 
 class TokenAuthenticatorTest {
 
+    private val cookieJar = mockk<PersistentCookieJar>(relaxed = true)
     private val refreshCoordinator = mockk<RefreshCoordinator>()
 
     @Test
     fun `authenticate returns null for non-401 responses`() {
-        val authenticator = TokenAuthenticator(refreshCoordinator)
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 500, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
     fun `successful refresh retries original request`() {
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.SUCCESS
-        val authenticator = TokenAuthenticator(refreshCoordinator)
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
@@ -39,11 +41,12 @@ class TokenAuthenticatorTest {
         assertEquals("/api/lists", result?.url?.encodedPath)
         assertEquals("GET", result?.method)
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
     fun `second 401 in chain is blocked by policy`() {
-        val authenticator = TokenAuthenticator(refreshCoordinator)
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val first = response(code = 401, method = "GET", path = "/api/lists")
         val second = response(code = 401, method = "GET", path = "/api/lists", prior = first)
 
@@ -51,29 +54,32 @@ class TokenAuthenticatorTest {
 
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
     fun `refresh endpoint 401 does not recurse`() {
-        val authenticator = TokenAuthenticator(refreshCoordinator)
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "POST", path = "/api/auth/refresh")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 0) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
     fun `refresh 401 returns null no retry`() {
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_UNAUTHORIZED
-        val authenticator = TokenAuthenticator(refreshCoordinator)
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator)
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     private fun response(code: Int, method: String, path: String, prior: Response? = null): Response {
