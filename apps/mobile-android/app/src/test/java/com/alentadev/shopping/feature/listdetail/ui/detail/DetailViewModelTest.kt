@@ -15,6 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -164,6 +165,37 @@ class DetailViewModelTest {
     }
 
     @Test
+    fun `toggleItemCheck sincroniza cuando monitor reactivo esta desactualizado pero la conectividad actual es true`() = runTest(mainDispatcherRule.testDispatcher) {
+        // Arrange
+        val listDetail = createListDetail("list-123", "Test List", 2)
+        val connectivityFlow = MutableStateFlow(false)
+
+        every { networkMonitor.isConnected } returns connectivityFlow
+        every { networkMonitor.isCurrentlyConnected() } returns true
+        every { getListDetailUseCase("list-123") } returns flowOf(listDetail)
+        coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
+        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns true
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        // Act
+        viewModel.toggleItemCheck("item-1", true)
+        advanceUntilIdle()
+
+        // Assert
+        coVerify(exactly = 1) { syncCheckUseCase("list-123", "item-1", true) }
+    }
+
+    @Test
     fun `toggleItemCheck handles error gracefully`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Test List", 2)
@@ -280,5 +312,4 @@ class MainDispatcherRule(
         Dispatchers.resetMain()
     }
 }
-
 
