@@ -28,6 +28,7 @@ data class ListEntity(
     val title: String,
     val status: String, // ACTIVE, COMPLETED, DRAFT
     val updatedAt: String,
+    val itemCount: Int = 0,
     val syncedAt: Long = System.currentTimeMillis()
 )
 
@@ -80,4 +81,3 @@ data class SyncMetadataEntity(
     val value: String,
     val updatedAt: Long = System.currentTimeMillis()
 )
-
