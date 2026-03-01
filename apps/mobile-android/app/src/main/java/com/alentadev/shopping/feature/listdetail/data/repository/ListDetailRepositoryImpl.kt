@@ -53,6 +53,12 @@ class ListDetailRepositoryImpl @Inject constructor(
             }
     }
 
+
+    override fun getCachedListDetail(listId: String): Flow<ListDetail> {
+        return localDataSource.getListDetailFlow(listId)
+            .filterNotNull()
+    }
+
     /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      * No envía cambios al backend (será sincronizado en fase 5)

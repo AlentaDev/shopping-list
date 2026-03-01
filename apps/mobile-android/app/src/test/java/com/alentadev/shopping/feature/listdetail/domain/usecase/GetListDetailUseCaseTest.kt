@@ -112,6 +112,26 @@ class GetListDetailUseCaseTest {
     }
 
     @Test
+    fun `invoke preferCache true reads from cached repository source`() = runTest {
+        val listId = "list-cache"
+        val listDetail = ListDetail(
+            id = listId,
+            title = "Cache",
+            items = emptyList(),
+            updatedAt = "2026-02-25T10:00:00Z"
+        )
+
+        coEvery { repository.getCachedListDetail(listId) } returns flowOf(listDetail)
+
+        val result = mutableListOf<ListDetail>()
+        useCase(listId, preferCache = true).collect { result.add(it) }
+
+        assertEquals(1, result.size)
+        assertEquals("Cache", result[0].title)
+    }
+
+
+    @Test
     fun `invoke throws exception when list id is blank`() = runTest {
         // Arrange
         val listId = ""
