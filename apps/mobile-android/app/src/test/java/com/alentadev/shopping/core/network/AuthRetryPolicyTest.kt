@@ -10,6 +10,8 @@ import org.junit.Test
 
 class AuthRetryPolicyTest {
 
+    private val authRetryPolicy = DefaultAuthRetryPolicy()
+
     @Test
     fun `isRefreshEndpoint blocks auth refresh endpoint`() {
         assertTrue(isRefreshEndpoint("/api/auth/refresh"))
@@ -17,11 +19,11 @@ class AuthRetryPolicyTest {
     }
 
     @Test
-    fun `shouldAttemptRefresh allows first 401 when request is allowed by default preset`() {
+    fun `shouldAttemptRefresh allows first 401 for safe GET route`() {
         val request = request(method = "GET", path = "/api/lists")
         val response = response(code = 401, request = request)
 
-        val result = shouldAttemptRefresh(request, response)
+        val result = authRetryPolicy.shouldAttemptRefresh(request, response)
 
         assertTrue(result)
     }
@@ -32,21 +34,17 @@ class AuthRetryPolicyTest {
         val firstResponse = response(code = 401, request = request)
         val secondResponse = response(code = 401, request = request, prior = firstResponse)
 
-        val result = shouldAttemptRefresh(request, secondResponse)
+        val result = authRetryPolicy.shouldAttemptRefresh(request, secondResponse)
 
         assertFalse(result)
     }
 
     @Test
-    fun `shouldAttemptRefresh strict preset disables retry for safe routes`() {
-        val request = request(method = "GET", path = "/api/lists")
+    fun `shouldAttemptRefresh blocks unsafe non GET routes`() {
+        val request = request(method = "POST", path = "/api/lists")
         val response = response(code = 401, request = request)
 
-        val result = shouldAttemptRefresh(
-            request = request,
-            response = response,
-            preset = AuthRetryPolicyPreset.STRICT
-        )
+        val result = authRetryPolicy.shouldAttemptRefresh(request, response)
 
         assertFalse(result)
     }

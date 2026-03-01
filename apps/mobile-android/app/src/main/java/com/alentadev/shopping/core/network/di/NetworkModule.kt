@@ -3,11 +3,17 @@ package com.alentadev.shopping.core.network.di
 import android.content.Context
 import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
+import com.alentadev.shopping.core.network.AuthRetryPolicy
+import com.alentadev.shopping.core.network.CookieClearingSessionInvalidationNotifier
 import com.alentadev.shopping.core.network.DebugInterceptor
+import com.alentadev.shopping.core.network.DefaultAuthRetryPolicy
 import com.alentadev.shopping.core.network.PersistentCookieJar
+import com.alentadev.shopping.core.network.RefreshCoordinator
 import com.alentadev.shopping.core.network.RetryInterceptor
+import com.alentadev.shopping.core.network.SessionInvalidationNotifier
 import com.alentadev.shopping.core.network.TokenAuthenticator
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,22 +66,55 @@ object NetworkModule {
 
     @Singleton
     @Provides
+    fun provideAuthRetryPolicy(): AuthRetryPolicy = DefaultAuthRetryPolicy()
+
+    @Singleton
+    @Provides
+    fun provideRefreshCoordinator(retrofit: Lazy<Retrofit>): RefreshCoordinator {
+        return RefreshCoordinator {
+            retrofit.get().create(AuthApi::class.java)
+        }
+    }
+
+    @Singleton
+    @Provides
+    fun provideSessionInvalidationNotifier(
+        cookieJar: PersistentCookieJar
+    ): SessionInvalidationNotifier = CookieClearingSessionInvalidationNotifier(cookieJar)
+
+    @Singleton
+    @Provides
+    fun provideTokenAuthenticator(
+        cookieJar: PersistentCookieJar,
+        authRetryPolicy: AuthRetryPolicy,
+        refreshCoordinator: RefreshCoordinator,
+        sessionInvalidationNotifier: SessionInvalidationNotifier
+    ): TokenAuthenticator {
+        return TokenAuthenticator(
+            cookieJar = cookieJar,
+            authRetryPolicy = authRetryPolicy,
+            refreshCoordinator = refreshCoordinator,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
+    }
+
+    @Singleton
+    @Provides
     fun provideOkHttpClient(
         retryInterceptor: RetryInterceptor,
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
-        retrofit: dagger.Lazy<Retrofit>  // Lazy para evitar ciclo
+        tokenAuthenticator: Lazy<TokenAuthenticator>
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(retryInterceptor)
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)
-            .authenticator(TokenAuthenticator(cookieJar) {
-                // Provider lazy de AuthApi
-                retrofit.get().create(AuthApi::class.java)
-            })
+            .authenticator { route, response ->
+                tokenAuthenticator.get().authenticate(route, response)
+            }
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
