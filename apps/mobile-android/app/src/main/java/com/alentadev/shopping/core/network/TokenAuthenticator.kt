@@ -39,6 +39,9 @@ class TokenAuthenticator(
 
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
         if (refreshResult != RefreshCoordinator.Result.SUCCESS) {
+            if (refreshResult == RefreshCoordinator.Result.FAILED_UNAUTHORIZED) {
+                cookieJar.clear()
+            }
             Log.d(TAG, "Refresh falló o no autorizado. No se reintenta request.")
             return null
         }
