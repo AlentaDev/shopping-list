@@ -130,7 +130,8 @@ class DetailViewModel @Inject constructor(
                 android.util.Log.d("DetailViewModel", "✅ Actualización local exitosa")
 
                 // Intentar sincronizar si hay conexión
-                if (_isConnected.value) {
+                val isOnlineNow = _isConnected.value || networkMonitor.isCurrentlyConnected()
+                if (isOnlineNow) {
                     android.util.Log.d("DetailViewModel", "🌐 Hay conexión, iniciando sincronización...")
                     updateSyncStatus(SyncStatus.SYNCING)
 
