@@ -21,10 +21,16 @@ import retrofit2.Response
 class RefreshCoordinatorTest {
 
     private val authApi = mockk<AuthApi>()
+    private val cookieJar = mockk<PersistentCookieJar>(relaxed = true)
+    private val sessionInvalidationNotifier = mockk<SessionInvalidationNotifier>(relaxed = true)
 
     @Test
     fun `multiple concurrent callers produce exactly one refresh HTTP call`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        val coordinator = RefreshCoordinator(
+            authApiProvider = { authApi },
+            cookieJar = cookieJar,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
         val callCount = AtomicInteger(0)
         val gate = CompletableDeferred<Unit>()
 
@@ -56,7 +62,11 @@ class RefreshCoordinatorTest {
 
     @Test
     fun `unauthorized refresh result is propagated to all waiters`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        val coordinator = RefreshCoordinator(
+            authApiProvider = { authApi },
+            cookieJar = cookieJar,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
         val gate = CompletableDeferred<Unit>()
 
         coEvery { authApi.refreshToken() } coAnswers {
@@ -82,11 +92,17 @@ class RefreshCoordinatorTest {
             assertEquals(RefreshCoordinator.Result.FAILED_UNAUTHORIZED, result)
         }
         coVerify(exactly = 1) { authApi.refreshToken() }
+        coVerify(exactly = 1) { cookieJar.clear() }
+        coVerify(exactly = 1) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }
 
     @Test
     fun `lock resets after failure so a future attempt can run`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        val coordinator = RefreshCoordinator(
+            authApiProvider = { authApi },
+            cookieJar = cookieJar,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
 
         coEvery { authApi.refreshToken() } throws IOException("network down") andThen OkResponse(ok = true)
 
@@ -97,4 +113,50 @@ class RefreshCoordinatorTest {
         assertEquals(RefreshCoordinator.Result.SUCCESS, secondResult)
         coVerify(exactly = 2) { authApi.refreshToken() }
     }
+
+    @Test
+    fun `unauthorized side effects are emitted once per invalidation cycle`() = runTest {
+        val coordinator = RefreshCoordinator(
+            authApiProvider = { authApi },
+            cookieJar = cookieJar,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
+        val gate = CompletableDeferred<Unit>()
+
+        coEvery { authApi.refreshToken() } coAnswers {
+            gate.await()
+            throw HttpException(Response.error<Any>(401, "unauthorized".toResponseBody(null)))
+        }
+
+        val waiters = List(6) { async { coordinator.refresh() } }
+        delay(10)
+        gate.complete(Unit)
+        waiters.awaitAll()
+
+        coVerify(exactly = 1) { cookieJar.clear() }
+        coVerify(exactly = 1) { sessionInvalidationNotifier.notifySessionInvalidated() }
+    }
+
+    @Test
+    fun `after successful refresh a new unauthorized triggers another invalidation cycle`() = runTest {
+        val coordinator = RefreshCoordinator(
+            authApiProvider = { authApi },
+            cookieJar = cookieJar,
+            sessionInvalidationNotifier = sessionInvalidationNotifier
+        )
+
+        coEvery { authApi.refreshToken() } throws HttpException(
+            Response.error<Any>(401, "unauthorized".toResponseBody(null))
+        ) andThen OkResponse(ok = true) andThenThrows HttpException(
+            Response.error<Any>(401, "unauthorized".toResponseBody(null))
+        )
+
+        coordinator.refresh()
+        coordinator.refresh()
+        coordinator.refresh()
+
+        coVerify(exactly = 2) { cookieJar.clear() }
+        coVerify(exactly = 2) { sessionInvalidationNotifier.notifySessionInvalidated() }
+    }
+
 }

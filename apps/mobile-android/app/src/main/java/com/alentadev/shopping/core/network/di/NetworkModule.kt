@@ -4,7 +4,9 @@ import android.content.Context
 import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.DebugInterceptor
+import com.alentadev.shopping.core.network.DefaultSessionInvalidationNotifier
 import com.alentadev.shopping.core.network.PersistentCookieJar
+import com.alentadev.shopping.core.network.SessionInvalidationNotifier
 import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.TokenAuthenticator
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
@@ -40,6 +42,12 @@ object NetworkModule {
         @ApplicationContext context: Context
     ): PersistentCookieJar = PersistentCookieJar(context)
 
+
+    @Singleton
+    @Provides
+    fun provideSessionInvalidationNotifier(): SessionInvalidationNotifier =
+        DefaultSessionInvalidationNotifier()
+
     @Singleton
     @Provides
     fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
@@ -65,14 +73,15 @@ object NetworkModule {
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
-        retrofit: dagger.Lazy<Retrofit>  // Lazy para evitar ciclo
+        retrofit: dagger.Lazy<Retrofit>,  // Lazy para evitar ciclo
+        sessionInvalidationNotifier: SessionInvalidationNotifier
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(retryInterceptor)
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)
-            .authenticator(TokenAuthenticator(cookieJar) {
+            .authenticator(TokenAuthenticator(cookieJar, sessionInvalidationNotifier) {
                 // Provider lazy de AuthApi
                 retrofit.get().create(AuthApi::class.java)
             })
