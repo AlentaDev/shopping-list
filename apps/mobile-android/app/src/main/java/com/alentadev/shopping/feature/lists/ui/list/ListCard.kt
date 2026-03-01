@@ -22,7 +22,8 @@ import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 @Composable
 fun ListCard(
     list: ShoppingList,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
@@ -31,7 +32,8 @@ fun ListCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        )
+        ),
+        onClick = onClick
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(

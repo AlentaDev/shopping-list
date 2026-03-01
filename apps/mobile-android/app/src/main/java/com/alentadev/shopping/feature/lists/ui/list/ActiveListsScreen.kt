@@ -31,6 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.R
 @Composable
 fun ActiveListsScreen(
+    onNavigateToDetail: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: ListsViewModel = hiltViewModel()
 ) {
@@ -88,7 +89,10 @@ fun ActiveListsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(state.lists) { list ->
-                            ListCard(list = list)
+                            ListCard(
+                                list = list,
+                                onClick = { onNavigateToDetail(list.id) }
+                            )
                         }
                     }
                 }

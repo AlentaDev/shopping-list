@@ -1,7 +1,8 @@
 # Plan de Implementación - Shopping List Android
 
 > **Fecha**: 2026-01-31  
-> **Estado**: Análisis completado, listo para implementación
+> **Última actualización**: 2026-02-28
+> **Estado**: FASE 3.5 Completada, Navegación pendiente
 
 ---
 
@@ -18,100 +19,59 @@
 - RetryInterceptor (backoff exponencial 1s, 2s, 4s) ✨ NUEVO
 - DeviceFingerprintProvider (fingerprint único del dispositivo)
 - Endpoints: `/health`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/refresh`, `/users/me`
-- **FASE 1.1**: Domain Layer completa (11 tests) ✅ COMPLETADA
-- **FASE 1.2**: Data Layer completa (8 tests) ✅ COMPLETADA
-- **FASE 1.3**: Network Integration (retry, cleanup, Hilt unificado) ✅ COMPLETADA
-- **FASE 1.4**: UI Layer de Login completa ✅ COMPLETADA
-  - LoginScreen.kt (Compose UI con validaciones)
-  - LoginViewModel.kt (@HiltViewModel con StateFlow)
-  - LoginUiState.kt (sealed class: Idle, Loading, Success, Error)
-  - LoginNavigation.kt (rutas de navegación)
-  - Strings.xml (15+ textos de UI)
-  - Toast de confirmación: "¡Bienvenido {nombre}! Login exitoso"
-  - Botón de prueba de cookies (verifica persistencia)
-  - 7 tests de ViewModel
+- **FASE 1**: Autenticación completa (33 tests) ✅ COMPLETADA
+- **FASE 2**: Listas Activas - Domain + Data + UI ✅ COMPLETADA
+- **FASE 3.1**: Detalle de Lista - Domain Layer (6 tests) ✅ COMPLETADA
+- **FASE 3.2**: Detalle de Lista - Data Layer (18 tests) ✅ COMPLETADA
+- **FASE 3.3**: Detalle de Lista - UI Layer ✅ COMPLETADA
+- **FASE 3.5**: Offline-First - Detalle de Lista (35+ tests) ✅ COMPLETADA
+  - SyncCheckUseCase.kt (sincronización real con servidor)
+  - ListDetailApi.updateItemCheck() (PATCH /api/lists/:id/items/:itemId)
+  - UpdateItemCheckRequest (DTO @Serializable con {"checked": true})
+  - ListDetailRemoteDataSource.updateItemCheck() (llamada HTTP)
+  - ListDetailRepository.syncItemCheck() (método de sincronización)
+  - DetectRemoteChangesUseCase.kt (detección de cambios remotos)
+  - ListDetailUiState extendido (SyncStatus enum, fromCache, hasRemoteChanges)
+  - DetailViewModel mejorado (NetworkMonitor, observeConnectivity, logging)
+  - ListDetailScreen mejorado (2 banners offline-first + spinner)
+  - Detecta cambios remotos automáticamente
+  - Sincronización en background al hacer check
+  - Logging completo en toda la cadena (ViewModel → Repository → API)
+  - 35+ tests unitarios PASSING
 
 ### ❌ **Falta implementar**
-- Navegación a pantalla siguiente (tras login exitoso)
-- FASE 2+: Listas, detalle, sincronización
+- Navegación completa (LoginScreen → ActiveListsScreen → DetailScreen)
+- FASE 4: Completar lista
+- FASE 5+: Refinamiento y sincronización avanzada
 
 ---
 
 ## 🎯 Plan de Implementación (Priorizado)
 
-### **FASE 0: Fundamentos (infraestructura crítica)**
+### **FASE 0: Fundamentos (infraestructura crítica) ✅ COMPLETADA**
 **Objetivo**: Preparar la base técnica para Clean Architecture offline-first
 
-#### 0.1 Añadir dependencias faltantes
-- [ ] Room (offline storage)
-- [ ] Coil (imágenes)
-- [ ] Hilt (DI - opcional pero recomendado)
-- [ ] Coroutines Test
-- [ ] MockK / Mockito
+#### 0.1 Añadir dependencias faltantes ✅
+- [x] Room (offline storage)
+- [x] Coil (imágenes)
+- [x] Hilt (DI)
+- [x] Coroutines Test
+- [x] MockK
 
-#### 0.2 Estructura de packages (feature-first)
-```
-com.alentadev.shopping/
-├─ core/
-│  ├─ data/
-│  │  └─ database/          # Room Database config
-│  ├─ network/              # Retrofit (ya existe, refactor)
-│  └─ util/                 # Extensions, constants
-├─ feature/
-│  ├─ auth/
-│  │  ├─ domain/
-│  │  │  ├─ entity/        # User, Session
-│  │  │  └─ usecase/       # LoginUseCase, LogoutUseCase
-│  │  ├─ data/
-│  │  │  ├─ remote/        # AuthApi, DTOs
-│  │  │  ├─ local/         # SessionDao
-│  │  │  └─ repository/    # AuthRepository
-│  │  └─ ui/
-│  │     ├─ login/         # LoginScreen, LoginViewModel
-│  │     └─ navigation/
-│  ├─ lists/
-│  │  ├─ domain/
-│  │  │  ├─ entity/        # ShoppingList, ListStatus
-│  │  │  └─ usecase/       # GetActiveListsUseCase
-│  │  ├─ data/
-│  │  │  ├─ remote/        # ListsApi, DTOs
-│  │  │  ├─ local/         # ListEntity, ListDao
-│  │  │  └─ repository/    # ListsRepository
-│  │  └─ ui/
-│  │     ├─ list/          # ActiveListsScreen, ListsViewModel
-│  │     └─ navigation/
-│  ├─ listdetail/
-│  │  ├─ domain/
-│  │  │  ├─ entity/        # ListItem, ItemKind
-│  │  │  └─ usecase/       # GetListDetailUseCase, CheckItemUseCase
-│  │  ├─ data/
-│  │  │  ├─ remote/        # ListDetailApi, DTOs
-│  │  │  ├─ local/         # ItemEntity, ItemDao
-│  │  │  └─ repository/    # ListDetailRepository
-│  │  └─ ui/
-│  │     ├─ detail/        # ListDetailScreen, DetailViewModel
-│  │     └─ components/    # ItemCard, CheckBox, TotalBar
-│  └─ sync/
-│     ├─ domain/
-│     │  └─ usecase/       # SyncSnapshotUseCase, MergeUseCase
-│     ├─ data/
-│     │  └─ repository/    # SyncRepository
-│     └─ worker/           # WorkManager (background sync)
-└─ app/
-   └─ navigation/          # NavGraph principal
-```
+#### 0.2 Estructura de packages (feature-first) ✅
+- [x] Estructura completa implementada y respetada
 
-#### 0.3 DTOs completos según OpenAPI
-- [ ] `AuthDtos.kt`: LoginRequest, PublicUser
-- [ ] `ListDtos.kt`: ListSummary, ListDetail, ListStatus
-- [ ] `ItemDtos.kt`: ListItemDto, ManualListItem, CatalogListItem
-- [ ] `ErrorDtos.kt`: AppError, ValidationError
+#### 0.3 DTOs completos según OpenAPI ✅
+- [x] `AuthDtos.kt`: LoginRequest, PublicUser
+- [x] `ListDtos.kt`: ListSummary, ListDetail, ListStatus
+- [x] `ItemDtos.kt`: ListItemDto, CatalogListItem
+- [x] `ErrorDtos.kt`: AppError, ValidationError
 
-#### 0.4 Room Database Schema
-- [ ] `UserEntity`
-- [ ] `ListEntity` (snapshot local)
-- [ ] `ItemEntity` (con relación a ListEntity)
-- [ ] `SyncMetadataEntity` (timestamps, versiones)
+#### 0.4 Room Database Schema ✅
+- [x] `UserEntity`
+- [x] `ListEntity` (snapshot local)
+- [x] `ItemEntity` (con relación a ListEntity)
+- [x] `SyncMetadataEntity` (timestamps, versiones)
 
 ---
 
@@ -223,44 +183,76 @@ com.alentadev.shopping/
 
 ---
 
-### **FASE 3: Detalle de Lista (CORE - Funcionalidad principal)**
-**Objetivo**: Ver productos, marcar checks offline, calcular total
+### **FASE 3: Detalle de Lista (CORE - Funcionalidad principal) ✅ COMPLETADA**
+**Objetivo**: Ver productos, marcar checks offline, calcular total, offline-first completo
 
-#### 3.1 Domain Layer
-- [ ] `ListItem.kt` (entity)
-- [ ] `ItemKind.kt` (enum: MANUAL, CATALOG)
-- [ ] `GetListDetailUseCase.kt`
-- [ ] `CheckItemUseCase.kt` (toggle checked local)
-- [ ] `CalculateTotalUseCase.kt` (sum de checked items)
-- [ ] Tests unitarios
+#### 3.1 Domain Layer ✅ COMPLETADA
+- [x] `ListDetailEntities.kt` (sealed class + subclases)
+  - [x] `ListItem` (sealed class base)
+  - [x] `ItemKind` (enum: MANUAL, CATALOG)
+  - [x] `CatalogItem` (con precio, thumbnail, etc)
+  - [x] `ManualItem` (simple, solo nota opcional)
+  - [x] `ListDetail` (lista con items)
+- [x] `GetListDetailUseCase.kt` - Obtiene detalle de lista
+- [x] `CheckItemUseCase.kt` - Toggle checked local
+- [x] `CalculateTotalUseCase.kt` - Suma de items checked
+- [x] Tests unitarios (6 tests PASSING)
 
-#### 3.2 Data Layer
-- [ ] `ListDetailApi.kt` (GET /api/lists/{id})
-- [ ] `ItemEntity.kt` (Room con FK a ListEntity)
-- [ ] `ItemDao.kt` (queries con relaciones)
-- [ ] `ListDetailRepository.kt` (offline-first con merge)
-- [ ] Mappers para ManualListItem y CatalogListItem
-- [ ] Tests de repository
+#### 3.2 Data Layer ✅ COMPLETADA
+- [x] `ListDetailApi.kt` (GET /api/lists/{id})
+- [x] `ItemEntity.kt` (Room con FK a ListEntity)
+- [x] `ItemDao.kt` (queries con relaciones)
+- [x] `ListDetailRemoteDataSource.kt` (acceso a API)
+- [x] `ListDetailLocalDataSource.kt` (acceso a Room)
+- [x] `ListDetailRepositoryImpl.kt` (offline-first con merge)
+- [x] `ItemDtos.kt` - DTOs para items
+- [x] `ListDetailDtos.kt` - DTOs para respuesta
+- [x] Mappers DTO ↔ Domain (ListDetail, ListItem)
+- [x] Tests de repository (7 tests)
+- [x] Tests de remote data source (5 tests)
+- [x] Tests de local data source (6 tests)
+- [x] DI Module `ListDetailModule.kt`
 
-#### 3.3 UI Layer
-- [ ] `ListDetailScreen.kt` (LazyColumn con items)
-- [ ] `DetailViewModel.kt` (state con checks locales)
-- [ ] `ItemCard.kt` (nombre, precio, qty, thumbnail, checkbox)
-- [ ] `TotalBar.kt` (sticky bottom bar con total EUR)
-- [ ] Estilo visual: item checked → tachado leve + gris
-- [ ] Coil para cargar thumbnails
-- [ ] Strings.xml
-- [ ] Tests de ViewModel
+#### 3.3 UI Layer ✅ COMPLETADA
+- [x] `ListDetailScreen.kt` (LazyColumn con items + banners)
+- [x] `DetailViewModel.kt` (state con checks locales + offline)
+- [x] `ItemCard.kt` (nombre, precio, qty, thumbnail, checkbox)
+- [x] `TotalBar.kt` (sticky bottom bar con total EUR)
+- [x] Estilo visual: item checked → tachado leve + gris
+- [x] Coil para cargar thumbnails
+- [x] Strings.xml
+- [x] Tests de ViewModel (6 tests)
+- [x] 2 Banners offline-first (naranja + rojo)
+- [x] Spinner de sincronización en TopAppBar
 
-#### 3.4 Cálculo de Total
-- [ ] Lógica: `precio * qty` para items checked
-- [ ] Formato: EUR sin redondeos
-- [ ] Actualización reactiva al marcar/desmarcar
+#### 3.4 Cálculo de Total ✅ COMPLETADA
+- [x] Lógica: `precio * qty` para items checked
+- [x] Formato: EUR sin redondeos
+- [x] Actualización reactiva al marcar/desmarcar
 
-#### 3.5 Offline-first
-- [ ] Guardar checks localmente (no enviar a backend)
-- [ ] Funcionar sin red
-- [ ] Banner si hay cambios remotos detectados
+#### 3.5 Offline-first ✅ COMPLETADA
+- [x] Guardar checks localmente e intentar sincronizar en background
+  - [x] `SyncCheckUseCase.kt` - Intenta sincronización con servidor ✅
+  - [x] `ListDetailApi.updateItemCheck()` - PATCH /api/lists/:id/items/:itemId ✅
+  - [x] `UpdateItemCheckRequest` - DTO serializable para body {"checked": true} ✅
+  - [x] `ListDetailRemoteDataSource.updateItemCheck()` - Llama al API ✅
+  - [x] `ListDetailRepository.syncItemCheck()` - Método de sincronización ✅
+  - [x] `DetailViewModel.toggleItemCheck()` - Orquesta guardado local + sync ✅
+  - [x] Flujo completo: checkItemUseCase (local) → syncCheckUseCase (si conexión) ✅
+  - [x] Logging detallado en toda la cadena ✅
+- [x] Funcionar sin red
+  - [x] App 100% funcional offline con datos cacheados ✅
+  - [x] Banner naranja informativo ✅
+  - [x] Cambios guardados en Room automáticamente ✅
+- [x] Banner si hay cambios remotos detectados
+  - [x] `DetectRemoteChangesUseCase.kt` - Detecta cambios en servidor ✅
+  - [x] Se ejecuta automáticamente al recuperar conexión ✅
+  - [x] Banner rojo con botón "Actualizar" ✅
+  - [x] `ListDetailUiState` extendido (SyncStatus enum, fromCache, hasRemoteChanges) ✅
+  - [x] `ListDetailScreen` mejorado (2 banners + spinner) ✅
+  - [x] `DetailViewModel` mejorado (NetworkMonitor, observeConnectivity) ✅
+- [x] Tests offline-first (35+ tests PASSING) ✅
+- [x] Documentación completa (5 archivos) ✅
 
 ---
 
@@ -386,6 +378,82 @@ com.alentadev.shopping/
 2. ✅ FASE 1.1: Domain Layer (LoginUseCase, LogoutUseCase, GetCurrentUserUseCase)
 3. ✅ FASE 1.2: Data Layer (AuthRepository, RemoteDataSource, LocalDataSource)
 4. ✅ FASE 1.3: Network Integration (RetryInterceptor, TokenAuthenticator mejorado, cleanup)
+
+### **Sprint 2: Auth UI + Login Screen (✅ COMPLETADO)**
+5. ✅ FASE 1.4: Presentation Layer (LoginScreen, ViewModel, StateFlow, Strings.xml)
+6. ✅ FASE 1.5: Features adicionales (Fingerprint, Cookies, Prueba de cookies)
+7. ✅ FASE 1.6: Tests y validación (33 tests PASSING, Build SUCCESSFUL)
+
+### **Sprint 3: Navegación + Listas (📋 PRÓXIMO)**
+8. 📋 FASE 1.7: Navegación completa (NavGraph, LoginScreen → ActiveListsScreen)
+9. 📋 FASE 2: Active Lists con offline-first básico
+   - Domain: GetActiveListsUseCase, ShoppingList entity
+   - Data: ListsApi, ListEntity, ListsRepository
+   - UI: ActiveListsScreen, ListsViewModel, Pull-to-refresh
+
+### **Sprint 4: Detalle (✅ COMPLETADO)**
+10. ✅ FASE 3: List Detail + checks + total
+    - Domain: GetListDetailUseCase, CheckItemUseCase
+    - Data: ListDetailApi, ItemEntity, ListDetailRepository
+    - UI: DetailScreen, ItemCard, TotalBar
+    - Offline-first: SyncCheckUseCase, DetectRemoteChangesUseCase, Banners, Spinner
+
+### **Sprint 5: Completar + Sync (⏳ PENDIENTE)**
+11. ⏳ FASE 4: Completar lista
+12. ⏳ FASE 5: Sincronización avanzada
+
+### **Sprint 6: Quality (⏳ PENDIENTE)**
+13. ⏳ FASE 6: Testing exhaustivo
+14. ⏳ FASE 7: Polish y documentación
+
+---
+
+## 📝 Notas Importantes
+
+### **Decisiones arquitectónicas**
+- **DI**: Hilt recomendado (standar Android moderno)
+- **State**: StateFlow + Compose state
+- **Navigation**: Jetpack Navigation Compose
+- **Storage**: Room (snapshots) + DataStore (cookies/prefs)
+- **Images**: Coil (integración nativa con Compose)
+
+### **Restricciones del proyecto**
+- TDD obligatorio
+- Cambios pequeños y aislados
+- Sin librerías nuevas sin justificación
+- Textos en strings.xml (cero hardcode)
+- Domain layer sin dependencias Android
+
+### **Endpoints críticos según OpenAPI**
+- `POST /api/auth/login` → Login
+- `GET /api/lists?status=ACTIVE` → Listas activas
+- `GET /api/lists/{id}` → Detalle con items
+- `POST /api/lists/{id}/complete` → Completar lista
+- `PATCH /api/lists/{id}/items/{itemId}` → Actualizar item (checked)
+
+### **Features NO implementadas (fuera de scope)**
+- Registro (solo en web)
+- Crear/editar listas (solo en web)
+- Añadir productos (solo en web)
+- Historial completo (solo en web)
+- Login con QR (futuro)
+- Autosave draft (web feature)
+- Catálogo Mercadona (web feature)
+- Duplicar listas (web feature)
+
+---
+
+## ✅ Checklist de Inicio
+
+Antes de empezar FASE 0:
+- [ ] Confirmar estrategia de DI (Hilt/Koin/Manual)
+- [ ] Confirmar preferencia TDD estricto vs MVP rápido
+- [ ] Validar que el backend está corriendo en localhost:3000
+- [ ] Revisar gitignore (si aún no está hecho)
+
+**¿Listo para empezar?** 🚀
+
+```
 
 ### **Sprint 2: Auth UI + Login Screen (✅ COMPLETADO)**
 5. ✅ FASE 1.4: Presentation Layer (LoginScreen, ViewModel, StateFlow, Strings.xml)

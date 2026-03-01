@@ -61,6 +61,9 @@ interface ListEntityDao {
     @Query("SELECT * FROM lists WHERE status = :status ORDER BY updatedAt DESC")
     fun getListsByStatusFlow(status: String): Flow<List<ListEntity>>
 
+    @Query("SELECT * FROM lists WHERE id = :id")
+    fun getListByIdFlow(id: String): Flow<ListEntity?>
+
     @Update
     suspend fun update(list: ListEntity)
 

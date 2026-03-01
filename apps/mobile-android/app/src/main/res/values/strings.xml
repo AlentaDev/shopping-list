@@ -31,4 +31,23 @@
     <string name="lists_items_count">Items: %1$d</string>
     <string name="lists_updated_at">Actualizado: %1$s</string>
     <string name="lists_offline_banner">Sin conexión. Mostrando datos guardados</string>
+
+    <!-- List Detail -->
+    <string name="detail_title">Detalle de Lista</string>
+    <string name="detail_back_button">Volver</string>
+    <string name="detail_loading">Cargando detalle…</string>
+    <string name="detail_error">No se pudo cargar el detalle</string>
+    <string name="detail_retry_button">Reintentar</string>
+    <string name="detail_total_label">Total</string>
+    <string name="detail_total_value">%.2f €</string>
+    <string name="detail_complete_button">Completar Lista</string>
+    <string name="detail_offline_banner">Sin conexión. Mostrando datos guardados</string>
+    <string name="detail_remote_changes_banner">La lista cambió en la web. Revisa los cambios</string>
+    <string name="detail_refresh_button">Actualizar</string>
+
+    <!-- Item Card -->
+    <string name="item_thumbnail_description">Imagen de %1$s</string>
+    <string name="item_quantity">Cantidad: %.1f</string>
+    <string name="item_price_detail">%.2f € × %.1f</string>
+    <string name="item_subtotal">%.2f €</string>
 </resources>

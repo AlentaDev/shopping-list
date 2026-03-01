@@ -7,9 +7,13 @@ import com.alentadev.shopping.feature.lists.ui.list.ActiveListsScreen
 
 const val ACTIVE_LISTS_ROUTE = "active_lists"
 
-fun NavGraphBuilder.activeListsScreen() {
+fun NavGraphBuilder.activeListsScreen(
+    onNavigateToDetail: (String) -> Unit
+) {
     composable(route = ACTIVE_LISTS_ROUTE) {
-        ActiveListsScreen()
+        ActiveListsScreen(
+            onNavigateToDetail = onNavigateToDetail
+        )
     }
 }
 
