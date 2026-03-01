@@ -20,7 +20,9 @@ private const val TAG = "TokenAuthenticator"
  */
 class TokenAuthenticator(
     private val cookieJar: PersistentCookieJar,
-    private val refreshCoordinator: RefreshCoordinator
+    private val authRetryPolicy: AuthRetryPolicy,
+    private val refreshCoordinator: RefreshCoordinator,
+    private val sessionInvalidationNotifier: SessionInvalidationNotifier
 ) : Authenticator {
 
     constructor(
@@ -28,18 +30,21 @@ class TokenAuthenticator(
         authApiProvider: () -> AuthApi
     ) : this(
         cookieJar = cookieJar,
-        refreshCoordinator = RefreshCoordinator(authApiProvider)
+        authRetryPolicy = DefaultAuthRetryPolicy(),
+        refreshCoordinator = RefreshCoordinator(DefaultConnectivityGate(), authApiProvider),
+        sessionInvalidationNotifier = CookieClearingSessionInvalidationNotifier(cookieJar)
     )
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
-        if (!shouldAttemptRefresh(request, response)) {
+        if (!authRetryPolicy.shouldAttemptRefresh(request, response)) {
             return null
         }
 
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
         if (refreshResult != RefreshCoordinator.Result.SUCCESS) {
             if (refreshResult == RefreshCoordinator.Result.FAILED_UNAUTHORIZED) {
+                runBlocking { sessionInvalidationNotifier.notifySessionInvalidated() }
                 cookieJar.clear()
             }
             Log.d(TAG, "Refresh falló o no autorizado. No se reintenta request.")
@@ -49,5 +54,8 @@ class TokenAuthenticator(
         Log.d(TAG, "Refresh exitoso. Reintentando request original.")
         return request.newBuilder().build()
     }
+}
 
+private class DefaultConnectivityGate : ConnectivityGate {
+    override fun isOnline(): Boolean = true
 }
