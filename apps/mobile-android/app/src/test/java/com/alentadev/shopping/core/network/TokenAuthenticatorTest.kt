@@ -1,6 +1,7 @@
 package com.alentadev.shopping.core.network
 
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import okhttp3.Protocol
@@ -16,22 +17,25 @@ class TokenAuthenticatorTest {
 
     private val cookieJar = mockk<PersistentCookieJar>(relaxed = true)
     private val authApi = mockk<AuthApi>(relaxed = true)
+    private val refreshCoordinator = mockk<RefreshCoordinator>()
 
     @Test
     fun `authenticate returns null for non-401 responses`() {
-        val authenticator = TokenAuthenticator(cookieJar) { authApi }
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator) { authApi }
         val response = response(code = 500, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
+        coVerify(exactly = 0) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { authApi.refreshToken() }
         coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
-    fun `authenticate retries same request once for 401 not authenticated`() {
-        val authenticator = TokenAuthenticator(cookieJar) { authApi }
+    fun `successful refresh retries original request`() {
+        coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.SUCCESS
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator) { authApi }
         val response = response(code = 401, method = "GET", path = "/api/lists")
 
         val result = authenticator.authenticate(null, response)
@@ -39,31 +43,48 @@ class TokenAuthenticatorTest {
         assertNotNull(result)
         assertEquals("/api/lists", result?.url?.encodedPath)
         assertEquals("GET", result?.method)
+        coVerify(exactly = 1) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { authApi.refreshToken() }
         coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
-    fun `authenticate does not retry forever when previous response exists`() {
-        val authenticator = TokenAuthenticator(cookieJar) { authApi }
+    fun `second 401 in chain is blocked by policy`() {
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator) { authApi }
         val first = response(code = 401, method = "GET", path = "/api/lists")
         val second = response(code = 401, method = "GET", path = "/api/lists", prior = first)
 
         val result = authenticator.authenticate(null, second)
 
         assertNull(result)
+        coVerify(exactly = 0) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { authApi.refreshToken() }
         coVerify(exactly = 0) { cookieJar.clear() }
     }
 
     @Test
-    fun `authenticate blocks refresh endpoint retry`() {
-        val authenticator = TokenAuthenticator(cookieJar) { authApi }
+    fun `refresh endpoint 401 does not recurse`() {
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator) { authApi }
         val response = response(code = 401, method = "POST", path = "/api/auth/refresh")
 
         val result = authenticator.authenticate(null, response)
 
         assertNull(result)
+        coVerify(exactly = 0) { refreshCoordinator.refresh() }
+        coVerify(exactly = 0) { authApi.refreshToken() }
+        coVerify(exactly = 0) { cookieJar.clear() }
+    }
+
+    @Test
+    fun `refresh 401 returns null no retry`() {
+        coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_UNAUTHORIZED
+        val authenticator = TokenAuthenticator(cookieJar, refreshCoordinator) { authApi }
+        val response = response(code = 401, method = "GET", path = "/api/lists")
+
+        val result = authenticator.authenticate(null, response)
+
+        assertNull(result)
+        coVerify(exactly = 1) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { authApi.refreshToken() }
         coVerify(exactly = 0) { cookieJar.clear() }
     }

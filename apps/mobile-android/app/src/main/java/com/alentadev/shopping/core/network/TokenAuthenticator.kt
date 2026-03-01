@@ -2,6 +2,7 @@ package com.alentadev.shopping.core.network
 
 import android.util.Log
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
+import kotlinx.coroutines.runBlocking
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
@@ -19,8 +20,16 @@ private const val TAG = "TokenAuthenticator"
  */
 class TokenAuthenticator(
     private val cookieJar: PersistentCookieJar,
-    private val authApiProvider: () -> AuthApi
+    private val refreshCoordinator: RefreshCoordinator
 ) : Authenticator {
+
+    constructor(
+        cookieJar: PersistentCookieJar,
+        authApiProvider: () -> AuthApi
+    ) : this(
+        cookieJar = cookieJar,
+        refreshCoordinator = RefreshCoordinator(authApiProvider)
+    )
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
@@ -28,9 +37,13 @@ class TokenAuthenticator(
             return null
         }
 
-        Log.d(TAG, "401 recibido. Reintentando una vez con cookies actuales.")
+        val refreshResult = runBlocking { refreshCoordinator.refresh() }
+        if (refreshResult != RefreshCoordinator.Result.SUCCESS) {
+            Log.d(TAG, "Refresh falló o no autorizado. No se reintenta request.")
+            return null
+        }
 
-        // No limpiar cookies ni forzar refresh manual desde Android.
+        Log.d(TAG, "Refresh exitoso. Reintentando request original.")
         return request.newBuilder().build()
     }
 
