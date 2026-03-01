@@ -20,7 +20,7 @@ import javax.inject.Singleton
 @Singleton
 class NetworkMonitor @Inject constructor(
     @param:ApplicationContext private val context: Context
-) {
+) : ConnectivityGate {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
@@ -43,6 +43,8 @@ class NetworkMonitor @Inject constructor(
 
         awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
     }.distinctUntilChanged()
+
+    override fun isOnline(): Boolean = isCurrentlyConnected()
 
     fun isCurrentlyConnected(): Boolean {
         val network = connectivityManager.activeNetwork ?: return false

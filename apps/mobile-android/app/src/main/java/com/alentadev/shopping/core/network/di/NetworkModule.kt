@@ -4,6 +4,7 @@ import android.content.Context
 import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.DebugInterceptor
+import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.core.network.PersistentCookieJar
 import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.TokenAuthenticator
@@ -65,6 +66,7 @@ object NetworkModule {
         debugInterceptor: DebugInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         cookieJar: PersistentCookieJar,
+        networkMonitor: NetworkMonitor,
         retrofit: dagger.Lazy<Retrofit>  // Lazy para evitar ciclo
     ): OkHttpClient {
         return OkHttpClient.Builder()
@@ -72,7 +74,7 @@ object NetworkModule {
             .addInterceptor(debugInterceptor)
             .addInterceptor(loggingInterceptor)
             .cookieJar(cookieJar)
-            .authenticator(TokenAuthenticator(cookieJar) {
+            .authenticator(TokenAuthenticator(cookieJar, networkMonitor) {
                 // Provider lazy de AuthApi
                 retrofit.get().create(AuthApi::class.java)
             })

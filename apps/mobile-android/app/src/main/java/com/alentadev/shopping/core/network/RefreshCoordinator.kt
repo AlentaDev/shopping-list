@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 
 class RefreshCoordinator(
+    private val connectivityGate: ConnectivityGate,
     private val authApiProvider: () -> AuthApi
 ) {
 
@@ -52,6 +53,10 @@ class RefreshCoordinator(
     }
 
     private suspend fun performRefresh(): Result {
+        if (!connectivityGate.isOnline()) {
+            return Result.FAILED_NETWORK
+        }
+
         return try {
             authApiProvider().refreshToken()
             Result.SUCCESS

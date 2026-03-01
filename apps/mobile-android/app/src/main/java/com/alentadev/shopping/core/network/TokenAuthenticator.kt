@@ -25,10 +25,11 @@ class TokenAuthenticator(
 
     constructor(
         cookieJar: PersistentCookieJar,
+        connectivityGate: ConnectivityGate,
         authApiProvider: () -> AuthApi
     ) : this(
         cookieJar = cookieJar,
-        refreshCoordinator = RefreshCoordinator(authApiProvider)
+        refreshCoordinator = RefreshCoordinator(connectivityGate, authApiProvider)
     )
 
     override fun authenticate(route: Route?, response: Response): Request? {

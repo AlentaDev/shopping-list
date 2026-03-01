@@ -4,6 +4,7 @@ import com.alentadev.shopping.feature.auth.data.dto.OkResponse
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
@@ -21,10 +22,12 @@ import retrofit2.Response
 class RefreshCoordinatorTest {
 
     private val authApi = mockk<AuthApi>()
+    private val connectivityGate = mockk<ConnectivityGate>()
 
     @Test
     fun `multiple concurrent callers produce exactly one refresh HTTP call`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        every { connectivityGate.isOnline() } returns true
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
         val callCount = AtomicInteger(0)
         val gate = CompletableDeferred<Unit>()
 
@@ -56,7 +59,8 @@ class RefreshCoordinatorTest {
 
     @Test
     fun `unauthorized refresh result is propagated to all waiters`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        every { connectivityGate.isOnline() } returns true
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
         val gate = CompletableDeferred<Unit>()
 
         coEvery { authApi.refreshToken() } coAnswers {
@@ -86,7 +90,8 @@ class RefreshCoordinatorTest {
 
     @Test
     fun `lock resets after failure so a future attempt can run`() = runTest {
-        val coordinator = RefreshCoordinator { authApi }
+        every { connectivityGate.isOnline() } returns true
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
 
         coEvery { authApi.refreshToken() } throws IOException("network down") andThen OkResponse(ok = true)
 
@@ -96,5 +101,29 @@ class RefreshCoordinatorTest {
         assertEquals(RefreshCoordinator.Result.FAILED_NETWORK, firstResult)
         assertEquals(RefreshCoordinator.Result.SUCCESS, secondResult)
         coVerify(exactly = 2) { authApi.refreshToken() }
+    }
+
+    @Test
+    fun `offline refresh returns failed network and does not call endpoint`() = runTest {
+        every { connectivityGate.isOnline() } returns false
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
+
+        val result = coordinator.refresh()
+
+        assertEquals(RefreshCoordinator.Result.FAILED_NETWORK, result)
+        coVerify(exactly = 0) { authApi.refreshToken() }
+    }
+
+    @Test
+    fun `offline result is consistent across concurrent waiters`() = runTest {
+        every { connectivityGate.isOnline() } returns false
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
+
+        val results = List(4) { async { coordinator.refresh() } }.awaitAll()
+
+        results.forEach { result ->
+            assertEquals(RefreshCoordinator.Result.FAILED_NETWORK, result)
+        }
+        coVerify(exactly = 0) { authApi.refreshToken() }
     }
 }
