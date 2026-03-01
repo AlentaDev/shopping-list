@@ -527,3 +527,70 @@ Antes de empezar FASE 0:
 - [ ] Revisar gitignore (si aún no está hecho)
 
 **¿Listo para empezar?** 🚀
+
+## 🔐 Auth Fase 1 — Decisiones de Red Actualizadas (2026-03)
+
+> Estas decisiones aplican a `core/network` y reemplazan cualquier comportamiento implícito previo de reintentos/autenticación en cadena.
+
+### 1) Flujo centralizado obligatorio: `401 -> refresh una vez -> retry original`
+- El manejo de `401` queda centralizado en la capa de red.
+- Ante `401` en request autenticado:
+  1. Ejecutar refresh de sesión **una sola vez**.
+  2. Si refresh responde `200`, reintentar request original **una sola vez**.
+  3. Si refresh falla, no repetir refresh ni reintentar en bucle.
+
+### 2) Política anti-loop de retry (reglas + presets)
+- El refresh **nunca** entra al mismo circuito de refresh/retry.
+- Cada request lleva metadata de intento (`retryCount`, `authRetryDone`).
+- Reglas:
+  - Máximo `1` auth-retry por request original.
+  - Reintentos de transporte solo para errores transitorios (`timeout`, `IOException`, `5xx`).
+  - No reintentar `4xx` funcionales (excepto el flujo controlado de `401`).
+- Presets operativos:
+  - **AUTH_REQUEST**: `maxAuthRetry=1`, `maxNetworkRetry=0-1`.
+  - **IDEMPOTENT_READ**: backoff corto exponencial (p. ej. `1s, 2s`).
+  - **NON_IDEMPOTENT_WRITE**: sin retry automático, fallback a acción manual/cola offline.
+
+### 3) Concurrencia refresh con estrategia single-flight
+- Si múltiples requests reciben `401` simultáneo, solo **un** refresh se ejecuta.
+- El resto espera el resultado del refresh en curso (join).
+- Si refresh exitoso, los pendientes reintentan su request original bajo las reglas anti-loop.
+- Si refresh falla, todos los pendientes finalizan con error de autenticación consistente.
+
+### 4) Invalidación de sesión cuando refresh devuelve 401
+- `401` en refresh se considera sesión inválida/no recuperable.
+- Acciones obligatorias:
+  - Limpiar cookies/tokens y estado de sesión local.
+  - Invalidar estado autenticado en memoria.
+  - Notificar evento global de sesión expirada para navegación a Login.
+- No ejecutar retries adicionales tras este escenario.
+
+### 5) Estrategia offline en capa de red
+- Detectar ausencia de conectividad antes de disparar retries agresivos.
+- En offline:
+  - Fallar rápido en requests remotos.
+  - Delegar en repositorios/casos de uso la lectura de snapshot local.
+  - Diferenciar error `offline` vs `auth` para UX correcta (banner offline, sin forzar logout).
+- Al recuperar red, permitir reintento explícito del usuario o sync controlado desde use cases.
+
+### 6) Estrategia de tests aplicada
+- Enfoque: **TDD** + tests unitarios dirigidos a comportamiento crítico.
+- Cobertura mínima esperada en `core/network` para este cambio:
+  - `401 -> refresh -> retry` exitoso.
+  - `401` + refresh `401` => invalidación de sesión.
+  - Anti-loop (sin segundo refresh por la misma request).
+  - Single-flight con requests concurrentes.
+  - Offline sin retry infinito y con tipado de error correcto.
+
+### 7) Módulos/archivos impactados (`core/network`) + notas de migración
+- Módulos clave a alinear:
+  - `TokenAuthenticator` (orquestación auth-retry).
+  - `RetryInterceptor` (solo transporte/transitorio, sin bucles auth).
+  - `NetworkModule` (wiring de dependencias y orden de interceptors).
+  - `PersistentCookieJar` / storage de sesión (limpieza en invalidación).
+  - Coordinador single-flight de refresh (nuevo o integrado en authenticator).
+- Notas de migración:
+  1. Eliminar lógica duplicada de refresh en repositorios o data sources.
+  2. Unificar clasificación de errores de red/auth/offline.
+  3. Verificar que endpoints de auth (especialmente refresh) estén excluidos de auth-retry recursivo.
+  4. Ajustar tests existentes para el flujo centralizado y contratos de error actualizados.
