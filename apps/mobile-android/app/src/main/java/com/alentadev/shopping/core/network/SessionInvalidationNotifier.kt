@@ -1,9 +1,17 @@
 package com.alentadev.shopping.core.network
 
-import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+import javax.inject.Singleton
 
 interface SessionInvalidationNotifier {
-    val events: Flow<Unit>
+    suspend fun notifySessionInvalidated()
+}
 
-    fun notifySessionInvalidated()
+@Singleton
+class CookieClearingSessionInvalidationNotifier @Inject constructor(
+    private val cookieJar: PersistentCookieJar
+) : SessionInvalidationNotifier {
+    override suspend fun notifySessionInvalidated() {
+        cookieJar.clear()
+    }
 }
