@@ -21,28 +21,34 @@ class RefreshCoordinator(
     private var inFlight: CompletableDeferred<Result>? = null
 
     suspend fun refresh(): Result {
-        var isLeader = false
-        val waiter = mutex.withLock {
-            inFlight?.let { return@withLock it }
-
-            isLeader = true
-            CompletableDeferred<Result>().also {
-                inFlight = it
+        // Determinar si somos líder u obtener el waiter existente
+        val (waiter, isLeader) = mutex.withLock {
+            val existing = inFlight
+            if (existing != null && !existing.isCompleted) {
+                // Hay un refresh en progreso, somos seguidores
+                Pair(existing, false)
+            } else {
+                // No hay refresh o ya completó, somos el líder
+                val new = CompletableDeferred<Result>()
+                inFlight = new
+                Pair(new, true)
             }
         }
 
-        if (isLeader) {
+        return if (isLeader) {
+            // Ejecutar el refresh, completar el waiter y limpiar
             val result = performRefresh()
             waiter.complete(result)
 
             mutex.withLock {
-                if (inFlight === waiter) {
-                    inFlight = null
-                }
+                if (inFlight === waiter) inFlight = null
             }
-        }
 
-        return waiter.await()
+            result
+        } else {
+            // Solo esperar el resultado del líder
+            waiter.await()
+        }
     }
 
     private suspend fun performRefresh(): Result {

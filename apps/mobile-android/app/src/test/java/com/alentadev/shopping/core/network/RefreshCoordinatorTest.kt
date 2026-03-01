@@ -57,14 +57,24 @@ class RefreshCoordinatorTest {
     @Test
     fun `unauthorized refresh result is propagated to all waiters`() = runTest {
         val coordinator = RefreshCoordinator { authApi }
+        val gate = CompletableDeferred<Unit>()
 
-        coEvery { authApi.refreshToken() } throws HttpException(
-            Response.error<Any>(401, "unauthorized".toResponseBody(null))
-        )
+        coEvery { authApi.refreshToken() } coAnswers {
+            gate.await()
+            throw HttpException(
+                Response.error<Any>(401, "unauthorized".toResponseBody(null))
+            )
+        }
 
         val waiters = List(5) {
             async { coordinator.refresh() }
         }
+
+        // Dar tiempo a que todas las coroutines se lancen y entren al mutex
+        delay(10)
+
+        // Liberar el gate para que el refresh complete
+        gate.complete(Unit)
 
         val results = waiters.awaitAll()
 
