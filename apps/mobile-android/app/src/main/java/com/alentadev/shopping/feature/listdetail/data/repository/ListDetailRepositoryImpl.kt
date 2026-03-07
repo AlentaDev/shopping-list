@@ -1,11 +1,12 @@
 package com.alentadev.shopping.feature.listdetail.data.repository
 
+import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
+import com.alentadev.shopping.core.data.network.OfflineFirstResult
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
 import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
@@ -17,7 +18,8 @@ import javax.inject.Inject
  */
 class ListDetailRepositoryImpl @Inject constructor(
     private val remoteDataSource: ListDetailRemoteDataSource,
-    private val localDataSource: ListDetailLocalDataSource
+    private val localDataSource: ListDetailLocalDataSource,
+    private val offlineFirstExecutor: OfflineFirstExecutor
 ) : ListDetailRepository {
 
     /**
@@ -35,21 +37,20 @@ class ListDetailRepositoryImpl @Inject constructor(
         return localDataSource.getListDetailFlow(listId)
             .filterNotNull()
             .onStart {
-                // Intenta obtener del servidor al suscribirse
-                try {
-                    val remoteDetail = remoteDataSource.getListDetail(listId)
-                    // Guarda en caché local
-                    localDataSource.saveListDetail(remoteDetail)
-                    // El Flow emitirá el valor cacheado (ya guardado)
-                } catch (e: Exception) {
-                    // Si falla, el Flow emite lo que tenga en caché
-                    // Si no hay caché, el Flow emite null y aquí no hace nada
+                when (
+                    offlineFirstExecutor.execute(
+                        isOnlineNow = { true },
+                        fetchRemote = { remoteDataSource.getListDetail(listId) },
+                        saveRemote = { remoteDetail -> localDataSource.saveListDetail(remoteDetail) },
+                        readLocal = {
+                            localDataSource.getListDetail(listId)
+                                ?: throw NoSuchElementException("Lista no encontrada en caché: $listId")
+                        }
+                    )
+                ) {
+                    is OfflineFirstResult.Success -> Unit
+                    is OfflineFirstResult.Error -> Unit
                 }
-            }
-            .catch { exception ->
-                // Si hay error downstream en el Flow (ej: problema con Room)
-                // Propagar el error
-                throw exception
             }
     }
 
@@ -117,6 +118,5 @@ class ListDetailRepositoryImpl @Inject constructor(
         localDataSource.saveListDetail(remoteDetail)
     }
 }
-
 
 

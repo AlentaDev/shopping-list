@@ -1,5 +1,8 @@
 package com.alentadev.shopping.feature.listdetail.data.repository
 
+import com.alentadev.shopping.core.data.network.DataSource
+import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
+import com.alentadev.shopping.core.data.network.OfflineFirstResult
 import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
@@ -7,6 +10,7 @@ import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataS
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -16,13 +20,15 @@ import org.junit.Test
 class ListDetailRepositoryImplTest {
     private lateinit var remoteDataSource: ListDetailRemoteDataSource
     private lateinit var localDataSource: ListDetailLocalDataSource
+    private lateinit var offlineFirstExecutor: OfflineFirstExecutor
     private lateinit var repository: ListDetailRepositoryImpl
 
     @Before
     fun setup() {
         remoteDataSource = mockk()
         localDataSource = mockk()
-        repository = ListDetailRepositoryImpl(remoteDataSource, localDataSource)
+        offlineFirstExecutor = mockk()
+        repository = ListDetailRepositoryImpl(remoteDataSource, localDataSource, offlineFirstExecutor)
     }
 
     @Test
@@ -56,6 +62,14 @@ class ListDetailRepositoryImplTest {
         coEvery { remoteDataSource.getListDetail(listId) } returns listDetail
         coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
         coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(listDetail)
+        coEvery {
+            offlineFirstExecutor.execute<ListDetail>(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(listDetail, DataSource.REMOTE)
 
         // Act
         val result = mutableListOf<ListDetail?>()
@@ -65,6 +79,14 @@ class ListDetailRepositoryImplTest {
         assertEquals(1, result.size)
         assertEquals(listId, result[0]?.id)
         assertEquals("Supermercado", result[0]?.title)
+        coVerify(exactly = 1) {
+            offlineFirstExecutor.execute<ListDetail>(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        }
     }
 
     @Test
@@ -102,12 +124,59 @@ class ListDetailRepositoryImplTest {
         coEvery { remoteDataSource.getListDetail(listId) } returns listDetail
         coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
         coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(listDetail)
+        coEvery {
+            offlineFirstExecutor.execute<ListDetail>(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } coAnswers {
+            val fetchRemote = arg<suspend () -> ListDetail>(1)
+            val saveRemote = arg<suspend (ListDetail) -> Unit>(2)
+
+            val remoteValue = fetchRemote()
+            saveRemote(remoteValue)
+            OfflineFirstResult.Success(remoteValue, DataSource.REMOTE)
+        }
 
         // Act
         repository.getListDetail(listId).collect {}
 
         // Assert
         coVerify { localDataSource.saveListDetail(listDetail) }
+    }
+
+    @Test
+    fun `getListDetail delegates fallback decision to offline executor`() = runTest {
+        val listId = "list-remote-fail"
+        val cached = ListDetail(
+            id = listId,
+            title = "Cached detail",
+            items = emptyList(),
+            updatedAt = "2026-02-25T10:00:00Z"
+        )
+        val isOnlineSlot = slot<() -> Boolean>()
+        val fetchRemoteSlot = slot<suspend () -> ListDetail>()
+        val saveRemoteSlot = slot<suspend (ListDetail) -> Unit>()
+        val readLocalSlot = slot<suspend () -> ListDetail>()
+
+        coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(cached)
+        coEvery {
+            offlineFirstExecutor.execute<ListDetail>(
+                isOnlineNow = capture(isOnlineSlot),
+                fetchRemote = capture(fetchRemoteSlot),
+                saveRemote = capture(saveRemoteSlot),
+                readLocal = capture(readLocalSlot)
+            )
+        } returns OfflineFirstResult.Success(cached, DataSource.CACHE)
+
+        val result = mutableListOf<ListDetail?>()
+        repository.getListDetail(listId).collect { result.add(it) }
+
+        assertEquals(1, result.size)
+        assertEquals("Cached detail", result.first()?.title)
+        assertTrue(isOnlineSlot.captured())
     }
 
     @Test
@@ -230,4 +299,3 @@ class ListDetailRepositoryImplTest {
         }
     }
 }
-

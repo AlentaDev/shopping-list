@@ -5,6 +5,7 @@ import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.entity.ManualItem
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -61,6 +62,8 @@ class GetListDetailUseCaseTest {
         assertEquals(listId, result[0].id)
         assertEquals("Supermercado", result[0].title)
         assertEquals(1, result[0].items.size)
+        coVerify(exactly = 1) { repository.getListDetail(listId) }
+        coVerify(exactly = 0) { repository.getCachedListDetail(any()) }
     }
 
     @Test
@@ -175,4 +178,3 @@ class GetListDetailUseCaseTest {
         }
     }
 }
-
