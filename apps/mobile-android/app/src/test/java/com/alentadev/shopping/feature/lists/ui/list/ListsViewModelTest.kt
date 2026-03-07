@@ -49,6 +49,7 @@ class ListsViewModelTest {
         networkMonitor = mockk()
 
         every { networkMonitor.isConnected } returns flowOf(true)
+        every { networkMonitor.isCurrentlyConnected() } returns true
 
         viewModel = ListsViewModel(
             getActiveListsUseCase,
@@ -106,6 +107,34 @@ class ListsViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Empty)
         assertFalse((state as ListsUiState.Empty).isOffline)
+    }
+
+    @Test
+    fun `loadLists uses current connectivity when flow is stale`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns true
+
+        val lists = listOf(
+            ShoppingList("1", "Lista 1", ListStatus.ACTIVE, 1000L, 3)
+        )
+        val result = ActiveListsResult(lists, fromCache = false)
+        coEvery { listsRepository.getActiveListsWithSource() } returns result
+
+        viewModel = ListsViewModel(
+            getActiveListsUseCase,
+            refreshListsUseCase,
+            listsRepository,
+            networkMonitor
+        )
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is ListsUiState.Success)
+        assertFalse((state as ListsUiState.Success).fromCache)
+        coVerify(exactly = 1) { listsRepository.getActiveListsWithSource() }
+        coVerify(exactly = 0) { listsRepository.getCachedActiveLists() }
     }
 
     @Test

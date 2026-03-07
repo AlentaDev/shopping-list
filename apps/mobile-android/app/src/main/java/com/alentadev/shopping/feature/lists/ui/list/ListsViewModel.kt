@@ -45,9 +45,11 @@ class ListsViewModel @Inject constructor(
     fun loadLists() {
         viewModelScope.launch {
             _uiState.value = ListsUiState.Loading
-            Log.d(TAG, "loadLists started - isConnected=${_isConnected.value}")
+            val currentConnected = networkMonitor.isCurrentlyConnected()
+            val effectiveConnected = _isConnected.value || currentConnected
+            Log.d(TAG, "loadLists started - flowConnected=${_isConnected.value}, currentConnected=$currentConnected, effectiveConnected=$effectiveConnected")
             try {
-                if (!_isConnected.value) {
+                if (!effectiveConnected) {
                     Log.d(TAG, "loadLists offline -> reading cached active lists")
                     val cachedLists = listsRepository.getCachedActiveLists()
                     _uiState.value = if (cachedLists.isEmpty()) {
