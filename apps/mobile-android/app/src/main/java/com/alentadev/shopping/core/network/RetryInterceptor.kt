@@ -23,6 +23,11 @@ class RetryInterceptor(
     private val sleep: (Long) -> Unit = { Thread.sleep(it) }
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
+        if (!connectivityGate.isOnline()) {
+            Log.w(TAG, "Sin conexión detectada antes del primer intento")
+            throw IOException("No network available")
+        }
+
         var lastException: IOException? = null
         var delay = INITIAL_DELAY_MS
 

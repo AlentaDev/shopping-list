@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.listdetail.data.repository
 
 import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
 import com.alentadev.shopping.core.data.network.OfflineFirstResult
+import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
@@ -19,7 +20,8 @@ import javax.inject.Inject
 class ListDetailRepositoryImpl @Inject constructor(
     private val remoteDataSource: ListDetailRemoteDataSource,
     private val localDataSource: ListDetailLocalDataSource,
-    private val offlineFirstExecutor: OfflineFirstExecutor
+    private val offlineFirstExecutor: OfflineFirstExecutor,
+    private val connectivityGate: ConnectivityGate
 ) : ListDetailRepository {
 
     /**
@@ -39,7 +41,7 @@ class ListDetailRepositoryImpl @Inject constructor(
             .onStart {
                 when (
                     offlineFirstExecutor.execute(
-                        isOnlineNow = { true },
+                        connectivityGate = connectivityGate,
                         fetchRemote = { remoteDataSource.getListDetail(listId) },
                         saveRemote = { remoteDetail -> localDataSource.saveListDetail(remoteDetail) },
                         readLocal = {

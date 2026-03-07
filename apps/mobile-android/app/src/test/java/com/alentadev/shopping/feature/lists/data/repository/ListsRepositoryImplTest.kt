@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.lists.data.repository
 import com.alentadev.shopping.core.data.network.DataSource
 import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
 import com.alentadev.shopping.core.data.network.OfflineFirstResult
+import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
@@ -19,6 +20,7 @@ class ListsRepositoryImplTest {
     private lateinit var remoteDataSource: ListsRemoteDataSource
     private lateinit var localDataSource: ListsLocalDataSource
     private lateinit var offlineFirstExecutor: OfflineFirstExecutor
+    private lateinit var connectivityGate: ConnectivityGate
     private lateinit var repository: ListsRepositoryImpl
 
     @Before
@@ -26,7 +28,8 @@ class ListsRepositoryImplTest {
         remoteDataSource = mockk()
         localDataSource = mockk()
         offlineFirstExecutor = mockk()
-        repository = ListsRepositoryImpl(remoteDataSource, localDataSource, offlineFirstExecutor)
+        connectivityGate = mockk()
+        repository = ListsRepositoryImpl(remoteDataSource, localDataSource, offlineFirstExecutor, connectivityGate)
     }
 
     @Test
@@ -137,7 +140,7 @@ class ListsRepositoryImplTest {
 
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -152,7 +155,7 @@ class ListsRepositoryImplTest {
         assertEquals("Mi lista", result?.title)
         coVerify(exactly = 1) {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -173,7 +176,7 @@ class ListsRepositoryImplTest {
 
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -193,7 +196,7 @@ class ListsRepositoryImplTest {
         // Arrange
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -214,7 +217,7 @@ class ListsRepositoryImplTest {
         )
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -234,7 +237,7 @@ class ListsRepositoryImplTest {
         )
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -252,7 +255,7 @@ class ListsRepositoryImplTest {
         val error = IllegalStateException("cache unavailable")
         coEvery {
             offlineFirstExecutor.execute(
-                isOnlineNow = any(),
+                connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
                 readLocal = any()
@@ -266,4 +269,29 @@ class ListsRepositoryImplTest {
             assertEquals("cache unavailable", exception.message)
         }
     }
+
+    @Test
+    fun `getActiveListsWithSource delegates connectivity decision to shared gate`() = runTest {
+        val lists = listOf(ShoppingList("remote-2", "Remota 2", ListStatus.ACTIVE, 3333L, 1))
+        coEvery {
+            offlineFirstExecutor.execute(
+                connectivityGate = connectivityGate,
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(lists, DataSource.REMOTE)
+
+        repository.getActiveListsWithSource()
+
+        coVerify(exactly = 1) {
+            offlineFirstExecutor.execute(
+                connectivityGate = connectivityGate,
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        }
+    }
+
 }

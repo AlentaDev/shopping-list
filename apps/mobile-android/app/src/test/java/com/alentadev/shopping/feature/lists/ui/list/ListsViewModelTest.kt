@@ -243,6 +243,31 @@ class ListsViewModelTest {
         assertTrue(state is ListsUiState.Error)
         assertEquals("Refresh error", (state as ListsUiState.Error).message)
     }
+    @Test
+    fun `refreshLists offline uses cache and skips remote refresh`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
+        val cached = listOf(ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 1))
+        coEvery { listsRepository.getCachedActiveLists() } returns cached
+
+        viewModel = ListsViewModel(
+            getActiveListsUseCase,
+            refreshListsUseCase,
+            listsRepository,
+            networkMonitor
+        )
+
+        viewModel.refreshLists()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is ListsUiState.Success)
+        assertTrue((state as ListsUiState.Success).fromCache)
+        coVerify(exactly = 1) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 0) { refreshListsUseCase.execute() }
+    }
+
+
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -256,4 +281,5 @@ class MainDispatcherRule(
     override fun finished(description: Description) {
         Dispatchers.resetMain()
     }
+
 }
