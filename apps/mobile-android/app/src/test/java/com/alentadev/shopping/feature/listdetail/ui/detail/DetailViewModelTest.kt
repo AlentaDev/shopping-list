@@ -60,6 +60,7 @@ class DetailViewModelTest {
 
         // Mock NetworkMonitor para simular conectado
         every { networkMonitor.isConnected } returns flowOf(true)
+        every { networkMonitor.isCurrentlyConnected() } returns true
     }
 
     @Test
@@ -94,6 +95,7 @@ class DetailViewModelTest {
         // Arrange
         val listDetail = createListDetail("list-123", "Offline List", 2)
         every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
         every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
 
         // Act
@@ -117,6 +119,36 @@ class DetailViewModelTest {
     }
 
 
+
+
+    @Test
+    fun `init uses current connectivity when flow is stale`() = runTest(mainDispatcherRule.testDispatcher) {
+        // Arrange
+        val listDetail = createListDetail("list-123", "Recovered Network", 2)
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns true
+        every { getListDetailUseCase("list-123", false) } returns flowOf(listDetail)
+
+        // Act
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        // Assert
+        val state = viewModel.uiState.value
+        assertTrue(state is ListDetailUiState.Success)
+        assertFalse((state as ListDetailUiState.Success).fromCache)
+        verify(exactly = 1) { networkMonitor.isCurrentlyConnected() }
+        verify(exactly = 1) { getListDetailUseCase("list-123", false) }
+        verify(exactly = 0) { getListDetailUseCase("list-123", true) }
+    }
     @Test
     fun `init sets Error when use case throws`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
@@ -173,6 +205,7 @@ class DetailViewModelTest {
     fun `retry offline keeps preferCache true and fromCache true`() = runTest(mainDispatcherRule.testDispatcher) {
         val listDetail = createListDetail("list-123", "Retry Offline", 1)
         every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
         every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
 
         viewModel = DetailViewModel(

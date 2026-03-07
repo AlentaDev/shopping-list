@@ -7,6 +7,7 @@ import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
 import com.alentadev.shopping.feature.lists.domain.usecase.GetActiveListsUseCase
 import com.alentadev.shopping.feature.lists.domain.usecase.RefreshListsUseCase
 import com.alentadev.shopping.core.network.NetworkMonitor
+import com.alentadev.shopping.core.network.resolveConnectivity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -45,11 +46,10 @@ class ListsViewModel @Inject constructor(
     fun loadLists() {
         viewModelScope.launch {
             _uiState.value = ListsUiState.Loading
-            val currentConnected = networkMonitor.isCurrentlyConnected()
-            val effectiveConnected = _isConnected.value || currentConnected
-            Log.d(TAG, "loadLists started - flowConnected=${_isConnected.value}, currentConnected=$currentConnected, effectiveConnected=$effectiveConnected")
+            val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
+            Log.d(TAG, "loadLists started - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
             try {
-                if (!effectiveConnected) {
+                if (!connectivity.effectiveConnected) {
                     Log.d(TAG, "loadLists offline -> reading cached active lists")
                     val cachedLists = listsRepository.getCachedActiveLists()
                     _uiState.value = if (cachedLists.isEmpty()) {

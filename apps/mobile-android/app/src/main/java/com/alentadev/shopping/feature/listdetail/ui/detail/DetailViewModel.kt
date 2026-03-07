@@ -1,9 +1,11 @@
 package com.alentadev.shopping.feature.listdetail.ui.detail
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alentadev.shopping.core.network.NetworkMonitor
+import com.alentadev.shopping.core.network.resolveConnectivity
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
@@ -39,6 +41,10 @@ class DetailViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private companion object {
+        const val TAG = "DetailViewModel"
+    }
 
     private val listId: String = checkNotNull(savedStateHandle["listId"]) {
         "El ID de la lista es requerido"
@@ -84,9 +90,12 @@ class DetailViewModel @Inject constructor(
     fun loadListDetail() {
         viewModelScope.launch {
             _uiState.value = ListDetailUiState.Loading
-            val shouldUseCacheOnly = !_isConnected.value
+            val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
+            Log.d(TAG, "loadListDetail started - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
+            val shouldUseCacheOnly = !connectivity.effectiveConnected
             getListDetailUseCase(listId, preferCache = shouldUseCacheOnly)
                 .catch { e ->
+                    Log.e(TAG, "loadListDetail failed", e)
                     _uiState.value = ListDetailUiState.Error(
                         e.message ?: "Error al cargar la lista"
                     )
@@ -123,30 +132,30 @@ class DetailViewModel @Inject constructor(
     fun toggleItemCheck(itemId: String, checked: Boolean) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("DetailViewModel", "🔘 toggleItemCheck - itemId: $itemId, checked: $checked, isConnected: ${_isConnected.value}")
+                val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
+                Log.d(TAG, "toggleItemCheck started - itemId=$itemId, checked=$checked, flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
 
                 // Actualizar localmente
-                android.util.Log.d("DetailViewModel", "📝 Actualizando localmente...")
+                Log.d(TAG, "toggleItemCheck -> updating local state")
                 checkItemUseCase(listId, itemId, checked)
-                android.util.Log.d("DetailViewModel", "✅ Actualización local exitosa")
+                Log.d(TAG, "toggleItemCheck -> local update success")
 
                 // Intentar sincronizar si hay conexión
-                val isOnlineNow = _isConnected.value || networkMonitor.isCurrentlyConnected()
-                if (isOnlineNow) {
-                    android.util.Log.d("DetailViewModel", "🌐 Hay conexión, iniciando sincronización...")
+                if (connectivity.effectiveConnected) {
+                    Log.d(TAG, "toggleItemCheck -> syncing with backend")
                     updateSyncStatus(SyncStatus.SYNCING)
 
                     val syncSuccess = syncCheckUseCase(listId, itemId, checked)
-                    android.util.Log.d("DetailViewModel", "🔄 Resultado sincronización: $syncSuccess")
+                    Log.d(TAG, "toggleItemCheck -> sync result success=$syncSuccess")
 
                     updateSyncStatus(if (syncSuccess) SyncStatus.SUCCESS else SyncStatus.IDLE)
                 } else {
-                    android.util.Log.d("DetailViewModel", "📡 Sin conexión, solo guardado local")
+                    Log.d(TAG, "toggleItemCheck -> offline, local only")
                 }
 
                 // El Flow del repositorio emitirá el estado actualizado
             } catch (e: Exception) {
-                android.util.Log.e("DetailViewModel", "❌ Error en toggleItemCheck: ${e.message}", e)
+                Log.e(TAG, "toggleItemCheck failed", e)
                 // Los errores se ignoran porque la operación es local
                 updateSyncStatus(SyncStatus.ERROR)
             }
