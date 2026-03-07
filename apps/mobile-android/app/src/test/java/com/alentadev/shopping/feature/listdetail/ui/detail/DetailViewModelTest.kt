@@ -149,6 +149,35 @@ class DetailViewModelTest {
         verify(exactly = 1) { getListDetailUseCase("list-123", false) }
         verify(exactly = 0) { getListDetailUseCase("list-123", true) }
     }
+
+    @Test
+    fun `init uses current offline connectivity when reactive state starts optimistic`() = runTest(mainDispatcherRule.testDispatcher) {
+        // Arrange
+        val listDetail = createListDetail("list-123", "Offline From Current", 2)
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
+        every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
+
+        // Act
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        // Assert
+        val state = viewModel.uiState.value
+        assertTrue(state is ListDetailUiState.Success)
+        assertTrue((state as ListDetailUiState.Success).fromCache)
+        verify(exactly = 1) { getListDetailUseCase("list-123", true) }
+        verify(exactly = 0) { getListDetailUseCase("list-123", false) }
+    }
+
     @Test
     fun `init sets Error when use case throws`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange

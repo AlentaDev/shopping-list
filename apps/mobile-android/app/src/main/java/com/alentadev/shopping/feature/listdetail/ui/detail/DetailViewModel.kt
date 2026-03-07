@@ -53,7 +53,7 @@ class DetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ListDetailUiState>(ListDetailUiState.Loading)
     val uiState: StateFlow<ListDetailUiState> = _uiState.asStateFlow()
 
-    private val _isConnected = MutableStateFlow(true)
+    private val _isConnected = MutableStateFlow(networkMonitor.isCurrentlyConnected())
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
     init {
