@@ -1,5 +1,6 @@
 package com.alentadev.shopping.core.data.network
 
+import com.alentadev.shopping.core.network.ConnectivityGate
 import javax.inject.Inject
 
 enum class DataSource {
@@ -20,6 +21,20 @@ sealed interface OfflineFirstResult<out T> {
 }
 
 class OfflineFirstExecutor @Inject constructor() {
+    suspend fun <T> execute(
+        connectivityGate: ConnectivityGate,
+        fetchRemote: suspend () -> T,
+        saveRemote: suspend (T) -> Unit,
+        readLocal: suspend () -> T
+    ): OfflineFirstResult<T> {
+        return execute(
+            isOnlineNow = connectivityGate::isOnline,
+            fetchRemote = fetchRemote,
+            saveRemote = saveRemote,
+            readLocal = readLocal
+        )
+    }
+
     suspend fun <T> execute(
         isOnlineNow: () -> Boolean,
         fetchRemote: suspend () -> T,

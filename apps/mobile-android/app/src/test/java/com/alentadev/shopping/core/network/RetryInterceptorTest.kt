@@ -8,6 +8,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
@@ -49,6 +50,23 @@ class RetryInterceptorTest {
 
         assertSame(exception, thrown)
         verify(exactly = 1) { chain.proceed(request) }
+        verify(exactly = 1) { connectivityGate.isOnline() }
+    }
+
+    @Test
+    fun `offline before first attempt fails fast without hitting chain`() {
+        val chain = mockk<Interceptor.Chain>()
+        val connectivityGate = mockk<ConnectivityGate>()
+
+        every { connectivityGate.isOnline() } returns false
+
+        val retryInterceptor = RetryInterceptor(connectivityGate, sleep = {})
+
+        val thrown = runCatching { retryInterceptor.intercept(chain) }.exceptionOrNull()
+
+        assertTrue(thrown is IOException)
+        assertEquals("No network available", thrown?.message)
+        verify(exactly = 0) { chain.request() }
         verify(exactly = 1) { connectivityGate.isOnline() }
     }
 

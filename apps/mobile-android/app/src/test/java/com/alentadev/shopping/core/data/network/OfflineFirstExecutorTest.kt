@@ -1,5 +1,6 @@
 package com.alentadev.shopping.core.data.network
 
+import com.alentadev.shopping.core.network.ConnectivityGate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -68,4 +69,44 @@ class OfflineFirstExecutorTest {
         assertEquals(DataSource.CACHE, error.source)
         assertTrue(error.throwable is NoSuchElementException)
     }
+
+    @Test
+    fun `execute with connectivity gate uses cache when gate reports offline`() = runTest {
+        val connectivityGate = ConnectivityGate { false }
+        var remoteCalled = false
+
+        val result = executor.execute(
+            connectivityGate = connectivityGate,
+            fetchRemote = {
+                remoteCalled = true
+                "remote-data"
+            },
+            saveRemote = { },
+            readLocal = { "cached-data" }
+        )
+
+        assertTrue(result is OfflineFirstResult.Success)
+        val success = result as OfflineFirstResult.Success
+        assertEquals("cached-data", success.data)
+        assertEquals(DataSource.CACHE, success.source)
+        assertTrue(!remoteCalled)
+    }
+
+    @Test
+    fun `execute with connectivity gate uses remote when gate reports online`() = runTest {
+        val connectivityGate = ConnectivityGate { true }
+
+        val result = executor.execute(
+            connectivityGate = connectivityGate,
+            fetchRemote = { "remote-data" },
+            saveRemote = { },
+            readLocal = { "cached-data" }
+        )
+
+        assertTrue(result is OfflineFirstResult.Success)
+        val success = result as OfflineFirstResult.Success
+        assertEquals("remote-data", success.data)
+        assertEquals(DataSource.REMOTE, success.source)
+    }
+
 }

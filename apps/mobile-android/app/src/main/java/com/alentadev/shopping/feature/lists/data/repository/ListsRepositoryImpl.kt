@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.lists.data.repository
 import com.alentadev.shopping.core.data.network.DataSource
 import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
 import com.alentadev.shopping.core.data.network.OfflineFirstResult
+import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.feature.lists.data.local.ListsLocalDataSource
 import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
 import com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult
@@ -17,7 +18,8 @@ import javax.inject.Inject
 class ListsRepositoryImpl @Inject constructor(
     private val remoteDataSource: ListsRemoteDataSource,
     private val localDataSource: ListsLocalDataSource,
-    private val offlineFirstExecutor: OfflineFirstExecutor
+    private val offlineFirstExecutor: OfflineFirstExecutor,
+    private val connectivityGate: ConnectivityGate
 ) : ListsRepository {
 
     /**
@@ -52,7 +54,7 @@ class ListsRepositoryImpl @Inject constructor(
     override suspend fun getListById(listId: String): ShoppingList? {
         return when (
             val result = offlineFirstExecutor.execute(
-                isOnlineNow = { true },
+                connectivityGate = connectivityGate,
                 fetchRemote = { remoteDataSource.getListDetail(listId) },
                 saveRemote = { },
                 readLocal = { localDataSource.getListById(listId) }
@@ -76,7 +78,7 @@ class ListsRepositoryImpl @Inject constructor(
     override suspend fun getActiveListsWithSource(): ActiveListsResult {
         return when (
             val result = offlineFirstExecutor.execute(
-                isOnlineNow = { true },
+                connectivityGate = connectivityGate,
                 fetchRemote = { remoteDataSource.getActiveLists() },
                 saveRemote = { lists -> localDataSource.saveLists(lists) },
                 readLocal = { localDataSource.getActiveListsOnce() }

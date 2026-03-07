@@ -87,7 +87,23 @@ class ListsViewModel @Inject constructor(
     fun refreshLists() {
         viewModelScope.launch {
             Log.d(TAG, "refreshLists started")
+            val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
+            Log.d(TAG, "refreshLists connectivity - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
             try {
+                if (!connectivity.effectiveConnected) {
+                    Log.d(TAG, "refreshLists offline -> reading cached active lists")
+                    val cachedLists = listsRepository.getCachedActiveLists()
+                    _uiState.value = if (cachedLists.isEmpty()) {
+                        ListsUiState.Empty(isOffline = true)
+                    } else {
+                        ListsUiState.Success(
+                            lists = cachedLists,
+                            fromCache = true
+                        )
+                    }
+                    return@launch
+                }
+
                 val lists = refreshListsUseCase.execute()
                 Log.d(TAG, "refreshLists success size=${lists.size}")
                 _uiState.value = if (lists.isEmpty()) {
