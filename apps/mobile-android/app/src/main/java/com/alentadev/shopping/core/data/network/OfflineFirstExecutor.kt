@@ -1,5 +1,7 @@
 package com.alentadev.shopping.core.data.network
 
+import javax.inject.Inject
+
 enum class DataSource {
     REMOTE,
     CACHE
@@ -17,7 +19,7 @@ sealed interface OfflineFirstResult<out T> {
     ) : OfflineFirstResult<Nothing>
 }
 
-class OfflineFirstExecutor {
+class OfflineFirstExecutor @Inject constructor() {
     suspend fun <T> execute(
         isOnlineNow: () -> Boolean,
         fetchRemote: suspend () -> T,

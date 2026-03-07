@@ -1,9 +1,13 @@
 package com.alentadev.shopping.feature.lists.data.repository
 
+import com.alentadev.shopping.core.data.network.DataSource
+import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
+import com.alentadev.shopping.core.data.network.OfflineFirstResult
+import com.alentadev.shopping.feature.lists.data.local.ListsLocalDataSource
+import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
+import com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
-import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
-import com.alentadev.shopping.feature.lists.data.local.ListsLocalDataSource
 import javax.inject.Inject
 
 /**
@@ -12,26 +16,19 @@ import javax.inject.Inject
  */
 class ListsRepositoryImpl @Inject constructor(
     private val remoteDataSource: ListsRemoteDataSource,
-    private val localDataSource: ListsLocalDataSource
+    private val localDataSource: ListsLocalDataSource,
+    private val offlineFirstExecutor: OfflineFirstExecutor
 ) : ListsRepository {
-
 
     /**
      * Obtiene listas activas una sola vez
-     * Intenta obtener del servidor, si falla usa caché
+     * Intenta obtener del servidor, si falla devuelve error
      * @return Lista de listas activas
      */
     override suspend fun getActiveLists(): List<ShoppingList> {
-        return try {
-            // Intenta obtener del servidor
-            val lists = remoteDataSource.getActiveLists()
-            // Guarda en local para caché
-            localDataSource.saveLists(lists)
-            lists
-        } catch (exception: Exception) {
-            // Si falla, relanza la excepción sin fallback a caché
-            throw exception
-        }
+        val lists = remoteDataSource.getActiveLists()
+        localDataSource.saveLists(lists)
+        return lists
     }
 
     /**
@@ -41,9 +38,7 @@ class ListsRepositoryImpl @Inject constructor(
      * @throws Exception si hay error de red (sin fallback)
      */
     override suspend fun refreshActiveLists(): List<ShoppingList> {
-        // Obtiene del servidor (sin fallback local)
         val lists = remoteDataSource.getActiveLists()
-        // Guarda en local para próxima vez
         localDataSource.saveLists(lists)
         return lists
     }
@@ -55,10 +50,16 @@ class ListsRepositoryImpl @Inject constructor(
      * @return ShoppingList o null
      */
     override suspend fun getListById(listId: String): ShoppingList? {
-        return try {
-            remoteDataSource.getListDetail(listId)
-        } catch (_: Exception) {
-            localDataSource.getListById(listId)
+        return when (
+            val result = offlineFirstExecutor.execute(
+                isOnlineNow = { true },
+                fetchRemote = { remoteDataSource.getListDetail(listId) },
+                saveRemote = { },
+                readLocal = { localDataSource.getListById(listId) }
+            )
+        ) {
+            is OfflineFirstResult.Success -> result.data
+            is OfflineFirstResult.Error -> throw result.throwable
         }
     }
 
@@ -72,20 +73,21 @@ class ListsRepositoryImpl @Inject constructor(
         return localDataSource.getActiveListsOnce()
     }
 
-    override suspend fun getActiveListsWithSource(): com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult {
-        return try {
-            val lists = remoteDataSource.getActiveLists()
-            localDataSource.saveLists(lists)
-            com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult(
-                lists = lists,
-                fromCache = false
+    override suspend fun getActiveListsWithSource(): ActiveListsResult {
+        return when (
+            val result = offlineFirstExecutor.execute(
+                isOnlineNow = { true },
+                fetchRemote = { remoteDataSource.getActiveLists() },
+                saveRemote = { lists -> localDataSource.saveLists(lists) },
+                readLocal = { localDataSource.getActiveListsOnce() }
             )
-        } catch (_: Exception) {
-            val cached = localDataSource.getActiveListsOnce()
-            com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult(
-                lists = cached,
-                fromCache = true
+        ) {
+            is OfflineFirstResult.Success -> ActiveListsResult(
+                lists = result.data,
+                fromCache = result.source == DataSource.CACHE
             )
+
+            is OfflineFirstResult.Error -> throw result.throwable
         }
     }
 }

@@ -96,6 +96,25 @@ class ListsViewModelTest {
         assertFalse(state.fromCache)
     }
 
+
+    @Test
+    fun `loadLists keeps fromCache true when repository falls back while online`() = runTest(mainDispatcherRule.testDispatcher) {
+        val cachedLists = listOf(
+            ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 3)
+        )
+        val result = ActiveListsResult(cachedLists, fromCache = true)
+        coEvery { listsRepository.getActiveListsWithSource() } returns result
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is ListsUiState.Success)
+        assertTrue((state as ListsUiState.Success).fromCache)
+        coVerify(exactly = 1) { listsRepository.getActiveListsWithSource() }
+        coVerify(exactly = 0) { listsRepository.getCachedActiveLists() }
+    }
+
     @Test
     fun `loadLists sets Empty online when no lists are returned`() = runTest(mainDispatcherRule.testDispatcher) {
         val result = ActiveListsResult(emptyList(), fromCache = false)

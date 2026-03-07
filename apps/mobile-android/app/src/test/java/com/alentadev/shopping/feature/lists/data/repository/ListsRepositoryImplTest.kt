@@ -1,5 +1,8 @@
 package com.alentadev.shopping.feature.lists.data.repository
 
+import com.alentadev.shopping.core.data.network.DataSource
+import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
+import com.alentadev.shopping.core.data.network.OfflineFirstResult
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.data.remote.ListsRemoteDataSource
@@ -15,13 +18,15 @@ import org.junit.Test
 class ListsRepositoryImplTest {
     private lateinit var remoteDataSource: ListsRemoteDataSource
     private lateinit var localDataSource: ListsLocalDataSource
+    private lateinit var offlineFirstExecutor: OfflineFirstExecutor
     private lateinit var repository: ListsRepositoryImpl
 
     @Before
     fun setup() {
         remoteDataSource = mockk()
         localDataSource = mockk()
-        repository = ListsRepositoryImpl(remoteDataSource, localDataSource)
+        offlineFirstExecutor = mockk()
+        repository = ListsRepositoryImpl(remoteDataSource, localDataSource, offlineFirstExecutor)
     }
 
     @Test
@@ -130,7 +135,14 @@ class ListsRepositoryImplTest {
             itemCount = 10
         )
 
-        coEvery { remoteDataSource.getListDetail("list-123") } returns list
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(list, DataSource.REMOTE)
 
         // Act
         val result = repository.getListById("list-123")
@@ -138,6 +150,14 @@ class ListsRepositoryImplTest {
         // Assert
         assertNotNull(result)
         assertEquals("Mi lista", result?.title)
+        coVerify(exactly = 1) {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        }
     }
 
     @Test
@@ -151,8 +171,14 @@ class ListsRepositoryImplTest {
             itemCount = 5
         )
 
-        coEvery { remoteDataSource.getListDetail("list-456") } throws Exception("Network error")
-        coEvery { localDataSource.getListById("list-456") } returns list
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(list, DataSource.CACHE)
 
         // Act
         val result = repository.getListById("list-456")
@@ -165,8 +191,14 @@ class ListsRepositoryImplTest {
     @Test
     fun `getListById returns null when not found`() = runTest {
         // Arrange
-        coEvery { remoteDataSource.getListDetail("nonexistent") } throws Exception("Not found")
-        coEvery { localDataSource.getListById("nonexistent") } returns null
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(null, DataSource.CACHE)
 
         // Act
         val result = repository.getListById("nonexistent")
@@ -174,5 +206,64 @@ class ListsRepositoryImplTest {
         // Assert
         assertNull(result)
     }
-}
 
+    @Test
+    fun `getActiveListsWithSource marks remote data with fromCache false`() = runTest {
+        val lists = listOf(
+            ShoppingList("remote-1", "Remota", ListStatus.ACTIVE, 1111L, 2)
+        )
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(lists, DataSource.REMOTE)
+
+        val result = repository.getActiveListsWithSource()
+
+        assertEquals(lists, result.lists)
+        assertFalse(result.fromCache)
+    }
+
+    @Test
+    fun `getActiveListsWithSource marks cached data with fromCache true`() = runTest {
+        val cachedLists = listOf(
+            ShoppingList("cache-1", "Cache", ListStatus.ACTIVE, 2222L, 3)
+        )
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Success(cachedLists, DataSource.CACHE)
+
+        val result = repository.getActiveListsWithSource()
+
+        assertEquals(cachedLists, result.lists)
+        assertTrue(result.fromCache)
+    }
+
+    @Test
+    fun `getActiveListsWithSource throws when executor returns error`() = runTest {
+        val error = IllegalStateException("cache unavailable")
+        coEvery {
+            offlineFirstExecutor.execute(
+                isOnlineNow = any(),
+                fetchRemote = any(),
+                saveRemote = any(),
+                readLocal = any()
+            )
+        } returns OfflineFirstResult.Error(error, DataSource.CACHE)
+
+        try {
+            repository.getActiveListsWithSource()
+            fail("Expected exception to be thrown")
+        } catch (exception: Throwable) {
+            assertEquals("cache unavailable", exception.message)
+        }
+    }
+}
