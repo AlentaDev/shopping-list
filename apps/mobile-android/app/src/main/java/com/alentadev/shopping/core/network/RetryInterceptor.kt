@@ -14,10 +14,14 @@ private const val INITIAL_DELAY_MS = 1000L
  *
  * Estrategia:
  * - Reintenta solo en errores de red (timeout, conexión rechazada, etc)
+ * - Si no hay conectividad, corta los reintentos inmediatamente
  * - No reintenta en 4xx/5xx del servidor
  * - Delay: 1s, 2s, 4s (exponencial)
  */
-class RetryInterceptor : Interceptor {
+class RetryInterceptor(
+    private val connectivityGate: ConnectivityGate,
+    private val sleep: (Long) -> Unit = { Thread.sleep(it) }
+) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         var lastException: IOException? = null
         var delay = INITIAL_DELAY_MS
@@ -29,8 +33,13 @@ class RetryInterceptor : Interceptor {
                 lastException = e
                 Log.w(TAG, "Request falló (intento ${attempt + 1}/$MAX_RETRIES): ${e.message}")
 
+                if (!connectivityGate.isOnline()) {
+                    Log.w(TAG, "Sin conexión: se cancelan reintentos")
+                    throw e
+                }
+
                 if (attempt < MAX_RETRIES - 1) {
-                    Thread.sleep(delay)
+                    sleep(delay)
                     delay *= 2 // Backoff exponencial
                 }
             }
@@ -39,4 +48,3 @@ class RetryInterceptor : Interceptor {
         throw lastException ?: IOException("Máximos intentos agotados")
     }
 }
-

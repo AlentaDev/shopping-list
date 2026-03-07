@@ -64,7 +64,9 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideRetryInterceptor(): RetryInterceptor = RetryInterceptor()
+    fun provideRetryInterceptor(
+        connectivityGate: ConnectivityGate
+    ): RetryInterceptor = RetryInterceptor(connectivityGate)
 
     @Singleton
     @Provides
