@@ -13,6 +13,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -166,6 +167,33 @@ class DetailViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListDetailUiState.Success)
         assertEquals("Updated List", (state as ListDetailUiState.Success).listDetail.title)
+    }
+
+    @Test
+    fun `retry offline keeps preferCache true and fromCache true`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Retry Offline", 1)
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        viewModel.retry()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is ListDetailUiState.Success)
+        assertTrue((state as ListDetailUiState.Success).fromCache)
+        verify(atLeast = 2) { getListDetailUseCase("list-123", true) }
+        verify(exactly = 0) { getListDetailUseCase("list-123", false) }
     }
 
     @Test
@@ -342,4 +370,3 @@ class MainDispatcherRule(
         Dispatchers.resetMain()
     }
 }
-
