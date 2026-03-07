@@ -152,6 +152,7 @@ class ListsViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Success)
         assertFalse((state as ListsUiState.Success).fromCache)
+        io.mockk.verify(exactly = 1) { networkMonitor.isCurrentlyConnected() }
         coVerify(exactly = 1) { listsRepository.getActiveListsWithSource() }
         coVerify(exactly = 0) { listsRepository.getCachedActiveLists() }
     }
