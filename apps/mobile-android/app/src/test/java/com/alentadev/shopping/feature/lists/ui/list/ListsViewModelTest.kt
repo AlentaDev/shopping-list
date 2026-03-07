@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -55,6 +56,25 @@ class ListsViewModelTest {
             listsRepository,
             networkMonitor
         )
+    }
+
+    @Test
+    fun `isConnected reflects NetworkMonitor updates`() = runTest(mainDispatcherRule.testDispatcher) {
+        val connectivity = MutableStateFlow(true)
+        every { networkMonitor.isConnected } returns connectivity
+
+        viewModel = ListsViewModel(
+            getActiveListsUseCase,
+            refreshListsUseCase,
+            listsRepository,
+            networkMonitor
+        )
+        advanceUntilIdle()
+
+        connectivity.value = false
+        advanceUntilIdle()
+
+        assertFalse(viewModel.isConnected.value)
     }
 
     @Test
