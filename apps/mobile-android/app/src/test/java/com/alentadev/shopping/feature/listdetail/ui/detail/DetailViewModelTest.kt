@@ -422,6 +422,28 @@ class DetailViewModelTest {
     }
 
     @Test
+    fun `loadListDetail triggers entry background refresh only once across multiple Room emissions`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail1 = createListDetail("list-123", "Original", 2)
+        val listDetail2 = createListDetail("list-123", "Updated", 2)
+        every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail1, listDetail2)
+        coEvery { refreshListDetailIfNeededUseCase("list-123") } returns RefreshDetailDecision.SKIP_EQUAL
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { refreshListDetailIfNeededUseCase("list-123") }
+    }
+
+    @Test
     fun `loadListDetail sets permanent refresh error flag on 404 during background refresh`() = runTest(mainDispatcherRule.testDispatcher) {
         val listDetail = createListDetail("list-123", "Test List", 2)
         every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)

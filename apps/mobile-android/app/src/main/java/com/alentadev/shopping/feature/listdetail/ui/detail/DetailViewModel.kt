@@ -87,6 +87,7 @@ class DetailViewModel @Inject constructor(
             if (_uiState.value !is ListDetailUiState.Success) {
                 _uiState.value = ListDetailUiState.Loading
             }
+            var hasTriggeredEntryRefresh = false
             val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
             if (connectivity.flowConnected != connectivity.currentConnected) {
                 Log.w(TAG, "failure_category type=connectivity_mismatch listId=$listId flowConnected=${connectivity.flowConnected} currentConnected=${connectivity.currentConnected}")
@@ -108,8 +109,9 @@ class DetailViewModel @Inject constructor(
                         syncStatus = currentState?.syncStatus ?: SyncStatus.IDLE,
                         hasPermanentRefreshError = currentState?.hasPermanentRefreshError ?: false
                     )
-                    if (connectivity.effectiveConnected) {
+                    if (connectivity.effectiveConnected && !hasTriggeredEntryRefresh) {
                         triggerBackgroundRefresh("entry")
+                        hasTriggeredEntryRefresh = true
                     }
                 }
         }
