@@ -13,21 +13,23 @@ import javax.inject.Singleton
 @Singleton
 class SyncCoordinatorImpl @Inject constructor(
     private val listsWarmupService: ListsWarmupService,
+    private val syncQueueProcessor: SyncQueueProcessor,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : SyncCoordinator {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private var warmUpJob: Job? = null
+    private var syncJob: Job? = null
 
     override fun startForAuthenticatedSession() {
-        warmUpJob?.cancel()
-        warmUpJob = scope.launch {
+        syncJob?.cancel()
+        syncJob = scope.launch {
             runCatching { listsWarmupService.warmUp() }
+            runCatching { syncQueueProcessor.flushPendingSync() }
         }
     }
 
     override fun cancel() {
-        warmUpJob?.cancel()
-        warmUpJob = null
+        syncJob?.cancel()
+        syncJob = null
     }
 
     fun clear() {
