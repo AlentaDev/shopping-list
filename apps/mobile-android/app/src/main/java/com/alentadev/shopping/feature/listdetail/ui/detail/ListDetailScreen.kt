@@ -69,6 +69,7 @@ fun ListDetailScreen(
         topBar = {
             when (val state = uiState) {
                 is ListDetailUiState.Success -> {
+                    val syncInProgressDesc = stringResource(R.string.detail_sync_in_progress)
                     TopAppBar(
                         title = {
                             Box(modifier = Modifier.fillMaxWidth()) {
@@ -78,7 +79,7 @@ fun ListDetailScreen(
                                         modifier = Modifier
                                             .size(20.dp)
                                             .align(Alignment.CenterEnd)
-                                            .semantics { contentDescription = stringResource(R.string.detail_sync_in_progress) },
+                                            .semantics { contentDescription = syncInProgressDesc },
                                         strokeWidth = 2.dp
                                     )
                                 }
