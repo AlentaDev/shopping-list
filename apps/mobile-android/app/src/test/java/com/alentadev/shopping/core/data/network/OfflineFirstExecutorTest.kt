@@ -72,7 +72,9 @@ class OfflineFirstExecutorTest {
 
     @Test
     fun `execute with connectivity gate uses cache when gate reports offline`() = runTest {
-        val connectivityGate = ConnectivityGate { false }
+        val connectivityGate = object : ConnectivityGate {
+            override fun isOnline(): Boolean = false
+        }
         var remoteCalled = false
 
         val result = executor.execute(
@@ -94,7 +96,9 @@ class OfflineFirstExecutorTest {
 
     @Test
     fun `execute with connectivity gate uses remote when gate reports online`() = runTest {
-        val connectivityGate = ConnectivityGate { true }
+        val connectivityGate = object : ConnectivityGate {
+            override fun isOnline(): Boolean = true
+        }
 
         val result = executor.execute(
             connectivityGate = connectivityGate,
