@@ -171,6 +171,57 @@ class ListDetailLocalDataSourceTest {
         coVerify(exactly = 1) { pendingSyncDao.markFailedPermanent("op-1") }
     }
 
+
+    @Test
+    fun `enqueuePendingCheckOperation collapses multiple toggles keeping latest desired checked`() = runTest {
+        coEvery { pendingSyncDao.upsertCollapsed("list-1", "item-1", true, 1000L) } returns Unit
+        coEvery { pendingSyncDao.upsertCollapsed("list-1", "item-1", false, 1100L) } returns Unit
+
+        dataSource.enqueuePendingCheckOperation("list-1", "item-1", true, 1000L)
+        dataSource.enqueuePendingCheckOperation("list-1", "item-1", false, 1100L)
+
+        coVerify(exactly = 1) { pendingSyncDao.upsertCollapsed("list-1", "item-1", true, 1000L) }
+        coVerify(exactly = 1) { pendingSyncDao.upsertCollapsed("list-1", "item-1", false, 1100L) }
+    }
+
+    @Test
+    fun `saveListDetail protects only items with pending operations during remote merge`() = runTest {
+        val listDetail = ListDetail(
+            id = "list-1",
+            title = "Compra",
+            updatedAt = "2026-03-01T10:00:00Z",
+            items = listOf(
+                ManualItem(
+                    id = "item-with-pending",
+                    name = "Pan",
+                    qty = 1.0,
+                    checked = false,
+                    updatedAt = "2026-03-01T10:00:00Z"
+                ),
+                ManualItem(
+                    id = "item-no-pending",
+                    name = "Leche",
+                    qty = 1.0,
+                    checked = false,
+                    updatedAt = "2026-03-01T10:00:00Z"
+                )
+            )
+        )
+        val insertedItems = slot<List<ItemEntity>>()
+
+        coEvery { listDao.insert(any()) } returns Unit
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-with-pending") } returns true
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-no-pending") } returns null
+        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+
+        dataSource.saveListDetail(listDetail)
+
+        assertTrue(insertedItems.isCaptured)
+        val itemById = insertedItems.captured.associateBy { it.id }
+        assertEquals(true, itemById.getValue("item-with-pending").checked)
+        assertEquals(false, itemById.getValue("item-no-pending").checked)
+    }
+
     @Test
     fun `deleteListItems deletes all items for list`() = runTest {
         val listId = "list-123"
