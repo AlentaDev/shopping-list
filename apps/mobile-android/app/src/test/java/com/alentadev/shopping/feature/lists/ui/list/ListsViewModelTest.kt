@@ -1,7 +1,6 @@
 package com.alentadev.shopping.feature.lists.ui.list
 
 import com.alentadev.shopping.core.network.NetworkMonitor
-import com.alentadev.shopping.feature.lists.domain.entity.ActiveListsResult
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
@@ -84,8 +83,7 @@ class ListsViewModelTest {
             ShoppingList("1", "Lista 1", ListStatus.ACTIVE, 1000L, 3),
             ShoppingList("2", "Lista 2", ListStatus.ACTIVE, 2000L, 2)
         )
-        val result = ActiveListsResult(lists, fromCache = false)
-        coEvery { listsRepository.getActiveListsWithSource() } returns result
+        coEvery { listsRepository.getCachedActiveLists() } returns lists
 
         viewModel.loadLists()
         advanceUntilIdle()
@@ -93,17 +91,15 @@ class ListsViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Success)
         assertEquals(2, (state as ListsUiState.Success).lists.size)
-        assertFalse(state.fromCache)
+        assertTrue(state.fromCache)
     }
 
-
     @Test
-    fun `loadLists keeps fromCache true when repository falls back while online`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `loadLists renders from Room cache first even when online`() = runTest(mainDispatcherRule.testDispatcher) {
         val cachedLists = listOf(
             ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 3)
         )
-        val result = ActiveListsResult(cachedLists, fromCache = true)
-        coEvery { listsRepository.getActiveListsWithSource() } returns result
+        coEvery { listsRepository.getCachedActiveLists() } returns cachedLists
 
         viewModel.loadLists()
         advanceUntilIdle()
@@ -111,14 +107,29 @@ class ListsViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Success)
         assertTrue((state as ListsUiState.Success).fromCache)
-        coVerify(exactly = 1) { listsRepository.getActiveListsWithSource() }
-        coVerify(exactly = 0) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 1) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 0) { listsRepository.getActiveListsWithSource() }
+    }
+
+
+    @Test
+    fun `loadLists keeps fromCache true when cache has data while online`() = runTest(mainDispatcherRule.testDispatcher) {
+        val cachedLists = listOf(ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 3))
+        coEvery { listsRepository.getCachedActiveLists() } returns cachedLists
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is ListsUiState.Success)
+        assertTrue((state as ListsUiState.Success).fromCache)
+        coVerify(exactly = 1) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 0) { listsRepository.getActiveListsWithSource() }
     }
 
     @Test
     fun `loadLists sets Empty online when no lists are returned`() = runTest(mainDispatcherRule.testDispatcher) {
-        val result = ActiveListsResult(emptyList(), fromCache = false)
-        coEvery { listsRepository.getActiveListsWithSource() } returns result
+        coEvery { listsRepository.getCachedActiveLists() } returns emptyList()
 
         viewModel.loadLists()
         advanceUntilIdle()
@@ -133,11 +144,8 @@ class ListsViewModelTest {
         every { networkMonitor.isConnected } returns flowOf(false)
         every { networkMonitor.isCurrentlyConnected() } returns true
 
-        val lists = listOf(
-            ShoppingList("1", "Lista 1", ListStatus.ACTIVE, 1000L, 3)
-        )
-        val result = ActiveListsResult(lists, fromCache = false)
-        coEvery { listsRepository.getActiveListsWithSource() } returns result
+        val lists = listOf(ShoppingList("1", "Lista 1", ListStatus.ACTIVE, 1000L, 3))
+        coEvery { listsRepository.getCachedActiveLists() } returns lists
 
         viewModel = ListsViewModel(
             getActiveListsUseCase,
@@ -151,10 +159,10 @@ class ListsViewModelTest {
 
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Success)
-        assertFalse((state as ListsUiState.Success).fromCache)
+        assertTrue((state as ListsUiState.Success).fromCache)
         io.mockk.verify(exactly = 1) { networkMonitor.isCurrentlyConnected() }
-        coVerify(exactly = 1) { listsRepository.getActiveListsWithSource() }
-        coVerify(exactly = 0) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 1) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 0) { listsRepository.getActiveListsWithSource() }
     }
 
     @Test
@@ -206,7 +214,7 @@ class ListsViewModelTest {
 
     @Test
     fun `loadLists sets Error when use case throws`() = runTest(mainDispatcherRule.testDispatcher) {
-        coEvery { listsRepository.getActiveListsWithSource() } throws Exception("Network error")
+        coEvery { listsRepository.getCachedActiveLists() } throws Exception("Network error")
 
         viewModel.loadLists()
         advanceUntilIdle()

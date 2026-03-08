@@ -47,34 +47,17 @@ class ListsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ListsUiState.Loading
             val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
-            Log.d(TAG, "loadLists started - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
+            Log.d(TAG, "loadLists started (Room-first) - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
             try {
-                if (!connectivity.effectiveConnected) {
-                    Log.d(TAG, "loadLists offline -> reading cached active lists")
-                    val cachedLists = listsRepository.getCachedActiveLists()
-                    _uiState.value = if (cachedLists.isEmpty()) {
-                        Log.d(TAG, "loadLists offline -> cache empty")
-                        ListsUiState.Empty(isOffline = true)
-                    } else {
-                        Log.d(TAG, "loadLists offline -> cache hit size=${cachedLists.size}")
-                        ListsUiState.Success(
-                            lists = cachedLists,
-                            fromCache = true
-                        )
-                    }
-                    return@launch
-                }
-
-                Log.d(TAG, "loadLists online -> fetching active lists with source")
-                val result = listsRepository.getActiveListsWithSource()
-                _uiState.value = if (result.lists.isEmpty()) {
-                    Log.d(TAG, "loadLists online -> no active lists")
-                    ListsUiState.Empty(isOffline = false)
+                val cachedLists = listsRepository.getCachedActiveLists()
+                _uiState.value = if (cachedLists.isEmpty()) {
+                    Log.d(TAG, "loadLists Room-first -> cache empty")
+                    ListsUiState.Empty(isOffline = !connectivity.effectiveConnected)
                 } else {
-                    Log.d(TAG, "loadLists online -> success size=${result.lists.size}, fromCache=${result.fromCache}")
+                    Log.d(TAG, "loadLists Room-first -> cache hit size=${cachedLists.size}")
                     ListsUiState.Success(
-                        lists = result.lists,
-                        fromCache = result.fromCache
+                        lists = cachedLists,
+                        fromCache = true
                     )
                 }
             } catch (e: Exception) {

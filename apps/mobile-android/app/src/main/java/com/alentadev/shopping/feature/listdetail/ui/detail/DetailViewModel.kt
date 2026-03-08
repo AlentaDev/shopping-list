@@ -91,9 +91,8 @@ class DetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = ListDetailUiState.Loading
             val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
-            Log.d(TAG, "loadListDetail started - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
-            val shouldUseCacheOnly = !connectivity.effectiveConnected
-            getListDetailUseCase(listId, preferCache = shouldUseCacheOnly)
+            Log.d(TAG, "loadListDetail started (Room-first) - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
+            getListDetailUseCase(listId, preferCache = true)
                 .catch { e ->
                     Log.e(TAG, "loadListDetail failed", e)
                     _uiState.value = ListDetailUiState.Error(
@@ -105,7 +104,7 @@ class DetailViewModel @Inject constructor(
                     val currentState = _uiState.value
 
                     // Mantener estado de offline y cambios remotos al actualizar
-                    val fromCache = (currentState as? ListDetailUiState.Success)?.fromCache ?: shouldUseCacheOnly
+                    val fromCache = (currentState as? ListDetailUiState.Success)?.fromCache ?: true
                     val hasRemoteChanges = (currentState as? ListDetailUiState.Success)?.hasRemoteChanges ?: false
                     val syncStatus = (currentState as? ListDetailUiState.Success)?.syncStatus ?: SyncStatus.IDLE
 
@@ -200,4 +199,3 @@ class DetailViewModel @Inject constructor(
         loadListDetail()
     }
 }
-
