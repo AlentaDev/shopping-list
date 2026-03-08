@@ -63,6 +63,7 @@ class DetailViewModel @Inject constructor(
     val uiEvents: SharedFlow<DetailUiEvent> = _uiEvents.asSharedFlow()
 
     private var refreshJob: Job? = null
+    private var hasEmittedCompletionNavigation = false
 
     init {
         loadListDetail()
@@ -138,7 +139,7 @@ class DetailViewModel @Inject constructor(
 
     fun confirmCompleteList() {
         val current = _uiState.value as? ListDetailUiState.Success ?: return
-        if (current.isCompleting) return
+        if (current.isCompleting || !current.showCompleteConfirmation) return
 
         val checkedIds = current.listDetail.items.filter { it.checked }.map { it.id }
         _uiState.value = current.copy(isCompleting = true, completeListError = null)
@@ -156,7 +157,10 @@ class DetailViewModel @Inject constructor(
                         showCompleteConfirmation = false,
                         completeListError = null
                     )
-                    _uiEvents.tryEmit(DetailUiEvent.ListCompleted)
+                    if (!hasEmittedCompletionNavigation) {
+                        hasEmittedCompletionNavigation = true
+                        _uiEvents.tryEmit(DetailUiEvent.ListCompleted)
+                    }
                 }
                 else -> {
                     _uiState.value = latest.copy(

@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.compose.ui.Modifier
 import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE
 import com.alentadev.shopping.feature.auth.ui.navigation.loginScreen
+import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_REFRESH_KEY
 import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_ROUTE
 import com.alentadev.shopping.feature.lists.ui.navigation.activeListsScreen
 import com.alentadev.shopping.feature.listdetail.ui.navigation.listDetailScreen
@@ -33,6 +34,12 @@ fun AppNavHost(
         )
         listDetailScreen(
             onBackClick = {
+                navController.popBackStack()
+            },
+            onListCompleted = {
+                navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.set(ACTIVE_LISTS_REFRESH_KEY, System.currentTimeMillis())
                 navController.popBackStack()
             }
         )
