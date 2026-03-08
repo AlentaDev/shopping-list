@@ -31,7 +31,7 @@ class SyncCoordinatorImplTest {
     }
 
     @Test
-    fun `flushPendingQueue launches only pending sync flush`() = runTest {
+    fun `flushPendingQueue launches pending sync flush and warm-up`() = runTest {
         val warmupService = mockk<ListsWarmupService>(relaxed = true)
         val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
         coEvery { syncQueueProcessor.hasPendingSyncOperations() } returns false
@@ -44,13 +44,13 @@ class SyncCoordinatorImplTest {
         coordinator.flushPendingQueue()
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { warmupService.warmUp() }
+        coVerify(exactly = 1) { warmupService.warmUp() }
         coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
     }
 
 
     @Test
-    fun `startForAuthenticatedSession skips warm-up when pending operations remain after flush`() = runTest {
+    fun `startForAuthenticatedSession still executes warm-up when pending operations remain after flush`() = runTest {
         val warmupService = mockk<ListsWarmupService>(relaxed = true)
         val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
         coEvery { syncQueueProcessor.hasPendingSyncOperations() } returns true
@@ -64,8 +64,27 @@ class SyncCoordinatorImplTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
-        coVerify(exactly = 1) { syncQueueProcessor.hasPendingSyncOperations() }
-        coVerify(exactly = 0) { warmupService.warmUp() }
+        coVerify(exactly = 0) { syncQueueProcessor.hasPendingSyncOperations() }
+        coVerify(exactly = 1) { warmupService.warmUp() }
+    }
+
+    @Test
+    fun `startForAuthenticatedSession executes warm-up even when flush fails`() = runTest {
+        val warmupService = mockk<ListsWarmupService>(relaxed = true)
+        val syncQueueProcessor = mockk<SyncQueueProcessor>()
+        coEvery { syncQueueProcessor.flushPendingSync() } throws RuntimeException("flush error")
+
+        val coordinator = SyncCoordinatorImpl(
+            listsWarmupService = warmupService,
+            syncQueueProcessor = syncQueueProcessor,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+
+        coordinator.startForAuthenticatedSession()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
+        coVerify(exactly = 1) { warmupService.warmUp() }
     }
 
 }

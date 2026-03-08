@@ -40,7 +40,8 @@ sealed class ListDetailUiState {
         val total: Double,
         val fromCache: Boolean = false,
         val hasRemoteChanges: Boolean = false,
-        val syncStatus: SyncStatus = SyncStatus.IDLE
+        val syncStatus: SyncStatus = SyncStatus.IDLE,
+        val hasPermanentRefreshError: Boolean = false
     ) : ListDetailUiState()
 
     /**

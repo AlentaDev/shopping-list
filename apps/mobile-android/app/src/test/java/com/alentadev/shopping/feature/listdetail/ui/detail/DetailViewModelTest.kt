@@ -8,6 +8,8 @@ import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUs
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshDetailDecision
+import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshListDetailIfNeededUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckResult
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckUseCase
 import io.mockk.coEvery
@@ -15,6 +17,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +28,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -39,6 +44,7 @@ class DetailViewModelTest {
     private lateinit var calculateTotalUseCase: CalculateTotalUseCase
     private lateinit var syncCheckUseCase: SyncCheckUseCase
     private lateinit var detectRemoteChangesUseCase: DetectRemoteChangesUseCase
+    private lateinit var refreshListDetailIfNeededUseCase: RefreshListDetailIfNeededUseCase
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var savedStateHandle: SavedStateHandle
     private lateinit var viewModel: DetailViewModel
@@ -53,6 +59,7 @@ class DetailViewModelTest {
         calculateTotalUseCase = mockk()
         syncCheckUseCase = mockk()
         detectRemoteChangesUseCase = mockk()
+        refreshListDetailIfNeededUseCase = mockk()
         networkMonitor = mockk()
         savedStateHandle = SavedStateHandle(mapOf("listId" to "list-123"))
 
@@ -62,6 +69,7 @@ class DetailViewModelTest {
         // Mock NetworkMonitor para simular conectado
         every { networkMonitor.isConnected } returns flowOf(true)
         every { networkMonitor.isCurrentlyConnected() } returns true
+        coEvery { refreshListDetailIfNeededUseCase(any()) } returns RefreshDetailDecision.SKIP_EQUAL
     }
 
     @Test
@@ -77,6 +85,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -106,6 +115,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -128,6 +138,7 @@ class DetailViewModelTest {
         val listDetail = createListDetail("list-123", "Recovered Network", 2)
         every { networkMonitor.isConnected } returns flowOf(false)
         every { networkMonitor.isCurrentlyConnected() } returns true
+        coEvery { refreshListDetailIfNeededUseCase(any()) } returns RefreshDetailDecision.SKIP_EQUAL
         every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
 
         // Act
@@ -137,6 +148,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -166,6 +178,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -194,6 +207,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -216,6 +230,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -244,6 +259,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -272,6 +288,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -293,6 +310,7 @@ class DetailViewModelTest {
 
         every { networkMonitor.isConnected } returns connectivityFlow
         every { networkMonitor.isCurrentlyConnected() } returns true
+        coEvery { refreshListDetailIfNeededUseCase(any()) } returns RefreshDetailDecision.SKIP_EQUAL
         every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
         coEvery { syncCheckUseCase("list-123", "item-1", true) } returns SyncCheckResult.Success
@@ -303,6 +321,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -328,6 +347,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -355,6 +375,7 @@ class DetailViewModelTest {
                 calculateTotalUseCase = calculateTotalUseCase,
                 syncCheckUseCase = syncCheckUseCase,
                 detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+                refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
                 networkMonitor = networkMonitor,
                 savedStateHandle = emptyStateHandle
             )
@@ -387,6 +408,7 @@ class DetailViewModelTest {
             calculateTotalUseCase = calculateTotalUseCase,
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -397,6 +419,63 @@ class DetailViewModelTest {
         assertTrue(state is ListDetailUiState.Success)
         assertEquals("Updated", (state as ListDetailUiState.Success).listDetail.title)
         assertEquals(20.0, state.total, 0.001)
+    }
+
+    @Test
+    fun `loadListDetail sets permanent refresh error flag on 404 during background refresh`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 2)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { refreshListDetailIfNeededUseCase("list-123") } throws retrofit2.HttpException(
+            retrofit2.Response.error<Any>(404, "error".toResponseBody("text/plain".toMediaType()))
+        )
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ListDetailUiState.Success
+        assertTrue(state.hasPermanentRefreshError)
+    }
+
+    @Test
+    fun `loadListDetail deduplicates concurrent refresh triggers`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 2)
+        val connectivityFlow = MutableStateFlow(false)
+        val refreshGate = CompletableDeferred<Unit>()
+
+        every { networkMonitor.isConnected } returns connectivityFlow
+        every { networkMonitor.isCurrentlyConnected() } returns true
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { refreshListDetailIfNeededUseCase("list-123") } coAnswers {
+            refreshGate.await()
+            RefreshDetailDecision.SKIP_EQUAL
+        }
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+
+        connectivityFlow.value = true
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { refreshListDetailIfNeededUseCase("list-123") }
+        refreshGate.complete(Unit)
+        advanceUntilIdle()
     }
 
     // Helper para crear ListDetail de prueba

@@ -10,28 +10,23 @@ import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUs
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshDetailDecision
+import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshListDetailIfNeededUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckResult
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import javax.inject.Inject
 
-/**
- * ViewModel para la pantalla de detalle de lista
- *
- * Responsabilidades:
- * - Cargar detalle de lista con items (offline-first)
- * - Gestionar checks de items y sincronización
- * - Detectar cambios remotos cuando se recupera conexión
- * - Calcular total de items marcados
- * - Exponer estado reactivo a la UI con información de offline/sync
- *
- * Patrón: MVVM con StateFlow + NetworkMonitor para offline-first
- */
 @HiltViewModel
 class DetailViewModel @Inject constructor(
     private val getListDetailUseCase: GetListDetailUseCase,
@@ -39,6 +34,7 @@ class DetailViewModel @Inject constructor(
     private val calculateTotalUseCase: CalculateTotalUseCase,
     private val syncCheckUseCase: SyncCheckUseCase,
     private val detectRemoteChangesUseCase: DetectRemoteChangesUseCase,
+    private val refreshListDetailIfNeededUseCase: RefreshListDetailIfNeededUseCase,
     private val networkMonitor: NetworkMonitor,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -57,135 +53,135 @@ class DetailViewModel @Inject constructor(
     private val _isConnected = MutableStateFlow(networkMonitor.isCurrentlyConnected())
     val isConnected: StateFlow<Boolean> = _isConnected.asStateFlow()
 
+    private val _syncSnackbarEvents = MutableSharedFlow<SyncSnackbarEvent>(extraBufferCapacity = 2)
+    val syncSnackbarEvents: SharedFlow<SyncSnackbarEvent> = _syncSnackbarEvents.asSharedFlow()
+
+    private var refreshJob: Job? = null
+
     init {
         loadListDetail()
         observeConnectivity()
     }
 
-    /**
-     * Observa cambios de conectividad de la red
-     * Cuando se recupera conexión, intenta detectar cambios remotos
-     */
     private fun observeConnectivity() {
         viewModelScope.launch {
-            var wasConnected = true
-            networkMonitor.isConnected.collect { connected ->
-                _isConnected.value = connected
-
-                // Si acaba de recuperarse la conexión
-                if (connected && !wasConnected) {
-                    detectRemoteChanges()
+            var wasConnected = networkMonitor.isCurrentlyConnected()
+            networkMonitor.isConnected.collect { flowConnected ->
+                val connectivity = networkMonitor.resolveConnectivity(flowConnected)
+                _isConnected.value = connectivity.effectiveConnected
+                if (connectivity.flowConnected != connectivity.currentConnected) {
+                    Log.w(TAG, "failure_category type=connectivity_mismatch listId=$listId flowConnected=${connectivity.flowConnected} currentConnected=${connectivity.currentConnected}")
                 }
-                wasConnected = connected
+
+                if (connectivity.effectiveConnected && !wasConnected) {
+                    detectRemoteChanges()
+                    triggerBackgroundRefresh("reconnect")
+                }
+                wasConnected = connectivity.effectiveConnected
             }
         }
     }
 
-    /**
-     * Carga el detalle de la lista
-     *
-     * Observa cambios en el Flow del repositorio para actualizar
-     * el estado cuando cambien los checks localmente.
-     * Detecta si los datos vienen del cache local (sin conexión).
-     */
     fun loadListDetail() {
         viewModelScope.launch {
-            _uiState.value = ListDetailUiState.Loading
+            if (_uiState.value !is ListDetailUiState.Success) {
+                _uiState.value = ListDetailUiState.Loading
+            }
             val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
-            Log.d(TAG, "loadListDetail started (Room-first) - flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
+            if (connectivity.flowConnected != connectivity.currentConnected) {
+                Log.w(TAG, "failure_category type=connectivity_mismatch listId=$listId flowConnected=${connectivity.flowConnected} currentConnected=${connectivity.currentConnected}")
+            }
+            Log.d(TAG, "refresh_started resource=detail listId=$listId trigger=entry effectiveConnected=${connectivity.effectiveConnected}")
             getListDetailUseCase(listId, preferCache = true)
                 .catch { e ->
                     Log.e(TAG, "loadListDetail failed", e)
-                    _uiState.value = ListDetailUiState.Error(
-                        e.message ?: "Error al cargar la lista"
-                    )
+                    _uiState.value = ListDetailUiState.Error(e.message ?: "Error al cargar la lista")
                 }
                 .collect { listDetail ->
                     val total = calculateTotalUseCase(listDetail)
-                    val currentState = _uiState.value
-
-                    // Mantener estado de offline y cambios remotos al actualizar
-                    val fromCache = (currentState as? ListDetailUiState.Success)?.fromCache ?: true
-                    val hasRemoteChanges = (currentState as? ListDetailUiState.Success)?.hasRemoteChanges ?: false
-                    val syncStatus = (currentState as? ListDetailUiState.Success)?.syncStatus ?: SyncStatus.IDLE
-
+                    val currentState = _uiState.value as? ListDetailUiState.Success
                     _uiState.value = ListDetailUiState.Success(
                         listDetail = listDetail,
                         total = total,
-                        fromCache = fromCache,
-                        hasRemoteChanges = hasRemoteChanges,
-                        syncStatus = syncStatus
+                        fromCache = true,
+                        hasRemoteChanges = currentState?.hasRemoteChanges ?: false,
+                        syncStatus = currentState?.syncStatus ?: SyncStatus.IDLE,
+                        hasPermanentRefreshError = currentState?.hasPermanentRefreshError ?: false
                     )
+                    if (connectivity.effectiveConnected) {
+                        triggerBackgroundRefresh("entry")
+                    }
                 }
         }
     }
 
-    /**
-     * Marca/desmarca un item de la lista
-     *
-     * Operación offline-first: se actualiza localmente siempre.
-     * Si hay conexión, se intenta sincronizar con el servidor.
-     *
-     * @param itemId ID del item a marcar/desmarcar
-     * @param checked Nuevo estado (true = marcado, false = desmarcado)
-     */
+    private fun triggerBackgroundRefresh(trigger: String) {
+        if (refreshJob?.isActive == true) {
+            Log.d(TAG, "refresh_dedup resource=detail listId=$listId hit=true trigger=$trigger")
+            return
+        }
+        Log.d(TAG, "refresh_dedup resource=detail listId=$listId hit=false trigger=$trigger")
+        refreshJob = viewModelScope.launch {
+            _syncSnackbarEvents.tryEmit(SyncSnackbarEvent.Show)
+            updateSyncStatus(SyncStatus.SYNCING)
+            try {
+                val decision = refreshListDetailIfNeededUseCase(listId)
+                Log.d(TAG, "refresh_decision listId=$listId decision=$decision")
+                if (decision != RefreshDetailDecision.SKIP_EQUAL) {
+                    detectRemoteChanges()
+                }
+                val current = _uiState.value as? ListDetailUiState.Success
+                if (current != null) {
+                    _uiState.value = current.copy(hasPermanentRefreshError = false)
+                }
+            } catch (exception: HttpException) {
+                if (exception.code() == 403 || exception.code() == 404) {
+                    Log.w(TAG, "failure_category type=permanent code=${exception.code()} listId=$listId")
+                    val current = _uiState.value as? ListDetailUiState.Success
+                    if (current != null) {
+                        _uiState.value = current.copy(hasPermanentRefreshError = true)
+                    }
+                }
+            } catch (exception: Exception) {
+                Log.w(TAG, "failure_category type=transient listId=$listId", exception)
+            } finally {
+                updateSyncStatus(SyncStatus.IDLE)
+                _syncSnackbarEvents.tryEmit(SyncSnackbarEvent.Hide)
+                Log.d(TAG, "refresh_finished resource=detail listId=$listId")
+            }
+        }
+    }
+
     fun toggleItemCheck(itemId: String, checked: Boolean) {
         viewModelScope.launch {
             try {
                 val connectivity = networkMonitor.resolveConnectivity(flowConnected = _isConnected.value)
-                Log.d(TAG, "toggleItemCheck started - itemId=$itemId, checked=$checked, flowConnected=${connectivity.flowConnected}, currentConnected=${connectivity.currentConnected}, effectiveConnected=${connectivity.effectiveConnected}")
-
-                // Actualizar localmente
-                Log.d(TAG, "toggleItemCheck -> updating local state")
                 checkItemUseCase(listId, itemId, checked)
-                Log.d(TAG, "toggleItemCheck -> local update success")
-
-                // Intentar sincronizar si hay conexión
                 if (connectivity.effectiveConnected) {
-                    Log.d(TAG, "toggleItemCheck -> syncing with backend")
                     updateSyncStatus(SyncStatus.SYNCING)
-
                     when (syncCheckUseCase(listId, itemId, checked)) {
                         SyncCheckResult.Success -> updateSyncStatus(SyncStatus.SUCCESS)
                         SyncCheckResult.TransientFailure, SyncCheckResult.PermanentFailure -> updateSyncStatus(SyncStatus.IDLE)
                     }
-                } else {
-                    Log.d(TAG, "toggleItemCheck -> offline, local only")
                 }
-
-                // El Flow del repositorio emitirá el estado actualizado
             } catch (e: Exception) {
                 Log.e(TAG, "toggleItemCheck failed", e)
-                // Los errores se ignoran porque la operación es local
                 updateSyncStatus(SyncStatus.ERROR)
             }
         }
     }
 
-    /**
-     * Detecta si la lista fue modificada remotamente
-     * Se ejecuta automáticamente cuando se recupera la conexión
-     */
     private suspend fun detectRemoteChanges() {
         try {
             val hasRemoteChanges = detectRemoteChangesUseCase(listId)
-            if (hasRemoteChanges) {
-                // Actualizar estado con flag de cambios remotos
-                val currentState = _uiState.value as? ListDetailUiState.Success
-                if (currentState != null) {
-                    _uiState.value = currentState.copy(
-                        hasRemoteChanges = true
-                    )
-                }
+            val currentState = _uiState.value as? ListDetailUiState.Success
+            if (currentState != null && hasRemoteChanges) {
+                _uiState.value = currentState.copy(hasRemoteChanges = true)
             }
-        } catch (e: Exception) {
-            // Error al detectar cambios, ignorar silenciosamente
+        } catch (_: Exception) {
         }
     }
 
-    /**
-     * Actualiza el estado de sincronización
-     */
     private fun updateSyncStatus(status: SyncStatus) {
         val currentState = _uiState.value as? ListDetailUiState.Success
         if (currentState != null) {
@@ -193,10 +189,12 @@ class DetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Reintentar cargar la lista (botón de retry)
-     */
     fun retry() {
         loadListDetail()
     }
+}
+
+sealed interface SyncSnackbarEvent {
+    data object Show : SyncSnackbarEvent
+    data object Hide : SyncSnackbarEvent
 }

@@ -17,12 +17,15 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -38,6 +41,19 @@ fun ActiveListsScreen(
     viewModel: ListsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isConnected by viewModel.isConnected.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val syncMessage = stringResource(R.string.background_sync_snackbar)
+
+    LaunchedEffect(viewModel) {
+        viewModel.syncSnackbarEvents.collect { event ->
+            when (event) {
+                ListSyncSnackbarEvent.Show -> snackbarHostState.showSnackbar(syncMessage)
+                ListSyncSnackbarEvent.Hide -> snackbarHostState.currentSnackbarData?.dismiss()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadLists()
@@ -45,6 +61,7 @@ fun ActiveListsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -73,7 +90,7 @@ fun ActiveListsScreen(
 
             is ListsUiState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    if (state.fromCache) {
+                    if (!isConnected) {
                         Text(
                             text = stringResource(R.string.lists_offline_banner),
                             style = MaterialTheme.typography.bodyMedium,
