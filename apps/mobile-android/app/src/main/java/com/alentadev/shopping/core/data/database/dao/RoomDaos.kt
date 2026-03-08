@@ -176,6 +176,9 @@ interface PendingSyncDao {
     @Query("SELECT * FROM pending_sync WHERE status = 'pending' ORDER BY localUpdatedAt ASC")
     suspend fun getPendingOrderedByLocalUpdatedAt(): List<PendingSyncEntity>
 
+    @Query("SELECT checked FROM pending_sync WHERE listId = :listId AND itemId = :itemId AND status = 'pending' LIMIT 1")
+    suspend fun getPendingCheckedState(listId: String, itemId: String): Boolean?
+
     @Query("UPDATE pending_sync SET retryCount = retryCount + 1 WHERE operationId = :operationId")
     suspend fun incrementRetry(operationId: String)
 

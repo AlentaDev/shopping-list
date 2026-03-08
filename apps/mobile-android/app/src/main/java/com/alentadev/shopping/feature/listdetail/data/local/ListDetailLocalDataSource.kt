@@ -49,13 +49,14 @@ class ListDetailLocalDataSource @Inject constructor(
         listDao.insert(listEntity)
 
         val itemEntities = listDetail.items.map { item ->
+            val pendingChecked = pendingSyncDao.getPendingCheckedState(listDetail.id, item.id)
             ItemEntity(
                 id = item.id,
                 listId = listDetail.id,
                 kind = item.kind.name.lowercase(),
                 name = item.name,
                 qty = item.qty,
-                checked = item.checked,
+                checked = resolveCheckedState(item.checked, pendingChecked),
                 note = (item as? ManualItem)?.note,
                 updatedAt = item.updatedAt,
                 thumbnail = (item as? CatalogItem)?.thumbnail,
