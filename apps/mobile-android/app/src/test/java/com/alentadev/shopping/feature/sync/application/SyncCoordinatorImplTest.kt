@@ -27,4 +27,21 @@ class SyncCoordinatorImplTest {
         coVerify(exactly = 1) { warmupService.warmUp() }
         coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
     }
+
+    @Test
+    fun `flushPendingQueue launches only pending sync flush`() = runTest {
+        val warmupService = mockk<ListsWarmupService>(relaxed = true)
+        val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
+        val coordinator = SyncCoordinatorImpl(
+            listsWarmupService = warmupService,
+            syncQueueProcessor = syncQueueProcessor,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+
+        coordinator.flushPendingQueue()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { warmupService.warmUp() }
+        coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
+    }
 }
