@@ -6,9 +6,12 @@ import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
 import com.alentadev.shopping.core.data.database.entity.ItemEntity
 import com.alentadev.shopping.core.data.database.entity.ListEntity
 import com.alentadev.shopping.core.data.database.entity.PendingSyncEntity
+import com.alentadev.shopping.feature.listdetail.domain.entity.ManualItem
+import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -68,8 +71,63 @@ class ListDetailLocalDataSourceTest {
     }
 
     @Test
-    fun `saveListDetail works without exceptions`() = runTest {
-        assertTrue(true)
+    fun `saveListDetail preserves pending checked state over remote snapshot`() = runTest {
+        val listDetail = ListDetail(
+            id = "list-1",
+            title = "Compra",
+            updatedAt = "2026-03-01T10:00:00Z",
+            items = listOf(
+                ManualItem(
+                    id = "item-1",
+                    name = "Pan",
+                    qty = 1.0,
+                    checked = false,
+                    updatedAt = "2026-03-01T10:00:00Z"
+                )
+            )
+        )
+        val insertedItems = slot<List<ItemEntity>>()
+
+        coEvery { listDao.insert(any()) } returns Unit
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-1") } returns true
+        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+
+        dataSource.saveListDetail(listDetail)
+
+        assertTrue(insertedItems.isCaptured)
+        assertEquals(1, insertedItems.captured.size)
+        assertTrue(insertedItems.captured.first().checked)
+        coVerify(exactly = 1) { pendingSyncDao.getPendingCheckedState("list-1", "item-1") }
+    }
+
+    @Test
+    fun `saveListDetail uses remote checked when there is no pending operation`() = runTest {
+        val listDetail = ListDetail(
+            id = "list-1",
+            title = "Compra",
+            updatedAt = "2026-03-01T10:00:00Z",
+            items = listOf(
+                ManualItem(
+                    id = "item-1",
+                    name = "Pan",
+                    qty = 1.0,
+                    checked = false,
+                    updatedAt = "2026-03-01T10:00:00Z"
+                )
+            )
+        )
+        val insertedItems = slot<List<ItemEntity>>()
+
+        coEvery { listDao.insert(any()) } returns Unit
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-1") } returns null
+        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+
+        dataSource.saveListDetail(listDetail)
+
+        assertTrue(insertedItems.isCaptured)
+        assertEquals(1, insertedItems.captured.size)
+        assertEquals(false, insertedItems.captured.first().checked)
+        coVerify(exactly = 1) { pendingSyncDao.getPendingCheckedState("list-1", "item-1") }
     }
 
     @Test
