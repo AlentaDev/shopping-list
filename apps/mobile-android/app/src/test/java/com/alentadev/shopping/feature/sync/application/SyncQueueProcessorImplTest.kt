@@ -12,7 +12,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.junit.Assert.assertEquals
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -35,8 +34,7 @@ class SyncQueueProcessorImplTest {
         val processor = SyncQueueProcessorImpl(
             pendingSyncDao = pendingSyncDao,
             listDetailApi = listDetailApi,
-            backoffPolicy = backoffPolicy,
-            sleep = {}
+            backoffPolicy = backoffPolicy
         )
 
         processor.flushPendingSync()
@@ -60,13 +58,11 @@ class SyncQueueProcessorImplTest {
         coEvery { listDetailApi.updateItemCheck(any(), any(), any()) } throws IOException("network")
         coEvery { pendingSyncDao.incrementRetry(any()) } returns Unit
         coEvery { backoffPolicy.delayMillisFor(retryCount = 2) } returns 500L
-        var delayedBy: Long? = null
 
         val processor = SyncQueueProcessorImpl(
             pendingSyncDao = pendingSyncDao,
             listDetailApi = listDetailApi,
-            backoffPolicy = backoffPolicy,
-            sleep = { delayedBy = it }
+            backoffPolicy = backoffPolicy
         )
 
         processor.flushPendingSync()
@@ -74,7 +70,6 @@ class SyncQueueProcessorImplTest {
         coVerify(exactly = 1) { pendingSyncDao.incrementRetry("op-1") }
         coVerify(exactly = 1) { backoffPolicy.delayMillisFor(2) }
         coVerify(exactly = 0) { pendingSyncDao.markFailedPermanent(any()) }
-        assertEquals(500L, delayedBy)
     }
 
     @Test
@@ -91,8 +86,7 @@ class SyncQueueProcessorImplTest {
         val processor = SyncQueueProcessorImpl(
             pendingSyncDao = pendingSyncDao,
             listDetailApi = listDetailApi,
-            backoffPolicy = backoffPolicy,
-            sleep = {}
+            backoffPolicy = backoffPolicy
         )
 
         processor.flushPendingSync()

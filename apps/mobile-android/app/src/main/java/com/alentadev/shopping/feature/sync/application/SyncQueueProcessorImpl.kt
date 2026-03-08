@@ -12,8 +12,7 @@ import retrofit2.HttpException
 class SyncQueueProcessorImpl @Inject constructor(
     private val pendingSyncDao: PendingSyncDao,
     private val listDetailApi: ListDetailApi,
-    private val backoffPolicy: SyncBackoffPolicy,
-    private val sleep: suspend (Long) -> Unit = { delay(it) }
+    private val backoffPolicy: SyncBackoffPolicy
 ) : SyncQueueProcessor {
 
     override suspend fun flushPendingSync() {
@@ -33,7 +32,7 @@ class SyncQueueProcessorImpl @Inject constructor(
                 } else {
                     pendingSyncDao.incrementRetry(operation.operationId)
                     val backoffDelay = backoffPolicy.delayMillisFor(operation.retryCount + 1)
-                    sleep(backoffDelay)
+                    delay(backoffDelay)
                 }
             }
         }
