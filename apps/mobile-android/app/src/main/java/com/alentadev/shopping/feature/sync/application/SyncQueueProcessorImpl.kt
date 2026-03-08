@@ -68,6 +68,6 @@ class SyncQueueProcessorImpl @Inject constructor(
 
     private fun String?.toCheckedItemIds(): List<String> {
         if (this.isNullOrBlank()) return emptyList()
-        return split(",").map { it.trim() }.filter { it.isNotBlank() }
+        return split(",").map { it.trim() }.filter { it.isNotBlank() }.distinct()
     }
 }

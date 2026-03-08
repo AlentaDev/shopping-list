@@ -129,7 +129,7 @@ class DetailViewModel @Inject constructor(
 
     fun onCompleteListRequested() {
         val current = _uiState.value as? ListDetailUiState.Success ?: return
-        _uiState.value = current.copy(showCompleteConfirmation = true, completeListError = null)
+        _uiState.value = current.copy(showCompleteConfirmation = true, completeListError = null, syncStatus = SyncStatus.IDLE)
     }
 
     fun dismissCompleteDialog() {
@@ -180,7 +180,6 @@ class DetailViewModel @Inject constructor(
         CompleteListResult.Unauthorized -> CompleteListError.UNAUTHORIZED
         CompleteListResult.Forbidden -> CompleteListError.FORBIDDEN
         CompleteListResult.NotFound -> CompleteListError.NOT_FOUND
-        CompleteListResult.ListNotFound -> CompleteListError.LIST_NOT_FOUND
         CompleteListResult.ServerError -> CompleteListError.SERVER_ERROR
         CompleteListResult.Success -> CompleteListError.UNKNOWN
     }

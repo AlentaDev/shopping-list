@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.R
@@ -67,6 +69,7 @@ fun ListDetailScreen(
         topBar = {
             when (val state = uiState) {
                 is ListDetailUiState.Success -> {
+                    val syncInProgressDesc = stringResource(R.string.detail_sync_in_progress)
                     TopAppBar(
                         title = {
                             Box(modifier = Modifier.fillMaxWidth()) {
@@ -75,7 +78,8 @@ fun ListDetailScreen(
                                     CircularProgressIndicator(
                                         modifier = Modifier
                                             .size(20.dp)
-                                            .align(Alignment.CenterEnd),
+                                            .align(Alignment.CenterEnd)
+                                            .semantics { contentDescription = syncInProgressDesc },
                                         strokeWidth = 2.dp
                                     )
                                 }
@@ -185,7 +189,11 @@ private fun SuccessState(
                 }
             }
 
-            TotalBar(total = state.total, onCompleteList = onCompleteListClick)
+            TotalBar(
+                total = state.total,
+                onCompleteList = onCompleteListClick,
+                isCompleteEnabled = !state.showCompleteConfirmation && !state.isCompleting
+            )
         }
     }
 }
@@ -209,7 +217,6 @@ private fun CompleteListErrorBanner(error: CompleteListError, modifier: Modifier
         CompleteListError.UNAUTHORIZED -> R.string.detail_complete_error_unauthorized
         CompleteListError.FORBIDDEN -> R.string.detail_complete_error_forbidden
         CompleteListError.NOT_FOUND -> R.string.detail_complete_error_not_found
-        CompleteListError.LIST_NOT_FOUND -> R.string.detail_complete_error_list_not_found
         CompleteListError.SERVER_ERROR,
         CompleteListError.UNKNOWN -> R.string.detail_complete_error_server
     }

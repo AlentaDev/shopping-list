@@ -155,7 +155,7 @@ class ListDetailRepositoryImpl @Inject constructor(
                 (e as? HttpException)?.code() == 400 -> CompleteListResult.InvalidTransition
                 (e as? HttpException)?.code() == 401 -> CompleteListResult.Unauthorized
                 (e as? HttpException)?.code() == 403 -> CompleteListResult.Forbidden
-                (e as? HttpException)?.code() == 404 -> CompleteListResult.ListNotFound
+                (e as? HttpException)?.code() == 404 -> CompleteListResult.NotFound
                 ((e as? HttpException)?.code() ?: 0) >= 500 -> CompleteListResult.ServerError
                 else -> CompleteListResult.ServerError
             }
