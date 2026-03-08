@@ -57,6 +57,26 @@ interface ListDetailRepository {
     suspend fun syncItemCheck(listId: String, itemId: String, checked: Boolean)
 
     /**
+     * Encola (colapsado por listId+itemId) una operación pendiente de sincronización.
+     */
+    suspend fun enqueuePendingCheckOperation(
+        listId: String,
+        itemId: String,
+        checked: Boolean,
+        localUpdatedAt: Long
+    )
+
+    /**
+     * Registra una operación como fallo permanente (403/404).
+     */
+    suspend fun markCheckOperationFailedPermanent(
+        listId: String,
+        itemId: String,
+        checked: Boolean,
+        localUpdatedAt: Long
+    )
+
+    /**
      * Refresca el detalle de la lista desde el servidor
      *
      * @param listId ID de la lista

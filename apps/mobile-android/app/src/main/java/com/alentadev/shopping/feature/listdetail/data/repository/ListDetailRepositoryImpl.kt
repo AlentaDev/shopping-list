@@ -79,25 +79,18 @@ class ListDetailRepositoryImpl @Inject constructor(
      * @param checked Nuevo estado
      */
     override suspend fun updateItemChecked(listId: String, itemId: String, checked: Boolean) {
-        android.util.Log.d("ListDetailRepository", "🔍 Validando item - listId: $listId, itemId: $itemId")
-
         // Validar que la lista existe localmente
         val listDetail = localDataSource.getListDetail(listId)
             ?: throw IllegalArgumentException("Lista no encontrada: $listId")
 
-        android.util.Log.d("ListDetailRepository", "✅ Lista encontrada: ${listDetail.title}")
-
         // Validar que el item existe en la lista
         val itemExists = listDetail.items.any { it.id == itemId }
         if (!itemExists) {
-            android.util.Log.e("ListDetailRepository", "❌ Item no encontrado en lista")
             throw IllegalArgumentException("Item no encontrado: $itemId en lista: $listId")
         }
 
-        android.util.Log.d("ListDetailRepository", "💾 Guardando en Room - itemId: $itemId, checked: $checked")
         // Actualizar localmente (sin enviar al servidor)
         localDataSource.updateItemChecked(itemId, checked)
-        android.util.Log.d("ListDetailRepository", "✅ Item guardado en Room")
     }
 
     /**
@@ -109,9 +102,25 @@ class ListDetailRepositoryImpl @Inject constructor(
      * @throws Exception si hay error de red o servidor
      */
     override suspend fun syncItemCheck(listId: String, itemId: String, checked: Boolean) {
-        android.util.Log.d("ListDetailRepository", "🌐 Llamando a remoteDataSource.updateItemCheck - listId: $listId, itemId: $itemId, checked: $checked")
         remoteDataSource.updateItemCheck(listId, itemId, checked)
-        android.util.Log.d("ListDetailRepository", "✅ Llamada a API completada")
+    }
+
+    override suspend fun enqueuePendingCheckOperation(
+        listId: String,
+        itemId: String,
+        checked: Boolean,
+        localUpdatedAt: Long
+    ) {
+        localDataSource.enqueuePendingCheckOperation(listId, itemId, checked, localUpdatedAt)
+    }
+
+    override suspend fun markCheckOperationFailedPermanent(
+        listId: String,
+        itemId: String,
+        checked: Boolean,
+        localUpdatedAt: Long
+    ) {
+        localDataSource.markPendingCheckFailedPermanent(listId, itemId, checked, localUpdatedAt)
     }
 
     /**
