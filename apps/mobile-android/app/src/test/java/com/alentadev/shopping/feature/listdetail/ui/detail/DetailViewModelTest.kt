@@ -6,6 +6,8 @@ import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshDetailDecision
@@ -42,6 +44,7 @@ class DetailViewModelTest {
     private lateinit var getListDetailUseCase: GetListDetailUseCase
     private lateinit var checkItemUseCase: CheckItemUseCase
     private lateinit var calculateTotalUseCase: CalculateTotalUseCase
+    private lateinit var completeListUseCase: CompleteListUseCase
     private lateinit var syncCheckUseCase: SyncCheckUseCase
     private lateinit var detectRemoteChangesUseCase: DetectRemoteChangesUseCase
     private lateinit var refreshListDetailIfNeededUseCase: RefreshListDetailIfNeededUseCase
@@ -57,6 +60,7 @@ class DetailViewModelTest {
         getListDetailUseCase = mockk()
         checkItemUseCase = mockk()
         calculateTotalUseCase = mockk()
+        completeListUseCase = mockk()
         syncCheckUseCase = mockk()
         detectRemoteChangesUseCase = mockk()
         refreshListDetailIfNeededUseCase = mockk()
@@ -70,6 +74,7 @@ class DetailViewModelTest {
         every { networkMonitor.isConnected } returns flowOf(true)
         every { networkMonitor.isCurrentlyConnected() } returns true
         coEvery { refreshListDetailIfNeededUseCase(any()) } returns RefreshDetailDecision.SKIP_EQUAL
+        coEvery { completeListUseCase(any(), any()) } returns CompleteListResult.Success
     }
 
     @Test
@@ -86,6 +91,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -116,6 +122,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -149,6 +156,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -179,6 +187,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -208,6 +217,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -231,6 +241,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -260,6 +271,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -289,6 +301,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -322,6 +335,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -348,6 +362,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -376,6 +391,7 @@ class DetailViewModelTest {
                 syncCheckUseCase = syncCheckUseCase,
                 detectRemoteChangesUseCase = detectRemoteChangesUseCase,
                 refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+                completeListUseCase = completeListUseCase,
                 networkMonitor = networkMonitor,
                 savedStateHandle = emptyStateHandle
             )
@@ -409,6 +425,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -435,6 +452,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -458,6 +476,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -488,6 +507,7 @@ class DetailViewModelTest {
             syncCheckUseCase = syncCheckUseCase,
             detectRemoteChangesUseCase = detectRemoteChangesUseCase,
             refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
             networkMonitor = networkMonitor,
             savedStateHandle = savedStateHandle
         )
@@ -498,6 +518,105 @@ class DetailViewModelTest {
         coVerify(exactly = 1) { refreshListDetailIfNeededUseCase("list-123") }
         refreshGate.complete(Unit)
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `onCompleteListRequested shows confirmation dialog`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 2)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        viewModel.onCompleteListRequested()
+
+        val state = viewModel.uiState.value as ListDetailUiState.Success
+        assertTrue(state.showCompleteConfirmation)
+    }
+
+    @Test
+    fun `confirmCompleteList deduplicates repeated taps while request is in flight`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 2).copy(
+            items = listOf(
+                CatalogItem("item-1", "Item 1", 1.0, true, "2024-01-01", 5.0, "prod-1"),
+                CatalogItem("item-2", "Item 2", 1.0, false, "2024-01-01", 5.0, "prod-2")
+            )
+        )
+        val gate = CompletableDeferred<Unit>()
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", listOf("item-1")) } coAnswers {
+            gate.await()
+            CompleteListResult.Success
+        }
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+        viewModel.onCompleteListRequested()
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val inFlightState = viewModel.uiState.value as ListDetailUiState.Success
+        assertTrue(inFlightState.isCompleting)
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { completeListUseCase("list-123", listOf("item-1")) }
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        val finalState = viewModel.uiState.value as ListDetailUiState.Success
+        assertFalse(finalState.isCompleting)
+    }
+
+    @Test
+    fun `confirmCompleteList sets error message when backend rejects transition`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", any()) } returns CompleteListResult.InvalidTransition
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+        viewModel.onCompleteListRequested()
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ListDetailUiState.Success
+        assertEquals(CompleteListError.INVALID_TRANSITION, state.completeListError)
+        assertFalse(state.showCompleteConfirmation)
     }
 
     // Helper para crear ListDetail de prueba

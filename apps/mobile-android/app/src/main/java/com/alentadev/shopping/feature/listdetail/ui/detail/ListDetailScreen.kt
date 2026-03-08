@@ -45,6 +45,14 @@ fun ListDetailScreen(
         }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            if (event is DetailUiEvent.ListCompleted) {
+                onBackClick()
+            }
+        }
+    }
+
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
@@ -106,8 +114,17 @@ fun ListDetailScreen(
                     isConnected = isConnected,
                     onItemCheckedChange = { itemId, checked -> viewModel.toggleItemCheck(itemId, checked) },
                     onRefresh = { viewModel.loadListDetail() },
+                    onCompleteListClick = { viewModel.onCompleteListRequested() },
                     modifier = Modifier.padding(paddingValues)
                 )
+
+                if (state.showCompleteConfirmation) {
+                    ConfirmCompleteDialog(
+                        isCompleting = state.isCompleting,
+                        onConfirm = { viewModel.confirmCompleteList() },
+                        onDismiss = { viewModel.dismissCompleteDialog() }
+                    )
+                }
             }
             is ListDetailUiState.Error -> {
                 ErrorState(
@@ -136,6 +153,7 @@ private fun SuccessState(
     isConnected: Boolean,
     onItemCheckedChange: (String, Boolean) -> Unit,
     onRefresh: () -> Unit,
+    onCompleteListClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -152,6 +170,10 @@ private fun SuccessState(
                 RemoteChangesBanner(onRefresh = onRefresh, modifier = Modifier.fillMaxWidth())
             }
 
+            state.completeListError?.let { error ->
+                CompleteListErrorBanner(error = error, modifier = Modifier.fillMaxWidth())
+            }
+
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 contentPadding = PaddingValues(16.dp),
@@ -162,7 +184,7 @@ private fun SuccessState(
                 }
             }
 
-            TotalBar(total = state.total, onCompleteList = null)
+            TotalBar(total = state.total, onCompleteList = onCompleteListClick)
         }
     }
 }
@@ -174,6 +196,30 @@ private fun OfflineBanner(modifier: Modifier = Modifier) {
             Icon(imageVector = Icons.Default.Info, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSecondaryContainer)
             Text(text = stringResource(R.string.detail_offline_banner), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.weight(1f))
         }
+    }
+}
+
+@Composable
+private fun CompleteListErrorBanner(error: CompleteListError, modifier: Modifier = Modifier) {
+    val messageRes = when (error) {
+        CompleteListError.OFFLINE -> R.string.detail_complete_error_offline
+        CompleteListError.NO_CONNECTION -> R.string.detail_complete_error_no_connection
+        CompleteListError.INVALID_TRANSITION -> R.string.detail_complete_error_invalid_transition
+        CompleteListError.UNAUTHORIZED -> R.string.detail_complete_error_unauthorized
+        CompleteListError.FORBIDDEN -> R.string.detail_complete_error_forbidden
+        CompleteListError.NOT_FOUND -> R.string.detail_complete_error_not_found
+        CompleteListError.LIST_NOT_FOUND -> R.string.detail_complete_error_list_not_found
+        CompleteListError.SERVER_ERROR,
+        CompleteListError.UNKNOWN -> R.string.detail_complete_error_server
+    }
+
+    Surface(modifier = modifier, color = MaterialTheme.colorScheme.errorContainer, shadowElevation = 4.dp) {
+        Text(
+            text = stringResource(messageRes),
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
 }
 
