@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.listdetail.data.di
 
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
 import com.alentadev.shopping.feature.listdetail.data.repository.ListDetailRepositoryImpl
+import com.alentadev.shopping.feature.listdetail.data.remote.CompleteListApi
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailApi
 import dagger.Binds
 import dagger.Module
@@ -34,6 +35,12 @@ abstract class ListDetailModule {
         @Singleton
         fun provideListDetailApi(retrofit: Retrofit): ListDetailApi {
             return retrofit.create(ListDetailApi::class.java)
+        }
+
+        @Provides
+        @Singleton
+        fun provideCompleteListApi(retrofit: Retrofit): CompleteListApi {
+            return retrofit.create(CompleteListApi::class.java)
         }
     }
 }

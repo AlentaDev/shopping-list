@@ -1,5 +1,6 @@
 package com.alentadev.shopping.feature.listdetail.domain.usecase
 
+import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -9,7 +10,7 @@ import org.junit.Before
 import org.junit.Test
 
 class CompleteListUseCaseTest {
-    private lateinit var repository: CompleteListRepository
+    private lateinit var repository: ListDetailRepository
     private lateinit var useCase: CompleteListUseCase
 
     @Before

@@ -8,16 +8,21 @@ import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataS
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
 import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
 
 class ListDetailRepositoryImplTest {
     private lateinit var remoteDataSource: ListDetailRemoteDataSource
@@ -180,5 +185,72 @@ class ListDetailRepositoryImplTest {
             remoteDataSource.getListDetail("list-123")
             localDataSource.saveListDetail(listDetail)
         }
+    }
+
+    @Test
+    fun `completeList returns success when remote completes without error`() = runTest {
+        coEvery { remoteDataSource.completeList("list-1", listOf("item-1")) } returns Unit
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.Success, result)
+    }
+
+    @Test
+    fun `completeList maps http 400 to invalid transition`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(400)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.InvalidTransition, result)
+    }
+
+    @Test
+    fun `completeList maps http 401 to unauthorized`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(401)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.Unauthorized, result)
+    }
+
+    @Test
+    fun `completeList maps http 403 to forbidden`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(403)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.Forbidden, result)
+    }
+
+    @Test
+    fun `completeList maps http 404 to list not found`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(404)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.ListNotFound, result)
+    }
+
+    @Test
+    fun `completeList maps http 500 to server error`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(500)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.ServerError, result)
+    }
+
+    @Test
+    fun `completeList maps network exception to no connection`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws IOException("Sin conexión")
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.NoConnection, result)
+    }
+
+    private fun httpException(code: Int): HttpException {
+        return HttpException(Response.error<Any>(code, "error".toResponseBody()))
     }
 }

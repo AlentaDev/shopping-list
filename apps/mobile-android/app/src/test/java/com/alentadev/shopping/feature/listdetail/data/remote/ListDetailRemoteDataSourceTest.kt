@@ -11,12 +11,14 @@ import org.junit.Test
 
 class ListDetailRemoteDataSourceTest {
     private lateinit var api: ListDetailApi
+    private lateinit var completeListApi: CompleteListApi
     private lateinit var dataSource: ListDetailRemoteDataSource
 
     @Before
     fun setup() {
         api = mockk()
-        dataSource = ListDetailRemoteDataSource(api)
+        completeListApi = mockk()
+        dataSource = ListDetailRemoteDataSource(api, completeListApi)
     }
 
     @Test

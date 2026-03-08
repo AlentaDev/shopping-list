@@ -5,11 +5,15 @@ import com.alentadev.shopping.core.data.network.OfflineFirstResult
 import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
 import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
 import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
+import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 /**
@@ -134,6 +138,24 @@ class ListDetailRepositoryImpl @Inject constructor(
     ) {
         localDataSource.markPendingCheckFailedPermanent(listId, itemId, checked, localUpdatedAt)
     }
+
+    override suspend fun completeList(listId: String, checkedItemIds: List<String>): CompleteListResult {
+        return try {
+            remoteDataSource.completeList(listId, checkedItemIds)
+            CompleteListResult.Success
+        } catch (e: Exception) {
+            when {
+                e is IOException || e is SocketTimeoutException -> CompleteListResult.NoConnection
+                (e as? HttpException)?.code() == 400 -> CompleteListResult.InvalidTransition
+                (e as? HttpException)?.code() == 401 -> CompleteListResult.Unauthorized
+                (e as? HttpException)?.code() == 403 -> CompleteListResult.Forbidden
+                (e as? HttpException)?.code() == 404 -> CompleteListResult.ListNotFound
+                ((e as? HttpException)?.code() ?: 0) >= 500 -> CompleteListResult.ServerError
+                else -> CompleteListResult.ServerError
+            }
+        }
+    }
+
 
     /**
      * Refresca el detalle de la lista desde el servidor
