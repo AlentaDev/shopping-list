@@ -139,7 +139,7 @@ class ListsRepositoryImplTest {
         )
 
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<ShoppingList?>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -154,7 +154,7 @@ class ListsRepositoryImplTest {
         assertNotNull(result)
         assertEquals("Mi lista", result?.title)
         coVerify(exactly = 1) {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<ShoppingList?>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -175,7 +175,7 @@ class ListsRepositoryImplTest {
         )
 
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<ShoppingList?>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -195,7 +195,7 @@ class ListsRepositoryImplTest {
     fun `getListById returns null when not found`() = runTest {
         // Arrange
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<ShoppingList?>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -216,7 +216,7 @@ class ListsRepositoryImplTest {
             ShoppingList("remote-1", "Remota", ListStatus.ACTIVE, 1111L, 2)
         )
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<List<ShoppingList>>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -236,7 +236,7 @@ class ListsRepositoryImplTest {
             ShoppingList("cache-1", "Cache", ListStatus.ACTIVE, 2222L, 3)
         )
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<List<ShoppingList>>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -254,7 +254,7 @@ class ListsRepositoryImplTest {
     fun `getActiveListsWithSource throws when executor returns error`() = runTest {
         val error = IllegalStateException("cache unavailable")
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<List<ShoppingList>>(
                 connectivityGate = any(),
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -274,7 +274,7 @@ class ListsRepositoryImplTest {
     fun `getActiveListsWithSource delegates connectivity decision to shared gate`() = runTest {
         val lists = listOf(ShoppingList("remote-2", "Remota 2", ListStatus.ACTIVE, 3333L, 1))
         coEvery {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<List<ShoppingList>>(
                 connectivityGate = connectivityGate,
                 fetchRemote = any(),
                 saveRemote = any(),
@@ -285,7 +285,7 @@ class ListsRepositoryImplTest {
         repository.getActiveListsWithSource()
 
         coVerify(exactly = 1) {
-            offlineFirstExecutor.execute(
+            offlineFirstExecutor.execute<List<ShoppingList>>(
                 connectivityGate = connectivityGate,
                 fetchRemote = any(),
                 saveRemote = any(),

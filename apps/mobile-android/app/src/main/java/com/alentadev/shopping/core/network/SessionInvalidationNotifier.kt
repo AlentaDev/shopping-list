@@ -1,6 +1,6 @@
 package com.alentadev.shopping.core.network
 
-import com.alentadev.shopping.feature.auth.domain.session.SessionWarmUpOrchestrator
+import com.alentadev.shopping.feature.sync.application.SyncCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -11,10 +11,10 @@ interface SessionInvalidationNotifier {
 @Singleton
 class CookieClearingSessionInvalidationNotifier @Inject constructor(
     private val cookieJar: PersistentCookieJar,
-    private val sessionWarmUpOrchestrator: SessionWarmUpOrchestrator
+    private val syncCoordinator: SyncCoordinator
 ) : SessionInvalidationNotifier {
     override suspend fun notifySessionInvalidated() {
-        sessionWarmUpOrchestrator.cancelWarmUp()
+        syncCoordinator.cancel()
         cookieJar.clear()
     }
 }

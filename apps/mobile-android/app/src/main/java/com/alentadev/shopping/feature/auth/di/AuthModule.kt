@@ -29,4 +29,3 @@ object AuthModule {
     @Provides
     fun provideCoroutineDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }
-

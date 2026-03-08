@@ -74,3 +74,15 @@ Campos mínimos:
 
 - Textos en `strings.xml`.
 - Mensajes iniciales definidos en la documentación de casos de uso.
+
+
+## Sync post-login (módulo dedicado)
+
+- El warm-up de listas vive en `feature/sync/`.
+- `feature/auth` se limita a autenticación/sesión y no orquesta warm-up.
+- El trigger ocurre en límite de app/sesión (`AppSessionSyncObserver`).
+- Componentes estables:
+  - `SyncCoordinator` (arranque/cancelación)
+  - `ListsWarmupService` (orquestación)
+  - `RefreshDecisionPolicy` (decisión pura)
+- Al cerrar sesión o invalidarse, el warm-up en curso se cancela.

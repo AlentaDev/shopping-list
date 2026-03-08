@@ -66,6 +66,10 @@ class ListDetailRepositoryImpl @Inject constructor(
         return localDataSource.getListDetail(listId) != null
     }
 
+    override suspend fun getCachedSnapshotTimestamp(listId: String): Long? {
+        return localDataSource.getCachedSnapshotTimestamp(listId)
+    }
+
     /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      * No envía cambios al backend (será sincronizado en fase 5)

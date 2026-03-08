@@ -1,9 +1,9 @@
-package com.alentadev.shopping.feature.auth.domain.session
+package com.alentadev.shopping.feature.sync.application
 
-import com.alentadev.shopping.feature.auth.domain.usecase.WarmUpListsCacheUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -11,29 +11,27 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SessionWarmUpOrchestrator @Inject constructor(
-    private val warmUpListsCacheUseCase: WarmUpListsCacheUseCase,
+class SyncCoordinatorImpl @Inject constructor(
+    private val listsWarmupService: ListsWarmupService,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
-) {
+) : SyncCoordinator {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
-    private var warmUpJob: kotlinx.coroutines.Job? = null
+    private var warmUpJob: Job? = null
 
-    fun startWarmUp() {
+    override fun startForAuthenticatedSession() {
         warmUpJob?.cancel()
         warmUpJob = scope.launch {
-            runCatching {
-                warmUpListsCacheUseCase.execute()
-            }
+            runCatching { listsWarmupService.warmUp() }
         }
     }
 
-    fun cancelWarmUp() {
+    override fun cancel() {
         warmUpJob?.cancel()
         warmUpJob = null
     }
 
     fun clear() {
-        cancelWarmUp()
+        cancel()
         scope.cancel()
     }
 }

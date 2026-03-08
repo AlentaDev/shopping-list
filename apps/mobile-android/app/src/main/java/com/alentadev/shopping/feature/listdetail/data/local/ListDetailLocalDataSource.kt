@@ -50,6 +50,10 @@ class ListDetailLocalDataSource @Inject constructor(
         return list.toDomain(items)
     }
 
+    suspend fun getCachedSnapshotTimestamp(listId: String): Long? {
+        return listDao.getListById(listId)?.syncedAt
+    }
+
     /**
      * Guarda una lista completa (lista + items) localmente
      * Inserta o reemplaza la lista y sus items
