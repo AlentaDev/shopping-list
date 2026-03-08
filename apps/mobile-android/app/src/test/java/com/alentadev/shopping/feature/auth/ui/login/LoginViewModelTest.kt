@@ -2,11 +2,12 @@ package com.alentadev.shopping.feature.auth.ui.login
 
 import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.entity.User
+import com.alentadev.shopping.feature.auth.domain.session.SessionWarmUpOrchestrator
 import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
-import io.mockk.every
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,6 +27,7 @@ import org.junit.runner.Description
 class LoginViewModelTest {
     private lateinit var loginUseCase: LoginUseCase
     private lateinit var getCurrentUserUseCase: GetCurrentUserUseCase
+    private lateinit var sessionWarmUpOrchestrator: SessionWarmUpOrchestrator
     private lateinit var viewModel: LoginViewModel
 
     @get:Rule
@@ -35,7 +37,8 @@ class LoginViewModelTest {
     fun setup() {
         loginUseCase = mockk()
         getCurrentUserUseCase = mockk()
-        viewModel = LoginViewModel(loginUseCase, getCurrentUserUseCase)
+        sessionWarmUpOrchestrator = mockk(relaxed = true)
+        viewModel = LoginViewModel(loginUseCase, getCurrentUserUseCase, sessionWarmUpOrchestrator)
     }
 
     @Test
@@ -64,6 +67,7 @@ class LoginViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is LoginUiState.Success)
         assertEquals(user.email, (state as LoginUiState.Success).user.email)
+        coVerify(exactly = 1) { sessionWarmUpOrchestrator.startWarmUp() }
     }
 
     @Test

@@ -62,6 +62,10 @@ class ListDetailRepositoryImpl @Inject constructor(
             .filterNotNull()
     }
 
+    override suspend fun hasCachedListDetail(listId: String): Boolean {
+        return localDataSource.getListDetail(listId) != null
+    }
+
     /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      * No envía cambios al backend (será sincronizado en fase 5)
@@ -120,5 +124,4 @@ class ListDetailRepositoryImpl @Inject constructor(
         localDataSource.saveListDetail(remoteDetail)
     }
 }
-
 

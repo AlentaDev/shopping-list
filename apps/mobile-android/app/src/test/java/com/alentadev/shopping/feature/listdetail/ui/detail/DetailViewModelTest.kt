@@ -122,12 +122,12 @@ class DetailViewModelTest {
 
 
     @Test
-    fun `init uses current connectivity when flow is stale`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `init keeps Room as source when flow is stale and current connectivity is online`() = runTest(mainDispatcherRule.testDispatcher) {
         // Arrange
         val listDetail = createListDetail("list-123", "Recovered Network", 2)
         every { networkMonitor.isConnected } returns flowOf(false)
         every { networkMonitor.isCurrentlyConnected() } returns true
-        every { getListDetailUseCase("list-123", false) } returns flowOf(listDetail)
+        every { getListDetailUseCase("list-123", true) } returns flowOf(listDetail)
 
         // Act
         viewModel = DetailViewModel(
@@ -144,10 +144,10 @@ class DetailViewModelTest {
         // Assert
         val state = viewModel.uiState.value
         assertTrue(state is ListDetailUiState.Success)
-        assertFalse((state as ListDetailUiState.Success).fromCache)
+        assertTrue((state as ListDetailUiState.Success).fromCache)
         verify(exactly = 1) { networkMonitor.isCurrentlyConnected() }
-        verify(exactly = 1) { getListDetailUseCase("list-123", false) }
-        verify(exactly = 0) { getListDetailUseCase("list-123", true) }
+        verify(exactly = 1) { getListDetailUseCase("list-123", true) }
+        verify(exactly = 0) { getListDetailUseCase("list-123", false) }
     }
 
     @Test

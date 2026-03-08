@@ -27,6 +27,11 @@ interface ListDetailRepository {
     fun getCachedListDetail(listId: String): Flow<ListDetail>
 
     /**
+     * Verifica si existe detalle cacheado en Room para una lista.
+     */
+    suspend fun hasCachedListDetail(listId: String): Boolean
+
+    /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      *
      * @param listId ID de la lista
@@ -54,4 +59,3 @@ interface ListDetailRepository {
      */
     suspend fun refreshListDetail(listId: String)
 }
-

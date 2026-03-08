@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.auth.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alentadev.shopping.feature.auth.domain.session.SessionWarmUpOrchestrator
 import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +16,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val getCurrentUserUseCase: GetCurrentUserUseCase,
+    private val sessionWarmUpOrchestrator: SessionWarmUpOrchestrator
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -66,6 +68,7 @@ class LoginViewModel @Inject constructor(
                 safeLog("d", "LoginViewModel", "Iniciando login para email: $email")
                 val session = loginUseCase.execute(email, password)
                 safeLog("d", "LoginViewModel", "Login exitoso: ${session.user.name}")
+                sessionWarmUpOrchestrator.startWarmUp()
                 _uiState.value = LoginUiState.Success(session.user)
             } catch (e: IllegalArgumentException) {
                 safeLog("e", "LoginViewModel", "IllegalArgumentException en login: ${e.message}", e)
