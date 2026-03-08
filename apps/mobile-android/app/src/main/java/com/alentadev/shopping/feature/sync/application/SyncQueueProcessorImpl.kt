@@ -2,8 +2,8 @@ package com.alentadev.shopping.feature.sync.application
 
 import android.util.Log
 import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
-import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailApi
-import com.alentadev.shopping.feature.listdetail.data.remote.UpdateItemCheckRequest
+import com.alentadev.shopping.core.data.database.entity.PendingSyncEntity
+import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.delay
@@ -12,7 +12,7 @@ import retrofit2.HttpException
 @Singleton
 class SyncQueueProcessorImpl @Inject constructor(
     private val pendingSyncDao: PendingSyncDao,
-    private val listDetailApi: ListDetailApi,
+    private val remoteDataSource: ListDetailRemoteDataSource,
     private val backoffPolicy: SyncBackoffPolicy
 ) : SyncQueueProcessor {
 
@@ -22,11 +22,22 @@ class SyncQueueProcessorImpl @Inject constructor(
 
         for (operation in pendingOperations) {
             try {
-                listDetailApi.updateItemCheck(
-                    operation.listId,
-                    operation.itemId,
-                    UpdateItemCheckRequest(operation.checked)
-                )
+                when (operation.commandType) {
+                    PendingSyncEntity.COMMAND_COMPLETE_LIST -> {
+                        remoteDataSource.completeList(
+                            listId = operation.listId,
+                            checkedItemIds = operation.checkedItemIdsPayload.toCheckedItemIds()
+                        )
+                    }
+
+                    else -> {
+                        remoteDataSource.updateItemCheck(
+                            listId = operation.listId,
+                            itemId = operation.itemId,
+                            checked = operation.checked
+                        )
+                    }
+                }
                 pendingSyncDao.delete(operation.operationId)
                 Log.d("SyncQueueProcessor", "merge_result listId=${operation.listId} remoteItems=1 pendingOverrides=1")
             } catch (exception: Exception) {
@@ -55,4 +66,8 @@ class SyncQueueProcessorImpl @Inject constructor(
         return httpException.code() == 403 || httpException.code() == 404
     }
 
+    private fun String?.toCheckedItemIds(): List<String> {
+        if (this.isNullOrBlank()) return emptyList()
+        return split(",").map { it.trim() }.filter { it.isNotBlank() }
+    }
 }

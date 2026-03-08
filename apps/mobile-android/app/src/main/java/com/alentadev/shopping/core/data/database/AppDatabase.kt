@@ -23,7 +23,7 @@ import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
         SyncMetadataEntity::class,
         PendingSyncEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -61,5 +61,13 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         database.execSQL(
             "CREATE UNIQUE INDEX IF NOT EXISTS index_pending_sync_listId_itemId ON pending_sync(listId, itemId)"
         )
+    }
+}
+
+
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE pending_sync ADD COLUMN commandType TEXT NOT NULL DEFAULT 'update_item_check'")
+        database.execSQL("ALTER TABLE pending_sync ADD COLUMN checkedItemIdsPayload TEXT")
     }
 }

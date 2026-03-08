@@ -190,10 +190,12 @@ class ListDetailRepositoryImplTest {
     @Test
     fun `completeList returns success when remote completes without error`() = runTest {
         coEvery { remoteDataSource.completeList("list-1", listOf("item-1")) } returns Unit
+        coEvery { localDataSource.markListPendingCompletion("list-1") } returns Unit
 
         val result = repository.completeList("list-1", listOf("item-1"))
 
         assertEquals(CompleteListResult.Success, result)
+        coVerify(exactly = 1) { localDataSource.markListPendingCompletion("list-1") }
     }
 
     @Test
@@ -244,10 +246,14 @@ class ListDetailRepositoryImplTest {
     @Test
     fun `completeList maps network exception to no connection`() = runTest {
         coEvery { remoteDataSource.completeList(any(), any()) } throws IOException("Sin conexión")
+        coEvery { localDataSource.markListPendingCompletion("list-1") } returns Unit
+        coEvery { localDataSource.enqueuePendingCompleteListOperation("list-1", listOf("item-1"), any()) } returns Unit
 
         val result = repository.completeList("list-1", listOf("item-1"))
 
         assertEquals(CompleteListResult.NoConnection, result)
+        coVerify(exactly = 1) { localDataSource.markListPendingCompletion("list-1") }
+        coVerify(exactly = 1) { localDataSource.enqueuePendingCompleteListOperation("list-1", listOf("item-1"), any()) }
     }
 
     private fun httpException(code: Int): HttpException {

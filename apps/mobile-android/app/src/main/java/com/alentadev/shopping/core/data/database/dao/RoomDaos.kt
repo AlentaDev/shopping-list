@@ -159,8 +159,8 @@ interface SyncMetadataDao {
 interface PendingSyncDao {
     @Query(
         """
-        INSERT INTO pending_sync(operationId, listId, itemId, checked, localUpdatedAt, retryCount, status)
-        VALUES(lower(hex(randomblob(16))), :listId, :itemId, :checked, :localUpdatedAt, 0, 'pending')
+        INSERT INTO pending_sync(operationId, listId, itemId, checked, commandType, checkedItemIdsPayload, localUpdatedAt, retryCount, status)
+        VALUES(lower(hex(randomblob(16))), :listId, :itemId, :checked, 'update_item_check', NULL, :localUpdatedAt, 0, 'pending')
         ON CONFLICT(listId, itemId) DO UPDATE SET
             operationId = excluded.operationId,
             checked = excluded.checked,
@@ -176,10 +176,30 @@ interface PendingSyncDao {
         localUpdatedAt: Long
     )
 
+
+
+    @Query(
+        """
+        INSERT INTO pending_sync(operationId, listId, itemId, checked, commandType, checkedItemIdsPayload, localUpdatedAt, retryCount, status)
+        VALUES(lower(hex(randomblob(16))), :listId, '__complete_list__', 0, 'complete_list', :checkedItemIdsPayload, :localUpdatedAt, 0, 'pending')
+        ON CONFLICT(listId, itemId) DO UPDATE SET
+            operationId = excluded.operationId,
+            checkedItemIdsPayload = excluded.checkedItemIdsPayload,
+            localUpdatedAt = excluded.localUpdatedAt,
+            retryCount = 0,
+            status = 'pending'
+        """
+    )
+    suspend fun upsertCompleteListCommand(
+        listId: String,
+        checkedItemIdsPayload: String,
+        localUpdatedAt: Long
+    )
+
     @Query("SELECT * FROM pending_sync WHERE status = 'pending' ORDER BY localUpdatedAt ASC")
     suspend fun getPendingOrderedByLocalUpdatedAt(): List<PendingSyncEntity>
 
-    @Query("SELECT checked FROM pending_sync WHERE listId = :listId AND itemId = :itemId AND status = 'pending' LIMIT 1")
+    @Query("SELECT checked FROM pending_sync WHERE listId = :listId AND itemId = :itemId AND commandType = 'update_item_check' AND status = 'pending' LIMIT 1")
     suspend fun getPendingCheckedState(listId: String, itemId: String): Boolean?
 
     @Query("UPDATE pending_sync SET retryCount = retryCount + 1 WHERE operationId = :operationId")

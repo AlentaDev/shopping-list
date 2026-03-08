@@ -99,6 +99,23 @@ class ListDetailLocalDataSource @Inject constructor(
         pendingSyncDao.markFailedPermanent(operationId)
     }
 
+
+
+    suspend fun enqueuePendingCompleteListOperation(listId: String, checkedItemIds: List<String>, localUpdatedAt: Long) {
+        val payload = checkedItemIds.joinToString(",")
+        pendingSyncDao.upsertCompleteListCommand(listId, payload, localUpdatedAt)
+    }
+
+    suspend fun markListPendingCompletion(listId: String) {
+        val list = listDao.getListById(listId) ?: return
+        listDao.update(
+            list.copy(
+                status = "COMPLETED",
+                syncedAt = System.currentTimeMillis()
+            )
+        )
+    }
+
     suspend fun deleteListItems(listId: String) {
         itemDao.deleteByListId(listId)
     }

@@ -222,6 +222,35 @@ class ListDetailLocalDataSourceTest {
         assertEquals(false, itemById.getValue("item-no-pending").checked)
     }
 
+
+    @Test
+    fun `enqueuePendingCompleteListOperation enqueues collapsed complete-list command`() = runTest {
+        coEvery { pendingSyncDao.upsertCompleteListCommand("list-1", "item-1,item-2", 1000L) } returns Unit
+
+        dataSource.enqueuePendingCompleteListOperation("list-1", listOf("item-1", "item-2"), 1000L)
+
+        coVerify(exactly = 1) { pendingSyncDao.upsertCompleteListCommand("list-1", "item-1,item-2", 1000L) }
+    }
+
+    @Test
+    fun `markListPendingCompletion marks list as completed locally`() = runTest {
+        val list = ListEntity(
+            id = "list-1",
+            title = "Compra",
+            status = "ACTIVE",
+            updatedAt = "2026-03-01T10:00:00Z",
+            itemCount = 2,
+            syncedAt = 100L
+        )
+
+        coEvery { listDao.getListById("list-1") } returns list
+        coEvery { listDao.update(any()) } returns Unit
+
+        dataSource.markListPendingCompletion("list-1")
+
+        coVerify(exactly = 1) { listDao.update(match { it.id == "list-1" && it.status == "COMPLETED" }) }
+    }
+
     @Test
     fun `deleteListItems deletes all items for list`() = runTest {
         val listId = "list-123"

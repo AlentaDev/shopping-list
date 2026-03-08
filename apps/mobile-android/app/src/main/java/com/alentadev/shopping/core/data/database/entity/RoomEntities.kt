@@ -97,6 +97,8 @@ data class PendingSyncEntity(
     val listId: String,
     val itemId: String,
     val checked: Boolean,
+    val commandType: String = COMMAND_UPDATE_ITEM_CHECK,
+    val checkedItemIdsPayload: String? = null,
     val localUpdatedAt: Long,
     val retryCount: Int = 0,
     val status: String = STATUS_PENDING
@@ -104,5 +106,8 @@ data class PendingSyncEntity(
     companion object {
         const val STATUS_PENDING = "pending"
         const val STATUS_FAILED_PERMANENT = "failed_permanent"
+        const val COMMAND_UPDATE_ITEM_CHECK = "update_item_check"
+        const val COMMAND_COMPLETE_LIST = "complete_list"
+        const val COMPLETE_LIST_ITEM_ID = "__complete_list__"
     }
 }
