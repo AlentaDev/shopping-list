@@ -173,6 +173,38 @@ class SyncQueueProcessorImplTest {
     }
 
 
+
+    @Test
+    fun `flushPendingSync normalizes complete-list payload before replaying command`() = runTest {
+        val pendingSyncDao = mockk<PendingSyncDao>()
+        val remoteDataSource = mockk<ListDetailRemoteDataSource>()
+        val backoffPolicy = mockk<SyncBackoffPolicy>(relaxed = true)
+        val pendingOperation = PendingSyncEntity(
+            operationId = "op-1",
+            listId = "list-1",
+            itemId = PendingSyncEntity.COMPLETE_LIST_ITEM_ID,
+            checked = false,
+            commandType = PendingSyncEntity.COMMAND_COMPLETE_LIST,
+            checkedItemIdsPayload = " item-1, item-1, , item-2 ",
+            localUpdatedAt = 10L
+        )
+
+        coEvery { pendingSyncDao.getPendingOrderedByLocalUpdatedAt() } returns listOf(pendingOperation)
+        coEvery { remoteDataSource.completeList("list-1", listOf("item-1", "item-2")) } returns Unit
+        coEvery { pendingSyncDao.delete("op-1") } returns Unit
+
+        val processor = SyncQueueProcessorImpl(
+            pendingSyncDao = pendingSyncDao,
+            remoteDataSource = remoteDataSource,
+            backoffPolicy = backoffPolicy
+        )
+
+        processor.flushPendingSync()
+
+        coVerify(exactly = 1) { remoteDataSource.completeList("list-1", listOf("item-1", "item-2")) }
+        coVerify(exactly = 1) { pendingSyncDao.delete("op-1") }
+    }
+
     @Test
     fun `hasPendingSyncOperations returns true when dao has pending operations`() = runTest {
         val pendingSyncDao = mockk<PendingSyncDao>()

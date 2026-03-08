@@ -11,7 +11,6 @@ sealed interface CompleteListResult {
     data object Unauthorized : CompleteListResult
     data object Forbidden : CompleteListResult
     data object NotFound : CompleteListResult
-    data object ListNotFound : CompleteListResult
     data object ServerError : CompleteListResult
 }
 
@@ -19,9 +18,12 @@ class CompleteListUseCase @Inject constructor(
     private val repository: ListDetailRepository
 ) {
     suspend operator fun invoke(listId: String, checkedItemIds: List<String>): CompleteListResult {
-        require(listId.isNotBlank()) { "El ID de la lista no puede estar vacío" }
-        require(checkedItemIds.none { it.isBlank() }) { "Los IDs de items marcados no pueden estar vacíos" }
+        val normalizedListId = listId.trim()
+        require(normalizedListId.isNotBlank()) { "El ID de la lista no puede estar vacío" }
 
-        return repository.completeList(listId, checkedItemIds)
+        val normalizedCheckedItemIds = checkedItemIds.map { it.trim() }
+        require(normalizedCheckedItemIds.none { it.isBlank() }) { "Los IDs de items marcados no pueden estar vacíos" }
+
+        return repository.completeList(normalizedListId, normalizedCheckedItemIds.distinct())
     }
 }

@@ -39,7 +39,8 @@ class ListDetailRemoteDataSource @Inject constructor(
      * @throws Exception si hay error de red o servidor
      */
     suspend fun completeList(listId: String, checkedItemIds: List<String>) {
-        completeListApi.completeList(listId, CompleteListRequest(checkedItemIds = checkedItemIds))
+        val normalizedCheckedItemIds = checkedItemIds.map { it.trim() }.filter { it.isNotBlank() }.distinct()
+        completeListApi.completeList(listId, CompleteListRequest(checkedItemIds = normalizedCheckedItemIds))
     }
 
     suspend fun updateItemCheck(listId: String, itemId: String, checked: Boolean) {

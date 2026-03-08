@@ -25,7 +25,8 @@ import com.alentadev.shopping.R
 fun TotalBar(
     total: Double,
     modifier: Modifier = Modifier,
-    onCompleteList: (() -> Unit)? = null
+    onCompleteList: (() -> Unit)? = null,
+    isCompleteEnabled: Boolean = true
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -63,6 +64,7 @@ fun TotalBar(
             if (onCompleteList != null) {
                 Button(
                     onClick = onCompleteList,
+                    enabled = isCompleteEnabled,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = stringResource(R.string.detail_complete_button))

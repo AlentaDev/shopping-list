@@ -3,6 +3,7 @@ package com.alentadev.shopping.feature.listdetail.data.remote
 import com.alentadev.shopping.feature.listdetail.data.dto.ListDetailDto
 import com.alentadev.shopping.feature.listdetail.data.dto.ListItemDto
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -161,5 +162,16 @@ class ListDetailRemoteDataSourceTest {
             assertEquals("API Error", e.message)
         }
     }
-}
 
+    @Test
+    fun `completeList trims and deduplicates checked item ids before request`() = runTest {
+        coEvery { completeListApi.completeList(any(), any()) } returns Unit
+
+        dataSource.completeList("list-1", listOf(" item-1 ", "item-1", "item-2 "))
+
+        coVerify(exactly = 1) {
+            completeListApi.completeList("list-1", match { it.checkedItemIds == listOf("item-1", "item-2") })
+        }
+    }
+
+}

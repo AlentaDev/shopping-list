@@ -231,7 +231,7 @@ class ListDetailRepositoryImplTest {
 
         val result = repository.completeList("list-1", listOf("item-1"))
 
-        assertEquals(CompleteListResult.ListNotFound, result)
+        assertEquals(CompleteListResult.NotFound, result)
     }
 
     @Test

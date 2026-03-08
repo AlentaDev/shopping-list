@@ -1,5 +1,6 @@
 package com.alentadev.shopping.feature.listdetail.ui.navigation
 
+import android.net.Uri
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
@@ -43,6 +44,6 @@ fun NavGraphBuilder.listDetailScreen(
  * @param listId ID de la lista a mostrar
  */
 fun NavController.navigateToListDetail(listId: String) {
-    navigate("$LIST_DETAIL_ROUTE/$listId")
+    navigate("$LIST_DETAIL_ROUTE/${Uri.encode(listId)}")
 }
 

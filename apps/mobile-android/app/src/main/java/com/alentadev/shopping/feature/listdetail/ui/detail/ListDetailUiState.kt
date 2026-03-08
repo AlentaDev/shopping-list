@@ -19,7 +19,6 @@ enum class CompleteListError {
     UNAUTHORIZED,
     FORBIDDEN,
     NOT_FOUND,
-    LIST_NOT_FOUND,
     SERVER_ERROR,
     UNKNOWN
 }

@@ -545,6 +545,39 @@ class DetailViewModelTest {
         assertTrue(state.showCompleteConfirmation)
     }
 
+
+    @Test
+    fun `onCompleteListRequested resets sync status to idle before showing dialog`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
+        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns SyncCheckResult.Success
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        viewModel.toggleItemCheck("item-1", true)
+        advanceUntilIdle()
+        val stateAfterSync = viewModel.uiState.value as ListDetailUiState.Success
+        assertEquals(SyncStatus.SUCCESS, stateAfterSync.syncStatus)
+
+        viewModel.onCompleteListRequested()
+
+        val state = viewModel.uiState.value as ListDetailUiState.Success
+        assertTrue(state.showCompleteConfirmation)
+        assertEquals(SyncStatus.IDLE, state.syncStatus)
+    }
+
     @Test
     fun `complete list happy path shows loading state and emits navigation after success`() = runTest(mainDispatcherRule.testDispatcher) {
         val listDetail = createListDetail("list-123", "Test List", 2).copy(

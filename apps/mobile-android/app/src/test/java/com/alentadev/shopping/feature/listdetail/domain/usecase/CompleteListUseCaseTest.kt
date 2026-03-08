@@ -6,6 +6,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 
@@ -67,5 +68,39 @@ class CompleteListUseCaseTest {
         }
 
         coVerify(exactly = failures.size) { repository.completeList(listId, checkedItemIds) }
+    }
+
+    @Test
+    fun `trims and deduplicates checked item ids before delegating`() = runTest {
+        val listId = " list-321 "
+        val checkedItemIds = listOf(" item-1 ", "item-1", " item-2")
+        coEvery { repository.completeList("list-321", listOf("item-1", "item-2")) } returns CompleteListResult.Success
+
+        val result = useCase(listId, checkedItemIds)
+
+        assertEquals(CompleteListResult.Success, result)
+        coVerify(exactly = 1) { repository.completeList("list-321", listOf("item-1", "item-2")) }
+    }
+
+    @Test
+    fun `throws when list id is blank after trim`() {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                useCase("   ", listOf("item-1"))
+            }
+        }
+
+        assertEquals("El ID de la lista no puede estar vacío", exception.message)
+    }
+
+    @Test
+    fun `throws when any checked item id is blank after trim`() {
+        val exception = assertThrows(IllegalArgumentException::class.java) {
+            kotlinx.coroutines.runBlocking {
+                useCase("list-1", listOf("item-1", "  "))
+            }
+        }
+
+        assertEquals("Los IDs de items marcados no pueden estar vacíos", exception.message)
     }
 }
