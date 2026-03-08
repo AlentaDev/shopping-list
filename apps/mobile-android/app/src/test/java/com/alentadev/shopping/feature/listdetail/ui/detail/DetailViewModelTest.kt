@@ -546,6 +546,107 @@ class DetailViewModelTest {
     }
 
     @Test
+    fun `complete list happy path shows loading state and emits navigation after success`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 2).copy(
+            items = listOf(
+                CatalogItem("item-1", "Item 1", 1.0, true, "2024-01-01", 5.0, "prod-1"),
+                CatalogItem("item-2", "Item 2", 1.0, false, "2024-01-01", 5.0, "prod-2")
+            )
+        )
+        val gate = CompletableDeferred<Unit>()
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", listOf("item-1")) } coAnswers {
+            gate.await()
+            CompleteListResult.Success
+        }
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        val receivedEvents = mutableListOf<DetailUiEvent>()
+        val collectJob = backgroundScope.launch {
+            viewModel.uiEvents.collect { receivedEvents += it }
+        }
+
+        viewModel.onCompleteListRequested()
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val inFlightState = viewModel.uiState.value as ListDetailUiState.Success
+        assertTrue(inFlightState.isCompleting)
+        assertTrue(inFlightState.showCompleteConfirmation)
+        assertTrue(receivedEvents.isEmpty())
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        val completedState = viewModel.uiState.value as ListDetailUiState.Success
+        assertFalse(completedState.isCompleting)
+        assertFalse(completedState.showCompleteConfirmation)
+        assertEquals(listOf(DetailUiEvent.ListCompleted), receivedEvents)
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `complete list offline and reconnect flow maps to pending then retry success`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", any()) } returnsMany listOf(
+            CompleteListResult.NoConnection,
+            CompleteListResult.Offline
+        )
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        viewModel.onCompleteListRequested()
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val firstAttemptState = viewModel.uiState.value as ListDetailUiState.Success
+        assertEquals(CompleteListError.NO_CONNECTION, firstAttemptState.completeListError)
+        assertFalse(firstAttemptState.showCompleteConfirmation)
+
+        val receivedEvents = mutableListOf<DetailUiEvent>()
+        val collectJob = backgroundScope.launch {
+            viewModel.uiEvents.collect { receivedEvents += it }
+        }
+
+        viewModel.onCompleteListRequested()
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val retryState = viewModel.uiState.value as ListDetailUiState.Success
+        assertNull(retryState.completeListError)
+        assertFalse(retryState.showCompleteConfirmation)
+        assertEquals(listOf(DetailUiEvent.ListCompleted), receivedEvents)
+        coVerify(exactly = 2) { completeListUseCase("list-123", any()) }
+
+        collectJob.cancel()
+    }
+
+    @Test
     fun `confirmCompleteList deduplicates repeated taps while request is in flight`() = runTest(mainDispatcherRule.testDispatcher) {
         val listDetail = createListDetail("list-123", "Test List", 2).copy(
             items = listOf(
@@ -618,6 +719,44 @@ class DetailViewModelTest {
         val state = viewModel.uiState.value as ListDetailUiState.Success
         assertEquals(CompleteListError.INVALID_TRANSITION, state.completeListError)
         assertFalse(state.showCompleteConfirmation)
+    }
+
+    @Test
+    fun `confirmCompleteList maps api errors to UI feedback`() = runTest(mainDispatcherRule.testDispatcher) {
+        val cases = listOf(
+            CompleteListResult.NotFound to CompleteListError.NOT_FOUND,
+            CompleteListResult.ServerError to CompleteListError.SERVER_ERROR,
+            CompleteListResult.Unauthorized to CompleteListError.UNAUTHORIZED,
+            CompleteListResult.Forbidden to CompleteListError.FORBIDDEN
+        )
+
+        cases.forEach { (result, expectedError) ->
+            val listDetail = createListDetail("list-123", "Test List", 1)
+            every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+            coEvery { completeListUseCase("list-123", any()) } returns result
+
+            viewModel = DetailViewModel(
+                getListDetailUseCase = getListDetailUseCase,
+                checkItemUseCase = checkItemUseCase,
+                calculateTotalUseCase = calculateTotalUseCase,
+                syncCheckUseCase = syncCheckUseCase,
+                detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+                refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+                completeListUseCase = completeListUseCase,
+                networkMonitor = networkMonitor,
+                savedStateHandle = savedStateHandle
+            )
+            advanceUntilIdle()
+
+            viewModel.onCompleteListRequested()
+            viewModel.confirmCompleteList()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value as ListDetailUiState.Success
+            assertEquals(expectedError, state.completeListError)
+            assertFalse(state.showCompleteConfirmation)
+            assertFalse(state.isCompleting)
+        }
     }
 
     @Test
