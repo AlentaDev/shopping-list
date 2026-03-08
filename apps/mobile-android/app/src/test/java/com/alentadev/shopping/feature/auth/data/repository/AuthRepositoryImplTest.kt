@@ -7,7 +7,9 @@ import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.entity.User
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -150,7 +152,7 @@ class AuthRepositoryImplTest {
         val cachedSession = Session(user = cachedUser)
 
         coEvery { remoteDataSource.getCurrentUser() } throws Exception("Network error")
-        coEvery { localDataSource.getSession() } returns flowOf(cachedSession)
+        every { localDataSource.getSession() } returns flowOf(cachedSession)
 
         // Act
         val result = authRepository.getCurrentSession()
@@ -164,7 +166,7 @@ class AuthRepositoryImplTest {
     fun `getCurrentSession throws when no session found`() = runTest {
         // Arrange
         coEvery { remoteDataSource.getCurrentUser() } throws Exception("Not authorized")
-        coEvery { localDataSource.getSession() } returns flowOf(null)
+        every { localDataSource.getSession() } returns flowOf(null)
 
         // Act & Assert
         try {
@@ -174,4 +176,21 @@ class AuthRepositoryImplTest {
             assertEquals("User not authenticated", e.message)
         }
     }
+    @Test
+    fun `observeSession delegates to local data source flow`() = runTest {
+        val session = Session(
+            user = User(
+                id = "u-1",
+                name = "User",
+                email = "u@example.com",
+                postalCode = "08001"
+            )
+        )
+        every { localDataSource.getSession() } returns flowOf(session)
+
+        val result = authRepository.observeSession().first()
+
+        assertEquals(session, result)
+    }
+
 }

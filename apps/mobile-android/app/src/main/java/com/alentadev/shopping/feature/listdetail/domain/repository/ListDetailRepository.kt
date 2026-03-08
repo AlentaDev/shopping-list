@@ -32,6 +32,11 @@ interface ListDetailRepository {
     suspend fun hasCachedListDetail(listId: String): Boolean
 
     /**
+     * Timestamp local del snapshot en caché (epoch millis), o null si no existe.
+     */
+    suspend fun getCachedSnapshotTimestamp(listId: String): Long?
+
+    /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      *
      * @param listId ID de la lista
