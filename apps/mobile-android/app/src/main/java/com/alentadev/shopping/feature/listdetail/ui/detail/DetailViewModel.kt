@@ -10,6 +10,7 @@ import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUs
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckResult
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -144,10 +145,10 @@ class DetailViewModel @Inject constructor(
                     Log.d(TAG, "toggleItemCheck -> syncing with backend")
                     updateSyncStatus(SyncStatus.SYNCING)
 
-                    val syncSuccess = syncCheckUseCase(listId, itemId, checked)
-                    Log.d(TAG, "toggleItemCheck -> sync result success=$syncSuccess")
-
-                    updateSyncStatus(if (syncSuccess) SyncStatus.SUCCESS else SyncStatus.IDLE)
+                    when (syncCheckUseCase(listId, itemId, checked)) {
+                        SyncCheckResult.Success -> updateSyncStatus(SyncStatus.SUCCESS)
+                        SyncCheckResult.TransientFailure, SyncCheckResult.PermanentFailure -> updateSyncStatus(SyncStatus.IDLE)
+                    }
                 } else {
                     Log.d(TAG, "toggleItemCheck -> offline, local only")
                 }

@@ -8,6 +8,7 @@ import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUs
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckResult
 import com.alentadev.shopping.feature.listdetail.domain.usecase.SyncCheckUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -264,7 +265,7 @@ class DetailViewModelTest {
         val listDetail = createListDetail("list-123", "Test List", 2)
         every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
-        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns true
+        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns SyncCheckResult.Success
         viewModel = DetailViewModel(
             getListDetailUseCase = getListDetailUseCase,
             checkItemUseCase = checkItemUseCase,
@@ -294,7 +295,7 @@ class DetailViewModelTest {
         every { networkMonitor.isCurrentlyConnected() } returns true
         every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
         coEvery { checkItemUseCase("list-123", "item-1", true) } returns Unit
-        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns true
+        coEvery { syncCheckUseCase("list-123", "item-1", true) } returns SyncCheckResult.Success
 
         viewModel = DetailViewModel(
             getListDetailUseCase = getListDetailUseCase,

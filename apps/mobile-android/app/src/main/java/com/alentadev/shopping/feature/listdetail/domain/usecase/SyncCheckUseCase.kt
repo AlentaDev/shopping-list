@@ -1,48 +1,63 @@
 package com.alentadev.shopping.feature.listdetail.domain.usecase
 
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
+import retrofit2.HttpException
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
+
+sealed interface SyncCheckResult {
+    data object Success : SyncCheckResult
+    data object TransientFailure : SyncCheckResult
+    data object PermanentFailure : SyncCheckResult
+}
 
 /**
  * Caso de uso para sincronizar un check de item con el servidor
- *
- * Intenta enviar el cambio de check al servidor.
- * Si no hay red, el cambio se queda local (offline-first).
  */
 class SyncCheckUseCase @Inject constructor(
     private val repository: ListDetailRepository
 ) {
-    /**
-     * Intenta sincronizar un cambio de check con el servidor
-     *
-     * @param listId ID de la lista
-     * @param itemId ID del item
-     * @param checked Nuevo estado del check
-     * @return true si la sincronización fue exitosa, false si falló (sin red)
-     * @throws IllegalArgumentException si los IDs están vacíos
-     */
     suspend operator fun invoke(
         listId: String,
         itemId: String,
         checked: Boolean
-    ): Boolean {
-        // Validar inputs
+    ): SyncCheckResult {
         require(listId.isNotBlank()) { "El ID de la lista no puede estar vacío" }
         require(itemId.isNotBlank()) { "El ID del item no puede estar vacío" }
 
-        android.util.Log.d("SyncCheckUseCase", "🔄 Iniciando sincronización - listId: $listId, itemId: $itemId, checked: $checked")
-
-        // Intentar sincronizar con el servidor
         return try {
             repository.syncItemCheck(listId, itemId, checked)
-            android.util.Log.d("SyncCheckUseCase", "✅ Sincronización exitosa")
-            true // Sincronización exitosa
+            SyncCheckResult.Success
         } catch (e: Exception) {
-            android.util.Log.e("SyncCheckUseCase", "❌ Error en sincronización: ${e.message}", e)
-            // Sin red o error del servidor: el cambio ya está local
-            false // Sincronización falló
+            val localUpdatedAt = System.currentTimeMillis()
+            when {
+                e.isPermanentHttpError() -> {
+                    repository.markCheckOperationFailedPermanent(listId, itemId, checked, localUpdatedAt)
+                    SyncCheckResult.PermanentFailure
+                }
+
+                e.isTransientSyncError() -> {
+                    repository.enqueuePendingCheckOperation(listId, itemId, checked, localUpdatedAt)
+                    SyncCheckResult.TransientFailure
+                }
+
+                else -> {
+                    repository.enqueuePendingCheckOperation(listId, itemId, checked, localUpdatedAt)
+                    SyncCheckResult.TransientFailure
+                }
+            }
         }
     }
+
+    private fun Exception.isPermanentHttpError(): Boolean {
+        val httpException = this as? HttpException ?: return false
+        return httpException.code() == 403 || httpException.code() == 404
+    }
+
+    private fun Exception.isTransientSyncError(): Boolean {
+        return this is IOException ||
+            this is SocketTimeoutException ||
+            ((this as? HttpException)?.code() ?: 0) >= 500
+    }
 }
-
-

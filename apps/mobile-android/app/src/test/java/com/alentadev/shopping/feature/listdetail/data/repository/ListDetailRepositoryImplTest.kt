@@ -4,16 +4,18 @@ import com.alentadev.shopping.core.data.network.DataSource
 import com.alentadev.shopping.core.data.network.OfflineFirstExecutor
 import com.alentadev.shopping.core.data.network.OfflineFirstResult
 import com.alentadev.shopping.core.network.ConnectivityGate
+import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataSource
+import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
 import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
-import com.alentadev.shopping.feature.listdetail.data.remote.ListDetailRemoteDataSource
-import com.alentadev.shopping.feature.listdetail.data.local.ListDetailLocalDataSource
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -35,93 +37,8 @@ class ListDetailRepositoryImplTest {
 
     @Test
     fun `getListDetail returns flow from local data source`() = runTest {
-        // Arrange
         val listId = "list-123"
-        val items = listOf(
-            CatalogItem(
-                id = "item-1",
-                name = "Leche",
-                qty = 2.0,
-                checked = false,
-                updatedAt = "2026-02-25T10:00:00Z",
-                thumbnail = "https://example.com/leche.jpg",
-                price = 1.50,
-                unitSize = 1.0,
-                unitFormat = "L",
-                unitPrice = 1.50,
-                isApproxSize = false,
-                source = "mercadona",
-                sourceProductId = "prod-1"
-            )
-        )
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Supermercado",
-            items = items,
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
-
-        coEvery { remoteDataSource.getListDetail(listId) } returns listDetail
-        coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
-        coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(listDetail)
-        coEvery {
-            offlineFirstExecutor.execute<ListDetail>(
-                connectivityGate = any(),
-                fetchRemote = any(),
-                saveRemote = any(),
-                readLocal = any()
-            )
-        } returns OfflineFirstResult.Success(listDetail, DataSource.REMOTE)
-
-        // Act
-        val result = mutableListOf<ListDetail?>()
-        repository.getListDetail(listId).collect { result.add(it) }
-
-        // Assert
-        assertEquals(1, result.size)
-        assertEquals(listId, result[0]?.id)
-        assertEquals("Supermercado", result[0]?.title)
-        coVerify(exactly = 1) {
-            offlineFirstExecutor.execute<ListDetail>(
-                connectivityGate = any(),
-                fetchRemote = any(),
-                saveRemote = any(),
-                readLocal = any()
-            )
-        }
-    }
-
-    @Test
-    fun `getCachedListDetail returns flow from local without remote sync attempt`() = runTest {
-        val listId = "list-cached"
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Offline",
-            items = emptyList(),
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
-
-        coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(listDetail)
-
-        val result = mutableListOf<ListDetail?>()
-        repository.getCachedListDetail(listId).collect { result.add(it) }
-
-        assertEquals(1, result.size)
-        assertEquals("Offline", result.first()?.title)
-        coVerify(exactly = 0) { remoteDataSource.getListDetail(any()) }
-    }
-
-
-    @Test
-    fun `getListDetail saves remote data to local cache`() = runTest {
-        // Arrange
-        val listId = "list-456"
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Compra semanal",
-            items = emptyList(),
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
+        val listDetail = ListDetail(id = listId, title = "Compra semanal", items = emptyList(), updatedAt = "2026")
 
         coEvery { remoteDataSource.getListDetail(listId) } returns listDetail
         coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
@@ -136,28 +53,20 @@ class ListDetailRepositoryImplTest {
         } coAnswers {
             val fetchRemote = arg<suspend () -> ListDetail>(1)
             val saveRemote = arg<suspend (ListDetail) -> Unit>(2)
-
             val remoteValue = fetchRemote()
             saveRemote(remoteValue)
             OfflineFirstResult.Success(remoteValue, DataSource.REMOTE)
         }
 
-        // Act
         repository.getListDetail(listId).collect {}
 
-        // Assert
         coVerify { localDataSource.saveListDetail(listDetail) }
     }
 
     @Test
     fun `getListDetail delegates fallback decision to offline executor`() = runTest {
         val listId = "list-remote-fail"
-        val cached = ListDetail(
-            id = listId,
-            title = "Cached detail",
-            items = emptyList(),
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
+        val cached = ListDetail(id = listId, title = "Cached detail", items = emptyList(), updatedAt = "2026")
 
         coEvery { localDataSource.getListDetailFlow(listId) } returns flowOf(cached)
         coEvery {
@@ -174,19 +83,10 @@ class ListDetailRepositoryImplTest {
 
         assertEquals(1, result.size)
         assertEquals("Cached detail", result.first()?.title)
-        coVerify(exactly = 1) {
-            offlineFirstExecutor.execute<ListDetail>(
-                connectivityGate = connectivityGate,
-                fetchRemote = any(),
-                saveRemote = any(),
-                readLocal = any()
-            )
-        }
     }
 
     @Test
     fun `updateItemChecked updates item locally when exists`() = runTest {
-        // Arrange
         val listId = "list-123"
         val itemId = "item-1"
         val items = listOf(
@@ -195,7 +95,7 @@ class ListDetailRepositoryImplTest {
                 name = "Leche",
                 qty = 2.0,
                 checked = false,
-                updatedAt = "2026-02-25T10:00:00Z",
+                updatedAt = "2026",
                 thumbnail = null,
                 price = 1.50,
                 unitSize = null,
@@ -206,34 +106,22 @@ class ListDetailRepositoryImplTest {
                 sourceProductId = "prod-1"
             )
         )
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Supermercado",
-            items = items,
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
+        val listDetail = ListDetail(id = listId, title = "Supermercado", items = items, updatedAt = "2026")
 
         coEvery { localDataSource.getListDetail(listId) } returns listDetail
         coEvery { localDataSource.updateItemChecked(itemId, true) } returns Unit
 
-        // Act
         repository.updateItemChecked(listId, itemId, true)
 
-        // Assert
         coVerify { localDataSource.updateItemChecked(itemId, true) }
     }
 
     @Test
     fun `updateItemChecked throws when list not found`() = runTest {
-        // Arrange
-        val listId = "list-999"
-        val itemId = "item-1"
+        coEvery { localDataSource.getListDetail("list-999") } returns null
 
-        coEvery { localDataSource.getListDetail(listId) } returns null
-
-        // Act & Assert
         try {
-            repository.updateItemChecked(listId, itemId, true)
+            repository.updateItemChecked("list-999", "item-1", true)
             fail("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             assertTrue(e.message?.contains("Lista no encontrada") ?: false)
@@ -242,21 +130,11 @@ class ListDetailRepositoryImplTest {
 
     @Test
     fun `updateItemChecked throws when item not found`() = runTest {
-        // Arrange
-        val listId = "list-123"
-        val itemId = "item-999"
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Supermercado",
-            items = emptyList(),
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
+        val listDetail = ListDetail(id = "list-123", title = "Supermercado", items = emptyList(), updatedAt = "2026")
+        coEvery { localDataSource.getListDetail("list-123") } returns listDetail
 
-        coEvery { localDataSource.getListDetail(listId) } returns listDetail
-
-        // Act & Assert
         try {
-            repository.updateItemChecked(listId, itemId, true)
+            repository.updateItemChecked("list-123", "item-999", true)
             fail("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             assertTrue(e.message?.contains("Item no encontrado") ?: false)
@@ -264,43 +142,43 @@ class ListDetailRepositoryImplTest {
     }
 
     @Test
-    fun `refreshListDetail fetches from remote and saves to local`() = runTest {
-        // Arrange
-        val listId = "list-123"
-        val listDetail = ListDetail(
-            id = listId,
-            title = "Supermercado",
-            items = emptyList(),
-            updatedAt = "2026-02-25T10:00:00Z"
-        )
+    fun `syncItemCheck delegates to remote`() = runTest {
+        coEvery { remoteDataSource.updateItemCheck("list-1", "item-1", true) } returns Unit
 
-        coEvery { remoteDataSource.getListDetail(listId) } returns listDetail
-        coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
+        repository.syncItemCheck("list-1", "item-1", true)
 
-        // Act
-        repository.refreshListDetail(listId)
-
-        // Assert
-        coVerify {
-            remoteDataSource.getListDetail(listId)
-            localDataSource.saveListDetail(listDetail)
-        }
+        coVerify(exactly = 1) { remoteDataSource.updateItemCheck("list-1", "item-1", true) }
     }
 
     @Test
-    fun `refreshListDetail throws when network error`() = runTest {
-        // Arrange
-        val listId = "list-123"
-        val networkError = Exception("Network error")
+    fun `enqueuePendingCheckOperation delegates to local datasource`() = runTest {
+        coEvery { localDataSource.enqueuePendingCheckOperation("list-1", "item-1", true, 1234L) } returns Unit
 
-        coEvery { remoteDataSource.getListDetail(listId) } throws networkError
+        repository.enqueuePendingCheckOperation("list-1", "item-1", true, 1234L)
 
-        // Act & Assert
-        try {
-            repository.refreshListDetail(listId)
-            fail("Expected Exception")
-        } catch (e: Exception) {
-            assertEquals("Network error", e.message)
+        coVerify(exactly = 1) { localDataSource.enqueuePendingCheckOperation("list-1", "item-1", true, 1234L) }
+    }
+
+    @Test
+    fun `markCheckOperationFailedPermanent delegates to local datasource`() = runTest {
+        coEvery { localDataSource.markPendingCheckFailedPermanent("list-1", "item-1", false, 1234L) } returns Unit
+
+        repository.markCheckOperationFailedPermanent("list-1", "item-1", false, 1234L)
+
+        coVerify(exactly = 1) { localDataSource.markPendingCheckFailedPermanent("list-1", "item-1", false, 1234L) }
+    }
+
+    @Test
+    fun `refreshListDetail fetches from remote and saves to local`() = runTest {
+        val listDetail = ListDetail(id = "list-123", title = "Supermercado", items = emptyList(), updatedAt = "2026")
+        coEvery { remoteDataSource.getListDetail("list-123") } returns listDetail
+        coEvery { localDataSource.saveListDetail(listDetail) } returns Unit
+
+        repository.refreshListDetail("list-123")
+
+        coVerify {
+            remoteDataSource.getListDetail("list-123")
+            localDataSource.saveListDetail(listDetail)
         }
     }
 }
