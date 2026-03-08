@@ -15,6 +15,7 @@ import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.SessionInvalidationNotifier
 import com.alentadev.shopping.core.network.TokenAuthenticator
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
+import com.alentadev.shopping.feature.auth.domain.session.SessionWarmUpOrchestrator
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -92,8 +93,12 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideSessionInvalidationNotifier(
-        cookieJar: PersistentCookieJar
-    ): SessionInvalidationNotifier = CookieClearingSessionInvalidationNotifier(cookieJar)
+        cookieJar: PersistentCookieJar,
+        sessionWarmUpOrchestrator: SessionWarmUpOrchestrator
+    ): SessionInvalidationNotifier = CookieClearingSessionInvalidationNotifier(
+        cookieJar = cookieJar,
+        sessionWarmUpOrchestrator = sessionWarmUpOrchestrator
+    )
 
     @Singleton
     @Provides
