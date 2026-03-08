@@ -37,6 +37,16 @@ interface ListDetailRepository {
     suspend fun getCachedSnapshotTimestamp(listId: String): Long?
 
     /**
+     * Timestamp de negocio local (`updatedAt` ISO-8601), o null si no existe snapshot.
+     */
+    suspend fun getCachedListUpdatedAt(listId: String): String?
+
+    /**
+     * Timestamp de negocio remoto (`updatedAt` ISO-8601) obtenido del servidor.
+     */
+    suspend fun getRemoteListUpdatedAt(listId: String): String
+
+    /**
      * Actualiza el estado checked de un item de forma local (offline-first)
      *
      * @param listId ID de la lista

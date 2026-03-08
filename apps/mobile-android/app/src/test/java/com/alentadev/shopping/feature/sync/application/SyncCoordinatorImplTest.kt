@@ -1,5 +1,6 @@
 package com.alentadev.shopping.feature.sync.application
 
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +16,7 @@ class SyncCoordinatorImplTest {
     fun `startForAuthenticatedSession launches warm-up and pending sync flush`() = runTest {
         val warmupService = mockk<ListsWarmupService>(relaxed = true)
         val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
+        coEvery { syncQueueProcessor.hasPendingSyncOperations() } returns false
         val coordinator = SyncCoordinatorImpl(
             listsWarmupService = warmupService,
             syncQueueProcessor = syncQueueProcessor,
@@ -32,6 +34,7 @@ class SyncCoordinatorImplTest {
     fun `flushPendingQueue launches only pending sync flush`() = runTest {
         val warmupService = mockk<ListsWarmupService>(relaxed = true)
         val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
+        coEvery { syncQueueProcessor.hasPendingSyncOperations() } returns false
         val coordinator = SyncCoordinatorImpl(
             listsWarmupService = warmupService,
             syncQueueProcessor = syncQueueProcessor,
@@ -44,4 +47,25 @@ class SyncCoordinatorImplTest {
         coVerify(exactly = 0) { warmupService.warmUp() }
         coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
     }
+
+
+    @Test
+    fun `startForAuthenticatedSession skips warm-up when pending operations remain after flush`() = runTest {
+        val warmupService = mockk<ListsWarmupService>(relaxed = true)
+        val syncQueueProcessor = mockk<SyncQueueProcessor>(relaxed = true)
+        coEvery { syncQueueProcessor.hasPendingSyncOperations() } returns true
+        val coordinator = SyncCoordinatorImpl(
+            listsWarmupService = warmupService,
+            syncQueueProcessor = syncQueueProcessor,
+            dispatcher = StandardTestDispatcher(testScheduler)
+        )
+
+        coordinator.startForAuthenticatedSession()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { syncQueueProcessor.flushPendingSync() }
+        coVerify(exactly = 1) { syncQueueProcessor.hasPendingSyncOperations() }
+        coVerify(exactly = 0) { warmupService.warmUp() }
+    }
+
 }

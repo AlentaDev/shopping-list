@@ -25,6 +25,10 @@ class ListDetailRemoteDataSource @Inject constructor(
         return dto.toDomain()
     }
 
+    suspend fun getListUpdatedAt(listId: String): String {
+        return listDetailApi.getListDetail(listId).updatedAt
+    }
+
     /**
      * Actualiza el estado checked de un item en el servidor
      * @param listId ID de la lista
