@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.alentadev.shopping.core.data.database.AppDatabase
 import com.alentadev.shopping.core.data.database.MIGRATION_2_3
 import com.alentadev.shopping.core.data.database.MIGRATION_3_4
+import com.alentadev.shopping.core.data.database.MIGRATION_4_5
 import com.alentadev.shopping.core.data.database.dao.ItemEntityDao
 import com.alentadev.shopping.core.data.database.dao.ListEntityDao
 import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
@@ -31,7 +32,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "shopping_list_db"
         )
-            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
     }
 

@@ -142,10 +142,16 @@ class ListDetailRepositoryImpl @Inject constructor(
     override suspend fun completeList(listId: String, checkedItemIds: List<String>): CompleteListResult {
         return try {
             remoteDataSource.completeList(listId, checkedItemIds)
+            localDataSource.markListPendingCompletion(listId)
             CompleteListResult.Success
         } catch (e: Exception) {
             when {
-                e is IOException || e is SocketTimeoutException -> CompleteListResult.NoConnection
+                e is IOException || e is SocketTimeoutException -> {
+                    val localUpdatedAt = System.currentTimeMillis()
+                    localDataSource.markListPendingCompletion(listId)
+                    localDataSource.enqueuePendingCompleteListOperation(listId, checkedItemIds, localUpdatedAt)
+                    CompleteListResult.NoConnection
+                }
                 (e as? HttpException)?.code() == 400 -> CompleteListResult.InvalidTransition
                 (e as? HttpException)?.code() == 401 -> CompleteListResult.Unauthorized
                 (e as? HttpException)?.code() == 403 -> CompleteListResult.Forbidden
