@@ -38,6 +38,8 @@ import com.alentadev.shopping.R
 @Composable
 fun ActiveListsScreen(
     onNavigateToDetail: (String) -> Unit,
+    refreshSignal: Long? = null,
+    onRefreshSignalConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ListsViewModel = hiltViewModel()
 ) {
@@ -58,6 +60,14 @@ fun ActiveListsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadLists()
+    }
+
+
+    LaunchedEffect(refreshSignal) {
+        if (refreshSignal != null) {
+            viewModel.refreshLists()
+            onRefreshSignalConsumed()
+        }
     }
 
     Scaffold(

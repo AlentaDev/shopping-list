@@ -348,6 +348,39 @@ class ListsViewModelTest {
         advanceUntilIdle()
     }
 
+    @Test
+    fun `refreshLists reflects completed list removal from local cache when offline`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
+        coEvery { listsRepository.getCachedActiveLists() } returnsMany listOf(
+            listOf(ShoppingList("1", "Lista activa", ListStatus.ACTIVE, 1000L, 1)),
+            emptyList()
+        )
+
+        viewModel = ListsViewModel(
+            getActiveListsUseCase,
+            refreshListsUseCase,
+            listsRepository,
+            networkMonitor
+        )
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        val initialState = viewModel.uiState.value
+        assertTrue(initialState is ListsUiState.Success)
+
+        viewModel.refreshLists()
+        advanceUntilIdle()
+
+        val refreshedState = viewModel.uiState.value
+        assertTrue(refreshedState is ListsUiState.Empty)
+        assertTrue((refreshedState as ListsUiState.Empty).isOffline)
+        coVerify(exactly = 2) { listsRepository.getCachedActiveLists() }
+        coVerify(exactly = 0) { refreshListsUseCase.execute() }
+    }
+
+
 
 }
 

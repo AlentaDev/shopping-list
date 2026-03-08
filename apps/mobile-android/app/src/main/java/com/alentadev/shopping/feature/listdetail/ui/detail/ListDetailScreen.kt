@@ -25,6 +25,7 @@ import com.alentadev.shopping.feature.listdetail.ui.components.TotalBar
 @Composable
 fun ListDetailScreen(
     onBackClick: () -> Unit,
+    onListCompleted: () -> Unit,
     viewModel: DetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -48,7 +49,7 @@ fun ListDetailScreen(
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             if (event is DetailUiEvent.ListCompleted) {
-                onBackClick()
+                onListCompleted()
             }
         }
     }

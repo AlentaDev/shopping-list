@@ -19,7 +19,8 @@ private const val LIST_DETAIL_ROUTE_WITH_ARGS = "$LIST_DETAIL_ROUTE/{$LIST_ID_AR
  * Agrega la pantalla de detalle de lista al grafo de navegación
  */
 fun NavGraphBuilder.listDetailScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onListCompleted: () -> Unit
 ) {
     composable(
         route = LIST_DETAIL_ROUTE_WITH_ARGS,
@@ -29,7 +30,10 @@ fun NavGraphBuilder.listDetailScreen(
             }
         )
     ) {
-        ListDetailScreen(onBackClick = onBackClick)
+        ListDetailScreen(
+            onBackClick = onBackClick,
+            onListCompleted = onListCompleted
+        )
     }
 }
 

@@ -24,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -617,6 +618,101 @@ class DetailViewModelTest {
         val state = viewModel.uiState.value as ListDetailUiState.Success
         assertEquals(CompleteListError.INVALID_TRANSITION, state.completeListError)
         assertFalse(state.showCompleteConfirmation)
+    }
+
+    @Test
+    fun `confirmCompleteList emits ListCompleted navigation only once`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", any()) } returns CompleteListResult.Success
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        val receivedEvents = mutableListOf<DetailUiEvent>()
+        val collectJob = backgroundScope.launch {
+            viewModel.uiEvents.collect { receivedEvents += it }
+        }
+
+        viewModel.onCompleteListRequested()
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        assertEquals(listOf(DetailUiEvent.ListCompleted), receivedEvents)
+        coVerify(exactly = 1) { completeListUseCase("list-123", any()) }
+
+        collectJob.cancel()
+    }
+
+    @Test
+    fun `confirmCompleteList does not re-emit navigation after state restoration`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", any()) } returns CompleteListResult.Success
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        val firstEvents = mutableListOf<DetailUiEvent>()
+        val firstCollector = backgroundScope.launch {
+            viewModel.uiEvents.collect { firstEvents += it }
+        }
+
+        viewModel.onCompleteListRequested()
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+        firstCollector.cancel()
+
+        assertEquals(listOf(DetailUiEvent.ListCompleted), firstEvents)
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+
+        val restoredEvents = mutableListOf<DetailUiEvent>()
+        val restoredCollector = backgroundScope.launch {
+            viewModel.uiEvents.collect { restoredEvents += it }
+        }
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        assertTrue(restoredEvents.isEmpty())
+        coVerify(exactly = 1) { completeListUseCase("list-123", any()) }
+
+        restoredCollector.cancel()
     }
 
     // Helper para crear ListDetail de prueba
