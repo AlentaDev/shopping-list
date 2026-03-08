@@ -48,7 +48,7 @@
     <string name="detail_remote_changes_banner">La lista cambió en la web. Revisa los cambios</string>
     <string name="detail_refresh_button">Actualizar</string>
     <string name="detail_permanent_error_banner">No se puede actualizar esta lista ahora. Mostrando último estado guardado.</string>
-    <string name="background_sync_snackbar">Mostrando datos guardados. Actualizando…</string>
+    <string name="background_sync_snackbar">Actualizando datos en segundo plano…</string>
 
     <!-- Item Card -->
     <string name="item_thumbnail_description">Imagen de %1$s</string>

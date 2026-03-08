@@ -225,6 +225,18 @@ class ListsViewModelTest {
         assertEquals("Network error", (state as ListsUiState.Error).message)
     }
 
+
+    @Test
+    fun `loadLists with cache does not trigger entry background refresh`() = runTest(mainDispatcherRule.testDispatcher) {
+        val cached = listOf(ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 1))
+        coEvery { listsRepository.getCachedActiveLists() } returns cached
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { refreshListsUseCase.execute() }
+    }
+
     @Test
     fun `refreshLists sets Success when lists are returned`() = runTest(mainDispatcherRule.testDispatcher) {
         val lists = listOf(
@@ -277,7 +289,7 @@ class ListsViewModelTest {
     }
 
     @Test
-    fun `reconnect triggers background refresh exactly once`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `reconnect triggers background refresh when cache exists`() = runTest(mainDispatcherRule.testDispatcher) {
         val connectivity = MutableStateFlow(false)
         every { networkMonitor.isConnected } returns connectivity
         every { networkMonitor.isCurrentlyConnected() } returns false
@@ -303,17 +315,32 @@ class ListsViewModelTest {
     }
 
     @Test
-    fun `loadLists deduplicates concurrent background refresh triggers`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `reconnect deduplicates concurrent background refresh triggers`() = runTest(mainDispatcherRule.testDispatcher) {
+        val connectivity = MutableStateFlow(false)
         val cached = listOf(ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 1))
         val gate = CompletableDeferred<Unit>()
+
+        every { networkMonitor.isConnected } returns connectivity
+        every { networkMonitor.isCurrentlyConnected() } returns false
         coEvery { listsRepository.getCachedActiveLists() } returns cached
         coEvery { refreshListsUseCase.execute() } coAnswers {
             gate.await()
             cached
         }
 
+        viewModel = ListsViewModel(
+            getActiveListsUseCase,
+            refreshListsUseCase,
+            listsRepository,
+            networkMonitor
+        )
+
         viewModel.loadLists()
-        viewModel.loadLists()
+        advanceUntilIdle()
+
+        connectivity.value = true
+        connectivity.value = false
+        connectivity.value = true
         advanceUntilIdle()
 
         coVerify(exactly = 1) { refreshListsUseCase.execute() }

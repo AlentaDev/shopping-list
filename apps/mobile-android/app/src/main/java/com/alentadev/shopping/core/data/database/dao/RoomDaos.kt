@@ -102,6 +102,9 @@ interface ItemEntityDao {
     @Query("SELECT * FROM items WHERE listId = :listId AND checked = 1")
     suspend fun getCheckedItemsByListId(listId: String): List<ItemEntity>
 
+    @Query("SELECT COUNT(*) FROM items WHERE listId = :listId")
+    suspend fun countItemsByListId(listId: String): Int
+
     @Update
     suspend fun update(item: ItemEntity)
 

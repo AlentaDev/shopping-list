@@ -77,7 +77,7 @@ class ListsViewModel @Inject constructor(
                 } else {
                     ListsUiState.Success(lists = cachedLists, fromCache = true)
                 }
-                if (connectivity.effectiveConnected) {
+                if (connectivity.effectiveConnected && cachedLists.isEmpty()) {
                     triggerBackgroundRefresh("entry")
                 }
             } catch (e: Exception) {

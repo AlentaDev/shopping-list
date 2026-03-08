@@ -16,6 +16,7 @@ class RefreshListDetailIfNeededUseCaseTest {
     @Test
     fun `invoke refreshes when local snapshot is missing`() = runTest {
         coEvery { repository.getCachedListUpdatedAt("l1") } returns null
+        coEvery { repository.hasCachedListItems("l1") } returns false
         coEvery { repository.getRemoteListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
 
         val result = useCase("l1")
@@ -27,6 +28,7 @@ class RefreshListDetailIfNeededUseCaseTest {
     @Test
     fun `invoke refreshes when remote updatedAt is newer`() = runTest {
         coEvery { repository.getCachedListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
+        coEvery { repository.hasCachedListItems("l1") } returns true
         coEvery { repository.getRemoteListUpdatedAt("l1") } returns "2025-01-01T10:01:00Z"
 
         val result = useCase("l1")
@@ -38,6 +40,7 @@ class RefreshListDetailIfNeededUseCaseTest {
     @Test
     fun `invoke skips refresh when updatedAt is equal or older`() = runTest {
         coEvery { repository.getCachedListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
+        coEvery { repository.hasCachedListItems("l1") } returns true
         coEvery { repository.getRemoteListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
 
         val result = useCase("l1")
@@ -47,8 +50,21 @@ class RefreshListDetailIfNeededUseCaseTest {
     }
 
     @Test
+    fun `invoke refreshes when list exists but items are missing`() = runTest {
+        coEvery { repository.getCachedListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
+        coEvery { repository.hasCachedListItems("l1") } returns false
+        coEvery { repository.getRemoteListUpdatedAt("l1") } returns "2025-01-01T10:00:00Z"
+
+        val result = useCase("l1")
+
+        assertEquals(RefreshDetailDecision.FETCH_MISSING, result)
+        coVerify(exactly = 1) { repository.refreshListDetail("l1") }
+    }
+
+    @Test
     fun `invoke skips refresh when updatedAt is invalid`() = runTest {
         coEvery { repository.getCachedListUpdatedAt("l1") } returns "bad-local"
+        coEvery { repository.hasCachedListItems("l1") } returns true
         coEvery { repository.getRemoteListUpdatedAt("l1") } returns "bad-remote"
 
         val result = useCase("l1")

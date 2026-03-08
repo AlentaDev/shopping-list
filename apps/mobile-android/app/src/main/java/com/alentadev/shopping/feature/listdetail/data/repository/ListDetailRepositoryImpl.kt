@@ -66,6 +66,10 @@ class ListDetailRepositoryImpl @Inject constructor(
         return localDataSource.getListDetail(listId) != null
     }
 
+    override suspend fun hasCachedListItems(listId: String): Boolean {
+        return localDataSource.hasCachedItems(listId)
+    }
+
     override suspend fun getCachedSnapshotTimestamp(listId: String): Long? {
         return localDataSource.getCachedSnapshotTimestamp(listId)
     }

@@ -18,8 +18,9 @@ class RefreshListDetailIfNeededUseCase @Inject constructor(
     suspend operator fun invoke(listId: String): RefreshDetailDecision {
         val localUpdatedAt = repository.getCachedListUpdatedAt(listId)
         val remoteUpdatedAt = repository.getRemoteListUpdatedAt(listId)
+        val hasCachedItems = repository.hasCachedListItems(listId)
 
-        if (localUpdatedAt == null) {
+        if (localUpdatedAt == null || !hasCachedItems) {
             repository.refreshListDetail(listId)
             return RefreshDetailDecision.FETCH_MISSING
         }
