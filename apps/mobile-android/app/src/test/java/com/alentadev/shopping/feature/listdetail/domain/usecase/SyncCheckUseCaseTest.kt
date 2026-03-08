@@ -26,7 +26,7 @@ class SyncCheckUseCaseTest {
     }
 
     @Test
-    fun `invoke returns success when remote sync succeeds`() = runTest {
+    fun `invoke returns success when remote sync succeeds and does not touch queue`() = runTest {
         coEvery { repository.syncItemCheck("list-1", "item-1", true) } returns Unit
 
         val result = useCase("list-1", "item-1", true)
@@ -38,8 +38,8 @@ class SyncCheckUseCaseTest {
     }
 
     @Test
-    fun `invoke enqueues pending operation on io exception`() = runTest {
-        coEvery { repository.syncItemCheck("list-1", "item-1", false) } throws IOException("network down")
+    fun `invoke enqueues transient failure with current desired checked value`() = runTest {
+        coEvery { repository.syncItemCheck(any(), any(), any()) } throws IOException("network down")
         coEvery { repository.enqueuePendingCheckOperation(any(), any(), any(), any()) } returns Unit
 
         val result = useCase("list-1", "item-1", false)
@@ -73,7 +73,7 @@ class SyncCheckUseCaseTest {
     }
 
     @Test
-    fun `invoke marks permanent failure on 403 error`() = runTest {
+    fun `invoke marks permanent failure on 403 error and does not enqueue`() = runTest {
         val error = HttpException(Response.error<Any>(403, "".toResponseBody()))
         coEvery { repository.syncItemCheck("list-1", "item-1", true) } throws error
         coEvery { repository.markCheckOperationFailedPermanent(any(), any(), any(), any()) } returns Unit

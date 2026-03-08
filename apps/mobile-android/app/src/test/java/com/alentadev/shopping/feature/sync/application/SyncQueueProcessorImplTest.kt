@@ -70,6 +70,7 @@ class SyncQueueProcessorImplTest {
 
         coVerify(exactly = 1) { pendingSyncDao.incrementRetry("op-1") }
         coVerify(exactly = 1) { backoffPolicy.delayMillisFor(2) }
+        coVerify(exactly = 0) { pendingSyncDao.delete(any()) }
         coVerify(exactly = 0) { pendingSyncDao.markFailedPermanent(any()) }
     }
 
@@ -93,6 +94,7 @@ class SyncQueueProcessorImplTest {
         processor.flushPendingSync()
 
         coVerify(exactly = 1) { pendingSyncDao.markFailedPermanent("op-1") }
+        coVerify(exactly = 0) { pendingSyncDao.delete(any()) }
         coVerify(exactly = 0) { pendingSyncDao.incrementRetry(any()) }
         coVerify(exactly = 0) { backoffPolicy.delayMillisFor(any()) }
     }
