@@ -10,6 +10,7 @@ import com.alentadev.shopping.core.data.database.entity.UserEntity
 import com.alentadev.shopping.core.data.database.entity.ListEntity
 import com.alentadev.shopping.core.data.database.entity.ItemEntity
 import com.alentadev.shopping.core.data.database.entity.SyncMetadataEntity
+import com.alentadev.shopping.core.data.database.entity.PendingSyncEntity
 import kotlinx.coroutines.flow.Flow
 
 // ============================================================================
@@ -145,3 +146,42 @@ interface SyncMetadataDao {
     suspend fun deleteAll()
 }
 
+
+
+// ============================================================================
+// PENDING SYNC DAO
+// ============================================================================
+
+@Dao
+interface PendingSyncDao {
+    @Query(
+        """
+        INSERT INTO pending_sync(operationId, listId, itemId, checked, localUpdatedAt, retryCount, status)
+        VALUES(lower(hex(randomblob(16))), :listId, :itemId, :checked, :localUpdatedAt, 0, 'pending')
+        ON CONFLICT(listId, itemId) DO UPDATE SET
+            operationId = excluded.operationId,
+            checked = excluded.checked,
+            localUpdatedAt = excluded.localUpdatedAt,
+            retryCount = 0,
+            status = 'pending'
+        """
+    )
+    suspend fun upsertCollapsed(
+        listId: String,
+        itemId: String,
+        checked: Boolean,
+        localUpdatedAt: Long
+    )
+
+    @Query("SELECT * FROM pending_sync WHERE status = 'pending' ORDER BY localUpdatedAt ASC")
+    suspend fun getPendingOrderedByLocalUpdatedAt(): List<PendingSyncEntity>
+
+    @Query("UPDATE pending_sync SET retryCount = retryCount + 1 WHERE operationId = :operationId")
+    suspend fun incrementRetry(operationId: String)
+
+    @Query("UPDATE pending_sync SET status = 'failed_permanent' WHERE operationId = :operationId")
+    suspend fun markFailedPermanent(operationId: String)
+
+    @Query("DELETE FROM pending_sync WHERE operationId = :operationId")
+    suspend fun delete(operationId: String)
+}

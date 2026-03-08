@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.room.Room
 import com.alentadev.shopping.core.data.database.AppDatabase
 import com.alentadev.shopping.core.data.database.MIGRATION_2_3
-import com.alentadev.shopping.core.data.database.dao.UserDao
-import com.alentadev.shopping.core.data.database.dao.ListEntityDao
+import com.alentadev.shopping.core.data.database.MIGRATION_3_4
 import com.alentadev.shopping.core.data.database.dao.ItemEntityDao
+import com.alentadev.shopping.core.data.database.dao.ListEntityDao
+import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
 import com.alentadev.shopping.core.data.database.dao.SyncMetadataDao
+import com.alentadev.shopping.core.data.database.dao.UserDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,7 +31,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "shopping_list_db"
         )
-            .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 
@@ -48,5 +50,8 @@ object DatabaseModule {
     @Singleton
     @Provides
     fun provideSyncMetadataDao(database: AppDatabase): SyncMetadataDao = database.syncMetadataDao()
-}
 
+    @Singleton
+    @Provides
+    fun providePendingSyncDao(database: AppDatabase): PendingSyncDao = database.pendingSyncDao()
+}

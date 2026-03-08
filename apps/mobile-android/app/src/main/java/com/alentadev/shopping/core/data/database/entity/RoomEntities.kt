@@ -1,6 +1,7 @@
 package com.alentadev.shopping.core.data.database.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 // ============================================================================
@@ -81,3 +82,27 @@ data class SyncMetadataEntity(
     val value: String,
     val updatedAt: Long = System.currentTimeMillis()
 )
+
+// ============================================================================
+// PENDING SYNC ENTITY - Operaciones locales pendientes de sincronización
+// ============================================================================
+
+@Entity(
+    tableName = "pending_sync",
+    indices = [Index(value = ["listId", "itemId"], unique = true)]
+)
+data class PendingSyncEntity(
+    @PrimaryKey(autoGenerate = false)
+    val operationId: String,
+    val listId: String,
+    val itemId: String,
+    val checked: Boolean,
+    val localUpdatedAt: Long,
+    val retryCount: Int = 0,
+    val status: String = STATUS_PENDING
+) {
+    companion object {
+        const val STATUS_PENDING = "pending"
+        const val STATUS_FAILED_PERMANENT = "failed_permanent"
+    }
+}
