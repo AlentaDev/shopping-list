@@ -38,6 +38,10 @@ class SyncQueueProcessorImpl @Inject constructor(
         }
     }
 
+    override suspend fun hasPendingSyncOperations(): Boolean {
+        return pendingSyncDao.getPendingOrderedByLocalUpdatedAt().isNotEmpty()
+    }
+
     private fun Exception.isPermanentError(): Boolean {
         val httpException = this as? HttpException ?: return false
         return httpException.code() == 403 || httpException.code() == 404

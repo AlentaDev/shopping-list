@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
@@ -103,4 +104,27 @@ class SyncQueueProcessorImplTest {
         )
         return HttpException(response)
     }
+
+
+    @Test
+    fun `hasPendingSyncOperations returns true when dao has pending operations`() = runTest {
+        val pendingSyncDao = mockk<PendingSyncDao>()
+        val listDetailApi = mockk<ListDetailApi>()
+        val backoffPolicy = mockk<SyncBackoffPolicy>(relaxed = true)
+
+        coEvery { pendingSyncDao.getPendingOrderedByLocalUpdatedAt() } returns listOf(
+            PendingSyncEntity("op-1", "list-1", "item-1", true, localUpdatedAt = 10L)
+        )
+
+        val processor = SyncQueueProcessorImpl(
+            pendingSyncDao = pendingSyncDao,
+            listDetailApi = listDetailApi,
+            backoffPolicy = backoffPolicy
+        )
+
+        val hasPending = processor.hasPendingSyncOperations()
+
+        assertTrue(hasPending)
+    }
+
 }

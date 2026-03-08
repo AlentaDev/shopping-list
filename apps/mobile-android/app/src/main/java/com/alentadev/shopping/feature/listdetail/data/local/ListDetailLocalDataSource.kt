@@ -37,6 +37,10 @@ class ListDetailLocalDataSource @Inject constructor(
         return listDao.getListById(listId)?.syncedAt
     }
 
+    suspend fun getCachedListUpdatedAt(listId: String): String? {
+        return listDao.getListById(listId)?.updatedAt
+    }
+
     suspend fun saveListDetail(listDetail: ListDetail) {
         val listEntity = ListEntity(
             id = listDetail.id,

@@ -22,8 +22,13 @@ class SyncCoordinatorImpl @Inject constructor(
     override fun startForAuthenticatedSession() {
         syncJob?.cancel()
         syncJob = scope.launch {
-            runCatching { listsWarmupService.warmUp() }
             runCatching { syncQueueProcessor.flushPendingSync() }
+            val hasPendingOperations = runCatching {
+                syncQueueProcessor.hasPendingSyncOperations()
+            }.getOrDefault(true)
+            if (!hasPendingOperations) {
+                runCatching { listsWarmupService.warmUp() }
+            }
         }
     }
 
