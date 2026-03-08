@@ -1,6 +1,7 @@
 package com.alentadev.shopping.feature.listdetail.domain.usecase
 
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
+import com.alentadev.shopping.feature.sync.domain.UpdatedAtComparator
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -19,7 +20,7 @@ class DetectRemoteChangesUseCaseTest {
     @Before
     fun setup() {
         repository = mockk()
-        useCase = DetectRemoteChangesUseCase(repository)
+        useCase = DetectRemoteChangesUseCase(repository, UpdatedAtComparator())
     }
 
     @Test
@@ -61,5 +62,15 @@ class DetectRemoteChangesUseCaseTest {
         } catch (e: IllegalArgumentException) {
             assertEquals("El ID de la lista no puede estar vacío", e.message)
         }
+    }
+
+    @Test
+    fun `invoke returns false when updatedAt is invalid`() = runTest {
+        coEvery { repository.getCachedListUpdatedAt("list-1") } returns "bad-local"
+        coEvery { repository.getRemoteListUpdatedAt("list-1") } returns "bad-remote"
+
+        val result = useCase("list-1")
+
+        assertFalse(result)
     }
 }

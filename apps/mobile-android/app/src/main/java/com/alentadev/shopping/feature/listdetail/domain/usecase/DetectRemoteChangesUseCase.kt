@@ -1,14 +1,13 @@
 package com.alentadev.shopping.feature.listdetail.domain.usecase
 
 import com.alentadev.shopping.feature.listdetail.domain.repository.ListDetailRepository
-import java.time.Instant
+import com.alentadev.shopping.feature.sync.domain.UpdatedAtComparison
+import com.alentadev.shopping.feature.sync.domain.UpdatedAtComparator
 import javax.inject.Inject
 
-/**
- * Caso de uso para detectar si la lista fue modificada remotamente.
- */
 class DetectRemoteChangesUseCase @Inject constructor(
-    private val repository: ListDetailRepository
+    private val repository: ListDetailRepository,
+    private val updatedAtComparator: UpdatedAtComparator
 ) {
     suspend operator fun invoke(listId: String): Boolean {
         require(listId.isNotBlank()) { "El ID de la lista no puede estar vacío" }
@@ -16,12 +15,6 @@ class DetectRemoteChangesUseCase @Inject constructor(
         val localUpdatedAt = repository.getCachedListUpdatedAt(listId) ?: return false
         val remoteUpdatedAt = repository.getRemoteListUpdatedAt(listId)
 
-        val localInstant = localUpdatedAt.toInstantOrNull() ?: return false
-        val remoteInstant = remoteUpdatedAt.toInstantOrNull() ?: return false
-
-        return remoteInstant.isAfter(localInstant)
+        return updatedAtComparator.compare(remoteUpdatedAt, localUpdatedAt) == UpdatedAtComparison.REMOTE_NEWER
     }
-
-    private fun String.toInstantOrNull(): Instant? =
-        runCatching { Instant.parse(this) }.getOrNull()
 }

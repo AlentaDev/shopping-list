@@ -41,6 +41,10 @@ class ListDetailLocalDataSource @Inject constructor(
         return listDao.getListById(listId)?.updatedAt
     }
 
+    suspend fun hasCachedItems(listId: String): Boolean {
+        return itemDao.countItemsByListId(listId) > 0
+    }
+
     suspend fun saveListDetail(listDetail: ListDetail) {
         val listEntity = ListEntity(
             id = listDetail.id,

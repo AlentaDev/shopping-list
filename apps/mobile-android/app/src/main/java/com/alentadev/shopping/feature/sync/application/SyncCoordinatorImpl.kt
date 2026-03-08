@@ -1,5 +1,8 @@
 package com.alentadev.shopping.feature.sync.application
 
+import android.util.Log
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -7,8 +10,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Singleton
 
 @Singleton
 class SyncCoordinatorImpl @Inject constructor(
@@ -21,21 +22,19 @@ class SyncCoordinatorImpl @Inject constructor(
 
     override fun startForAuthenticatedSession() {
         syncJob?.cancel()
-        syncJob = scope.launch {
-            runCatching { syncQueueProcessor.flushPendingSync() }
-            val hasPendingOperations = runCatching {
-                syncQueueProcessor.hasPendingSyncOperations()
-            }.getOrDefault(true)
-            if (!hasPendingOperations) {
-                runCatching { listsWarmupService.warmUp() }
-            }
-        }
+        syncJob = scope.launch { runSyncCycle(trigger = "auth") }
     }
 
     override fun flushPendingQueue() {
-        scope.launch {
-            runCatching { syncQueueProcessor.flushPendingSync() }
-        }
+        scope.launch { runSyncCycle(trigger = "reconnect_or_foreground") }
+    }
+
+    private suspend fun runSyncCycle(trigger: String) {
+        Log.d("SyncCoordinator", "refresh_started resource=sync trigger=$trigger")
+        val flushResult = runCatching { syncQueueProcessor.flushPendingSync() }
+        Log.d("SyncCoordinator", "pending_flush_result status=${if (flushResult.isSuccess) "success" else "failed"}")
+        runCatching { listsWarmupService.warmUp() }
+        Log.d("SyncCoordinator", "refresh_finished resource=sync trigger=$trigger")
     }
 
     override fun cancel() {

@@ -33,6 +33,7 @@ class ListsWarmupServiceImplTest {
         val list = ShoppingList("l1", "Lista 1", ListStatus.ACTIVE, 100L, 2)
         coEvery { listsRepository.refreshActiveLists() } returns listOf(list)
         coEvery { listDetailRepository.hasCachedListDetail("l1") } returns false
+        coEvery { listDetailRepository.hasCachedListItems("l1") } returns false
         coEvery { listDetailRepository.getCachedSnapshotTimestamp("l1") } returns null
         coEvery { listDetailRepository.refreshListDetail("l1") } returns Unit
 
@@ -46,10 +47,24 @@ class ListsWarmupServiceImplTest {
         val list = ShoppingList("l1", "Lista 1", ListStatus.ACTIVE, 100L, 2)
         coEvery { listsRepository.refreshActiveLists() } returns listOf(list)
         coEvery { listDetailRepository.hasCachedListDetail("l1") } returns true
+        coEvery { listDetailRepository.hasCachedListItems("l1") } returns true
         coEvery { listDetailRepository.getCachedSnapshotTimestamp("l1") } returns 100L
 
         service.warmUp()
 
         coVerify(exactly = 0) { listDetailRepository.refreshListDetail(any()) }
+    }
+
+    @Test
+    fun `warmUp fetches detail when snapshot exists without items`() = runTest {
+        val list = ShoppingList("l1", "Lista 1", ListStatus.ACTIVE, 100L, 2)
+        coEvery { listsRepository.refreshActiveLists() } returns listOf(list)
+        coEvery { listDetailRepository.hasCachedListDetail("l1") } returns true
+        coEvery { listDetailRepository.hasCachedListItems("l1") } returns false
+        coEvery { listDetailRepository.getCachedSnapshotTimestamp("l1") } returns 100L
+
+        service.warmUp()
+
+        coVerify(exactly = 1) { listDetailRepository.refreshListDetail("l1") }
     }
 }
