@@ -1,6 +1,7 @@
 package com.alentadev.shopping.feature.listdetail.domain.repository
 
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -90,6 +91,12 @@ interface ListDetailRepository {
         checked: Boolean,
         localUpdatedAt: Long
     )
+
+
+    /**
+     * Completa una lista enviando los IDs de items marcados al backend
+     */
+    suspend fun completeList(listId: String, checkedItemIds: List<String>): CompleteListResult
 
     /**
      * Refresca el detalle de la lista desde el servidor

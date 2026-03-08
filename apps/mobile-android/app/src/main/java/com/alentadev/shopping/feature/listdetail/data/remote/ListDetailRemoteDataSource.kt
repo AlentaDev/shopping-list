@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.listdetail.data.remote
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
 import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ManualItem
+import com.alentadev.shopping.feature.listdetail.data.dto.CompleteListRequest
 import com.alentadev.shopping.feature.listdetail.data.dto.ListDetailDto
 import com.alentadev.shopping.feature.listdetail.data.dto.ListItemDto
 import javax.inject.Inject
@@ -11,7 +12,8 @@ import javax.inject.Inject
  * Se comunica directamente con ListDetailApi
  */
 class ListDetailRemoteDataSource @Inject constructor(
-    private val listDetailApi: ListDetailApi
+    private val listDetailApi: ListDetailApi,
+    private val completeListApi: CompleteListApi
 ) {
 
     /**
@@ -36,6 +38,10 @@ class ListDetailRemoteDataSource @Inject constructor(
      * @param checked Nuevo estado de checked
      * @throws Exception si hay error de red o servidor
      */
+    suspend fun completeList(listId: String, checkedItemIds: List<String>) {
+        completeListApi.completeList(listId, CompleteListRequest(checkedItemIds = checkedItemIds))
+    }
+
     suspend fun updateItemCheck(listId: String, itemId: String, checked: Boolean) {
         android.util.Log.d("RemoteDataSource", "🚀 PATCH /api/lists/$listId/items/$itemId - checked: $checked")
         val request = UpdateItemCheckRequest(checked)
