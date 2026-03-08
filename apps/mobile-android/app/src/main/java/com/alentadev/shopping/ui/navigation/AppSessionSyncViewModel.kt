@@ -8,10 +8,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AppSessionSyncViewModel @Inject constructor(
-    appSessionSyncObserver: AppSessionSyncObserver
+    private val appSessionSyncObserver: AppSessionSyncObserver
 ) : ViewModel() {
 
     init {
         appSessionSyncObserver.start(viewModelScope)
+    }
+
+    fun onAppForeground() {
+        appSessionSyncObserver.onAppForeground()
     }
 }

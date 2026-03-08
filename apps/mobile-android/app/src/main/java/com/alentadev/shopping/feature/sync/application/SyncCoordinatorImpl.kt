@@ -27,6 +27,12 @@ class SyncCoordinatorImpl @Inject constructor(
         }
     }
 
+    override fun flushPendingQueue() {
+        scope.launch {
+            runCatching { syncQueueProcessor.flushPendingSync() }
+        }
+    }
+
     override fun cancel() {
         syncJob?.cancel()
         syncJob = null
