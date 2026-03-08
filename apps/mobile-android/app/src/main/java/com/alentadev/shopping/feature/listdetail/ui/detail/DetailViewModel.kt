@@ -8,6 +8,8 @@ import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.core.network.resolveConnectivity
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
+import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.DetectRemoteChangesUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.GetListDetailUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.RefreshDetailDecision
@@ -35,6 +37,7 @@ class DetailViewModel @Inject constructor(
     private val syncCheckUseCase: SyncCheckUseCase,
     private val detectRemoteChangesUseCase: DetectRemoteChangesUseCase,
     private val refreshListDetailIfNeededUseCase: RefreshListDetailIfNeededUseCase,
+    private val completeListUseCase: CompleteListUseCase,
     private val networkMonitor: NetworkMonitor,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -55,6 +58,9 @@ class DetailViewModel @Inject constructor(
 
     private val _syncSnackbarEvents = MutableSharedFlow<SyncSnackbarEvent>(extraBufferCapacity = 2)
     val syncSnackbarEvents: SharedFlow<SyncSnackbarEvent> = _syncSnackbarEvents.asSharedFlow()
+
+    private val _uiEvents = MutableSharedFlow<DetailUiEvent>(extraBufferCapacity = 1)
+    val uiEvents: SharedFlow<DetailUiEvent> = _uiEvents.asSharedFlow()
 
     private var refreshJob: Job? = null
 
@@ -107,7 +113,10 @@ class DetailViewModel @Inject constructor(
                         fromCache = true,
                         hasRemoteChanges = currentState?.hasRemoteChanges ?: false,
                         syncStatus = currentState?.syncStatus ?: SyncStatus.IDLE,
-                        hasPermanentRefreshError = currentState?.hasPermanentRefreshError ?: false
+                        hasPermanentRefreshError = currentState?.hasPermanentRefreshError ?: false,
+                        showCompleteConfirmation = currentState?.showCompleteConfirmation ?: false,
+                        isCompleting = currentState?.isCompleting ?: false,
+                        completeListError = currentState?.completeListError
                     )
                     if (connectivity.effectiveConnected && !hasTriggeredEntryRefresh) {
                         triggerBackgroundRefresh("entry")
@@ -115,6 +124,61 @@ class DetailViewModel @Inject constructor(
                     }
                 }
         }
+    }
+
+    fun onCompleteListRequested() {
+        val current = _uiState.value as? ListDetailUiState.Success ?: return
+        _uiState.value = current.copy(showCompleteConfirmation = true, completeListError = null)
+    }
+
+    fun dismissCompleteDialog() {
+        val current = _uiState.value as? ListDetailUiState.Success ?: return
+        _uiState.value = current.copy(showCompleteConfirmation = false)
+    }
+
+    fun confirmCompleteList() {
+        val current = _uiState.value as? ListDetailUiState.Success ?: return
+        if (current.isCompleting) return
+
+        val checkedIds = current.listDetail.items.filter { it.checked }.map { it.id }
+        _uiState.value = current.copy(isCompleting = true, completeListError = null)
+
+        viewModelScope.launch {
+            val result = runCatching { completeListUseCase(listId, checkedIds) }
+                .getOrDefault(CompleteListResult.ServerError)
+
+            val latest = _uiState.value as? ListDetailUiState.Success ?: return@launch
+            when (result) {
+                CompleteListResult.Success,
+                CompleteListResult.Offline -> {
+                    _uiState.value = latest.copy(
+                        isCompleting = false,
+                        showCompleteConfirmation = false,
+                        completeListError = null
+                    )
+                    _uiEvents.tryEmit(DetailUiEvent.ListCompleted)
+                }
+                else -> {
+                    _uiState.value = latest.copy(
+                        isCompleting = false,
+                        showCompleteConfirmation = false,
+                        completeListError = result.toUiError()
+                    )
+                }
+            }
+        }
+    }
+
+    private fun CompleteListResult.toUiError(): CompleteListError = when (this) {
+        CompleteListResult.Offline -> CompleteListError.OFFLINE
+        CompleteListResult.NoConnection -> CompleteListError.NO_CONNECTION
+        CompleteListResult.InvalidTransition -> CompleteListError.INVALID_TRANSITION
+        CompleteListResult.Unauthorized -> CompleteListError.UNAUTHORIZED
+        CompleteListResult.Forbidden -> CompleteListError.FORBIDDEN
+        CompleteListResult.NotFound -> CompleteListError.NOT_FOUND
+        CompleteListResult.ListNotFound -> CompleteListError.LIST_NOT_FOUND
+        CompleteListResult.ServerError -> CompleteListError.SERVER_ERROR
+        CompleteListResult.Success -> CompleteListError.UNKNOWN
     }
 
     private fun triggerBackgroundRefresh(trigger: String) {
@@ -199,4 +263,8 @@ class DetailViewModel @Inject constructor(
 sealed interface SyncSnackbarEvent {
     data object Show : SyncSnackbarEvent
     data object Hide : SyncSnackbarEvent
+}
+
+sealed interface DetailUiEvent {
+    data object ListCompleted : DetailUiEvent
 }
