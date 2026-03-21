@@ -86,3 +86,15 @@ Campos mínimos:
   - `ListsWarmupService` (orquestación)
   - `RefreshDecisionPolicy` (decisión pura)
 - Al cerrar sesión o invalidarse, el warm-up en curso se cancela.
+
+## Startup routing (single source of truth)
+
+- El entry routing de la app vive en `ui/navigation/SessionGateViewModel`.
+- Usa `ObserveSessionUseCase` para sesión persistida y `GetCurrentUserUseCase` para validación remota cuando hay conectividad.
+- Máquina de estados de bootstrap:
+  - `Unknown`
+  - `Checking`
+  - `Authenticated`
+  - `Unauthenticated`
+  - `OfflineRecoverable`
+- `AppNavHost` arranca en `session_gate` y decide ruta de login o listas activas según este estado.
