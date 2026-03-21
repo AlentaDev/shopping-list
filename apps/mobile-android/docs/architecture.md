@@ -97,4 +97,4 @@ Campos mínimos:
   - `Authenticated`
   - `Unauthenticated`
   - `OfflineRecoverable`
-- `AppNavHost` arranca en `session_gate` y decide ruta de login o listas activas según este estado.
+- `AppNavHost` arranca en `bootstrap`; enruta a listas activas (`Authenticated`) o a login (`Unauthenticated` y `OfflineRecoverable`, con modo recuperable en este último caso).

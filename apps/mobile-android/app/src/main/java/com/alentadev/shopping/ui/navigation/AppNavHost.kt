@@ -13,15 +13,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE
+import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE_PATTERN
 import com.alentadev.shopping.feature.auth.ui.navigation.loginScreen
+import com.alentadev.shopping.feature.auth.ui.navigation.loginRoute
 import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_REFRESH_KEY
 import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_ROUTE
 import com.alentadev.shopping.feature.lists.ui.navigation.activeListsScreen
 import com.alentadev.shopping.feature.listdetail.ui.navigation.listDetailScreen
 import com.alentadev.shopping.feature.listdetail.ui.navigation.navigateToListDetail
 
-private const val SESSION_GATE_ROUTE = "session_gate"
+const val BOOTSTRAP_ROUTE = "bootstrap"
 
 @Composable
 fun AppNavHost(
@@ -31,20 +32,23 @@ fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = SESSION_GATE_ROUTE,
+        startDestination = BOOTSTRAP_ROUTE,
         modifier = modifier
     ) {
-        composable(route = SESSION_GATE_ROUTE) {
-            SessionGateRoute(
+        composable(route = BOOTSTRAP_ROUTE) {
+            BootstrapRoute(
                 onNavigateToLogin = {
-                    navController.navigate(LOGIN_ROUTE) {
-                        popUpTo(SESSION_GATE_ROUTE) { inclusive = true }
+                    navController.navigate(loginRoute(recoverableMode = false)) {
+                        popUpTo(BOOTSTRAP_ROUTE) { inclusive = true }
+                    }
+                },
+                onNavigateToRecoverableLogin = {
+                    navController.navigate(loginRoute(recoverableMode = true)) {
+                        popUpTo(BOOTSTRAP_ROUTE) { inclusive = true }
                     }
                 },
                 onNavigateToActiveLists = {
-                    navController.navigate(ACTIVE_LISTS_ROUTE) {
-                        popUpTo(SESSION_GATE_ROUTE) { inclusive = true }
-                    }
+                    navController.navigate(ACTIVE_LISTS_ROUTE)
                 },
                 sessionGateViewModel = sessionGateViewModel
             )
@@ -52,7 +56,7 @@ fun AppNavHost(
         loginScreen(
             onNavigateToActiveListsScreen = {
                 navController.navigate(ACTIVE_LISTS_ROUTE) {
-                    popUpTo(LOGIN_ROUTE) { inclusive = true }
+                    popUpTo(LOGIN_ROUTE_PATTERN) { inclusive = true }
                 }
             }
         )
@@ -76,20 +80,20 @@ fun AppNavHost(
 }
 
 @Composable
-private fun SessionGateRoute(
+private fun BootstrapRoute(
     onNavigateToLogin: () -> Unit,
+    onNavigateToRecoverableLogin: () -> Unit,
     onNavigateToActiveLists: () -> Unit,
     sessionGateViewModel: SessionGateViewModel
 ) {
     val state by sessionGateViewModel.state.collectAsState()
 
     LaunchedEffect(state) {
-        when (state) {
-            AuthBootstrapState.Authenticated,
-            AuthBootstrapState.OfflineRecoverable -> onNavigateToActiveLists()
-            AuthBootstrapState.Unauthenticated -> onNavigateToLogin()
-            AuthBootstrapState.Unknown,
-            AuthBootstrapState.Checking -> Unit
+        when (resolveBootstrapDestination(state)) {
+            ACTIVE_LISTS_ROUTE -> onNavigateToActiveLists()
+            loginRoute(recoverableMode = false) -> onNavigateToLogin()
+            loginRoute(recoverableMode = true) -> onNavigateToRecoverableLogin()
+            null -> Unit
         }
     }
 
@@ -100,3 +104,12 @@ private fun SessionGateRoute(
         CircularProgressIndicator()
     }
 }
+
+internal fun resolveBootstrapDestination(state: AuthBootstrapState): String? =
+    when (state) {
+        AuthBootstrapState.Authenticated -> ACTIVE_LISTS_ROUTE
+        AuthBootstrapState.Unauthenticated -> loginRoute(recoverableMode = false)
+        AuthBootstrapState.OfflineRecoverable -> loginRoute(recoverableMode = true)
+        AuthBootstrapState.Unknown,
+        AuthBootstrapState.Checking -> null
+    }

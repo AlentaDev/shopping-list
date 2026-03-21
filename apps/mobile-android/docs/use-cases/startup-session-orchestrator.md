@@ -16,7 +16,7 @@ Centralizar la decisión de ruta inicial de la app móvil en un único orquestad
 
 ## Resolución de arranque
 1. Si no hay sesión local → `Unauthenticated` (ruta login).
-2. Si hay sesión local y no hay red → `OfflineRecoverable` (permite continuar modo offline).
+2. Si hay sesión local y no hay red → `OfflineRecoverable` (redirige a login en modo recuperable).
 3. Si hay sesión local y hay red:
    - pasa por `Checking`
    - valida usuario remoto con `GetCurrentUserUseCase`
@@ -24,5 +24,6 @@ Centralizar la decisión de ruta inicial de la app móvil en un único orquestad
    - error → `Unauthenticated`
 
 ## Notas de implementación
-- El `AppNavHost` inicia en `session_gate` y navega según el estado del `SessionGateViewModel`.
-- `OfflineRecoverable` y `Authenticated` convergen en la ruta de listas activas como entrypoint funcional.
+- El `AppNavHost` inicia en `bootstrap` y navega según el estado del `SessionGateViewModel`.
+- `Authenticated` navega directo a listas activas.
+- `OfflineRecoverable` navega a login en modo recuperable (`login?recoverable=true`).
