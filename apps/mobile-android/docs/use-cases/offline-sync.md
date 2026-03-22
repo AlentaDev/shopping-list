@@ -1,36 +1,30 @@
 # Caso de uso: Offline y sincronización
 
 ## Objetivo
-Permitir uso offline con snapshots locales y sincronización posterior con merge
-confirmado por el usuario.
+Permitir operación continua sin red y recuperación automática al reconectar, sin perder consistencia.
 
-## Snapshot local
-Se guarda un snapshot con:
-- Lista: `id`, `name`.
-- Productos: `id`, `name`, `price`, `quantity`, `photoUrl`.
-- Estado local: `checked`.
-- Info extra si la API la requiere en UI.
+## Alcance
+- Listas activas con snapshot local.
+- Detalle de lista con check/uncheck local.
+- Sincronización diferida al volver la conectividad.
 
-## Flujo offline
-1) La app detecta falta de red.
-2) Se usa el snapshot local.
-3) El usuario puede marcar/desmarcar productos.
+## Flujo offline recoverable
+1. Se detecta pérdida de red.
+2. Si existe snapshot local, la UI sigue operativa con datos cacheados.
+3. Los cambios del usuario (checks) se persisten localmente.
+4. El estado se muestra como recuperable (sin forzar cierre de sesión inmediato).
 
-## Al recuperar la red (merge)
-1) La app compara la versión remota con el snapshot.
-2) Si hay cambios, se avisa al usuario.
-3) Se realiza merge con confirmación.
+## Flujo al reconectar
+1. Se restablece red.
+2. Se dispara revalidación automática de sesión cuando aplica (`OfflineRecoverable`).
+3. Si la sesión es válida, continúa sincronización de pendientes.
+4. Si la sesión no es válida, se redirige a login.
 
-## Regla de productos eliminados
-- Si un producto fue eliminado en backend:
-  - Se elimina localmente.
-  - Se muestra aviso explícito.
+## Política de sincronización
+- Prioridad 1: preservar cambios locales del usuario.
+- Prioridad 2: actualizar desde remoto cuando la red sea estable.
+- Si hay cambios remotos relevantes, mostrar aviso y permitir refresh explícito en UI.
 
-## UX de avisos
-- Con snapshot disponible: banner/snackbar no intrusivo.
-- Sin snapshot disponible: pantalla completa con botón **Reintentar**.
-
-## Mensajes sugeridos
-- Sin conexión: "Sin conexión. Usando datos guardados."
-- Cambios detectados: "La lista cambió en la web. Revisa los cambios."
-- Producto eliminado: "Se eliminó un producto desde la web."
+## UX mínima esperada
+- Con snapshot: banner no intrusivo de modo offline.
+- Sin snapshot: estado de error recuperable con acción de reintento.

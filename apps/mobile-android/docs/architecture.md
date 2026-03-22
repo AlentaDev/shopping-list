@@ -1,100 +1,75 @@
 # Arquitectura móvil (Android)
 
 ## Objetivo
+Mantener la app Android robusta, simple y alineada con **Clean Architecture + MVVM** y organización por features.
 
-Mantener una app móvil **robusta y simple**, alineada con la arquitectura del
-proyecto y preparada para crecer sin complejidad innecesaria.
+## Estructura por feature
 
-## Estructura por features
-
-Se usa una organización por **feature** y **Clean Architecture + MVVM**.
-Ejemplo de estructura:
-
-```
+```text
 com.alentadev.shopping
-├─ core/                 # utilidades puras
-├─ feature/health/
+├─ core/                 # utilidades técnicas transversales
+├─ feature/<feature>/
 │  ├─ ui/
 │  ├─ domain/
 │  └─ data/
 │     ├─ remote/
 │     └─ local/
-├─ shared/ui/            # componentes UI reutilizables
-└─ app/                  # wiring (DI, navegación)
+├─ shared/ui/
+└─ ui/navigation/        # entrada y enrutamiento global
 ```
 
-## Dependencias
+## Reglas de dependencias
+- `ui -> domain -> data`.
+- `domain` no depende de Android framework.
+- `data` encapsula API + persistencia local.
 
-- `ui/` → `domain/` → `data/`.
-- `domain/` no depende de Android framework.
-- `data/` encapsula red y almacenamiento local.
+## Startup auth gate (single source of truth)
 
-## Offline-first
+El arranque de sesión se decide en `ui/navigation/SessionGateViewModel`.
 
-- Las listas activas se guardan en **snapshot local**.
-- Los checks de compra se permiten **sin red**.
-- Se usa **merge con confirmación** al recuperar conexión.
+### Estados de bootstrap
+- `Unknown`
+- `Checking`
+- `Authenticated`
+- `Unauthenticated`
+- `OfflineRecoverable`
 
-## Snapshot local (mínimo viable)
+### Política de decisión
+1. Sin sesión local: `Unauthenticated`.
+2. Con sesión local y sin red: `OfflineRecoverable`.
+3. Con sesión local y red: `Checking` y validación remota.
+   - éxito: `Authenticated`
+   - error no recuperable: `Unauthenticated`
 
-Campos mínimos:
-- Lista: `id`, `name`.
-- Productos: `id`, `name`, `price`, `quantity`, `photoUrl`.
-- Estado local: `checked`.
-- Información extra según responda la API (si es necesaria en UI).
+`AppNavHost` inicia en `bootstrap` y enruta en función de estos estados.
 
-## Reconciliación al volver la red (merge)
+## Offline recoverable behavior
 
-- Si la lista cambió en backend, se muestra **aviso**.
-- Si un producto fue eliminado en backend:
-  - Se elimina localmente y se **notifica**.
-- No se hace refresh silencioso sin aviso.
+- Si hay datos locales y no hay red, la app preserva sesión recuperable en lugar de forzar logout inmediato.
+- Listas activas y detalle consumen snapshot local cuando la red falla.
+- Cambios de check se guardan localmente y se intentan sincronizar al recuperar conectividad.
 
-## Reintentos de red
+## Reconnect auto-auth policy
 
-- 2 reintentos con backoff (1s, 3s).
-- Luego se muestra aviso con opción **Reintentar**.
-- UX mixto:
-  - Si hay snapshot: banner/snackbar no intrusivo.
-  - Si no hay snapshot: pantalla completa con botón.
+- Si el estado es `OfflineRecoverable`, al volver la red se dispara validación automática de sesión.
+- Si valida, la app vuelve a flujo autenticado sin login manual.
+- Si no valida, permanece/retorna a login según resultado del backend.
 
-## Auth y cookies
+## Red y autenticación
 
 - Login con email/password.
-- Cookies HttpOnly: access 15 min / refresh 7 días.
-- Ante 401: refresh automático y reintento de la request.
-- Si refresh falla: logout automático.
+- Cookies HttpOnly (access/refresh) gestionadas por cliente HTTP.
+- Ante 401, se ejecuta refresh coordinado y reintento.
+- Si el refresh devuelve no autorizado, se invalida sesión.
+- Si el refresh falla por causa recuperable de red, se mantiene estado recuperable.
 
 ## Logout
 
-- Logout manual.
-- Limpia sesión y **borra datos locales** (snapshots y checks).
+- Logout explícito limpia sesión local.
+- Se limpian snapshots y estado local asociado para evitar datos stale entre sesiones.
 
-## UI y textos
+## Referencias
 
-- Textos en `strings.xml`.
-- Mensajes iniciales definidos en la documentación de casos de uso.
-
-
-## Sync post-login (módulo dedicado)
-
-- El warm-up de listas vive en `feature/sync/`.
-- `feature/auth` se limita a autenticación/sesión y no orquesta warm-up.
-- El trigger ocurre en límite de app/sesión (`AppSessionSyncObserver`).
-- Componentes estables:
-  - `SyncCoordinator` (arranque/cancelación)
-  - `ListsWarmupService` (orquestación)
-  - `RefreshDecisionPolicy` (decisión pura)
-- Al cerrar sesión o invalidarse, el warm-up en curso se cancela.
-
-## Startup routing (single source of truth)
-
-- El entry routing de la app vive en `ui/navigation/SessionGateViewModel`.
-- Usa `ObserveSessionUseCase` para sesión persistida y `GetCurrentUserUseCase` para validación remota cuando hay conectividad.
-- Máquina de estados de bootstrap:
-  - `Unknown`
-  - `Checking`
-  - `Authenticated`
-  - `Unauthenticated`
-  - `OfflineRecoverable`
-- `AppNavHost` arranca en `bootstrap`; enruta a listas activas (`Authenticated`) o a login (`Unauthenticated` y `OfflineRecoverable`, con modo recuperable en este último caso).
+- Roadmap canónico: `docs/implementation/006-implementation-plan.md`
+- Caso de uso de arranque: `docs/use-cases/startup-session-orchestrator.md`
+- Caso de uso offline/sync: `docs/use-cases/offline-sync.md`
