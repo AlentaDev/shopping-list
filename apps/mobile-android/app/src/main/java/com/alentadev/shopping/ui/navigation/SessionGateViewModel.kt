@@ -2,6 +2,7 @@ package com.alentadev.shopping.ui.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
@@ -14,7 +15,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import java.io.IOException
 import javax.inject.Inject
+import retrofit2.HttpException
+
+private const val TAG = "SessionGateViewModel"
 
 @HiltViewModel
 class SessionGateViewModel @Inject constructor(
@@ -29,6 +34,14 @@ class SessionGateViewModel @Inject constructor(
 
     private var hasRetriedCurrentRecoverableWindow = false
 
+    private fun transitionTo(newState: AuthBootstrapState, reason: String) {
+        val previous = _state.value
+        if (previous != newState) {
+            Log.d(TAG, "session_state_transition from=$previous to=$newState reason=$reason")
+        }
+        _state.value = newState
+    }
+
     init {
         observeStartupSession()
         observeReconnectForRecoverableState()
@@ -41,7 +54,7 @@ class SessionGateViewModel @Inject constructor(
                 .collectLatest { session ->
                     if (session == null) {
                         hasRetriedCurrentRecoverableWindow = false
-                        _state.value = AuthBootstrapState.Unauthenticated
+                        transitionTo(AuthBootstrapState.Unauthenticated, reason = "persisted_session_missing")
                         return@collectLatest
                     }
 
@@ -69,6 +82,7 @@ class SessionGateViewModel @Inject constructor(
                     if (hasRetriedCurrentRecoverableWindow) return@collect
 
                     hasRetriedCurrentRecoverableWindow = true
+                    Log.d(TAG, "session_validation_retry trigger=reconnect")
                     resolvePersistedSession()
                 }
         }
@@ -76,16 +90,30 @@ class SessionGateViewModel @Inject constructor(
 
     private suspend fun resolvePersistedSession() {
         if (!connectivityGate.isOnline()) {
-            _state.value = AuthBootstrapState.OfflineRecoverable
+            transitionTo(AuthBootstrapState.OfflineRecoverable, reason = "connectivity_gate_offline")
             return
         }
 
-        _state.value = AuthBootstrapState.Checking
-        _state.value = try {
+        transitionTo(AuthBootstrapState.Checking, reason = "remote_validation_started")
+        val nextState = try {
             getCurrentUserUseCase.execute()
             AuthBootstrapState.Authenticated
-        } catch (_: Exception) {
-            AuthBootstrapState.Unauthenticated
+        } catch (exception: Exception) {
+            if (isDefinitiveAuthFailure(exception)) {
+                AuthBootstrapState.Unauthenticated
+            } else {
+                AuthBootstrapState.OfflineRecoverable
+            }
+        }
+        transitionTo(nextState, reason = "remote_validation_finished")
+    }
+
+    private fun isDefinitiveAuthFailure(exception: Exception): Boolean {
+        return when (exception) {
+            is HttpException -> exception.code() == 401 || exception.code() == 403
+            is IllegalStateException -> true
+            is IOException -> false
+            else -> false
         }
     }
 }
