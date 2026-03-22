@@ -15,7 +15,6 @@ import org.junit.Test
 
 class TokenAuthenticatorTest {
 
-    private val cookieJar = mockk<PersistentCookieJar>(relaxed = true)
     private val authRetryPolicy = mockk<AuthRetryPolicy>()
     private val refreshCoordinator = mockk<RefreshCoordinator>()
     private val sessionInvalidationNotifier = mockk<SessionInvalidationNotifier>(relaxed = true)
@@ -24,7 +23,6 @@ class TokenAuthenticatorTest {
     fun `authenticate returns null when policy blocks refresh`() {
         every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns false
         val authenticator = TokenAuthenticator(
-            cookieJar,
             authRetryPolicy,
             refreshCoordinator,
             sessionInvalidationNotifier
@@ -43,7 +41,6 @@ class TokenAuthenticatorTest {
         every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.SUCCESS
         val authenticator = TokenAuthenticator(
-            cookieJar,
             authRetryPolicy,
             refreshCoordinator,
             sessionInvalidationNotifier
@@ -64,7 +61,6 @@ class TokenAuthenticatorTest {
         every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_UNAUTHORIZED
         val authenticator = TokenAuthenticator(
-            cookieJar,
             authRetryPolicy,
             refreshCoordinator,
             sessionInvalidationNotifier
@@ -83,7 +79,6 @@ class TokenAuthenticatorTest {
         every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns true
         coEvery { refreshCoordinator.refresh() } returns RefreshCoordinator.Result.FAILED_NETWORK
         val authenticator = TokenAuthenticator(
-            cookieJar,
             authRetryPolicy,
             refreshCoordinator,
             sessionInvalidationNotifier

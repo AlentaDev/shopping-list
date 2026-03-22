@@ -18,7 +18,6 @@ private const val TAG = "TokenAuthenticator"
  * potencialmente renovados por la API en la respuesta previa.
  */
 class TokenAuthenticator(
-    private val cookieJar: PersistentCookieJar,
     private val authRetryPolicy: AuthRetryPolicy,
     private val refreshCoordinator: RefreshCoordinator,
     private val sessionInvalidationNotifier: SessionInvalidationNotifier
@@ -39,15 +38,14 @@ class TokenAuthenticator(
 
         Log.d(TAG, "  🔄 Intentando refresh token...")
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
-        Log.d(TAG, "  → Resultado refresh: $refreshResult")
+        Log.d(TAG, "  → Resultado refresh: $refreshResult event=auth_refresh_result")
 
         if (refreshResult != RefreshCoordinator.Result.SUCCESS) {
             if (refreshResult == RefreshCoordinator.Result.FAILED_UNAUTHORIZED) {
-                Log.e(TAG, "  🔓 Refresh retornó 401 - Limpiando sesión")
+                Log.e(TAG, "  🔓 Refresh retornó 401 - Invalidación estricta de sesión event=session_invalidation")
                 runBlocking { sessionInvalidationNotifier.notifySessionInvalidated() }
-                cookieJar.clear()
             } else {
-                Log.e(TAG, "  ❌ Refresh falló ($refreshResult)")
+                Log.e(TAG, "  ❌ Refresh falló ($refreshResult) event=session_preserved_recoverable")
             }
             Log.d(TAG, "  ❌ No se reintenta request")
             return null
@@ -57,4 +55,3 @@ class TokenAuthenticator(
         return request.newBuilder().build()
     }
 }
-

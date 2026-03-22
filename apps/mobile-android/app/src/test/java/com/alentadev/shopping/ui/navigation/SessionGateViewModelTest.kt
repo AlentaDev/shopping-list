@@ -10,6 +10,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
+import java.net.SocketTimeoutException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,6 +28,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import retrofit2.HttpException
+import retrofit2.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionGateViewModelTest {
@@ -88,6 +93,65 @@ class SessionGateViewModelTest {
         every { connectivityGate.isOnline() } returns true
         every { networkMonitor.isConnected } returns flowOf(true)
         coEvery { getCurrentUserUseCase.execute() } throws IllegalStateException("expired")
+
+        val viewModel = SessionGateViewModel(
+            observeSessionUseCase = observeSessionUseCase,
+            getCurrentUserUseCase = getCurrentUserUseCase,
+            connectivityGate = connectivityGate,
+            networkMonitor = networkMonitor
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(AuthBootstrapState.Unauthenticated, viewModel.state.value)
+    }
+
+    @Test
+    fun `when persisted session exists and online and validation fails with IO then state remains offline recoverable`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { observeSessionUseCase.execute() } returns flowOf(testSession())
+        every { connectivityGate.isOnline() } returns true
+        every { networkMonitor.isConnected } returns flowOf(true)
+        coEvery { getCurrentUserUseCase.execute() } throws IOException("network down")
+
+        val viewModel = SessionGateViewModel(
+            observeSessionUseCase = observeSessionUseCase,
+            getCurrentUserUseCase = getCurrentUserUseCase,
+            connectivityGate = connectivityGate,
+            networkMonitor = networkMonitor
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
+    }
+
+    @Test
+    fun `when persisted session exists and online and validation times out then state remains offline recoverable`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { observeSessionUseCase.execute() } returns flowOf(testSession())
+        every { connectivityGate.isOnline() } returns true
+        every { networkMonitor.isConnected } returns flowOf(true)
+        coEvery { getCurrentUserUseCase.execute() } throws SocketTimeoutException("timeout")
+
+        val viewModel = SessionGateViewModel(
+            observeSessionUseCase = observeSessionUseCase,
+            getCurrentUserUseCase = getCurrentUserUseCase,
+            connectivityGate = connectivityGate,
+            networkMonitor = networkMonitor
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
+    }
+
+    @Test
+    fun `when persisted session exists and validation gets 401 then state becomes unauthenticated`() = runTest(mainDispatcherRule.testDispatcher) {
+        every { observeSessionUseCase.execute() } returns flowOf(testSession())
+        every { connectivityGate.isOnline() } returns true
+        every { networkMonitor.isConnected } returns flowOf(true)
+        coEvery { getCurrentUserUseCase.execute() } throws HttpException(
+            Response.error<Any>(401, "unauthorized".toResponseBody(null))
+        )
 
         val viewModel = SessionGateViewModel(
             observeSessionUseCase = observeSessionUseCase,

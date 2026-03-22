@@ -103,13 +103,11 @@ object NetworkModule {
     @Singleton
     @Provides
     fun provideTokenAuthenticator(
-        cookieJar: PersistentCookieJar,
         authRetryPolicy: AuthRetryPolicy,
         refreshCoordinator: RefreshCoordinator,
         sessionInvalidationNotifier: SessionInvalidationNotifier
     ): TokenAuthenticator {
         return TokenAuthenticator(
-            cookieJar = cookieJar,
             authRetryPolicy = authRetryPolicy,
             refreshCoordinator = refreshCoordinator,
             sessionInvalidationNotifier = sessionInvalidationNotifier
