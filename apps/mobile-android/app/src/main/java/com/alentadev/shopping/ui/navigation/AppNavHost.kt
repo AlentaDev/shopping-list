@@ -24,6 +24,21 @@ import com.alentadev.shopping.feature.listdetail.ui.navigation.navigateToListDet
 
 const val BOOTSTRAP_ROUTE = "bootstrap"
 
+internal data class AuthenticatedNavigationCommand(
+    val route: String,
+    val clearLoginRoute: String,
+    val clearBootstrapRoute: String,
+    val launchSingleTop: Boolean
+)
+
+internal fun buildAuthenticatedNavigationCommand(): AuthenticatedNavigationCommand =
+    AuthenticatedNavigationCommand(
+        route = ACTIVE_LISTS_ROUTE,
+        clearLoginRoute = LOGIN_ROUTE_PATTERN,
+        clearBootstrapRoute = BOOTSTRAP_ROUTE,
+        launchSingleTop = true
+    )
+
 @Composable
 fun AppNavHost(
     navController: NavHostController,
@@ -34,10 +49,11 @@ fun AppNavHost(
 
     LaunchedEffect(bootstrapState) {
         if (bootstrapState == AuthBootstrapState.Authenticated) {
-            navController.navigate(ACTIVE_LISTS_ROUTE) {
-                popUpTo(LOGIN_ROUTE_PATTERN) { inclusive = true }
-                popUpTo(BOOTSTRAP_ROUTE) { inclusive = true }
-                launchSingleTop = true
+            val command = buildAuthenticatedNavigationCommand()
+            navController.navigate(command.route) {
+                popUpTo(command.clearLoginRoute) { inclusive = true }
+                popUpTo(command.clearBootstrapRoute) { inclusive = true }
+                launchSingleTop = command.launchSingleTop
             }
         }
     }
