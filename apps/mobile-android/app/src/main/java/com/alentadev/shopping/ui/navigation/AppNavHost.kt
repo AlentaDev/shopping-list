@@ -30,6 +30,18 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     sessionGateViewModel: SessionGateViewModel = hiltViewModel()
 ) {
+    val bootstrapState by sessionGateViewModel.state.collectAsState()
+
+    LaunchedEffect(bootstrapState) {
+        if (bootstrapState == AuthBootstrapState.Authenticated) {
+            navController.navigate(ACTIVE_LISTS_ROUTE) {
+                popUpTo(LOGIN_ROUTE_PATTERN) { inclusive = true }
+                popUpTo(BOOTSTRAP_ROUTE) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = BOOTSTRAP_ROUTE,
@@ -58,7 +70,8 @@ fun AppNavHost(
                 navController.navigate(ACTIVE_LISTS_ROUTE) {
                     popUpTo(LOGIN_ROUTE_PATTERN) { inclusive = true }
                 }
-            }
+            },
+            isRecoverableRetrying = bootstrapState == AuthBootstrapState.Checking
         )
         activeListsScreen(
             onNavigateToDetail = { listId ->

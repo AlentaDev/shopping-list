@@ -11,6 +11,7 @@
     <string name="login_loading">Autenticando…</string>
     <string name="login_show_password">Mostrar</string>
     <string name="login_hide_password">Ocultar</string>
+    <string name="login_reconnect_retrying">Conexión recuperada. Revalidando sesión…</string>
 
     <!-- Error messages -->
     <string name="error_email_empty">El email no puede estar vacío</string>
