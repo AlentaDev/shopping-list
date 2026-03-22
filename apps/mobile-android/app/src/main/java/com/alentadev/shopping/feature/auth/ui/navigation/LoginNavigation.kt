@@ -14,7 +14,8 @@ fun loginRoute(recoverableMode: Boolean): String =
     "$LOGIN_ROUTE?$RECOVERABLE_MODE_ARG=$recoverableMode"
 
 fun NavGraphBuilder.loginScreen(
-    onNavigateToActiveListsScreen: () -> Unit
+    onNavigateToActiveListsScreen: () -> Unit,
+    isRecoverableRetrying: Boolean
 ) {
     composable(
         route = LOGIN_ROUTE_PATTERN,
@@ -28,11 +29,10 @@ fun NavGraphBuilder.loginScreen(
         val recoverableMode = backStackEntry.arguments?.getBoolean(RECOVERABLE_MODE_ARG) ?: false
         LoginScreen(
             recoverableMode = recoverableMode,
+            isRecoverableRetrying = isRecoverableRetrying,
             onLoginSuccess = {
                 onNavigateToActiveListsScreen()
             }
         )
     }
 }
-
-

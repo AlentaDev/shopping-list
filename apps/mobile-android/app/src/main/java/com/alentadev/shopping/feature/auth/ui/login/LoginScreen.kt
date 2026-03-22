@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.alentadev.shopping.R
 
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -23,6 +25,7 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = hiltViewModel(),
     recoverableMode: Boolean = false,
+    isRecoverableRetrying: Boolean = false,
     onLoginSuccess: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,6 +68,18 @@ fun LoginScreen(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 24.dp)
         )
+
+
+        if (recoverableMode && isRecoverableRetrying) {
+            AssistChip(
+                onClick = {},
+                enabled = false,
+                label = { Text(text = stringResource(R.string.login_reconnect_retrying)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+        }
 
         // Email field
         OutlinedTextField(
