@@ -1,35 +1,25 @@
 # Caso de uso: Login
 
 ## Objetivo
-Permitir que el usuario acceda a la app con email y contraseña, usando cuenta
-creada previamente en la web.
+Autenticar usuario web existente en Android y dejar sesión lista para navegación protegida.
 
 ## Precondiciones
-- El usuario **ya tiene cuenta** creada en la web.
-- Hay conectividad de red.
+- Cuenta creada en web.
+- Conectividad para login inicial.
 
 ## Flujo principal
-1) La app verifica conectividad.
-2) El usuario introduce email y contraseña.
-3) Se envía la solicitud de login.
-4) El backend responde con cookies HttpOnly:
-   - Access: 15 min
-   - Refresh: 7 días (rotación en cada refresh)
-5) Se navega a listas activas.
+1. Usuario ingresa email/password.
+2. App envía login al backend.
+3. Backend responde con sesión basada en cookies HttpOnly.
+4. App persiste sesión local y navega a flujo autenticado.
 
-## Reglas y decisiones
-- Si no hay red, se muestra aviso y no se intenta login.
-- Reintentos: 2 con backoff (1s, 3s). Luego se muestra opción **Reintentar**.
-- Ante 401: refresh automático y reintento de la request.
-- Si refresh falla: logout automático.
+## Reglas clave
+- Sin red en login inicial: mostrar error y opción de reintento.
+- Ante 401 en requests autenticadas: intentar refresh automático.
+- Si refresh termina en no autorizado: ir a estado no autenticado.
+- Si el error es recuperable de red, preservar estado recuperable cuando exista sesión local.
 
-## Mensajes sugeridos
-- Sin red: "Sin conexión. Revisa tu red y vuelve a intentar."
-- Error de credenciales: "Email o contraseña incorrectos."
-- Error temporal: "No se pudo iniciar sesión. Reintenta en unos segundos."
-
-## Alternativas / excepciones
-- Usuario sin cuenta: mostrar enlace a registro web.
-
-## Notas
-- El registro **solo existe en web**.
+## Relación con startup auth gate
+- El login no decide rutas globales por sí mismo.
+- La decisión final de entrada/salida de sesión la centraliza `SessionGateViewModel`.
+- Tras reconectar desde `OfflineRecoverable`, la app intenta auto-auth sin requerir login manual inmediato.
