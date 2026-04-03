@@ -52,6 +52,7 @@ class TokenAuthenticatorTest {
         assertNotNull(result)
         assertEquals("/api/lists", result?.url?.encodedPath)
         assertEquals("GET", result?.method)
+        assertEquals(AUTH_RETRY_MARKER_VALUE, result?.header(AUTH_RETRY_MARKER_HEADER))
         coVerify(exactly = 1) { refreshCoordinator.refresh() }
         coVerify(exactly = 0) { sessionInvalidationNotifier.notifySessionInvalidated() }
     }

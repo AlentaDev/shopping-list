@@ -31,10 +31,10 @@ class TokenAuthenticator(
         Log.d(TAG, "  → Status: ${response.code}")
 
         if (!authRetryPolicy.shouldAttemptRefresh(request, response)) {
-            Log.d(TAG, "  ❌ Policy dice NO reintentar")
+            Log.d(TAG, "  ❌ refresh skipped due to loop protection")
             return null
         }
-        Log.d(TAG, "  ✅ Policy dice SÍ reintentar")
+        Log.d(TAG, "  ✅ 401 eligible for refresh")
 
         Log.d(TAG, "  🔄 Intentando refresh token...")
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
@@ -51,7 +51,9 @@ class TokenAuthenticator(
             return null
         }
 
-        Log.d(TAG, "  ✅ Refresh exitoso - Reintentando request con nuevas cookies")
-        return request.newBuilder().build()
+        Log.d(TAG, "  ✅ refresh succeeded, retrying original request")
+        return request.newBuilder()
+            .header(AUTH_RETRY_MARKER_HEADER, AUTH_RETRY_MARKER_VALUE)
+            .build()
     }
 }

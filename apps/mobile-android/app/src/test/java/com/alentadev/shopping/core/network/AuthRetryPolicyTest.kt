@@ -40,8 +40,31 @@ class AuthRetryPolicyTest {
     }
 
     @Test
-    fun `shouldAttemptRefresh blocks unsafe non GET routes`() {
+    fun `shouldAttemptRefresh allows non safe methods when loop protections pass`() {
         val request = request(method = "POST", path = "/api/lists")
+        val response = response(code = 401, request = request)
+
+        val result = authRetryPolicy.shouldAttemptRefresh(request, response)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `shouldAttemptRefresh allows POST complete endpoint on 401`() {
+        val request = request(method = "POST", path = "/api/lists/list-1/complete")
+        val response = response(code = 401, request = request)
+
+        val result = authRetryPolicy.shouldAttemptRefresh(request, response)
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `shouldAttemptRefresh blocks when request has retry marker header`() {
+        val request = request(method = "GET", path = "/api/lists")
+            .newBuilder()
+            .header(AUTH_RETRY_MARKER_HEADER, AUTH_RETRY_MARKER_VALUE)
+            .build()
         val response = response(code = 401, request = request)
 
         val result = authRetryPolicy.shouldAttemptRefresh(request, response)

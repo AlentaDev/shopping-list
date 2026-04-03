@@ -21,64 +21,48 @@ class DefaultAuthRetryPolicy @Inject constructor() : AuthRetryPolicy {
             Log.d(TAG, "  ❌ No es 401 (status=${response.code})")
             return false
         }
-        Log.d(TAG, "  ✅ Es 401")
+        Log.d(TAG, "  ✅ 401 eligible for refresh")
 
         if (isRefreshEndpoint(request.url.encodedPath)) {
-            Log.d(TAG, "  ❌ Es refresh endpoint, no reintentar")
+            Log.d(TAG, "  ❌ refresh skipped due to loop protection (refresh endpoint)")
             return false
         }
 
-        if (responseCount(response) >= 2) {
-            Log.d(TAG, "  ❌ Ya hay 2+ intentos (cuenta=${responseCount(response)})")
-            return false
-        }
-        Log.d(TAG, "  ✅ Primera vez")
-
-        val isSafe = isSafeByDefault(request)
-        Log.d(TAG, "  ${if (isSafe) "✅" else "❌"} Método ${request.method} es ${if (isSafe) "SEGURO" else "NO SEGURO"}")
-
-        return isSafe
-    }
-
-    private fun isSafeByDefault(request: Request): Boolean {
-        val normalizedMethod = request.method.uppercase()
-        if (!SAFE_METHODS.contains(normalizedMethod)) {
-            Log.d(TAG, "    → ${request.method} NO está en SAFE_METHODS: $SAFE_METHODS")
+        if (hasRetryMarkerHeader(request)) {
+            Log.d(TAG, "  ❌ refresh skipped due to loop protection (retry marker present)")
             return false
         }
 
-        val path = normalizePath(request.url.encodedPath)
-        val isSafeRoute = isSafeRetryRoute(path)
-        Log.d(TAG, "    → Path '$path' es ${if (isSafeRoute) "SEGURO" else "NO SEGURO"}")
-
-        return isSafeRoute
-    }
-
-    private fun isSafeRetryRoute(path: String): Boolean =
-        isSafeListsReadRoute(path) || path == "/api/users/me"
-
-    private fun isSafeListsReadRoute(path: String): Boolean =
-        path == "/api/lists" ||
-            path.startsWith("/api/lists/") ||
-            path == "/api/lists/autosave"
-
-    private fun responseCount(response: Response): Int {
-        var count = 1
-        var current = response.priorResponse
-        while (current != null) {
-            count++
-            current = current.priorResponse
+        if (hasPriorRefreshAttempt(response)) {
+            Log.d(TAG, "  ❌ refresh skipped due to loop protection (prior response detected)")
+            return false
         }
-        return count
+
+        val normalizedPath = normalizePath(request.url.encodedPath)
+        if (isListsCompleteEndpoint(request.method, normalizedPath)) {
+            Log.d(TAG, "  ✅ 401 eligible for refresh (lists complete exception)")
+        }
+        return true
     }
 }
 
 private const val AUTH_REFRESH_ENDPOINT = "/api/auth/refresh"
-private val SAFE_METHODS = setOf("GET", "HEAD", "OPTIONS", "PATCH")
+const val AUTH_RETRY_MARKER_HEADER = "X-Auth-Retry"
+const val AUTH_RETRY_MARKER_VALUE = "1"
 
 fun isRefreshEndpoint(path: String): Boolean {
     val normalizedPath = normalizePath(path)
     return normalizedPath == AUTH_REFRESH_ENDPOINT
+}
+
+private fun hasPriorRefreshAttempt(response: Response): Boolean = response.priorResponse != null
+
+private fun hasRetryMarkerHeader(request: Request): Boolean =
+    request.header(AUTH_RETRY_MARKER_HEADER) == AUTH_RETRY_MARKER_VALUE
+
+private fun isListsCompleteEndpoint(method: String, path: String): Boolean {
+    val normalizedMethod = method.uppercase()
+    return normalizedMethod == "POST" && Regex("^/api/lists/[^/]+/complete$").matches(path)
 }
 
 private fun normalizePath(pathOrUrl: String): String {
