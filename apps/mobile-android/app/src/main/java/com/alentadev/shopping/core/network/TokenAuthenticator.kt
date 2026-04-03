@@ -20,9 +20,9 @@ private const val TAG = "TokenAuthenticator"
 class TokenAuthenticator(
     private val authRetryPolicy: AuthRetryPolicy,
     private val refreshCoordinator: RefreshCoordinator,
-    private val sessionInvalidationNotifier: SessionInvalidationNotifier
+    private val sessionInvalidationNotifier: SessionInvalidationNotifier,
+    private val authCredentialProvider: AuthCredentialProvider
 ) : Authenticator {
-
 
     override fun authenticate(route: Route?, response: Response): Request? {
         val request = response.request
@@ -35,6 +35,7 @@ class TokenAuthenticator(
             return null
         }
         Log.d(TAG, "  ✅ 401 eligible for refresh")
+        logCredentialPresence("before_refresh", request)
 
         Log.d(TAG, "  🔄 Intentando refresh token...")
         val refreshResult = runBlocking { refreshCoordinator.refresh() }
@@ -51,9 +52,22 @@ class TokenAuthenticator(
             return null
         }
 
-        Log.d(TAG, "  ✅ refresh succeeded, retrying original request")
-        return request.newBuilder()
+        logCredentialPresence("after_refresh", request)
+
+        val retriedRequestBuilder = request.newBuilder()
             .header(AUTH_RETRY_MARKER_HEADER, AUTH_RETRY_MARKER_VALUE)
-            .build()
+
+        authCredentialProvider.buildCookieHeader(request.url)?.let { cookieHeader ->
+            retriedRequestBuilder.header("Cookie", cookieHeader)
+        }
+
+        Log.d(TAG, "  ✅ refresh succeeded, retrying original request")
+        return retriedRequestBuilder.build()
+    }
+
+    private fun logCredentialPresence(stage: String, request: Request) {
+        val hasCredentials = authCredentialProvider.hasCredentials(request.url)
+        val presence = if (hasCredentials) "present" else "absent"
+        Log.d(TAG, "  🔎 credential_state stage=$stage credentials=$presence")
     }
 }

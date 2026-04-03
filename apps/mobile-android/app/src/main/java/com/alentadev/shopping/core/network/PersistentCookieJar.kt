@@ -18,7 +18,7 @@ import okhttp3.HttpUrl
 private val Context.cookieDataStore by preferencesDataStore(name = "cookies")
 private const val TAG = "PersistentCookieJar"
 
-class PersistentCookieJar(private val context: Context) : CookieJar {
+class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredentialProvider {
     private val COOKIES_KEY = stringPreferencesKey("saved_cookies")
     private val scope = CoroutineScope(Dispatchers.IO)
     private val cookieStorage = CookieStorage()
@@ -49,6 +49,17 @@ class PersistentCookieJar(private val context: Context) : CookieJar {
                 Log.e(TAG, "Error al guardar cookies", e)
             }
         }
+    }
+
+
+    override fun hasCredentials(url: HttpUrl): Boolean {
+        return loadForRequest(url).isNotEmpty()
+    }
+
+    override fun buildCookieHeader(url: HttpUrl): String? {
+        val cookies = loadForRequest(url)
+        if (cookies.isEmpty()) return null
+        return cookies.joinToString("; ") { "${it.name}=${it.value}" }
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
