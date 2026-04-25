@@ -105,12 +105,14 @@ object NetworkModule {
     fun provideTokenAuthenticator(
         authRetryPolicy: AuthRetryPolicy,
         refreshCoordinator: RefreshCoordinator,
-        sessionInvalidationNotifier: SessionInvalidationNotifier
+        sessionInvalidationNotifier: SessionInvalidationNotifier,
+        authCredentialProvider: PersistentCookieJar
     ): TokenAuthenticator {
         return TokenAuthenticator(
             authRetryPolicy = authRetryPolicy,
             refreshCoordinator = refreshCoordinator,
-            sessionInvalidationNotifier = sessionInvalidationNotifier
+            sessionInvalidationNotifier = sessionInvalidationNotifier,
+            authCredentialProvider = authCredentialProvider
         )
     }
 
