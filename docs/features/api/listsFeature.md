@@ -1,4 +1,4 @@
-# Lists (Phase 1)
+# Listas (Fase 1)
 
 ## Resumen
 
@@ -7,11 +7,11 @@ Existe un **único `DRAFT` por usuario** y siempre es el autosave persistido en 
 
 ## Clasificación de estado
 
-- **CURRENT BEHAVIOR**: contratos HTTP implementados y semántica vigente se validan contra `docs/api/design.md`.
-- **TARGET BEHAVIOR**: decisiones objetivo y evolución están en `docs/007-lists-management-evolution.md`.
-- **TRANSITION NOTE**: secuencia incremental de cambios en `docs/lists-implementation-plan.md`.
+- **COMPORTAMIENTO_ACTUAL**: contratos HTTP implementados y semántica vigente se validan contra `docs/api/design.md`.
+- **COMPORTAMIENTO_OBJETIVO**: decisiones objetivo y evolución están en `docs/007-lists-management-evolution.md`.
+- **NOTA_TRANSICION**: secuencia incremental de cambios en `docs/lists-implementation-plan.md`.
 
-### Decision rationale
+### Justificación de la decisión
 
 Se prefiere permitir `DRAFT` vacío para mantener contratos API estables y unificados en todos los flujos. Esta decisión evita lógica especial de creación diferida del autosave y facilita la recuperación de sesión con menor complejidad en cliente y servidor.
 
@@ -61,13 +61,17 @@ Ejemplo conciso de recuperación (reuse/edit):
 3. Backend crea `DRAFT` en el mismo flujo y continúa la operación de edición/reuse.
 4. La respuesta es exitosa y el usuario termina con exactamente un `DRAFT` reutilizable.
 
-## Acceptance checklist (backend + frontend)
+## Checklist de aceptación (backend + frontend)
 
 > Checklist verificable para QA/API/Web. Cada criterio referencia endpoint(s) y caso(s) de uso concretos para evitar ambigüedad de implementación.
+>
+> Nota de alcance: la semántica transversal canónica de draft/recovery vive en
+> `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`.
+> Este checklist se mantiene como vista operativa enfocada en validación de la feature.
 
 - [ ] **`204` solo en bootstrap de primer login/auth**
   - **Endpoint:** `GET /api/lists/autosave`
-  - **Use case:** bootstrap de sesión autenticada sin draft previo.
+  - **Caso de uso:** bootstrap de sesión autenticada sin draft previo.
   - **Criterio verificable:**
     1. Usuario autenticado recién creado, sin `DRAFT` inicializado -> `GET /api/lists/autosave` devuelve `204`.
     2. Después de primera inicialización (`PUT /api/lists/autosave` o flujo equivalente de bootstrap) -> `GET /api/lists/autosave` devuelve siempre `200` (incluyendo draft vacío).
@@ -92,17 +96,15 @@ Ejemplo conciso de recuperación (reuse/edit):
   - **Criterio verificable:** si el `DRAFT` no existe por condición transitoria/carrera, la operación crea uno en el mismo flujo y responde éxito funcional (sin error por draft faltante), manteniendo invariante de draft único.
 
 - [ ] **Migración local-first en primer login preserva items locales pre-auth al draft servidor**
-  - **Use case:** reconciliación login/bootstrap cliente-servidor.
+  - **Caso de uso:** reconciliación login/bootstrap cliente-servidor.
   - **Endpoints:** `GET /api/lists/autosave` (detección bootstrap `204`) + `PUT /api/lists/autosave` (persistencia del `LOCAL_DRAFT` pre-auth).
   - **Criterio verificable:** con items en `LOCAL_DRAFT` antes de autenticar, el primer login debe terminar con `GET /api/lists/autosave` en `200` y los items locales presentes en el draft servidor (sin pérdida silenciosa).
 
-- [ ] **Matriz canónica de acciones en modal de detalle read-only (`ACTIVE`/`COMPLETED`)**
-  - **Estado UI esperado (web):** el modal de detalle abre en solo lectura para ambos estados.
-  - **Criterio verificable:**
-    1. En `ACTIVE`, el modal muestra únicamente acciones de **Editar**, **Borrar** y **Cerrar**.
-    2. En `COMPLETED`, el modal muestra únicamente acciones de **Reusar**, **Borrar** y **Cerrar**.
-    3. En ambos estados, **Cerrar** no muta datos ni llama endpoints de negocio.
-    4. Ninguna combinación de acciones contradice endpoints actuales: edición vía `PATCH /api/lists/:id/editing` + `POST /api/lists/:id/finish-edit`, reuso vía `POST /api/lists/:id/reuse`, borrado vía endpoint de delete vigente.
+- [ ] **Matriz UI canónica alineada (referencia)**
+  - La definición completa de acciones por estado (`ACTIVE`/`COMPLETED`) se mantiene en:
+    - `docs/usecases/list-use-cases.md#matriz-canonica-de-acciones-ui-para-gestion-de-listas`
+    - `docs/features/web/lists-management.md#matriz-canonica-de-acciones-ui-listas`
+  - Este checklist valida que API y rutas actuales no contradicen esa matriz.
 
 - [ ] **Guard de transición `DRAFT` -> `ACTIVE` no vacío en Web y API**
   - **Endpoints / casos de uso:** acción “Finalizar lista” web + `PATCH /api/lists/:id/activate`.
@@ -133,7 +135,7 @@ Reglas de contrato:
 
 ### POST /api/lists
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -141,7 +143,7 @@ Reglas de contrato:
 }
 ```
 
-**Response 201**
+**Respuesta 201**
 
 ```json
 {
@@ -157,7 +159,7 @@ Reglas de contrato:
 
 ### GET /api/lists
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -183,7 +185,7 @@ Reglas de contrato:
 
 ### GET /api/lists/autosave
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -228,7 +230,7 @@ El autosave se crea o recupera al autenticarse (puede estar vacío) y se actuali
 
 ### PUT /api/lists/autosave
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -254,7 +256,7 @@ El autosave se crea o recupera al autenticarse (puede estar vacío) y se actuali
 }
 ```
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -272,7 +274,7 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 - El servidor compara `baseUpdatedAt` contra el `updatedAt` actual del `DRAFT`.
 - Si `updatedAt` servidor `!= baseUpdatedAt`, la API **debe** responder `409 Conflict` y **no** persistir la escritura.
 
-**Response 409 (conflict)**
+**Respuesta 409 (conflicto)**
 
 ```json
 {
@@ -312,7 +314,7 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 
 ### GET /api/lists/:id
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -346,7 +348,7 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 
 ### PATCH /api/lists/:id/activate
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -354,7 +356,7 @@ Sobrescribe el `DRAFT` con el contenido enviado (incluyendo el caso vacío).
 }
 ```
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -372,7 +374,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 Completa una lista activa y sincroniza items marcados.
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -382,7 +384,7 @@ Completa una lista activa y sincroniza items marcados.
 
 ### DELETE /api/lists/:id
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -392,7 +394,7 @@ Completa una lista activa y sincroniza items marcados.
 
 ### DELETE /api/lists/autosave
 
-**Response 204**
+**Respuesta 204**
 
 Sin contenido. En Variant A para usuarios bootstrap-completed, limpia el contenido del `DRAFT` (título/items según regla vigente), pero no elimina la entidad `DRAFT` persistente.
 
@@ -400,7 +402,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 ### POST /api/lists/:id/items/from-catalog
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -410,7 +412,7 @@ After completion, exactly one reusable server DRAFT exists.
 }
 ```
 
-**Response 201**
+**Respuesta 201**
 
 ```json
 {
@@ -433,7 +435,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 ### PATCH /api/lists/:id/items/:itemId
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -442,7 +444,7 @@ After completion, exactly one reusable server DRAFT exists.
 }
 ```
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -465,7 +467,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 ### DELETE /api/lists/:id/items/:itemId
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {
@@ -477,7 +479,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 Caso de uso **ReuseList**: reusa una lista completada sobrescribiendo el contenido del `DRAFT` existente con los mismos items sin marcar; si falta draft, aplica fallback update-or-create.
 
-**Response 201**
+**Respuesta 201**
 
 ```json
 {
@@ -512,7 +514,7 @@ After completion, exactly one reusable server DRAFT exists.
 
 Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEditing=false`).
 
-**Request**
+**Solicitud**
 
 ```json
 {
@@ -520,7 +522,7 @@ Marca una lista activa como en edición (`isEditing=true`) o la desactiva (`isEd
 }
 ```
 
-**Response 200**
+**Respuesta 200**
 
 ```json
 {

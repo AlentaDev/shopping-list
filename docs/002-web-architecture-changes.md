@@ -24,7 +24,7 @@ Se aprueba la siguiente arquitectura web:
 - La app web vive en `apps/web`.
 - El código UI se organiza **feature-first** en `apps/web/src/features`.
   - Cada feature puede tener `components/`, sus tests y un `index.ts`.
-- Los contextos globales viven en `apps/web/src/app/context`:
+- Los contextos globales viven en `apps/web/src/context`:
   - `CartContext*`, `ToastContext*`, `useCart`, `useToast` e `index.ts`.
 - El módulo `apps/web/src/shared` se reserva para utilidades y componentes reutilizables,
   con esta estructura establecida:

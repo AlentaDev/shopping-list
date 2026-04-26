@@ -8,7 +8,7 @@ Definir el comportamiento funcional y técnico del flujo **completar lista** en 
 2. **Lista vacía no esperada** por restricciones actuales de producto.
 3. Si no hay conexión, la acción se **encola como pending** en el flujo de cola existente de listas.
 4. El comportamiento **local-first es obligatorio**.
-5. Cuando backend confirma éxito, la lista queda en estado **completed** y **desaparece de listas activas**.
+5. Cuando backend confirma éxito, la lista queda en estado **COMPLETED** y **desaparece de listas activas**.
 
 ## Alcance
 - Feature Android de detalle de lista activa.
@@ -24,7 +24,7 @@ Definir el comportamiento funcional y técnico del flujo **completar lista** en 
 1. Usuario toca “Completar lista”.
 2. UI pide confirmación.
 3. Al confirmar, ViewModel dispara caso de uso en modo local-first.
-4. Repositorio aplica transición local inmediata (estado completed/pending según conectividad).
+4. Repositorio aplica transición local inmediata (estado `COMPLETED`/pendiente según conectividad).
 5. Si hay red y backend responde éxito, la lista se elimina de activas y se navega fuera del detalle.
 
 ## Matriz de escenarios (fuente de verdad para tests)

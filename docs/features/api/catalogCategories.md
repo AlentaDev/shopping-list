@@ -1,11 +1,11 @@
-# Catalog - Categories (Phase 1)
+# Catálogo - Categorías (Fase 1)
 
 ## Endpoints
 
 ### GET /api/catalog/categories
-Returns root categories with their level-1 children.
+Devuelve categorías raíz con sus categorías hijas de nivel 1.
 
-**Response (200)**
+**Respuesta (200)**
 ```json
 {
   "categories": [
@@ -28,9 +28,9 @@ Returns root categories with their level-1 children.
 ```
 
 ### GET /api/catalog/categories/:id
-Returns a category detail with subcategories and product summaries.
+Devuelve el detalle de una categoría con subcategorías y resumen de productos.
 
-**Response (200)**
+**Respuesta (200)**
 ```json
 {
   "id": "12",
@@ -57,15 +57,15 @@ Returns a category detail with subcategories and product summaries.
 }
 ```
 
-**Response (502)**
+**Respuesta (502)**
 ```json
 { "error": "catalog_provider_unavailable" }
 ```
 
-## Implementation Notes
-- Backed by Mercadona categories endpoints via the catalog provider.
-- IDs are always serialized as strings.
-- Cache keys:
+## Notas de implementación
+- Respaldado por endpoints de categorías de Mercadona vía el provider de catálogo.
+- Los IDs siempre se serializan como string.
+- Claves de cache:
   - `mercadona:categories:root` (TTL 24h)
   - `mercadona:categories:{id}` (TTL 6h)
-- If the provider fails and cache exists, cached data is returned.
+- Si el provider falla y existe cache, se devuelve el dato cacheado.

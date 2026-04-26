@@ -1,15 +1,15 @@
-# Add list items from Mercadona catalog
+# Añadir items a lista desde catálogo Mercadona
 
-## Summary
-Allows authenticated users to add list items from the Mercadona catalog by productId while storing a snapshot of pricing and presentation data.
+## Resumen
+Permite a usuarios autenticados añadir items a una lista desde el catálogo de Mercadona por `productId`, guardando un snapshot de precio y presentación.
 
 > **Deprecated:** manual items are being removed from the API, database, and web. All future changes must assume catalog-only items.
 
 ## Endpoints
 ### POST `/api/lists/:id/items/from-catalog`
-Adds a catalog item snapshot to a list owned by the authenticated user.
+Añade un snapshot de item de catálogo a una lista del usuario autenticado.
 
-#### Request body
+#### Body de request
 ```json
 {
   "source": "mercadona",
@@ -18,7 +18,7 @@ Adds a catalog item snapshot to a list owned by the authenticated user.
 }
 ```
 
-#### Response (201)
+#### Respuesta (201)
 ```json
 {
   "id": "item_123",
@@ -38,13 +38,13 @@ Adds a catalog item snapshot to a list owned by the authenticated user.
 }
 ```
 
-#### Errors
-- `400 validation_error` for invalid payloads.
-- `401 not_authenticated` when no session exists.
-- `403 forbidden` when the list does not belong to the user.
-- `404 list_not_found` when the list does not exist.
-- `502 catalog_provider_failed` when the catalog provider fails.
+#### Errores
+- `400 validation_error` para payload inválido.
+- `401 not_authenticated` cuando no hay sesión.
+- `403 forbidden` cuando la lista no pertenece al usuario.
+- `404 list_not_found` cuando la lista no existe.
+- `502 catalog_provider_failed` cuando falla el provider de catálogo.
 
-## Notes
-- The list item stores a snapshot of Mercadona product data (`display_name`, `thumbnail`, and `price_instructions`) to keep lists stable if catalog data changes.
-- Responses normalize catalog items into a `kind` + `name` shape with optional catalog fields.
+## Notas
+- El item de lista guarda un snapshot de datos de producto de Mercadona (`display_name`, `thumbnail`, `price_instructions`) para mantener estabilidad si cambia el catálogo.
+- Las respuestas normalizan items de catálogo a una forma `kind` + `name` con campos opcionales de catálogo.

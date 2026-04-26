@@ -1,6 +1,6 @@
 # Shopping List Mobile (Android)
 
-App móvil Android para consumir las listas **active** creadas en la web.
+App móvil Android para consumir las listas **ACTIVE** creadas en la web.
 Esta carpeta se mantiene aislada para que Android Studio pueda trabajar sin
 cargar el resto del repositorio.
 

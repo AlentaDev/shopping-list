@@ -13,13 +13,13 @@ La experiencia de catálogo muestra el detalle de la categoría seleccionada y r
 
 ## Ejemplos
 
-### Request
+### Solicitud
 
 ```
 GET /api/catalog/categories
 ```
 
-### Response
+### Respuesta
 
 ```json
 {
@@ -36,13 +36,13 @@ GET /api/catalog/categories
 }
 ```
 
-### Request
+### Solicitud
 
 ```
 GET /api/catalog/categories/:id
 ```
 
-### Response
+### Respuesta
 
 ```json
 {

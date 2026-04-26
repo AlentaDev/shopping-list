@@ -39,11 +39,11 @@
 - [ ] UI de confirmación + navegación de retorno a listas activas.
 - [ ] Estrategia offline: comportamiento explícito (bloquear con mensaje o encolar) documentado e implementado.
 
-## Fase 5 — Offline recoverable y sincronización
+## Fase 5 — Modo recuperable offline y sincronización
 
 **Objetivo**: consolidar política única de reconexión y consistencia.
 
-- [x] Startup auth gate con estado `OfflineRecoverable`.
+- [x] Orquestador de auth al inicio con estado `OfflineRecoverable`.
 - [x] Reintento automático de autenticación al reconectar desde estado recuperable.
 - [x] Preservar sesión local cuando el refresh falla por error recuperable de red.
 - [ ] UX de conflictos avanzada (casos límite de merge y mensajes finales).
@@ -69,7 +69,7 @@
 
 ## 3) Políticas funcionales vigentes (alineadas con código)
 
-### Startup auth gate
+### Orquestador de auth al inicio
 
 1. Sin sesión local → `Unauthenticated` (login).
 2. Con sesión local + sin red → `OfflineRecoverable` (login en modo recuperable).
@@ -77,12 +77,12 @@
    - éxito → `Authenticated`
    - fallo no recuperable → `Unauthenticated`
 
-### Offline recoverable
+### Modo recuperable offline
 
 - Si no hay red pero hay sesión/snapshot local, la app entra en modo recuperable en vez de invalidar sesión inmediatamente.
 - La UI debe informar estado recuperable y permitir retry explícito.
 
-### Reconnect auto-auth policy
+### Política de auto-auth al reconectar
 
 - Cuando el estado actual es `OfflineRecoverable` y vuelve la conectividad, se dispara validación automática de sesión (`GetCurrentUserUseCase`).
 - Si valida, navega a flujo autenticado.
@@ -90,12 +90,12 @@
 
 ---
 
-## 4) Definition of Done 100%
+## 4) Definición de terminado (100%)
 
 > Checklist único de cierre documental y funcional para Android.
 
 ### A. Arquitectura y flujo de sesión
-- [x] Startup auth gate centralizado en un único orquestador.
+- [x] Orquestador de auth al inicio centralizado en un único punto.
 - [x] Estados de bootstrap definidos y usados de forma consistente.
 - [x] Política de reconexión automática documentada y aplicada.
 
@@ -115,4 +115,3 @@
 - [ ] Flujo “Completar lista” implementado end-to-end.
 - [ ] Refinamientos finales de sync/conflictos cerrados.
 - [ ] Cierre completo de calidad/polish (fases 6 y 7).
-

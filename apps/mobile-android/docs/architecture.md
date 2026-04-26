@@ -23,7 +23,7 @@ com.alentadev.shopping
 - `domain` no depende de Android framework.
 - `data` encapsula API + persistencia local.
 
-## Startup auth gate (single source of truth)
+## Orquestador de auth al inicio (fuente única de verdad)
 
 El arranque de sesión se decide en `ui/navigation/SessionGateViewModel`.
 
@@ -43,13 +43,13 @@ El arranque de sesión se decide en `ui/navigation/SessionGateViewModel`.
 
 `AppNavHost` inicia en `bootstrap` y enruta en función de estos estados.
 
-## Offline recoverable behavior
+## Comportamiento offline recuperable
 
 - Si hay datos locales y no hay red, la app preserva sesión recuperable en lugar de forzar logout inmediato.
 - Listas activas y detalle consumen snapshot local cuando la red falla.
 - Cambios de check se guardan localmente y se intentan sincronizar al recuperar conectividad.
 
-## Reconnect auto-auth policy
+## Política de auto-auth al reconectar
 
 - Si el estado es `OfflineRecoverable`, al volver la red se dispara validación automática de sesión.
 - Si valida, la app vuelve a flujo autenticado sin login manual.

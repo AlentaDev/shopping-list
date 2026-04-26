@@ -1,15 +1,15 @@
-# Users Feature (MVP)
+# Usuarios (API)
 
-## Overview
-User profile access for authenticated users, backed by the shared user repository and protected by the access-token cookie.
+## Resumen
+Acceso al perfil del usuario autenticado, respaldado por el repositorio compartido de usuarios y protegido por la cookie `access_token`.
 
 ## Endpoints
 
 ### GET /api/users/me
-Returns the current authenticated user.
+Devuelve el usuario autenticado actual.
 
-**Responses**
-- `200` with user:
+**Respuestas**
+- `200` con usuario:
 ```json
 {
   "id": "uuid",
@@ -18,12 +18,12 @@ Returns the current authenticated user.
   "postalCode": "12345"
 }
 ```
-- `401` not authenticated
+- `401` no autenticado
 
-## Implementation Notes
-- **Module path**: `apps/api/src/modules/users`
-- **Layers**:
-  - `application`: user lookup use case
-  - `infrastructure`: in-memory repository (default), Postgres repository disponible
-  - `api`: Express router protected by `requireAuth`
-- **Auth**: relies on the access-token cookie set by the auth module
+## Notas de implementación
+- **Ruta del módulo**: `apps/api/src/modules/users`
+- **Capas**:
+  - `application`: caso de uso de obtención de usuario actual
+  - `infrastructure`: repositorio in-memory (default), repositorio Postgres disponible
+  - `api`: router de Express protegido por `requireAuth`
+- **Auth**: depende de la cookie `access_token` emitida por el módulo de auth

@@ -19,8 +19,13 @@ Proveer registro, login y refresh de tokens usando access + refresh tokens en co
   - Respuesta: `{ ok: true }`.
   - Rota refresh token y setea nuevas cookies.
 
-- `POST /api/auth/logout-token`
+- `POST /api/auth/logout`
   - Limpia cookies `access_token` y `refresh_token`.
+
+- `GET /api/users/me`
+  - Endpoint canónico para usuario actual autenticado.
+
+`GET /api/auth/me` se mantiene solo como endpoint deprecado (`410`).
 
 ## Reglas importantes
 - Password policy: 12-20 caracteres, minúscula, mayúscula, número y carácter especial.

@@ -6,9 +6,9 @@ Proveer una pantalla dedicada para gestionar listas por estado desde el menú de
 
 ## Clasificación de estado
 
-- **CURRENT BEHAVIOR**: reglas implementadas deben contrastarse con `docs/api/design.md` y con el comportamiento real de UI.
-- **TARGET BEHAVIOR**: decisiones objetivo de producto/arquitectura en `docs/007-lists-management-evolution.md`.
-- **TRANSITION NOTE**: orden de migración y cortes por iteración en `docs/lists-implementation-plan.md`.
+- **COMPORTAMIENTO_ACTUAL**: reglas implementadas deben contrastarse con `docs/api/design.md` y con el comportamiento real de UI.
+- **COMPORTAMIENTO_OBJETIVO**: decisiones objetivo de producto/arquitectura en `docs/007-lists-management-evolution.md`.
+- **NOTA_TRANSICION**: orden de migración y cortes por iteración en `docs/lists-implementation-plan.md`.
 
 ## Endpoints
 
@@ -25,24 +25,13 @@ La política canónica de invariante y recuperación del `DRAFT` está en `docs/
 Este documento debe tratarla como fuente única para reglas de bootstrap, reutilización y self-healing backend, siguiendo Variant A como semántica canónica de draft persistente.
 
 
-### Bootstrap de primer login (resumen operativo web)
+### Bootstrap de primer login (referencia canónica)
 
-Al autenticarse por primera vez, la web debe cerrar bootstrap con un único `DRAFT` remoto reutilizable:
+Para evitar drift, los detalles normativos de bootstrap (casos, desempates y feedback) se mantienen en:
 
-1. Sin `DRAFT` remoto + `LOCAL_DRAFT` con items: crear `DRAFT` remoto con contenido local y mantener edición sobre `LOCAL_DRAFT`.
-2. Sin `DRAFT` remoto + `LOCAL_DRAFT` vacío: crear `DRAFT` remoto vacío para dejar preparado autosave posterior.
-3. Condición de carrera (local y remoto aparecen a la vez): resolver por `updatedAt`; con empate y contenido distinto usar desempate explícito:
-   - Prioridad local cuando remoto quedó vacío y local tiene items.
-   - Modal de elección cuando ambos tienen contenido distinto.
+- `docs/usecases/list-use-cases.md#bootstrap-de-primer-login-normativo`
 
-Feedback UX esperado:
-
-- Creación desde local con items: toast de confirmación de guardado en cuenta.
-- Creación de `DRAFT` vacío: sin modal, mensaje no bloqueante opcional.
-- Resolución automática por `updatedAt`: toast de recuperación indicando que se aplicó la versión más reciente.
-- Empate con conflicto de contenido: modal obligatorio para elegir fuente + toast final de confirmación.
-
-Invariante de salida: al terminar bootstrap existe exactamente un `DRAFT` remoto por usuario, reutilizable por crear/editar/reusar sin crear drafts adicionales.
+Este documento solo define comportamiento UI de gestión de listas y debe permanecer alineado con esa sección.
 
 ## Reglas importantes
 
@@ -168,41 +157,18 @@ Esta combinación representa una sesión de edición activa (no un flujo de borr
 - `GET /api/lists/autosave` devuelve `204` solo en bootstrap inicial antes de la primera inicialización del draft.
   Después de bootstrap (usuarios establecidos), debe devolver `200` incluso con draft vacío.
 
-### Sync policy
+### Sync policy (resumen web)
 
-- **Debounce de autosave:** cada cambio en `LOCAL_DRAFT` programa un `PUT /api/lists/autosave` con debounce de **800 ms**. Cambios consecutivos dentro de la ventana reinician el temporizador y solo se envía el último snapshot.
-- **Retry en fallos de autosave:**
-  - Reintentos automáticos con backoff exponencial: **1 s**, **2 s**, **4 s** (máximo 3 reintentos).
-  - Si todos fallan, se mantiene el estado en `LOCAL_DRAFT`, se marca estado `sync=error` y se habilita reintento manual.
-  - Un nuevo cambio del usuario vuelve a intentar sincronizar automáticamente.
-- **Conflictos multi-tab/concurrencia:**
-  - Regla base: el cliente envía `baseUpdatedAt` y el servidor compara contra `updatedAt` remoto actual.
-  - Contrato determinista: si `server.updatedAt !== baseUpdatedAt`, responde `409 Conflict` con `{ error, remoteUpdatedAt, message }` y no persiste el snapshot.
-  - Si llega `409 Conflict`, la pestaña no sobrescribe el remoto automáticamente ni oculta el conflicto con retries silenciosos.
-  - Se mantiene `LOCAL_DRAFT` como “cambios pendientes”, se obtiene snapshot remoto actualizado y se muestra diálogo explícito de resolución.
-  - Resolución no silenciosa obligatoria (dos opciones visibles):
-    - `Mantener local`: conserva el contenido local como fuente y vuelve a intentar sincronizar con la nueva base remota.
-    - `Mantener remoto`: rehidrata la UI con el snapshot remoto y descarta el pendiente local.
-- **Refresh cross-tab por `storage` event:**
-  - Cuando otra pestaña actualiza `lists.localDraft`, la pestaña actual refresca la vista del draft en caliente.
-  - El refresco solo se aplica automáticamente si **no** hay cambios locales pendientes (safe refresh).
-  - Si hay cambios locales pendientes, no se pisa la edición local y se marca que existen cambios remotos disponibles.
-- **Comportamiento offline:**
-  - Sin conectividad no se intentan llamadas de autosave.
-  - Los cambios siguen aplicando a `LOCAL_DRAFT`.
-  - Al volver la red, se reanuda el autosave con el último snapshot local pendiente.
-- **Regla explícita de sobreescritura server -> local:**
-  - Los datos del servidor **solo pueden sobrescribir `LOCAL_DRAFT`** en escenarios de recuperación definidos: bootstrap inicial de sesión, recuperación tras logout/login, o resolución explícita después de conflicto (`409`) aceptada por el usuario.
-  - Fuera de esos escenarios, nunca se pisa `LOCAL_DRAFT` con datos remotos de forma implícita.
+La semántica canónica de sincronización, conflicto `409` y overwrite server->local está centralizada en:
 
-#### Timeline de ejemplo (resolución de conflicto entre pestañas)
+- `docs/usecases/list-use-cases.md#draft-invariant-and-recovery-policy`
+- `docs/api/design.md` (contrato HTTP actual)
 
-1. **t0:** Pestaña A y B cargan el mismo `DRAFT` (`updatedAt=10:00`).
-2. **t1:** A edita y autosave guarda OK (`updatedAt=10:01`).
-3. **t2:** B edita sobre snapshot viejo (`updatedAt=10:00`) y envía autosave.
-4. **t3:** API responde `409 Conflict` a B.
-5. **t4:** B conserva su `LOCAL_DRAFT` pendiente, descarga snapshot remoto (`10:01`) y muestra aviso de conflicto.
-6. **t5:** Usuario en B elige “recargar desde servidor” (flujo de recuperación); recién ahí se permite sobrescribir `LOCAL_DRAFT` con remoto y reintentar usando el nuevo `baseUpdatedAt`.
+Este documento mantiene solo las decisiones de UX web:
+
+- La edición operativa usa `LOCAL_DRAFT` como source of truth local.
+- Ante `409`, se requiere resolución explícita del usuario (`Mantener local` / `Mantener remoto`).
+- No se permite overwrite remoto implícito fuera de escenarios de recuperación definidos.
 
 
 ## Contrato final de edit-mode

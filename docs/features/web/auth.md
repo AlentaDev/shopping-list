@@ -56,5 +56,5 @@ Permitir a los usuarios registrarse e iniciar sesión desde la interfaz web.
 - **Producción**: usar `VITE_AUTH_LOG_MODE=quiet` para reducir ruido en consola.
 
 ## Notas de implementación
-- La navegación es simple (basada en `window.history`) y se resuelve en `App.tsx`.
+- La navegación es simple (basada en `window.history`) y se orquesta desde `features/app-shell` (`AppShell` + `useAppShellNavigation`).
 - Los formularios son UI pura y delegan en `AuthService`.

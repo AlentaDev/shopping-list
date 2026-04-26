@@ -1,5 +1,15 @@
 # Plan de migración incremental para frontend (apps/web)
 
+> ⚠️ **Estado del documento:** histórico/parcialmente desactualizado.
+>
+> Este plan describe una migración incremental propuesta en etapas anteriores.
+> Partes del plan ya se completaron y otras ya no reflejan el estado actual del repo.
+>
+> Para estado vigente y contratos actuales usar como fuente principal:
+> - `AGENTS.md` (reglas de arquitectura frontend)
+> - `docs/features/web/*.md`
+> - `apps/web/src/` (estructura real)
+
 ## Resumen de arquitectura objetivo
 
 El frontend debe seguir una arquitectura por **features** con límites claros:
@@ -136,4 +146,3 @@ Reglas clave: componentes sin `fetch`, orquestación y llamadas a API en `servic
   - Actualizar imports y re-exports.
 - **Tests/commands:** `pnpm --filter web test`.
 - **Resultado esperado:** convención de nombres alineada sin cambios funcionales.
-

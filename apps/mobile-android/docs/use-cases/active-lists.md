@@ -1,7 +1,7 @@
 # Caso de uso: Listas activas
 
 ## Objetivo
-Mostrar al usuario sus listas en estado **active** creadas en la web.
+Mostrar al usuario sus listas en estado **ACTIVE** creadas en la web.
 
 ## Precondiciones
 - Usuario autenticado.
@@ -16,7 +16,7 @@ Mostrar al usuario sus listas en estado **active** creadas en la web.
 2) Se permite abrir el detalle de listas guardadas.
 
 ## Reglas y decisiones
-- Solo se muestran listas `active`.
+- Solo se muestran listas `ACTIVE`.
 - Si no hay listas activas: estado vacío controlado.
 - Se almacena snapshot local para uso offline.
 

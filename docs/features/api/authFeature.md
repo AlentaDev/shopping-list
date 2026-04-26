@@ -1,14 +1,18 @@
-# Auth Feature (MVP)
+# Autenticación (API)
 
-## Overview
-Basic authentication module with in-memory persistence by default, cookie-based sessions, and input validation (Postgres persistence is also available). It supports signup, login, and logout.
+## Resumen
+Módulo de autenticación con persistencia in-memory por defecto (Postgres opcional), sesiones por cookies httpOnly y validación de inputs con Zod.
+
+> Fuente canónica del contrato actual:
+> - `docs/api/openapi.yaml`
+> - `docs/api/design.md`
 
 ## Endpoints
 
-### POST /api/auth/signup
-Creates a new user and starts an account with unique email.
+### POST /api/auth/register
+Crea un usuario nuevo (email único) y abre sesión.
 
-**Request body**
+**Body de request**
 ```json
 {
   "name": "Alice",
@@ -18,14 +22,14 @@ Creates a new user and starts an account with unique email.
 }
 ```
 
-**Validation**
-- `name`: string, 3–20 chars
-- `email`: valid email format
-- `password`: non-empty string
-- `postalCode`: non-empty string
+**Validación**
+- `name`: string, 3–20 caracteres
+- `email`: formato de email válido
+- `password`: string no vacío
+- `postalCode`: string no vacío
 
-**Responses**
-- `201` with user:
+**Respuestas**
+- `201` con usuario:
 ```json
 {
   "id": "uuid",
@@ -34,15 +38,15 @@ Creates a new user and starts an account with unique email.
   "postalCode": "12345"
 }
 ```
-- `400` validation error
-- `409` duplicate email
+- `400` error de validación
+- `409` email duplicado
 
 ---
 
 ### POST /api/auth/login
-Authenticates a user and sets an httpOnly cookie session.
+Autentica usuario y setea cookies de sesión.
 
-**Request body**
+**Body de request**
 ```json
 {
   "email": "alice@example.com",
@@ -50,8 +54,8 @@ Authenticates a user and sets an httpOnly cookie session.
 }
 ```
 
-**Responses**
-- `200` with user:
+**Respuestas**
+- `200` con usuario:
 ```json
 {
   "id": "uuid",
@@ -60,34 +64,37 @@ Authenticates a user and sets an httpOnly cookie session.
   "postalCode": "12345"
 }
 ```
-- `401` invalid credentials
+- `401` credenciales inválidas
 
-**Cookie**
-- `session` is set with `HttpOnly` and `SameSite=Lax`.
+**Cookies**
+- `access_token` + `refresh_token` con `HttpOnly` y `SameSite=Lax`.
 
 ---
 
-### GET /api/auth/me (deprecated)
-Deprecated. Use `GET /api/users/me` instead.
+### GET /api/auth/me (deprecado)
+Deprecado. Usar `GET /api/users/me`.
 
-**Responses**
-- `410` deprecated endpoint
+**Respuestas**
+- `410` endpoint deprecado
+
+### POST /api/auth/refresh
+Usa `refresh_token`, rota tokens y responde `{ ok: true }`.
 
 ### POST /api/auth/logout
-Clears the session cookie.
+Limpia `access_token` y `refresh_token`.
 
-**Responses**
-- `200` with:
+**Respuestas**
+- `200` con:
 ```json
 { "ok": true }
 ```
 
-## Implementation Notes
-- **Module path**: `apps/api/src/modules/auth`
-- **Layers**:
-  - `application`: use cases and ports
-  - `infrastructure`: in-memory repositories (default), session store, password hasher
-  - `web`: Express router with Zod validation
-- **Password hashing**: Node.js `scrypt` with per-user salt
-- **Sessions**: in-memory map keyed by session id (default)
-- **Error handling**: centralized in `apps/api/src/app.ts`
+## Notas de implementación
+- **Ruta del módulo**: `apps/api/src/modules/auth`
+- **Capas**:
+  - `application`: casos de uso y puertos
+  - `infrastructure`: stores in-memory (default), stores Postgres, password hasher y servicios de tokens
+  - `api`: Express router con validación Zod
+- **Hash de contraseña**: Node.js `scrypt` con salt por usuario
+- **Refresh tokens**: store in-memory por defecto (Postgres disponible)
+- **Manejo de errores**: centralizado en `apps/api/src/app/errors/errorMiddleware.ts`
