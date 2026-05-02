@@ -4,6 +4,10 @@ import {
   mapHttpErrorToDomainError,
   type HttpDomainError,
 } from "@src/shared/services/http/httpErrorMapper";
+import {
+  adaptAuthUserResponse,
+  adaptOkResponse,
+} from "./adapters/AuthAdapter";
 
 export type RegisterInput = {
   name: string;
@@ -50,9 +54,9 @@ export async function registerUser(input: RegisterInput): Promise<AuthUser> {
       await throwAuthErrorFromResponse(response, "Unable to register");
     }
 
-    return (await response.json()) as AuthUser;
+    return adaptAuthUserResponse(await response.json());
   } catch (error) {
-    await throwMappedNetworkError(error, "register_request_failed");
+    return throwMappedNetworkError(error, "register_request_failed");
   }
 }
 
@@ -71,9 +75,9 @@ export async function loginUser(input: LoginInput): Promise<AuthUser> {
       await throwAuthErrorFromResponse(response, "Unable to login");
     }
 
-    return (await response.json()) as AuthUser;
+    return adaptAuthUserResponse(await response.json());
   } catch (error) {
-    await throwMappedNetworkError(error, "login_request_failed");
+    return throwMappedNetworkError(error, "login_request_failed");
   }
 }
 
@@ -88,26 +92,26 @@ export async function getCurrentUser(): Promise<AuthUser> {
       await throwAuthErrorFromResponse(response, "Unable to load current user");
     }
 
-    return (await response.json()) as AuthUser;
+    return adaptAuthUserResponse(await response.json());
   } catch (error) {
-    await throwMappedNetworkError(error, "current_user_request_failed");
+    return throwMappedNetworkError(error, "current_user_request_failed");
   }
 }
 
 export async function refreshSession(): Promise<{ ok: boolean }> {
   try {
-    const response = await fetch("/api/auth/refresh", {
+    const response = await fetchWithAuth("/api/auth/refresh", {
       method: "POST",
-      credentials: "include",
+      retryOnAuth401: false,
     });
 
     if (!response.ok) {
       await throwAuthErrorFromResponse(response, "Unable to refresh session");
     }
 
-    return (await response.json()) as { ok: boolean };
+    return adaptOkResponse(await response.json());
   } catch (error) {
-    await throwMappedNetworkError(error, "refresh_request_failed");
+    return throwMappedNetworkError(error, "refresh_request_failed");
   }
 }
 
@@ -117,10 +121,10 @@ export async function logoutUser(): Promise<{ ok: boolean }> {
   });
 
   if (!response.ok) {
-    throw new Error("Unable to logout");
+    await throwAuthErrorFromResponse(response, "Unable to logout");
   }
 
-  return (await response.json()) as { ok: boolean };
+  return adaptOkResponse(await response.json());
 }
 
 async function throwAuthErrorFromResponse(

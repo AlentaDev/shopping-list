@@ -175,15 +175,14 @@ describe("AuthService", () => {
       json: async () => ({ ok: true }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(refreshSession()).resolves.toEqual({ ok: true });
 
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/refresh", {
       method: "POST",
-      credentials: "include",
+      retryOnAuth401: false,
     });
-    expect(fetchWithAuthMock).not.toHaveBeenCalledWith("/api/auth/refresh", expect.anything());
   });
 
   it("loads the current user", async () => {
@@ -259,7 +258,7 @@ describe("AuthService", () => {
       json: async () => ({ error: "not_authenticated" }),
     }));
 
-    vi.stubGlobal("fetch", fetchMock);
+    fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
     await expect(refreshSession()).rejects.toBeInstanceOf(AuthServiceError);
     await expect(refreshSession()).rejects.toMatchObject({
