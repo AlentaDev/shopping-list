@@ -4,4 +4,7 @@ echo "✓ INICIANDO VERIFICACIÓN PRE-COMMIT"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
+# Revisión AI de archivos staged (GGA)
+gga run
+
 bash .husky/run-checks.sh pre-commit
