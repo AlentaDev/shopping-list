@@ -25,6 +25,61 @@ Fuentes principales de skills: `/home/alentadev/projects/shopping-list/skills`, 
   - `shared` solo para utilidades puras/técnicas; lógica específica vive en su feature/app.
   - Si el ownership de una capa no está claro, detenerse y preguntar.
 
+### auth-session-flow
+- **Trigger**: auth, login, refresh token, 401, cookies, logout, sesión, autorización.
+- **Path**: `/home/alentadev/projects/shopping-list/skills/auth-session-flow/SKILL.md`
+- **Reglas compactas**:
+  - Aplicar en Web/API/Android cuando toque sesión, refresh, retry 401, cookies o autorización.
+  - TDD obligatorio cubriendo éxito, expiración, retry y fallo final.
+  - API es autoridad de sesión/autorización; clientes no infieren permisos.
+  - Autorización explícita por lista/recurso antes de devolver o mutar datos.
+  - Refresh/retry centralizado; 401 puede intentar refresh una vez y luego limpiar sesión.
+  - No loguear tokens, cookies ni secretos; logs de auth estructurados y seguros.
+
+### shopping-list-domain
+- **Trigger**: lista, shopping list, draft, active, completed, autosave, complete, reuse, edit session.
+- **Path**: `/home/alentadev/projects/shopping-list/skills/shopping-list-domain/SKILL.md`
+- **Reglas compactas**:
+  - Aplicar cuando cambien estados o reglas de listas, autosave, completar, reutilizar o edición.
+  - TDD primero sobre comportamiento de dominio antes de UI/wiring.
+  - Tratar `draft`, `active` y `completed` como estados de dominio, no flags sueltos.
+  - Transiciones viven en servicios/casos de uso, no dispersas en componentes.
+  - Autosave maneja conflicto, recuperación y sincronización sin corromper datos.
+  - No duplicar reglas entre Web/API/Android; documentar cambios de contrato.
+
+### external-provider-mercadona
+- **Trigger**: Mercadona, catálogo, productos externos, provider externo, cache, fallback.
+- **Path**: `/home/alentadev/projects/shopping-list/skills/external-provider-mercadona/SKILL.md`
+- **Reglas compactas**:
+  - Nunca llamar Mercadona/providers externos desde frontend o Android.
+  - Integración externa detrás de interfaces/providers en backend infrastructure.
+  - La app debe funcionar si Mercadona falla: cache, fallback o degradación explícita.
+  - Normalizar DTO externo antes de exponerlo al dominio o clientes.
+  - No filtrar detalles internos del provider en respuestas públicas.
+  - TDD cubre éxito, fallo provider, fallback/cache y transformación.
+
+### deployment-environments
+- **Trigger**: deploy, Render, Vercel, Neon, env vars, CORS, build command, start command.
+- **Path**: `/home/alentadev/projects/shopping-list/skills/deployment-environments/SKILL.md`
+- **Reglas compactas**:
+  - Aplicar en cambios de deploy, env vars, CORS, Render, Vercel, Neon o comandos build/start.
+  - API debe validar env vars al arrancar y fallar rápido si falta config crítica.
+  - No commitear secretos ni valores productivos sensibles.
+  - CORS con credenciales requiere origen explícito; no usar `*` con cookies.
+  - Render API debe garantizar build antes de runtime compilado.
+  - Documentar wiring Neon/Postgres y no asumir `DATABASE_URL` si la app espera vars separadas.
+
+### android-release-safety
+- **Trigger**: Android release, localRelease, prod flavor, BuildConfig, APK, AAB, signing, publicación.
+- **Path**: `/home/alentadev/projects/shopping-list/skills/android-release-safety/SKILL.md`
+- **Reglas compactas**:
+  - Aplicar en release Android, flavors, BuildConfig, URLs de API, APK/AAB, signing o publicación.
+  - Nunca permitir release apuntando a API local salvo excepción explícita documentada.
+  - URLs/flags de entorno se resuelven por flavors/BuildConfig, no por `if` runtime disperso.
+  - No commitear keystores, passwords, tokens ni secretos de signing.
+  - Mantener bloqueada cualquier variante insegura como `localRelease`.
+  - Revisar impacto en debug, local, prod y CI ante cambios Gradle/release.
+
 ### react-web
 - **Trigger**: react, vite, vitest, testing-library, frontend web, componente, hook, UI_TEXT.
 - **Path**: `/home/alentadev/projects/shopping-list/skills/react-web/SKILL.md`

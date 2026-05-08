@@ -342,6 +342,11 @@ features/<feature>/
 ## Skills de proyecto
 
 - `skills/shopping-list-architecture/SKILL.md` — Reglas transversales del repo para arquitectura, TDD, deuda técnica, refactors y sprint técnico.
+- `skills/auth-session-flow/SKILL.md` — Reglas cross-app para auth, sesión, refresh token, retry 401, cookies, logout y autorización por recurso.
+- `skills/shopping-list-domain/SKILL.md` — Reglas de dominio para listas, estados `draft/active/completed`, autosave, edición, completar y reutilizar.
+- `skills/external-provider-mercadona/SKILL.md` — Reglas para integración backend-only con Mercadona, providers externos, cache, fallback y adapters.
+- `skills/deployment-environments/SKILL.md` — Reglas para Render, Vercel, Neon, env vars, CORS y comandos de despliegue.
+- `skills/android-release-safety/SKILL.md` — Reglas de seguridad para flavors, BuildConfig, variantes release, APK/AAB y publicación Android.
 - `skills/react-web/SKILL.md` — Reglas operativas para cambios en `apps/web` (React/Vite/Vitest) con TDD y límites de arquitectura frontend.
 - `skills/express-api/SKILL.md` — Reglas operativas para cambios en `apps/api` (Express/TypeScript) con capas backend, Zod, autorización y TDD.
 - `skills/android-kotlin/SKILL.md` — Reglas operativas para cambios en `apps/mobile-android` (Kotlin/Gradle/red/auth) con foco en seguridad de release y separación por capas.
