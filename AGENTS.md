@@ -336,3 +336,12 @@ features/<feature>/
 - Detener implementación
 - Pedir aclaración
 - Elegir siempre la opción más simple
+
+---
+
+## Skills de proyecto
+
+- `skills/shopping-list-architecture/SKILL.md` — Reglas transversales del repo para arquitectura, TDD, deuda técnica, refactors y sprint técnico.
+- `skills/react-web/SKILL.md` — Reglas operativas para cambios en `apps/web` (React/Vite/Vitest) con TDD y límites de arquitectura frontend.
+- `skills/express-api/SKILL.md` — Reglas operativas para cambios en `apps/api` (Express/TypeScript) con capas backend, Zod, autorización y TDD.
+- `skills/android-kotlin/SKILL.md` — Reglas operativas para cambios en `apps/mobile-android` (Kotlin/Gradle/red/auth) con foco en seguridad de release y separación por capas.
