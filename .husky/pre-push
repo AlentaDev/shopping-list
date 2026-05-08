@@ -1,13 +1,7 @@
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔍 INICIANDO VERIFICACIÓN PRE-PUSH"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+echo "🔍 Pre-push liviano: no ejecuta quality/e2e/build por defecto."
+echo "  CI es el guardrail fuerte."
+echo "  Para ejecutar checks locales completos: HUSKY_FULL_CHECKS=1 bash .husky/run-checks.sh pre-push"
 
 bash .husky/run-checks.sh pre-push
 
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🚀 ¡VERIFICACIÓN COMPLETA! Push listo para ejecutarse."
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
+echo "🚀 Push listo."
