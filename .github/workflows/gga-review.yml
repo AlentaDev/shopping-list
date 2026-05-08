@@ -20,9 +20,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitHub CLI
-        uses: cli/cli-action@v2
-
       - name: Install GGA
         run: |
           git clone https://github.com/Gentleman-Programming/gentleman-guardian-angel.git /tmp/gga
@@ -33,5 +30,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROVIDER: github:gpt-4o
+          GGA_PROVIDER: github:gpt-4o
         run: gga run --pr-mode
