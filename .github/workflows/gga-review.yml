@@ -20,9 +20,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitHub CLI
-        uses: cli/cli-action@v2
-
       - name: Install GGA
         run: |
           git clone https://github.com/Gentleman-Programming/gentleman-guardian-angel.git /tmp/gga
