@@ -14,6 +14,16 @@ run_cmd() {
   eval "$cmd"
 }
 
+run_optional_gga() {
+  if [ "${HUSKY_GGA:-0}" != "1" ]; then
+    return 0
+  fi
+
+  echo "🛡️ Ejecutando GGA local bajo demanda..."
+  echo "───────────────────────────────────────────────────────"
+  run_cmd "gga run"
+}
+
 changed_files_for_hook() {
   if [ -n "${HUSKY_CHANGED_FILES:-}" ]; then
     printf "%s\n" "$HUSKY_CHANGED_FILES"
@@ -91,6 +101,13 @@ run_global_checks() {
 }
 
 main() {
+  run_optional_gga
+
+  if [ "${HUSKY_FULL_CHECKS:-0}" != "1" ]; then
+    echo "ℹ️ Checks pesados omitidos. Usá HUSKY_FULL_CHECKS=1 para ejecutarlos localmente."
+    return
+  fi
+
   local changed_files
   changed_files="$(changed_files_for_hook)"
 

@@ -1,10 +1,5 @@
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✓ INICIANDO VERIFICACIÓN PRE-COMMIT"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-# Revisión AI de archivos staged (GGA)
-gga run
+echo "✓ Pre-commit liviano: validaciones pesadas viven en CI."
+echo "  Para ejecutar checks locales: HUSKY_FULL_CHECKS=1 bash .husky/run-checks.sh pre-commit"
+echo "  Para ejecutar GGA local: HUSKY_GGA=1 bash .husky/run-checks.sh pre-commit"
 
 bash .husky/run-checks.sh pre-commit
