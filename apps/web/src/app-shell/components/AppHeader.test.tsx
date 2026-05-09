@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { createRef } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import { AppHeader } from "@src/features/app-shell/components/AppHeader";
+import { AppHeader } from "./AppHeader";
 
 const baseProps = {
   authUser: null,
@@ -15,6 +15,7 @@ const baseProps = {
   onNavigateHome: vi.fn(),
   onOpenCart: vi.fn(),
   onToggleCategories: vi.fn(),
+  onNavigateDownloadApp: vi.fn(),
   onNavigateLogin: vi.fn(),
   onNavigateRegister: vi.fn(),
   onToggleUserMenu: vi.fn(),
@@ -24,8 +25,8 @@ const baseProps = {
   userMenuRef: createRef<HTMLDivElement>(),
 };
 
-describe("AppHeader", () => {
-  it("muestra botones de login y registro cuando no hay usuario", () => {
+describe("app-shell/AppHeader", () => {
+  it("muestra login/registro cuando no hay usuario autenticado", () => {
     render(<AppHeader {...baseProps} />);
 
     expect(
@@ -36,28 +37,21 @@ describe("AppHeader", () => {
     ).toBeInTheDocument();
   });
 
-  it("notifica el toggle de categorías", async () => {
-    const onToggleCategories = vi.fn();
-
-    render(
-      <AppHeader
-        {...baseProps}
-        onToggleCategories={onToggleCategories}
-      />,
-    );
+  it("abre carrito cuando se hace click en el botón de carrito", async () => {
+    const onOpenCart = vi.fn();
+    render(<AppHeader {...baseProps} linesCount={2} onOpenCart={onOpenCart} />);
 
     await userEvent.click(
-      screen.getByRole("button", { name: UI_TEXT.APP.CATEGORIES_LABEL }),
+      screen.getByRole("button", { name: UI_TEXT.APP.CART_BUTTON_LABEL }),
     );
 
-    expect(onToggleCategories).toHaveBeenCalledTimes(1);
+    expect(onOpenCart).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("2")).toBeInTheDocument();
   });
 
-  it("renderiza el menú de usuario y dispara acciones", async () => {
-    const onToggleUserMenu = vi.fn();
-    const onNavigateLists = vi.fn();
-    const onCloseUserMenu = vi.fn();
+  it("en menú autenticado dispara logout y cierra menú", async () => {
     const onLogout = vi.fn();
+    const onCloseUserMenu = vi.fn();
 
     render(
       <AppHeader
@@ -69,29 +63,16 @@ describe("AppHeader", () => {
           postalCode: "28001",
         }}
         isUserMenuOpen
-        onToggleUserMenu={onToggleUserMenu}
-        onNavigateLists={onNavigateLists}
-        onCloseUserMenu={onCloseUserMenu}
         onLogout={onLogout}
+        onCloseUserMenu={onCloseUserMenu}
       />,
     );
 
     await userEvent.click(
-      screen.getByRole("button", {
-        name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
-      }),
-    );
-    expect(onToggleUserMenu).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(
-      screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LISTS }),
-    );
-    expect(onNavigateLists).toHaveBeenCalledTimes(1);
-    expect(onCloseUserMenu).toHaveBeenCalledTimes(1);
-
-    await userEvent.click(
       screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LOGOUT }),
     );
+
     expect(onLogout).toHaveBeenCalledTimes(1);
+    expect(onCloseUserMenu).toHaveBeenCalledTimes(1);
   });
 });

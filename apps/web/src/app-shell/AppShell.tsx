@@ -5,19 +5,21 @@ import { useAuth } from "@src/context/useAuth";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
-import { AppHeader } from "@src/features/app-shell/components/AppHeader";
-import { useAppShellNavigation } from "@src/features/app-shell/useAppShellNavigation";
+import { AppHeader } from "@src/app-shell/components/AppHeader";
+import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
   ListDetail,
-  ListItem as RemoteListItem,
   ListSummary,
 } from "@src/features/lists/services/types";
 import {
   LIST_STATUS,
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
-import type { ShoppingListItem } from "@src/features/shopping-list/types";
+import {
+  adaptListDetailItemsToShoppingListItems,
+  adaptListStatusToShoppingListStatus,
+} from "@src/features/shopping-list/services/adapters/AppShellListAdapter";
 
 const CATALOG_PATH = "/";
 
@@ -47,33 +49,20 @@ export const AppShell = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleOpenCart = () => {
-      setIsCartOpen(true);
-    };
-
+    const handleOpenCart = () => setIsCartOpen(true);
     window.addEventListener(APP_EVENTS.OPEN_CART, handleOpenCart);
-    return () => {
-      window.removeEventListener(APP_EVENTS.OPEN_CART, handleOpenCart);
-    };
+    return () => window.removeEventListener(APP_EVENTS.OPEN_CART, handleOpenCart);
   }, []);
 
-  // Cerrar menú al hacer clic fuera
   useEffect(() => {
     if (!isUserMenuOpen) return;
-
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
         setIsUserMenuOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isUserMenuOpen, setIsUserMenuOpen]);
 
   const handleRegister = async (values: RegisterFormValues) => {
@@ -84,7 +73,6 @@ export const AppShell = () => {
       setAuthRedirectPending(false);
     } catch {
       setAuthRedirectPending(false);
-      // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
@@ -96,7 +84,6 @@ export const AppShell = () => {
       setAuthRedirectPending(false);
     } catch {
       setAuthRedirectPending(false);
-      // Error is already handled by AuthProvider and displayed via authError
     }
   };
 
@@ -104,15 +91,15 @@ export const AppShell = () => {
     try {
       await logout();
       navigate("/");
-    } catch {
-      // Error is already handled by AuthProvider and displayed via authError
+    } catch (error) {
+      console.warn("No se pudo cerrar sesión.", error);
     }
   };
 
   const handleOpenList = (list: ListDetail) => {
-    setItems(mapListItems(list.items));
+    setItems(adaptListDetailItemsToShoppingListItems(list.items));
     setCurrentListId(list.id);
-    setCurrentListStatus(resolveShoppingListStatus(list.status));
+    setCurrentListStatus(adaptListStatusToShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
     setIsListLoading(false);
     setCurrentListIsEditing(list.isEditing);
@@ -121,26 +108,25 @@ export const AppShell = () => {
 
   const handleStartOpenList = (list: ListSummary) => {
     setCurrentListId(list.id);
-    setCurrentListStatus(resolveShoppingListStatus(list.status));
+    setCurrentListStatus(adaptListStatusToShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
     setIsListLoading(true);
     setCurrentListIsEditing(list.isEditing);
     setIsCartOpen(true);
   };
 
-  const { authMode, currentPath, navigate, mainContent } =
-    useAppShellNavigation({
-      authUser,
-      authRedirectPending,
-      isAuthSubmitting,
-      authError,
-      isCategoriesOpen,
-      linesCount,
-      onLogin: handleLogin,
-      onRegister: handleRegister,
-      onOpenList: handleOpenList,
-      onStartOpenList: handleStartOpenList,
-    });
+  const { authMode, currentPath, navigate, mainContent } = useAppShellNavigation({
+    authUser,
+    authRedirectPending,
+    isAuthSubmitting,
+    authError,
+    isCategoriesOpen,
+    linesCount,
+    onLogin: handleLogin,
+    onRegister: handleRegister,
+    onOpenList: handleOpenList,
+    onStartOpenList: handleStartOpenList,
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -152,6 +138,7 @@ export const AppShell = () => {
         onNavigateHome={() => navigate("/")}
         onOpenCart={() => setIsCartOpen(true)}
         onToggleCategories={() => setIsCategoriesOpen((prev) => !prev)}
+        onNavigateDownloadApp={() => navigate("/app")}
         onNavigateLogin={() => navigate("/auth/login")}
         onNavigateRegister={() => navigate("/auth/register")}
         onToggleUserMenu={() => setIsUserMenuOpen(!isUserMenuOpen)}
@@ -160,13 +147,8 @@ export const AppShell = () => {
         onLogout={handleLogout}
         userMenuRef={userMenuRef}
       />
-
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <div
-          key={`${currentPath}-${authMode ?? "main"}`}
-          className="page-transition"
-          data-testid="page-transition"
-        >
+        <div key={`${currentPath}-${authMode ?? "main"}`} className="page-transition" data-testid="page-transition">
           {mainContent}
         </div>
       </main>
@@ -178,9 +160,7 @@ export const AppShell = () => {
           setIsListLoading(false);
         }}
         onAddMoreProducts={() => {
-          if (currentPath !== CATALOG_PATH) {
-            navigate(CATALOG_PATH);
-          }
+          if (currentPath !== CATALOG_PATH) navigate(CATALOG_PATH);
         }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}
@@ -192,31 +172,3 @@ export const AppShell = () => {
     </div>
   );
 };
-
-
-const mapListItems = (items: RemoteListItem[]): ShoppingListItem[] =>
-  items.map((item) => ({
-    id: item.id,
-    name: item.name,
-    category: "",
-    thumbnail: item.thumbnail ?? null,
-    price: item.price ?? null,
-    quantity: item.qty,
-  }));
-
-const resolveShoppingListStatus = (
-  status?: string,
-): ShoppingListStatus => {
-  switch (status) {
-    case LIST_STATUS.ACTIVE:
-      return LIST_STATUS.ACTIVE;
-    case LIST_STATUS.COMPLETED:
-      return LIST_STATUS.COMPLETED;
-    case LIST_STATUS.DRAFT:
-      return LIST_STATUS.DRAFT;
-    default:
-      return LIST_STATUS.DRAFT;
-  }
-};
-
-export default AppShell;

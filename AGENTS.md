@@ -196,12 +196,27 @@ Solo se usan para **validar flujos críticos de la aplicación** que integran m�
 
 ```txt
 apps/web/src/
+├─ app-shell/   # excepción aprobada: composición transversal de UI/routing
 ├─ context/
 ├─ features/
 ├─ infrastructure/
 ├─ providers/
 └─ shared/
 ```
+
+### Excepción aprobada: `app-shell/` (composición)
+
+Se aprueba explícitamente `apps/web/src/app-shell/` como **capa de composición**
+transversal (routing UI, wiring entre features, shell de navegación), con estas
+restricciones obligatorias:
+
+- `app-shell/` **no** contiene lógica de negocio de feature.
+- `app-shell/` puede componer features visibles en pantalla.
+- Transformaciones DTO → dominio deben vivir en `features/*/services/adapters/`.
+- `features/*` no deben depender de internals de `app-shell/` salvo fallback
+  de compatibilidad temporal documentado en la migración.
+- Si hay conflicto entre regla feature-first y composición transversal,
+  prevalece esta excepción para `app-shell/`.
 
 ### Dentro de cada feature
 
@@ -270,6 +285,11 @@ features/<feature>/
 - `components/` → importar desde `services/adapters/` directamente
 - `shared/` → usar `fetch` o depender de features
 - `features/*` → importar otra feature (solo vía `shared/` o `context/` cuando aplique)
+
+✅ Permitido (excepción aprobada):
+
+- `app-shell/*` → componer features para navegación/renderizado de pantallas
+- `App.tsx` → usar `@src/app-shell/AppShell`
 
 ---
 

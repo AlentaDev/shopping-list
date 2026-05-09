@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import App from "@src/App";
 
-vi.mock("@src/features/app-shell/AppShell", () => ({
+vi.mock("@src/app-shell/AppShell", () => ({
   AppShell: () => <div>AppShell mocked</div>,
 }));
 

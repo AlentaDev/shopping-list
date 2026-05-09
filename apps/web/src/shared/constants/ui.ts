@@ -15,8 +15,37 @@ export const UI_TEXT = {
     TITLE: "La lista de la compra",
     CART_BUTTON_LABEL: "Abrir carrito",
     CATEGORIES_LABEL: "Categorías",
+    DOWNLOAD_APP_LABEL: "Descargar app",
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
+  },
+  APP_DOWNLOAD: {
+    BADGE_LABEL: "Beta",
+    TITLE: "Shopping List para Android",
+    SUBTITLE:
+      "Descarga la app beta para usar tus listas en el súper y seguir comprando aunque la conexión sea inestable.",
+    DOWNLOAD_BUTTON_LABEL: "Descargar APK Android",
+    VERSION_LABEL: "Versión:",
+    UPDATED_AT_LABEL: "Última actualización:",
+    RELEASE: {
+      VERSION: "v0.9.0-beta.1",
+      UPDATED_AT: "03/05/2026",
+      APK_URL:
+        "https://github.com/alentadev/shopping-list/releases/latest/download/shopping-list-android.apk",
+    },
+    INSTALL_STEPS: {
+      TITLE: "Cómo instalar",
+      FIRST: "Descarga el APK en tu dispositivo Android.",
+      SECOND: "Abre el archivo y confirma la instalación.",
+      THIRD:
+        "Si Android lo solicita, habilita 'Instalar apps desconocidas' para tu navegador o gestor de archivos.",
+    },
+    KNOWN_LIMITATIONS: {
+      TITLE: "Limitaciones conocidas de esta beta",
+      FIRST: "La sincronización puede requerir reintentos en conexiones inestables.",
+      SECOND: "Algunas interacciones de sesión siguen en ajuste para mejorar robustez.",
+      THIRD: "Soporte inicial solo para Android.",
+    },
   },
   AUTH: {
     BACK_TO_HOME: "Volver al catálogo",
