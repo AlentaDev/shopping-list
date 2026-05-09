@@ -1,4 +1,4 @@
-import { AppShell } from "@src/features/app-shell/AppShell";
+import { AppShell } from "@src/app-shell/AppShell";
 
 const App = () => <AppShell />;
 

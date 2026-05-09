@@ -10,6 +10,7 @@ type AppHeaderProps = {
   onNavigateHome: () => void;
   onOpenCart: () => void;
   onToggleCategories: () => void;
+  onNavigateDownloadApp: () => void;
   onNavigateLogin: () => void;
   onNavigateRegister: () => void;
   onToggleUserMenu: () => void;
@@ -27,6 +28,7 @@ export const AppHeader = ({
   onNavigateHome,
   onOpenCart,
   onToggleCategories,
+  onNavigateDownloadApp,
   onNavigateLogin,
   onNavigateRegister,
   onToggleUserMenu,
@@ -87,6 +89,13 @@ export const AppHeader = ({
         >
           {UI_TEXT.APP.CATEGORIES_LABEL}
         </button>
+        <button
+          type="button"
+          onClick={onNavigateDownloadApp}
+          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+        >
+          {UI_TEXT.APP.DOWNLOAD_APP_LABEL}
+        </button>
         {authUser ? (
           <div className="relative" ref={userMenuRef}>
             <button
@@ -126,7 +135,10 @@ export const AppHeader = ({
                 <button
                   type="button"
                   role="menuitem"
-                  onClick={onLogout}
+                  onClick={() => {
+                    onCloseUserMenu();
+                    onLogout();
+                  }}
                   className="flex w-full items-center rounded-lg px-3 py-2 text-left text-red-600 hover:bg-red-50"
                 >
                   {UI_TEXT.AUTH.USER_MENU.LOGOUT}

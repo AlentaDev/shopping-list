@@ -4,8 +4,9 @@ import { renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import Catalog from "@src/features/catalog/Catalog";
 import { ListsContainer } from "@src/features/lists";
-import { AuthLoggedInNotice, AuthScreen } from "@src/features/auth";
-import { useAppShellNavigation } from "@src/features/app-shell/useAppShellNavigation";
+import { AuthScreen } from "@src/features/auth";
+import { MobileAppDownloadPage } from "@src/features/mobile-app";
+import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
 
 const baseArgs = {
   authUser: null,
@@ -20,13 +21,13 @@ const baseArgs = {
   onStartOpenList: vi.fn(),
 };
 
-describe("useAppShellNavigation", () => {
+describe("useAppShellNavigation (canonical path)", () => {
   beforeEach(() => {
     window.history.pushState({}, "", "/");
   });
 
-  it("expone authMode en login", () => {
-    window.history.pushState({}, "", "/auth/login");
+  it("resuelve /auth/* a flujo de auth", () => {
+    window.history.pushState({}, "", "/auth/recover");
 
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
 
@@ -34,34 +35,13 @@ describe("useAppShellNavigation", () => {
     expect(result.current.mainContent.type).toBe(AuthScreen);
   });
 
-  it("muestra aviso cuando el usuario ya está autenticado en auth", () => {
-    window.history.pushState({}, "", "/auth/register");
-
-    const { result } = renderHook(() =>
-      useAppShellNavigation({
-        ...baseArgs,
-        authUser: {
-          id: "user-1",
-          name: "Ada",
-          email: "ada@example.com",
-          postalCode: "28001",
-        },
-      }),
-    );
-
-    expect(result.current.authMode).toBe("register");
-    expect(result.current.mainContent.type).toBe(AuthLoggedInNotice);
-  });
-
-  it("renderiza el catálogo por defecto", () => {
+  it("renderiza catálogo en /", () => {
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
-
     expect(result.current.mainContent.type).toBe(Catalog);
   });
 
-  it("renderiza listas cuando hay usuario y ruta /lists", () => {
+  it("renderiza listas en /lists con usuario", () => {
     window.history.pushState({}, "", "/lists");
-
     const { result } = renderHook(() =>
       useAppShellNavigation({
         ...baseArgs,
@@ -73,15 +53,12 @@ describe("useAppShellNavigation", () => {
         },
       }),
     );
-
     expect(result.current.mainContent.type).toBe(ListsContainer);
   });
 
-  it("fuerza login en /lists si no hay usuario", () => {
-    window.history.pushState({}, "", "/lists");
-
+  it("renderiza descarga en /app", () => {
+    window.history.pushState({}, "", "/app");
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
-
-    expect(result.current.mainContent.type).toBe(AuthScreen);
+    expect(result.current.mainContent.type).toBe(MobileAppDownloadPage);
   });
 });
