@@ -21,14 +21,24 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Default (puedes sobreescribir por buildType)
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+    }
+
+    flavorDimensions += "environment"
+
+    productFlavors {
+        create("local") {
+            dimension = "environment"
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+        }
+
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "API_BASE_URL", "\"https://api.tu-dominio.com\"")
+        }
     }
 
     buildTypes {
         debug {
-            // Emulador Android -> host (Windows) localhost
-            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
         }
         release {
             isMinifyEnabled = false
@@ -37,8 +47,6 @@ android {
                 "proguard-rules.pro"
             )
 
-            // Cambia esto por tu dominio real en producción (HTTPS)
-            buildConfigField("String", "API_BASE_URL", "\"https://api.tu-dominio.com\"")
         }
     }
 
@@ -55,6 +63,15 @@ android {
     testOptions {
         unitTests {
             isReturnDefaultValues = true // Mock android.util.Log y otros Android framework classes
+        }
+    }
+}
+
+androidComponents {
+    beforeVariants { variantBuilder ->
+        val isLocalFlavor = variantBuilder.productFlavors.any { (_, flavor) -> flavor == "local" }
+        if (isLocalFlavor && variantBuilder.buildType == "release") {
+            variantBuilder.enable = false
         }
     }
 }
