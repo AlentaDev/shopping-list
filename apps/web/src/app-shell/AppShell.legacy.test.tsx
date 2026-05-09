@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppShell } from "@src/features/app-shell/AppShell";
+import { AppShell } from "@src/app-shell/AppShell";
 import { AppProviders } from "@src/providers/AppProviders";
 import { UI_TEXT } from "@src/shared/constants/ui";
 

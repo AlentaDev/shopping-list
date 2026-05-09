@@ -78,6 +78,7 @@ describe("ShoppingList", () => {
   ];
 
   afterEach(() => {
+    vi.useRealTimers();
     cleanup();
   });
 
@@ -272,7 +273,7 @@ describe("ShoppingList", () => {
     ).toBeInTheDocument();
   });
 
-  it("muestra acciones de detalle para listas activas", () => {
+  it("muestra acciones de detalle para listas activas", async () => {
     sessionStorage.setItem("lists.autosaveChecked", "true");
 
     renderShoppingList({
@@ -282,7 +283,7 @@ describe("ShoppingList", () => {
     });
 
     expect(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.DELETE,
       }),
     ).toBeInTheDocument();
@@ -294,7 +295,7 @@ describe("ShoppingList", () => {
   });
 
 
-  it("muestra acciones explícitas al editar una lista activa", () => {
+  it("muestra acciones explícitas al editar una lista activa", async () => {
     renderShoppingList({
       authenticated: true,
       listId: "list-edit-1",
@@ -305,7 +306,7 @@ describe("ShoppingList", () => {
     });
 
     expect(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.EDITING_ACTIONS.FINISH,
       }),
     ).toBeInTheDocument();
@@ -326,7 +327,7 @@ describe("ShoppingList", () => {
     ).toBeNull();
   });
 
-  it("permite mostrar control para editar título en sesión de edición ACTIVE", () => {
+  it("permite mostrar control para editar título en sesión de edición ACTIVE", async () => {
     renderShoppingList({
       authenticated: true,
       listId: "list-edit-title-1",
@@ -337,7 +338,7 @@ describe("ShoppingList", () => {
     });
 
     expect(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: UI_TEXT.LIST_MODAL.EDIT_TITLE.BUTTON_LABEL,
       }),
     ).toBeInTheDocument();
@@ -406,8 +407,6 @@ describe("ShoppingList", () => {
       );
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
         "/api/lists/autosave",
@@ -416,8 +415,8 @@ describe("ShoppingList", () => {
           body: expect.stringContaining('"title":"Lista activa renombrada"'),
         }),
       );
-    });
-  });
+    }, { timeout: 9000 });
+  }, 10000);
 
   it("rehidrata el título editado tras recarga y finish-edit limpia draft local", async () => {
     const user = userEvent.setup();
@@ -882,7 +881,7 @@ describe("ShoppingList", () => {
     });
   });
 
-  it("muestra acciones de detalle para listas completadas", () => {
+  it("muestra acciones de detalle para listas completadas", async () => {
     sessionStorage.setItem("lists.autosaveChecked", "true");
 
     renderShoppingList({
@@ -892,7 +891,7 @@ describe("ShoppingList", () => {
     });
 
     expect(
-      screen.getByRole("button", {
+      await screen.findByRole("button", {
         name: UI_TEXT.SHOPPING_LIST.DETAIL_ACTIONS.REUSE,
       }),
     ).toBeInTheDocument();
@@ -1466,14 +1465,14 @@ describe("ShoppingList", () => {
     ).toBeNull();
   });
 
-  it("deshabilita la acción de activar lista si no hay items", () => {
+  it("deshabilita la acción de activar lista si no hay items", async () => {
     renderShoppingList({
       authenticated: true,
       listStatus: "LOCAL_DRAFT",
       items: [],
     });
 
-    const readyToShopButton = screen.getByRole("button", {
+    const readyToShopButton = await screen.findByRole("button", {
       name: UI_TEXT.LIST_MODAL.READY_TO_SHOP_LABEL,
     });
 

@@ -1,1 +1,1 @@
-export { AppShell } from "./AppShell";
+export { AppShell } from "@src/app-shell/AppShell";

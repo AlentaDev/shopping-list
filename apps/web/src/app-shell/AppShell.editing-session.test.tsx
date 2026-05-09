@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppShell } from "./AppShell";
+import { AppShell } from "@src/app-shell/AppShell";
 import type { ListDetail } from "@src/features/lists/services/types";
 
 type ShoppingListMockProps = {
@@ -13,6 +13,18 @@ type ShoppingListMockProps = {
 };
 
 const shoppingListSpy = vi.fn();
+
+const adapterMocks = vi.hoisted(() => ({
+  adaptListDetailItemsToShoppingListItemsMock: vi.fn((items) => items),
+  adaptListStatusToShoppingListStatusMock: vi.fn(() => "ACTIVE"),
+}));
+
+vi.mock("@src/features/shopping-list/services/adapters/AppShellListAdapter", () => ({
+  adaptListDetailItemsToShoppingListItems:
+    adapterMocks.adaptListDetailItemsToShoppingListItemsMock,
+  adaptListStatusToShoppingListStatus:
+    adapterMocks.adaptListStatusToShoppingListStatusMock,
+}));
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
   default: () => <div data-testid="toast-placeholder" />,
@@ -38,7 +50,7 @@ vi.mock("@src/context/useAuth", () => ({
   }),
 }));
 
-vi.mock("@src/features/app-shell/useAppShellNavigation", () => ({
+vi.mock("@src/app-shell/useAppShellNavigation", () => ({
   useAppShellNavigation: ({ onOpenList }: { onOpenList: (list: ListDetail) => void }) => ({
     authMode: null,
     currentPath: "/",
@@ -52,7 +64,16 @@ vi.mock("@src/features/app-shell/useAppShellNavigation", () => ({
             title: "Lista activa",
             status: "ACTIVE",
             isEditing: true,
-            items: [],
+            items: [
+              {
+                id: "item-1",
+                kind: "catalog",
+                name: "Pan",
+                qty: 2,
+                checked: false,
+                updatedAt: "2024-02-01T10:00:00.000Z",
+              },
+            ],
           })
         }
       >
@@ -62,7 +83,7 @@ vi.mock("@src/features/app-shell/useAppShellNavigation", () => ({
   }),
 }));
 
-vi.mock("@src/features/app-shell/components/AppHeader", () => ({
+vi.mock("@src/app-shell/components/AppHeader", () => ({
   AppHeader: ({ onOpenCart }: { onOpenCart: () => void }) => (
     <button type="button" onClick={onOpenCart}>
       open-cart
@@ -92,6 +113,14 @@ describe("AppShell editing session persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.pushState({}, "", "/");
+    adapterMocks.adaptListDetailItemsToShoppingListItemsMock.mockReset();
+    adapterMocks.adaptListStatusToShoppingListStatusMock.mockReset();
+    adapterMocks.adaptListDetailItemsToShoppingListItemsMock.mockImplementation(
+      (items) => items,
+    );
+    adapterMocks.adaptListStatusToShoppingListStatusMock.mockImplementation(
+      () => "ACTIVE",
+    );
   });
 
   it("mantiene initialIsEditing=true tras cerrar y reabrir modal durante edición activa", async () => {
@@ -120,6 +149,30 @@ describe("AppShell editing session persistence", () => {
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("true");
     expect(screen.getByTestId("shopping-list-editing")).toHaveTextContent(
       "true",
+    );
+  });
+
+  it("delegates list payload transformation to shopping-list adapters", async () => {
+    const user = userEvent.setup();
+
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "open-editing-list" }));
+
+    expect(
+      adapterMocks.adaptListDetailItemsToShoppingListItemsMock,
+    ).toHaveBeenCalledWith([
+      {
+        id: "item-1",
+        kind: "catalog",
+        name: "Pan",
+        qty: 2,
+        checked: false,
+        updatedAt: "2024-02-01T10:00:00.000Z",
+      },
+    ]);
+    expect(adapterMocks.adaptListStatusToShoppingListStatusMock).toHaveBeenCalledWith(
+      "ACTIVE",
     );
   });
 });
