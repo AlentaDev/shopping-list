@@ -1108,12 +1108,15 @@ describe("ShoppingList", () => {
 
     renderShoppingList({ onClose, onAddMoreProducts });
 
+    expect(document.body.style.overflow).toBe("hidden");
+
     await userEvent.click(
       screen.getByRole("button", { name: "Añadir más productos" }),
     );
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onAddMoreProducts).toHaveBeenCalledTimes(1);
+    expect(document.body.style.overflow).toBe("");
   });
 
   it("shows an empty state message when there are no items", () => {

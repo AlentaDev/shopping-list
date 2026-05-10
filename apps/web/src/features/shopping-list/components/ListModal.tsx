@@ -61,7 +61,9 @@ const ListModal = ({
     document.body.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = previousOverflow.current ?? "";
+      if (document.body.style.overflow === "hidden") {
+        document.body.style.overflow = previousOverflow.current ?? "";
+      }
     };
   }, [isOpen]);
 

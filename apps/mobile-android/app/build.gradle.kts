@@ -33,7 +33,7 @@ android {
 
         create("prod") {
             dimension = "environment"
-            buildConfigField("String", "API_BASE_URL", "\"https://api.tu-dominio.com\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://api-shopping-list.onrender.com\"")
         }
     }
 

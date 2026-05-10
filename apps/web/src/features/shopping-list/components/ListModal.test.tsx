@@ -79,6 +79,26 @@ describe("ListModal", () => {
     expect(document.body.style.overflow).toBe("auto");
   });
 
+  it("does not re-lock body scroll if it was already unlocked before unmount", () => {
+    const { rerender } = render(
+      <ListModal isOpen onClose={vi.fn()} title="Mi lista">
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    expect(document.body.style.overflow).toBe("hidden");
+
+    document.body.style.overflow = "";
+
+    rerender(
+      <ListModal isOpen={false} onClose={vi.fn()} title="Mi lista">
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    expect(document.body.style.overflow).toBe("");
+  });
+
   it("backdrop disappears immediately when isOpen becomes false", async () => {
     const { rerender } = render(
       <ListModal isOpen onClose={vi.fn()} title="Mi lista">

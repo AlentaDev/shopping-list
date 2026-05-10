@@ -180,6 +180,11 @@ const clearEditSessionMarker = () => {
   }
 };
 
+const restoreGlobalScroll = () => {
+  document.body.style.overflow = "";
+  document.documentElement.style.overflow = "";
+};
+
 const ShoppingListTotalSkeleton = () => (
   <div
     data-testid="shopping-list-total-skeleton"
@@ -419,6 +424,7 @@ const ShoppingList = ({
   const handleClose = () => {
     setPendingRemoval(null);
     setPendingListDeletion(false);
+    restoreGlobalScroll();
     onClose();
   };
 
