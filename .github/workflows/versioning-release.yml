@@ -1,0 +1,60 @@
+name: Versioning Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  version-and-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply versions from changesets
+        run: pnpm version:packages
+
+      - name: Sync Android Gradle version
+        run: pnpm version:android:sync
+
+      - name: Commit version files if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add -A
+            git commit -m "chore(release): apply semantic version bumps"
+            git push
+          else
+            echo "No version changes to commit"
+          fi
+
+      - name: Create app tags
+        run: pnpm release:tag
+
+      - name: Push tags
+        run: git push --tags
+
+      - name: Android release reminder
+        run: |
+          VERSION=$(node -e "console.log(require('./apps/mobile-android/package.json').version)")
+          echo "📱 Android $VERSION versioned. Reminder: build/sign/upload APK/AAB manually."
