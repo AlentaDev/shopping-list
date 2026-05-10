@@ -12,7 +12,7 @@ const DRAFT_LOSS_MESSAGE =
 
 export const UI_TEXT = {
   APP: {
-    TITLE: "La lista de la compra",
+    TITLE: "Shopping List",
     CART_BUTTON_LABEL: "Abrir carrito",
     CATEGORIES_LABEL: "Categorías",
     DOWNLOAD_APP_LABEL: "Descargar app",
