@@ -3,6 +3,10 @@
         {
             "source": "/api/(.*)",
             "destination": "https://api-shopping-list.onrender.com/api/$1"
+        },
+        {
+            "source": "/((?!api/).*)",
+            "destination": "/"
         }
     ]
 }
