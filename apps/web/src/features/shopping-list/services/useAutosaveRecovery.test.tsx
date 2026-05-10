@@ -194,6 +194,52 @@ describe("useAutosaveRecovery", () => {
     expect(sessionStorage.getItem("lists.autosaveChecked")).toBe("true");
   });
 
+  it("no crea conflicto cuando local/remoto difieren solo en id técnico", async () => {
+    const localDraft: LocalDraft = {
+      title: "Lista local",
+      items: [
+        {
+          id: "4706",
+          kind: "catalog",
+          name: "Leche",
+          qty: 2,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "4706",
+        },
+      ],
+      updatedAt: "2024-01-01T10:00:00.000Z",
+    };
+
+    localStorage.setItem("lists.localDraft", JSON.stringify(localDraft));
+
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>>(
+      async () => ({
+        ok: true,
+        json: async () => ({
+          ...SAMPLE_REMOTE,
+          items: [
+            {
+              ...SAMPLE_REMOTE.items[0],
+              id: "active-1:4706",
+              sourceProductId: "4706",
+              qty: 2,
+            },
+          ],
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        }),
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No conflict")).toBeInTheDocument();
+    });
+  });
+
 
 
   it("aplica flujo update first: refresca remoto, reaplica item local y sincroniza", async () => {

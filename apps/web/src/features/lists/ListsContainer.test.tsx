@@ -511,6 +511,7 @@ describe("ListsContainer", () => {
       sourceTabId: "tab-test",
     });
   });
+
   it("en editar lista activa ejecuta start-edit antes de abrir el modal", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>

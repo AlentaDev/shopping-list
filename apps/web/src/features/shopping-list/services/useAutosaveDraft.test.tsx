@@ -129,6 +129,48 @@ const DirtySourceProductHarness = () => {
   );
 };
 
+const MixedIdentityHarness = () => {
+  const [items, setItems] = useState<ListItem[]>([]);
+
+  useAutosaveDraft(
+    {
+      title: "Lista semanal",
+      items,
+    },
+    { enabled: true },
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setItems([
+          {
+            id: "4706",
+            sourceProductId: "4706",
+            name: "Leche",
+            category: "Bebidas",
+            thumbnail: null,
+            price: 1.5,
+            quantity: 1,
+          },
+          {
+            id: "active-1:4706",
+            sourceProductId: "active-1:4706:4706",
+            name: "Leche",
+            category: "Bebidas",
+            thumbnail: null,
+            price: 1.5,
+            quantity: 3,
+          },
+        ])
+      }
+    >
+      Add mixed identity items
+    </button>
+  );
+};
+
 const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
   const [items, setItems] = useState<ListItem[]>([]);
   const [title, setTitle] = useState("Lista secundaria");
@@ -168,6 +210,37 @@ const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
       </button>
     </>
   );
+};
+
+const ReuseAfterRehydrateHarness = () => {
+  const [title, setTitle] = useState("Lista inicial");
+  const [items, setItems] = useState<ListItem[]>([]);
+
+  useAutosaveDraft(
+    {
+      title,
+      items,
+    },
+    {
+      enabled: false,
+      onRehydrate: () => {
+        setTitle("Lista reutilizada");
+        setItems([
+          {
+            id: "item-reused-1",
+            sourceProductId: "8901",
+            name: "Yogur",
+            category: "Lácteos",
+            thumbnail: null,
+            price: 2.2,
+            quantity: 3,
+          },
+        ]);
+      },
+    },
+  );
+
+  return <span data-testid="reuse-state">ready</span>;
 };
 
 describe("useAutosaveDraft", () => {
@@ -300,6 +373,41 @@ describe("useAutosaveDraft", () => {
 
     expect(typeof body).toBe("string");
     expect(body).toContain('"sourceProductId":"4706"');
+  });
+
+  it("serializa un solo item canónico cuando entran ids legacy mezclados", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<MixedIdentityHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add mixed identity items" }));
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    const putCall = fetchMock.mock.calls.find((call) => call[1]?.method === "PUT");
+    const body = JSON.parse(String(putCall?.[1]?.body)) as {
+      items: Array<{ id: string; sourceProductId: string; qty: number; checked: boolean }>;
+    };
+
+    expect(body.items).toHaveLength(1);
+    expect(body.items[0]).toMatchObject({
+      id: "active-1:4706",
+      sourceProductId: "4706",
+      qty: 3,
+      checked: false,
+    });
   });
 
   it("solo guarda en localStorage cuando está deshabilitado", async () => {
@@ -600,6 +708,46 @@ describe("useAutosaveDraft", () => {
       expect(screen.getByTestId("secondary-remote-flag")).toHaveTextContent(
         "clean",
       );
+    });
+  });
+
+  it("persiste en localStorage el draft reutilizado cuando ya existía draft previo al montar", async () => {
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Lista previa",
+        items: [
+          {
+            id: "item-previo",
+            kind: "catalog",
+            name: "Huevos",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "item-previo",
+          },
+        ],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    );
+
+    render(<ReuseAfterRehydrateHarness />);
+
+    await waitFor(() => {
+      const stored = localStorage.getItem("lists.localDraft");
+      expect(stored).toBeTruthy();
+      const parsed = JSON.parse(stored ?? "{}") as {
+        title: string;
+        items: Array<{ name: string; sourceProductId: string; qty: number }>;
+      };
+
+      expect(parsed.title).toBe("Lista reutilizada");
+      expect(parsed.items).toHaveLength(1);
+      expect(parsed.items[0]).toMatchObject({
+        name: "Yogur",
+        sourceProductId: "8901",
+        qty: 3,
+      });
     });
   });
 

@@ -85,9 +85,19 @@ const hasStoredEditSessionMarker = () => {
   }
 };
 
-const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => ({
-  title: draft.title,
-  items: draft.items.map((item) => ({
+const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => {
+  const metadata =
+    draft.isEditing || draft.editingTargetListId
+      ? {
+          isEditing: draft.isEditing,
+          editingTargetListId: draft.editingTargetListId,
+        }
+      : {};
+
+  return {
+    title: draft.title,
+    ...metadata,
+    items: draft.items.map((item) => ({
     id: item.id,
     kind: "catalog",
     name: item.name,
@@ -101,19 +111,34 @@ const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => ({
     unitFormat: item.unitFormat ?? null,
     unitPrice: item.unitPrice ?? null,
     isApproxSize: item.isApproxSize ?? false,
-  })),
-});
+    })),
+  };
+};
 
-const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => ({
-  title: draft.title,
-  items: draft.items,
-});
+const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => {
+  const metadata =
+    draft.isEditing === true || typeof draft.editingTargetListId === "string"
+      ? {
+          isEditing: draft.isEditing === true,
+          editingTargetListId: draft.editingTargetListId ?? null,
+        }
+      : {};
+
+  return {
+    title: draft.title,
+    items: draft.items,
+    ...metadata,
+  };
+};
 
 const normalizeDraftTitle = (draft: AutosaveDraftInput) =>
   draft.title.trim() || UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE;
 
 const normalizeDraftForComparison = (draft: AutosaveDraftInput) => ({
   title: normalizeDraftTitle(draft),
+  isEditing: draft.isEditing === true,
+  editingTargetListId:
+    typeof draft.editingTargetListId === "string" ? draft.editingTargetListId : null,
   items: [...draft.items]
     .map((item) => ({
       id: item.id,
@@ -130,7 +155,9 @@ const normalizeDraftForComparison = (draft: AutosaveDraftInput) => ({
       unitPrice: item.unitPrice ?? null,
       isApproxSize: item.isApproxSize ?? false,
     }))
-    .sort((left, right) => left.id.localeCompare(right.id)),
+    .sort((left, right) =>
+      left.sourceProductId.localeCompare(right.sourceProductId),
+    ),
 });
 
 const areDraftsEqual = (
@@ -164,6 +191,8 @@ const mergeDraftWithPendingLocalItems = (
 
   return {
     title: localDraft.title,
+    isEditing: localDraft.isEditing,
+    editingTargetListId: localDraft.editingTargetListId ?? null,
     items: [...remoteDraft.items, ...pendingLocalItems],
   };
 };

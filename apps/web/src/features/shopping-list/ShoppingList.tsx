@@ -396,6 +396,7 @@ const ShoppingList = ({
     {
       enabled: Boolean(authUser),
       onRehydrate: handleRehydrate,
+      skipInitialLocalRehydrate: Boolean(initialListId) && !initialIsEditing,
     },
   );
 
@@ -471,7 +472,10 @@ const ShoppingList = ({
 
     try {
       if (listId) {
-        await deleteListItem({ listId, itemId: pendingRemoval.id });
+        await deleteListItem({
+          listId,
+          itemId: pendingRemoval.serverItemId ?? pendingRemoval.id,
+        });
       }
 
       removeItem(pendingRemoval.id);

@@ -10,6 +10,7 @@ import type { ListItem } from "./ListContextValue";
 const FIRST_ITEM_QUANTITY_TEST_ID = "first-item-quantity";
 const LINES_COUNT_TEST_ID = "lines-count";
 const TOTAL_AMOUNT_TEST_ID = "total-amount";
+const FIRST_ITEM_CHECKED_TEST_ID = "first-item-checked";
 
 const TestConsumer = () => {
   const {
@@ -28,6 +29,9 @@ const TestConsumer = () => {
       <span data-testid={TOTAL_AMOUNT_TEST_ID}>{total.toFixed(2)}</span>
       <span data-testid={FIRST_ITEM_QUANTITY_TEST_ID}>
         {items[0]?.quantity ?? 0}
+      </span>
+      <span data-testid={FIRST_ITEM_CHECKED_TEST_ID}>
+        {String((items[0] as { checked?: boolean } | undefined)?.checked ?? false)}
       </span>
       <button
         type="button"
@@ -87,6 +91,35 @@ const TestConsumer = () => {
         }
       >
         Replace all
+      </button>
+      <button
+        type="button"
+        onClick={() =>
+          setItems([
+            {
+              id: "active-1:4706",
+              sourceProductId: "4706",
+              name: "Manzanas",
+              category: "Frutas",
+              thumbnail: null,
+              price: 1.2,
+              quantity: 2,
+              checked: false,
+            } as ListItem,
+            {
+              id: "4706",
+              sourceProductId: "active-1:4706",
+              name: "Manzanas",
+              category: "Frutas",
+              thumbnail: null,
+              price: 1.2,
+              quantity: 3,
+              checked: true,
+            } as ListItem,
+          ])
+        }
+      >
+        Replace all with mixed duplicates
       </button>
     </div>
   );
@@ -227,5 +260,24 @@ describe("ListContext", () => {
 
     expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("1");
     expect(screen.getByTestId(TOTAL_AMOUNT_TEST_ID)).toHaveTextContent("3.10");
+  });
+
+  it("deduplica por sourceProductId y mergea qty=max + checked=OR al hidratar mezcla legacy", async () => {
+    render(
+      <ListProvider initialItems={[]}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Replace all" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Replace all with mixed duplicates" })
+    );
+
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("1");
+    expect(screen.getByTestId(FIRST_ITEM_QUANTITY_TEST_ID)).toHaveTextContent("3");
+    expect(screen.getByTestId(FIRST_ITEM_CHECKED_TEST_ID)).toHaveTextContent(
+      "true"
+    );
   });
 });

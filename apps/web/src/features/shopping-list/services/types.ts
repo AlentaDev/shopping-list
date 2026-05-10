@@ -19,6 +19,8 @@ export type AutosaveCatalogItemInput = {
 export type AutosaveDraftInput = {
   title: string;
   items: AutosaveCatalogItemInput[];
+  isEditing?: boolean;
+  editingTargetListId?: string | null;
 };
 
 export type LocalDraft = AutosaveDraftInput & {

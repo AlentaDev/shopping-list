@@ -50,4 +50,48 @@ describe("AutosaveAdapter", () => {
     });
   });
 
+  it("deduplica entradas legacy por sourceProductId y reconcilia id técnico", () => {
+    expect(
+      adaptAutosaveResponse({
+        id: "autosave-1",
+        title: "Lista",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        isEditing: true,
+        editingTargetListId: "active-1",
+        items: [
+          {
+            id: "4706",
+            kind: "catalog",
+            name: "Leche",
+            qty: 1,
+            checked: false,
+            sourceProductId: "4706",
+          },
+          {
+            id: "active-1:4706",
+            kind: "catalog",
+            name: "Leche",
+            qty: 3,
+            checked: true,
+            sourceProductId: "active-1:4706:4706",
+          },
+        ],
+      }),
+    ).toEqual({
+      id: "autosave-1",
+      title: "Lista",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+      isEditing: true,
+      editingTargetListId: "active-1",
+      items: [
+        expect.objectContaining({
+          id: "active-1:4706",
+          sourceProductId: "4706",
+          qty: 3,
+          checked: true,
+        }),
+      ],
+    });
+  });
+
 });

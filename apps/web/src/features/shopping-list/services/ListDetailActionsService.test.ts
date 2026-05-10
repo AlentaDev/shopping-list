@@ -92,6 +92,7 @@ describe("ListDetailActionsService", () => {
           price: 1.2,
           quantity: 2,
           sourceProductId: "item-1",
+          serverItemId: "item-1",
         },
         {
           id: "",
@@ -101,6 +102,7 @@ describe("ListDetailActionsService", () => {
           price: null,
           quantity: 0,
           sourceProductId: "",
+          serverItemId: null,
         },
       ],
     });

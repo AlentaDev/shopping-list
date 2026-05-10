@@ -3,6 +3,8 @@ import { createContext } from "react";
 export type ListItem = {
   id: string;
   sourceProductId?: string;
+  serverItemId?: string | null;
+  checked?: boolean;
   name: string;
   category: string;
   thumbnail?: string | null;

@@ -74,6 +74,39 @@ const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   isApproxSize: item.isApproxSize ?? false,
 });
 
+const mergeAutosaveItems = (
+  current: AutosaveItem,
+  incoming: AutosaveItem,
+): AutosaveItem => ({
+  ...current,
+  ...incoming,
+  id:
+    incoming.id.includes(":") || !current.id
+      ? incoming.id
+      : current.id,
+  qty: Math.max(current.qty, incoming.qty),
+  checked: current.checked || incoming.checked,
+  sourceProductId: current.sourceProductId,
+});
+
+const dedupeAutosaveItems = (items: AutosaveItem[]): AutosaveItem[] => {
+  const deduped = new Map<string, AutosaveItem>();
+
+  for (const item of items) {
+    const key = item.sourceProductId.trim();
+    const existing = deduped.get(key);
+
+    if (!existing) {
+      deduped.set(key, item);
+      continue;
+    }
+
+    deduped.set(key, mergeAutosaveItems(existing, item));
+  }
+
+  return [...deduped.values()];
+};
+
 export const adaptAutosaveResponse = (
   payload: unknown,
 ): AutosaveDraft | null => {
@@ -89,7 +122,9 @@ export const adaptAutosaveResponse = (
     isEditing: data.isEditing === true,
     editingTargetListId:
       typeof data.editingTargetListId === "string" ? data.editingTargetListId : null,
-    items: Array.isArray(data.items) ? data.items.map(adaptAutosaveItem) : [],
+    items: Array.isArray(data.items)
+      ? dedupeAutosaveItems(data.items.map(adaptAutosaveItem))
+      : [],
     updatedAt: data.updatedAt ?? "",
   };
 };

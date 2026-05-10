@@ -13,6 +13,7 @@ type UseAutosaveDraftOptions = {
   debounceMs?: number;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
   persistLocal?: boolean;
+  skipInitialLocalRehydrate?: boolean;
 };
 
 type UseAutosaveDraftParams = {
@@ -53,17 +54,51 @@ const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
 const buildAutosaveDraft = (
   title: string,
   items: ListItem[],
-): AutosaveDraftInput => ({
-  title,
-  items: items.map(mapListItemToAutosave),
-});
+): AutosaveDraftInput => {
+  const deduped = new Map<string, AutosaveCatalogItemInput>();
+
+  for (const item of items.map(mapListItemToAutosave)) {
+    const key = item.sourceProductId.trim();
+    const existing = deduped.get(key);
+
+    if (!existing) {
+      deduped.set(key, item);
+      continue;
+    }
+
+    deduped.set(key, {
+      ...existing,
+      ...item,
+      id: item.id.includes(":") || !existing.id ? item.id : existing.id,
+      qty: Math.max(existing.qty, item.qty),
+      checked: existing.checked || item.checked,
+      sourceProductId: existing.sourceProductId,
+    });
+  }
+
+  return {
+    title,
+    items: [...deduped.values()],
+  };
+};
 
 const mapLocalDraftToInput = (
   draft: AutosaveDraftInput & { updatedAt?: string },
-): AutosaveDraftInput => ({
-  title: draft.title,
-  items: draft.items,
-});
+): AutosaveDraftInput => {
+  const metadata =
+    draft.isEditing === true || typeof draft.editingTargetListId === "string"
+      ? {
+          isEditing: draft.isEditing === true,
+          editingTargetListId: draft.editingTargetListId ?? null,
+        }
+      : {};
+
+  return {
+    title: draft.title,
+    items: draft.items,
+    ...metadata,
+  };
+};
 
 const areDraftsEqual = (
   current: AutosaveDraftInput | null,
@@ -106,6 +141,7 @@ export const useAutosaveDraft = (
 ) => {
   const { enabled = true, debounceMs, onRehydrate, persistLocal = true } =
     options;
+  const { skipInitialLocalRehydrate = false } = options;
 
   const schedulerRef = useRef<AutosaveScheduler | null>(null);
   const hasRehydratedRef = useRef(false);
@@ -142,7 +178,7 @@ export const useAutosaveDraft = (
       return;
     }
 
-    const localDraft = loadLocalDraft();
+    const localDraft = skipInitialLocalRehydrate ? null : loadLocalDraft();
 
     if (localDraft) {
       const normalizedDraft = mapLocalDraftToInput(localDraft);
@@ -157,7 +193,7 @@ export const useAutosaveDraft = (
     }
 
     hasRehydratedRef.current = true;
-  }, [onRehydrate]);
+  }, [onRehydrate, skipInitialLocalRehydrate]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -230,7 +266,10 @@ export const useAutosaveDraft = (
 
     if (isApplyingRemoteDraftRef.current) {
       isApplyingRemoteDraftRef.current = false;
-      return;
+
+      if (areDraftsEqual(draft, baseDraftRef.current)) {
+        return;
+      }
     }
 
     saveLocalDraft(draft);

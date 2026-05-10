@@ -250,6 +250,47 @@ describe("ShoppingList", () => {
     );
   });
 
+  it("usa serverItemId técnico al borrar ítems remotos", async () => {
+    const fetchMock = vi.fn<
+      (
+        input: RequestInfo,
+        init?: RequestInit,
+      ) => Promise<{
+        ok: boolean;
+        json: () => Promise<unknown>;
+      }>
+    >(() => new Promise<FetchResponse>(() => {}));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderShoppingList({
+      listId: "active-1",
+      listStatus: "ACTIVE",
+      items: [
+        {
+          id: "4706",
+          sourceProductId: "4706",
+          serverItemId: "active-1:4706",
+          name: appleName,
+          category: "Frutas",
+          thumbnail: null,
+          price: 1.2,
+          quantity: 1,
+        },
+      ],
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: `Eliminar ${appleName}` }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Sí, eliminar" }));
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/active-1/items/active-1:4706",
+      expect.objectContaining({ method: "DELETE" }),
+    );
+  });
+
   it("permite editar el título en listas draft", async () => {
     renderShoppingList({
       authenticated: true,
@@ -954,6 +995,39 @@ describe("ShoppingList", () => {
     expect(
       screen.getByRole("heading", { name: "Lista reusada" }),
     ).toBeInTheDocument();
+  });
+
+  it("mantiene los items iniciales de reuse cuando existe localDraft vacío", async () => {
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "",
+        items: [],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    );
+
+    renderShoppingList({
+      authenticated: true,
+      listId: "reuse-1",
+      listStatus: "DRAFT",
+      listTitle: "Lista reusada",
+      items: [
+        {
+          id: "item-reuse-1",
+          name: "Café",
+          category: "Desayuno",
+          thumbnail: null,
+          price: 2.5,
+          quantity: 3,
+        },
+      ],
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Café")).toBeInTheDocument();
+      expect(screen.getByTestId("quantity-item-reuse-1")).toHaveTextContent("3");
+    });
   });
 
   it("confirma el borrado de la lista desde el detalle", async () => {

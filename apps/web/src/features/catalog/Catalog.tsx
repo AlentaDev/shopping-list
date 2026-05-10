@@ -165,6 +165,8 @@ const Catalog = ({
                     onAddProduct={(product) => {
                       addItem({
                         id: product.id,
+                        sourceProductId: product.id,
+                        serverItemId: null,
                         name: product.name,
                         category: section.subcategoryName,
                         thumbnail: product.thumbnail,

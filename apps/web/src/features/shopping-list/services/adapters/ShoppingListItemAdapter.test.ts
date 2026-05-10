@@ -23,7 +23,8 @@ describe("ShoppingListItemAdapter", () => {
 
     expect(items).toEqual([
       {
-        id: "item-1",
+        id: "4706",
+        serverItemId: "item-1",
         name: "Pan",
         category: "",
         thumbnail: "https://example.com/pan.png",
@@ -33,6 +34,7 @@ describe("ShoppingListItemAdapter", () => {
       },
       {
         id: "item-2",
+        serverItemId: "item-2",
         name: "Leche",
         category: "",
         thumbnail: null,
@@ -42,6 +44,7 @@ describe("ShoppingListItemAdapter", () => {
       },
       {
         id: "",
+        serverItemId: null,
         name: "",
         category: "",
         thumbnail: null,
@@ -61,6 +64,46 @@ describe("ShoppingListItemAdapter", () => {
     ]);
 
     expect(items[0]?.sourceProductId).toBe("4706");
+  });
+
+  it("separa sourceProductId canónico de serverItemId técnico en identidad legacy mixta", () => {
+    const items = adaptShoppingListItems([
+      {
+        id: "active-1:4706",
+        sourceProductId: "active-1:4706",
+        name: "Manzanas",
+        qty: 1,
+      },
+      {
+        id: "active-1:4706",
+        sourceProductId: "4706",
+        name: "Manzanas",
+        qty: 2,
+      },
+    ]);
+
+    expect(items).toEqual([
+      {
+        id: "4706",
+        serverItemId: "active-1:4706",
+        sourceProductId: "4706",
+        name: "Manzanas",
+        category: "",
+        thumbnail: null,
+        price: null,
+        quantity: 1,
+      },
+      {
+        id: "4706",
+        serverItemId: "active-1:4706",
+        sourceProductId: "4706",
+        name: "Manzanas",
+        category: "",
+        thumbnail: null,
+        price: null,
+        quantity: 2,
+      },
+    ]);
   });
 
   it("devuelve una lista vacía cuando no hay items", () => {

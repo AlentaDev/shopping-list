@@ -12,6 +12,7 @@ import {
   getListDetail,
   startListEditing,
 } from "./services/ListsService";
+import { mapCheckedItemsToTechnicalIds } from "./services/checkedItemIds";
 import {
   createListTabSyncSourceId,
   publishListTabSyncEvent,
@@ -153,9 +154,7 @@ const ListsContainer = ({
 
       if (action === "complete") {
         const listDetail = await getListDetail(list.id);
-        const checkedItemIds = listDetail.items
-          .filter((item) => item.checked)
-          .map((item) => item.id);
+        const checkedItemIds = mapCheckedItemsToTechnicalIds(listDetail.items);
         await completeList(list.id, { checkedItemIds });
         refreshLists();
         return;
