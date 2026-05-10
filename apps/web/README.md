@@ -1,73 +1,104 @@
-# React + TypeScript + Vite
+# Web (`@app/web`)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React + TypeScript + Vite para Shopping List.
 
-Currently, two official plugins are available:
+Sigue arquitectura por features y reglas estrictas de separación entre UI y servicios.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Quick start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Desde la raíz del repo:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm -C apps/web dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Build producción:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+pnpm -C apps/web build
 ```
+
+Preview local del build:
+
+```bash
+pnpm -C apps/web preview
+```
+
+---
+
+## Scripts principales
+
+```bash
+pnpm -C apps/web dev
+pnpm -C apps/web lint
+pnpm -C apps/web typecheck
+pnpm -C apps/web test
+pnpm -C apps/web test:run
+pnpm -C apps/web test:coverage
+pnpm -C apps/web quality
+pnpm -C apps/web verify
+```
+
+---
+
+## Testing y cobertura
+
+Estrategia del proyecto: **100/80/0**
+
+- **CORE (100%)**: lógica crítica (services/adapters/context/shared utils críticas)
+- **IMPORTANT (80%)**: componentes/flujo visible de features
+- **INFRASTRUCTURE (0%)**: wiring/config sin obligación de tests
+
+Comando útil:
+
+```bash
+pnpm -C apps/web test:coverage
+```
+
+---
+
+## Reglas de arquitectura frontend (resumen)
+
+Estructura base:
+
+```txt
+src/
+├─ app-shell/
+├─ context/
+├─ features/
+├─ infrastructure/
+├─ providers/
+└─ shared/
+```
+
+Reglas críticas:
+
+- `features/*/components`: UI pura, sin `fetch`.
+- `features/*/services`: orquestación y llamadas HTTP.
+- `features/*/services/adapters`: DTO -> dominio frontend (funciones puras).
+- `shared`: reutilizable y puro, sin `fetch` ni acoplamiento a features.
+- Textos UI centralizados en `UI_TEXT`.
+
+Referencia completa de normas: `AGENTS.md` (raíz).
+
+---
+
+## Variables de entorno
+
+Actualmente la web puede funcionar sin `.env` propio en local.
+
+Si se agregan nuevas variables, se documentan en este README y en `docs/`.
+
+---
+
+## Versionado y releases
+
+- Versión inicial estable: `1.0.0`
+- SemVer independiente por app (web/api/android)
+- Cambios de versión gestionados por Changesets desde la raíz del repo
+
+Guía completa:
+
+- `docs/versioning-and-releases.md`

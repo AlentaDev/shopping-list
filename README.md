@@ -1,160 +1,175 @@
-# Shopping List MVP
+# Shopping List Monorepo
 
-Aplicación web para gestionar listas de la compra personales y compartidas, enfocada inicialmente en Mercadona y pensada para consumo propio o familiar.
+Monorepo de **Shopping List** con arquitectura de **monolito modular**.
 
-El proyecto está construido como un **monolito modular** con **TypeScript**, siguiendo una arquitectura **Vertical Slice + Hexagonal-lite**, priorizando simplicidad, claridad y mantenibilidad a largo plazo.
-
----
-
-## Objetivo del proyecto
-
-- Crear y gestionar listas de la compra
-- Compartir listas con otros usuarios mediante invitación por email
-- Añadir productos a las listas (manuales o desde catálogo)
-- Integrar el catálogo de Mercadona a través de un provider interno
-- Mantener una base de código clara, testeada y fácil de evolucionar
-
-Este proyecto **no es un producto comercial** ni está pensado para escalar masivamente.
+Objetivo: construir producto real con foco en **claridad**, **TDD** y **cambios pequeños**.
 
 ---
 
-## Stack tecnológico
+## Quick start
 
-### Frontend
+1. Instalar dependencias
 
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- Vitest (tests unitarios)
-- Playwright (tests E2E mínimos)
+```bash
+pnpm install
+```
 
-### Backend
+2. Configurar entorno API
 
-- Node.js
-- Express
-- TypeScript (modo `strict`)
-- Validación de inputs con Zod
-- Persistencia **in-memory** por defecto con opción de **PostgreSQL**
+- Copiar `apps/api/.env.example` -> `apps/api/.env`
+- Completar variables mínimas (`PORT`, `CORS_ORIGIN`)
 
-### Tooling y calidad
+3. Levantar Postgres (obligatorio por defecto)
 
-- pnpm (monorepo)
-- Husky (git hooks)
-- ESLint + Prettier
-- TDD como metodología principal
+```bash
+docker compose up -d
+```
+
+4. (Opcional recomendado) ejecutar migraciones
+
+```bash
+pnpm -C apps/api database:migrate
+```
+
+5. Levantar web + api
+
+```bash
+pnpm dev
+```
+
+6. Verificar calidad
+
+```bash
+pnpm quality
+pnpm test
+```
 
 ---
 
-## Arquitectura (visión general)
+## Estructura del repo
 
-### Principios
-
-- Monolito modular
-- Organización por **features** (no por capas técnicas globales)
-- Dependencias siempre hacia dentro
-- Integraciones externas desacopladas mediante interfaces
-- Simplicidad por encima de sobreingeniería
-
-## Estructura del proyecto
-
+```txt
 apps/
-├── api/
-│ └── src/
-│ ├── modules/ # Features backend (auth, lists, invites, catalog…)
-│ ├── core/ # Dominio compartido (value objects estables)
-│ └── shared/ # Utilidades técnicas transversales
-└── web/
-└── src/
-├── app/ # Bootstrap, routing y providers
-├── features/ # Features frontend
-└── shared/ # UI y utilidades comunes
+├─ web/               # Frontend React + Vite
+├─ api/               # Backend Express + TypeScript
+└─ mobile-android/    # Android app (Kotlin)
+
+docs/                 # Documentación de arquitectura, features y releases
+```
 
 ---
 
-## Reglas de arquitectura importantes
+## Arquitectura y reglas clave
 
-- Los módulos **no importan internals de otros módulos**
-- `core` contiene únicamente value objects y tipos de dominio compartidos
-- `shared` contiene solo código técnico, nunca lógica de negocio
-- El frontend **no accede directamente** a servicios externos
-- Mercadona se integra exclusivamente a través de un **CatalogProvider** en backend
-- La API puede operar con repositorios **in-memory** o **PostgreSQL** (según wiring)
+- Monolito modular, organización por **features**.
+- Dependencias hacia adentro, sin importar internals entre módulos.
+- **TDD obligatorio**: test primero, implementación mínima, refactor después.
+- Frontend y backend con límites de responsabilidades estrictos (ver `AGENTS.md`).
+- Integraciones externas encapsuladas en backend.
 
----
+Si querés contexto completo de decisiones, empezá por:
 
-## Testing
-
-- **TDD obligatorio**
-- Backend:
-  - Tests de casos de uso
-  - Tests de endpoints
-- Frontend:
-  - Tests unitarios por feature
-  - Tests E2E solo para flujos críticos
-
-No se acepta código nuevo sin tests asociados.
+- `AGENTS.md`
+- `docs/003-rest-api-feature-first.md`
 
 ---
 
-## Instalación local
+## Workspaces
 
-1. Instala dependencias:
-   ```bash
-   pnpm install
-   ```
-2. Configura el entorno (API + Web):
-   - **API**: usa el archivo de ejemplo `apps/api/.env.example` y crea `apps/api/.env` con las variables mínimas:
-     - `PORT`
-     - `CORS_ORIGIN`
-   - `DB_PROVIDER` (opcional; si no se define, la API usa **in-memory** por defecto)
-     - `DB_HOST`
-     - `DB_PORT`
-     - `DB_NAME`
-     - `DB_USER`
-     - `DB_PASSWORD`
-     - `DB_SSL`
-   - **Web**: actualmente no requiere variables de entorno. Si en el futuro se añadieran, coloca el archivo en `apps/web/.env`.
-3. (Opcional) Inicia Postgres localmente (ejemplo con Docker Compose):
-   ```bash
-   docker compose up -d
-   ```
-4. (Opcional) Ejecuta migraciones locales:
-   ```bash
-   pnpm -C apps/api database:migrate
-   ```
+### Web (`apps/web`)
 
-   - Ejecuta este comando **después** de levantar la base de datos y **antes** de iniciar la API.
-5. Levanta los servicios:
-   ```bash
-   pnpm dev
-   ```
+- React + TypeScript + Vite
+- Tests con Vitest (+ Playwright para E2E críticos)
 
-**Alternativa con Postgres**:
+> README específico: `apps/web/README.md`
 
-1. Levanta los servicios usando Postgres:
-   ```bash
-   DB_PROVIDER=postgres pnpm dev
-   ```
+### API (`apps/api`)
 
-   - En este modo necesitas migraciones.
+- Express + TypeScript (`strict`)
+- Zod para validación
+- Persistencia **PostgreSQL por defecto** en runtime normal
+- Modo in-memory disponible solo con `DB_PROVIDER=inmemory`
+
+> README específico: `apps/api/README.md` *(pendiente de crear/actualizar)*
+
+### Android (`apps/mobile-android`)
+
+- Kotlin
+- Arquitectura Clean + MVVM
+- Publicación manual (firma y subida)
+
+> README específico: `apps/mobile-android/README.md`
 
 ---
 
-## Estado del proyecto
+## Versionado y releases
 
-Este repositorio proporciona un **scaffold base** preparado para evolucionar de forma incremental.
+Se usa **SemVer independiente por app**:
 
-El foco está en:
+- `web` -> `1.0.0`
+- `api` -> `1.0.0`
+- `android` -> `0.9.0`
 
-- claridad del diseño
-- bajo acoplamiento
-- mínima complejidad accidental
-- facilidad de mantenimiento a largo plazo
+Automatización actual:
+
+- PR check exige changeset cuando hay cambios en apps.
+- En `main` se aplican bumps y tags por app.
+- Android mantiene publish manual (firma/subida).
+
+Guía completa:
+
+- `docs/versioning-and-releases.md`
 
 ---
 
-## Notas finales
+## Scripts útiles (raíz)
 
-Si una solución parece sencilla, probablemente es intencional.  
-El objetivo es avanzar sin introducir deuda técnica innecesaria.
+```bash
+pnpm dev
+pnpm lint
+pnpm test
+pnpm quality
+pnpm verify
+
+pnpm changeset
+pnpm version:packages
+pnpm version:android:sync
+pnpm release:tag
+```
+
+---
+
+## E2E y base de datos
+
+Los tests E2E del repo **requieren Postgres**.
+
+- El script raíz `pnpm test:e2e` ejecuta primero `apps/api database:test:prepare`.
+- Ese paso está configurado con `DB_PROVIDER=postgres`.
+
+Antes de correr E2E, levantá la DB:
+
+```bash
+docker compose up -d
+```
+
+---
+
+## Estado actual
+
+Web y API están estables en producción.
+
+El foco de evolución principal está en Android (iteración funcional + release manual seguro).
+
+---
+
+## Nota importante sobre BBDD
+
+Por diseño actual del backend:
+
+- En entorno normal, si no se define `DB_PROVIDER`, la API usa **Postgres**.
+- En tests, la API usa **in-memory** por defecto.
+- Si querés correr sin Postgres en local, definí explícitamente:
+
+```bash
+DB_PROVIDER=inmemory pnpm api
+```

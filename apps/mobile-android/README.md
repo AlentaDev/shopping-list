@@ -1,54 +1,107 @@
-# Shopping List Mobile (Android)
+# Android (`@app/mobile-android`)
 
-App móvil Android para consumir las listas **ACTIVE** creadas en la web.
-Esta carpeta se mantiene aislada para que Android Studio pueda trabajar sin
-cargar el resto del repositorio.
+App Android de Shopping List para operar listas activas en contexto real de supermercado.
 
-## Objetivo
+Foco: app robusta, simple y **offline-first** con arquitectura **Clean + MVVM**.
 
-- App móvil **robusta y simple**.
-- Offline-first para uso en supermercado.
-- Login obligatorio con cuenta creada en la web.
+---
 
-## Documentación
+## Quick start
 
-### Arquitectura y Casos de Uso
-- `AGENTS.md`: reglas operativas para IA y contribuciones
-- `docs/architecture.md`: arquitectura móvil y decisiones clave
-- `docs/use-cases/`: casos de uso definitivos
-- `docs/implementation/005-understanding.md`: análisis completo del proyecto
-- `docs/implementation/006-implementation-plan.md`: plan de implementación por fases
+1. Abrir `apps/mobile-android/` en Android Studio.
+2. Sincronizar Gradle.
+3. Ejecutar variante local debug:
 
-### Debugging y Troubleshooting
-- `.github/docs/debugging/002-monitorizacion.md`: guía de monitorización
-- `.github/docs/debugging/003-conexion-debugging.md`: debugging de conexión
-- `.github/docs/debugging/004-solucion-conexion.md`: soluciones implementadas
-- `.github/docs/archive/001-retrofit-setup.md`: setup histórico de Retrofit
+```bash
+./gradlew :app:assembleLocalDebug
+```
 
-## Principios clave
+4. (Opcional) correr tests unitarios:
 
-- **Clean Architecture + MVVM**.
-- **TDD obligatorio**.
-- **Sin nuevas librerías** sin aprobación previa.
-- **No hardcode** de textos: usar `strings.xml`.
+```bash
+./gradlew :app:testLocalDebugUnitTest
+```
+
+---
+
+## Flavors y entornos
+
+La app usa dimensión `environment`:
+
+- `local`: `API_BASE_URL = http://10.0.2.2:3000`
+- `prod`: `API_BASE_URL = https://api-shopping-list.onrender.com`
+
+Regla de seguridad activa:
+
+- `localRelease` está deshabilitado (no se puede generar release local por error).
+
+---
+
+## Versión Android
+
+Fuente de verdad de versión:
+
+- `apps/mobile-android/package.json` -> `version` (SemVer)
+
+Sincronización automática al hacer release en main:
+
+- `versionName` = SemVer (ej: `0.9.0`)
+- `versionCode` = `MAJOR*10000 + MINOR*100 + PATCH`
+
+Ejemplo:
+
+- `0.9.0` -> `versionCode 900`
+- `0.10.2` -> `versionCode 1002`
+
+Script manual de sync (si hace falta):
+
+```bash
+pnpm version:android:sync
+```
+
+---
+
+## Release (importante)
+
+La publicación Android es **manual por diseño**:
+
+1. Versionado/tags los gestiona CI.
+2. Build de release firmado lo hacés vos.
+3. Subida a Play Console también manual.
+
+Esto protege la firma y evita publicar artefactos sin control.
+
+---
+
+## Arquitectura y reglas
+
+- Clean Architecture + MVVM
+- Organización feature-first
+- TDD obligatorio
+- Sin librerías nuevas sin aprobación
+- Sin hardcode de textos (`strings.xml`)
+
+Referencia operativa completa:
+
+- `apps/mobile-android/AGENTS.md`
+
+---
 
 ## Casos de uso (resumen)
 
-- Login email/password (registro en web obligatorio).
-- Listado de listas activas.
-- Detalle con productos, precios, cantidades y checks offline.
-- Total local calculado en app (EUR, sin redondeos).
-- Completar lista con confirmación.
-- Sync con merge y aviso de borrados.
+- Login con cuenta registrada en web.
+- Ver listas activas.
+- Detalle de lista con checks y cálculo local.
+- Trabajo offline con sincronización posterior.
 
-Para el detalle completo ver `docs/use-cases/`.
+Detalle completo:
 
-## API
+- `apps/mobile-android/docs/use-cases/`
 
-Los endpoints están documentados en el OpenAPI del repositorio:
-`/docs/api/` (fuera de esta carpeta).
+---
 
-## Notas
+## Troubleshooting y docs
 
-- Esta app **no** muestra historial (por ahora, sólo en web).
-- El login con QR queda en futuro.
+- Arquitectura: `apps/mobile-android/docs/architecture.md`
+- Plan/implementación: `apps/mobile-android/docs/implementation/`
+- Debugging: `apps/mobile-android/.github/docs/debugging/`
