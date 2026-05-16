@@ -104,6 +104,8 @@ function reuseItem(
     unitFormatSnapshot: item.unitFormatSnapshot,
     unitPricePerUnitSnapshot: item.unitPricePerUnitSnapshot,
     isApproxSizeSnapshot: item.isApproxSizeSnapshot,
+    categorySnapshot: item.categorySnapshot ?? null,
+    subcategorySnapshot: item.subcategorySnapshot ?? null,
     qty: item.qty,
     checked: false,
     createdAt: now,

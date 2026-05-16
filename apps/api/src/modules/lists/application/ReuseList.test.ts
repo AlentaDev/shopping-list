@@ -97,6 +97,8 @@ describe("ReuseList", () => {
           isApproxSize: false,
           source: "mercadona",
           sourceProductId: "sku-1",
+          categorySnapshot: null,
+          subcategorySnapshot: null,
         },
       ],
     });
@@ -285,6 +287,8 @@ describe("ReuseList", () => {
           isApproxSize: false,
           source: "mercadona",
           sourceProductId: "sku-1",
+          categorySnapshot: null,
+          subcategorySnapshot: null,
         },
       ],
     });

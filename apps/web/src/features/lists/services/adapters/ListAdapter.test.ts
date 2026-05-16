@@ -121,6 +121,8 @@ describe("ListAdapter", () => {
           qty: 2,
           checked: true,
           updatedAt: "2024-02-02T10:00:00.000Z",
+          categorySnapshot: "Panadería",
+          subcategorySnapshot: "Pan de molde",
         },
       ],
     };
@@ -149,6 +151,8 @@ describe("ListAdapter", () => {
           isApproxSize: false,
           source: undefined,
           sourceProductId: undefined,
+          categorySnapshot: "Panadería",
+          subcategorySnapshot: "Pan de molde",
         },
       ],
     });

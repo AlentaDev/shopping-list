@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { List } from "../domain/list.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
-import { ListStatusTransitionError } from "./errors.js";
+import { ListEditingLockedError, ListStatusTransitionError } from "./errors.js";
 import { CompleteList } from "./CompleteList.js";
 
 describe("CompleteList", () => {
@@ -123,5 +123,32 @@ describe("CompleteList", () => {
         checkedItemIds: [],
       }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
+  });
+
+  it("throws when list is being edited", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new CompleteList(listRepository);
+    const list: List = {
+      id: "list-1",
+      ownerUserId: "user-1",
+      title: "Weekly groceries",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: undefined,
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    };
+
+    await listRepository.save(list);
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        listId: "list-1",
+        checkedItemIds: [],
+      }),
+    ).rejects.toBeInstanceOf(ListEditingLockedError);
   });
 });

@@ -39,7 +39,9 @@ data class CatalogItem(
     val unitPrice: Double? = null,
     val isApproxSize: Boolean = false,
     val source: String = "mercadona",
-    val sourceProductId: String
+    val sourceProductId: String,
+    val categorySnapshot: String? = null,
+    val subcategorySnapshot: String? = null
 ) : ListItem() {
     override val kind: ItemKind = ItemKind.CATALOG
 
@@ -76,5 +78,4 @@ data class ListDetail(
             .sum()
     }
 }
-
 

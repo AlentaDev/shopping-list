@@ -169,6 +169,9 @@ const Catalog = ({
                         serverItemId: null,
                         name: product.name,
                         category: section.subcategoryName,
+                        categorySnapshot:
+                          categoryDetail?.categoryName ?? section.subcategoryName,
+                        subcategorySnapshot: section.subcategoryName ?? null,
                         thumbnail: product.thumbnail,
                         price: product.price,
                         quantity: 1,

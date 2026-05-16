@@ -235,6 +235,17 @@ class ListDetailRepositoryImplTest {
     }
 
     @Test
+    fun `completeList maps http 409 to editing conflict and does not enqueue pending action`() = runTest {
+        coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(409)
+
+        val result = repository.completeList("list-1", listOf("item-1"))
+
+        assertEquals(CompleteListResult.EditingConflict, result)
+        coVerify(exactly = 0) { localDataSource.markListPendingCompletion(any()) }
+        coVerify(exactly = 0) { localDataSource.enqueuePendingCompleteListOperation(any(), any(), any()) }
+    }
+
+    @Test
     fun `completeList maps http 500 to server error`() = runTest {
         coEvery { remoteDataSource.completeList(any(), any()) } throws httpException(500)
 

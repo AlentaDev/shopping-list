@@ -30,6 +30,12 @@ export class ListStatusTransitionError extends AppError {
   }
 }
 
+export class ListEditingLockedError extends AppError {
+  constructor() {
+    super(409, "list_editing_locked", "List is being edited");
+  }
+}
+
 
 export class AutosaveVersionConflictError extends AppError {
   readonly remoteUpdatedAt: string;

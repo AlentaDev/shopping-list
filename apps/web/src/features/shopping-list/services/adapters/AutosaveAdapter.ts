@@ -13,6 +13,8 @@ type AutosaveItemPayload = {
   unitFormat?: string | null;
   unitPrice?: number | null;
   isApproxSize?: boolean;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
   source?: "mercadona";
   sourceProductId?: string;
 };
@@ -72,6 +74,8 @@ const adaptAutosaveItem = (item: AutosaveItemPayload): AutosaveItem => ({
   unitFormat: item.unitFormat ?? null,
   unitPrice: item.unitPrice ?? null,
   isApproxSize: item.isApproxSize ?? false,
+  categorySnapshot: item.categorySnapshot ?? null,
+  subcategorySnapshot: item.subcategorySnapshot ?? null,
 });
 
 const mergeAutosaveItems = (

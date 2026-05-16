@@ -153,6 +153,7 @@ class ListDetailRepositoryImpl @Inject constructor(
                     CompleteListResult.NoConnection
                 }
                 (e as? HttpException)?.code() == 400 -> CompleteListResult.InvalidTransition
+                (e as? HttpException)?.code() == 409 -> CompleteListResult.EditingConflict
                 (e as? HttpException)?.code() == 401 -> CompleteListResult.Unauthorized
                 (e as? HttpException)?.code() == 403 -> CompleteListResult.Forbidden
                 (e as? HttpException)?.code() == 404 -> CompleteListResult.NotFound
@@ -177,4 +178,3 @@ class ListDetailRepositoryImpl @Inject constructor(
         localDataSource.saveListDetail(remoteDetail)
     }
 }
-

@@ -15,6 +15,8 @@ export type ListItemDto = {
   isApproxSize?: boolean;
   source?: "mercadona";
   sourceProductId?: string;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 export function toListItemDto(item: ListItem): ListItemDto {
@@ -44,5 +46,7 @@ export function toListItemDto(item: ListItem): ListItemDto {
     isApproxSize: item.isApproxSizeSnapshot,
     source: item.source,
     sourceProductId: item.sourceProductId,
+    categorySnapshot: item.categorySnapshot ?? null,
+    subcategorySnapshot: item.subcategorySnapshot ?? null,
   };
 }

@@ -2,6 +2,7 @@ import type { ListRepository } from "./ports.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import {
   ItemNotFoundError,
+  ListEditingLockedError,
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
@@ -35,6 +36,10 @@ export class CompleteList {
 
     if (list.status !== "ACTIVE") {
       throw new ListStatusTransitionError();
+    }
+
+    if (list.isEditing) {
+      throw new ListEditingLockedError();
     }
 
     const checkedIds = new Set(input.checkedItemIds);

@@ -1,87 +1,87 @@
-# shopping-list-item-identity Specification
+# Especificación de shopping-list-item-identity
 
-## Purpose
+## Propósito
 Definir identidad dual de ítems en web para eliminar colisiones entre `idProducto` y `idLista:idProducto` sin cambiar la persistencia backend.
 
-## Non-Goals
+## No objetivos
 - No cambiar el formato backend `item.id = {listId}:{productId}`.
 - No rediseñar sincronización multi-dispositivo ni resolver completamente conflictos multi-tab.
 - No modificar la política de single-draft backend (solo preservarla).
 
-## Requirements
+## Requisitos
 
-### Requirement: Canonical Client Identity
-The system MUST treat `sourceProductId` as the canonical client identity for catalog items, and MUST treat `serverItemId` as a technical server reference only.
+### Requisito: Identidad canónica del cliente
+El sistema DEBE tratar `sourceProductId` como identidad canónica de cliente para ítems de catálogo, y DEBE tratar `serverItemId` solo como referencia técnica del servidor. La metadata opcional `categorySnapshot` / `subcategorySnapshot` NO DEBE alterar la semántica de deduplicación.
 
-#### Scenario: Legacy mixed identity is normalized
-- GIVEN an item loaded with `sourceProductId = active-1:4706` or `idProducto = 4706`
-- WHEN the client hydrates list items
-- THEN the canonical identity is `sourceProductId = 4706`
-- AND any technical identifier is stored only as `serverItemId`
+#### Escenario: Identidad legacy mixta se normaliza
+- DADO un ítem cargado con `sourceProductId = active-1:4706` o `idProducto = 4706`
+- CUANDO el cliente hidrata ítems de lista
+- ENTONCES la identidad canónica es `sourceProductId = 4706`
+- Y cualquier identificador técnico se almacena solo como `serverItemId`
 
-### Requirement: Reuse with Draft Resolution
-The system MUST enforce a single reuse path: create draft when none exists, or request replacement confirmation when a draft already exists.
+### Requisito: Reuse con resolución de draft
+El sistema DEBE forzar una única ruta de reuse: crear draft cuando no existe ninguno, o pedir confirmación de reemplazo cuando ya existe un draft.
 
-#### Scenario: Reuse without existing draft
-- GIVEN no autosave draft exists for the user
-- WHEN the user triggers reuse from a completed list
-- THEN the system creates a new draft with canonical `sourceProductId` identities
+#### Escenario: Reuse sin draft existente
+- DADO que no existe un draft de autosave para la persona usuaria
+- CUANDO la persona usuaria dispara reuse desde una lista completed
+- ENTONCES el sistema crea un nuevo draft con identidades canónicas `sourceProductId`
 
-#### Scenario: Reuse with existing draft
-- GIVEN an autosave draft already exists
-- WHEN the user triggers reuse from a completed list
-- THEN the system asks for replacement confirmation before overwriting
+#### Escenario: Reuse con draft existente
+- DADO que ya existe un draft de autosave
+- CUANDO la persona usuaria dispara reuse desde una lista completed
+- ENTONCES el sistema pide confirmación de reemplazo antes de sobrescribir
 
-### Requirement: Single Draft per User
-The system SHALL keep at most one autosave draft per user during reuse, edit, reset, and autosave transitions.
+### Requisito: Un solo draft por usuario
+El sistema DEBERÁ mantener como máximo un draft de autosave por usuario durante transiciones de reuse, edit, reset y autosave.
 
-#### Scenario: Stale drafts are removed
-- GIVEN more than one draft is discoverable due to stale state
-- WHEN a draft transition is executed
-- THEN stale drafts are removed and only one active draft remains
+#### Escenario: Se eliminan drafts stale
+- DADO que se detecta más de un draft por estado stale
+- CUANDO se ejecuta una transición de draft
+- ENTONCES se eliminan los drafts stale y queda solo un draft activo
 
-### Requirement: Active Edit Link Preservation
-The system MUST preserve the link to the origin active list through `editingTargetListId` for edit start, autosave, finish, and cancel.
+### Requisito: Preservación del vínculo de edición activa
+El sistema DEBE preservar el vínculo a la lista active de origen mediante `editingTargetListId` para inicio de edit, autosave, finish y cancel.
 
-#### Scenario: Edit lifecycle keeps origin link
-- GIVEN the user starts editing an active list with `editingTargetListId = L1`
-- WHEN autosave snapshots are produced and later finish/cancel is executed
-- THEN `editingTargetListId` remains `L1` until the edit lifecycle ends
+#### Escenario: El ciclo de edit mantiene el vínculo de origen
+- DADO que la persona usuaria inicia edición de una lista active con `editingTargetListId = L1`
+- CUANDO se producen snapshots de autosave y luego se ejecuta finish/cancel
+- ENTONCES `editingTargetListId` permanece en `L1` hasta que termina el ciclo de edit
 
-### Requirement: Autosave Server ID Reconciliation
-The system MUST autosave using canonical `sourceProductId` and SHOULD reconcile `serverItemId` when server responses arrive.
+### Requisito: Reconciliación de Server ID en autosave
+El sistema DEBE hacer autosave usando `sourceProductId` canónico y DEBERÍA reconciliar `serverItemId` cuando llegan respuestas del servidor.
 
-#### Scenario: Eventual server ID reconciliation
-- GIVEN a draft item created client-side without `serverItemId`
-- WHEN autosave persistence returns technical IDs
-- THEN the item keeps the same `sourceProductId`
-- AND `serverItemId` is attached/updated without creating duplicates
+#### Escenario: Reconciliación eventual de server ID
+- DADO un ítem draft creado del lado cliente sin `serverItemId`
+- CUANDO la persistencia de autosave devuelve IDs técnicos
+- ENTONCES el ítem mantiene el mismo `sourceProductId`
+- Y `serverItemId` se adjunta/actualiza sin crear duplicados
 
-### Requirement: Robust Deduplication
-The system MUST deduplicate catalog items by canonical `sourceProductId`, including legacy mixed inputs (`idProducto` and `idLista:idProducto`).
+### Requisito: Deduplicación robusta
+El sistema DEBE deduplicar ítems de catálogo por `sourceProductId` canónico, incluyendo entradas legacy mixtas (`idProducto` e `idLista:idProducto`).
 
-#### Scenario: Mixed legacy entries collapse to one
-- GIVEN two items representing the same product (`4706` and `active-1:4706`)
-- WHEN merge/hydration runs
-- THEN the result contains exactly one catalog item for `sourceProductId = 4706`
+#### Escenario: Entradas legacy mixtas colapsan a una
+- DADOS dos ítems que representan el mismo producto (`4706` y `active-1:4706`)
+- CUANDO corre merge/hydration
+- ENTONCES el resultado contiene exactamente un ítem de catálogo para `sourceProductId = 4706`
 
-### Requirement: Collision-Free Complete and Save
-The system MUST execute save/complete operations without collisions caused by mixed client/server identifiers.
+### Requisito: Complete y save sin colisiones
+El sistema DEBE ejecutar operaciones save/complete sin colisiones causadas por identificadores mixtos cliente/servidor.
 
-#### Scenario: Complete uses technical IDs safely
-- GIVEN checked items keyed canonically by `sourceProductId`
-- WHEN complete/save calls require technical IDs
-- THEN the request maps to corresponding `serverItemId` values deterministically
-- AND no duplicate or missing checked item is produced by ID mismatch
+#### Escenario: Complete usa IDs técnicos de forma segura
+- DADOS ítems marcados, indexados canónicamente por `sourceProductId`
+- CUANDO llamadas de complete/save requieren IDs técnicos
+- ENTONCES la solicitud mapea determinísticamente a valores `serverItemId` correspondientes
+- Y no se produce ningún ítem marcado duplicado o faltante por mismatch de IDs
 
-## Acceptance Criteria
+## Criterios de aceptación
 - Reuse + edit + autosave flows produce 0 duplicate catalog items for a same `sourceProductId` in automated tests.
 - Reuse enforces replace confirmation when a draft exists, and creates draft directly when none exists.
 - A single draft per user is verifiable after each transition (reuse/edit/reset/autosave).
 - `editingTargetListId` persists across edit lifecycle until finish/cancel.
 - Complete/save requests are validated to map canonical selection to technical IDs with no collisions.
 
-## Known Risks and Mitigations
-- Partial multi-tab conflicts MAY still occur; mitigate with last-write-wins + deterministic dedup on read.
-- Legacy local snapshots MAY carry mixed IDs; mitigate with idempotent normalization during hydration.
-- Missing `serverItemId` during transient states MAY block technical operations; mitigate with deferred reconciliation and guarded API mapping.
+## Riesgos conocidos y mitigaciones
+- Conflictos parciales multi-tab PUEDEN seguir ocurriendo; mitigar con last-write-wins + dedup determinística en lectura.
+- Snapshots locales legacy PUEDEN traer IDs mixtos; mitigar con normalización idempotente durante hydration.
+- Ausencia de `serverItemId` durante estados transitorios PUEDE bloquear operaciones técnicas; mitigar con reconciliación diferida y mapeo API protegido.

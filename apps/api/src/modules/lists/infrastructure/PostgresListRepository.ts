@@ -12,7 +12,7 @@ type PgPool = {
 const LIST_COLUMNS =
   "id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at" as const;
 const ITEM_COLUMNS =
-  "id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at" as const;
+  "id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, category_snapshot, subcategory_snapshot, qty, checked, created_at, updated_at" as const;
 
 export class PostgresListRepository implements ListRepository {
   constructor(private readonly pool: PgPool) {}
@@ -89,7 +89,7 @@ export class PostgresListRepository implements ListRepository {
 
       for (const item of list.items) {
         await this.pool.query(
-          "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+          "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, category_snapshot, subcategory_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
           buildItemValues(item),
         );
       }
@@ -193,6 +193,18 @@ function mapItemRow(row: Record<string, unknown>): ListItem {
         ? Number(row.unit_price_per_unit_snapshot)
         : null,
     isApproxSizeSnapshot: Boolean(row.is_approx_size_snapshot),
+    categorySnapshot:
+      row.category_snapshot !== undefined
+        ? row.category_snapshot === null
+          ? null
+          : String(row.category_snapshot)
+        : null,
+    subcategorySnapshot:
+      row.subcategory_snapshot !== undefined
+        ? row.subcategory_snapshot === null
+          ? null
+          : String(row.subcategory_snapshot)
+        : null,
     qty: Number(row.qty),
     checked: Boolean(row.checked),
     createdAt: parsePgDate(row.created_at),
@@ -223,6 +235,8 @@ function buildItemValues(item: ListItem): Array<unknown> {
     item.unitFormatSnapshot,
     item.unitPricePerUnitSnapshot,
     item.isApproxSizeSnapshot,
+    item.categorySnapshot ?? null,
+    item.subcategorySnapshot ?? null,
     item.qty,
     item.checked,
     item.createdAt,

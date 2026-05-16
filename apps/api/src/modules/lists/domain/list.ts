@@ -22,6 +22,8 @@ export type CatalogListItem = {
   unitFormatSnapshot: string | null;
   unitPricePerUnitSnapshot: number | null;
   isApproxSizeSnapshot: boolean;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
   qty: number;
   checked: boolean;
   createdAt: Date;

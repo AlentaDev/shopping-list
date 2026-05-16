@@ -111,6 +111,8 @@ const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => {
     unitFormat: item.unitFormat ?? null,
     unitPrice: item.unitPrice ?? null,
     isApproxSize: item.isApproxSize ?? false,
+    categorySnapshot: item.categorySnapshot ?? null,
+    subcategorySnapshot: item.subcategorySnapshot ?? null,
     })),
   };
 };
@@ -154,6 +156,8 @@ const normalizeDraftForComparison = (draft: AutosaveDraftInput) => ({
       unitFormat: item.unitFormat ?? null,
       unitPrice: item.unitPrice ?? null,
       isApproxSize: item.isApproxSize ?? false,
+      categorySnapshot: item.categorySnapshot ?? null,
+      subcategorySnapshot: item.subcategorySnapshot ?? null,
     }))
     .sort((left, right) =>
       left.sourceProductId.localeCompare(right.sourceProductId),

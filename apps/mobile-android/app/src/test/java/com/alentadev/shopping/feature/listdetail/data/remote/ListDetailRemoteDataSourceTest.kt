@@ -9,6 +9,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.HttpException
+import retrofit2.Response
 
 class ListDetailRemoteDataSourceTest {
     private lateinit var api: ListDetailApi
@@ -90,6 +93,8 @@ class ListDetailRemoteDataSourceTest {
                     unitFormat = "L",
                     unitPrice = 1.50,
                     isApproxSize = false,
+                    categorySnapshot = "Lácteos",
+                    subcategorySnapshot = "Leche y bebidas vegetales",
                     updatedAt = "2026-02-25T10:00:00Z"
                 )
             ),
@@ -109,6 +114,8 @@ class ListDetailRemoteDataSourceTest {
         assertEquals(1.50, item.price!!, 0.01)
         assertEquals("mercadona", item.source)
         assertEquals("prod-1", item.sourceProductId)
+        assertEquals("Lácteos", item.categorySnapshot)
+        assertEquals("Leche y bebidas vegetales", item.subcategorySnapshot)
     }
 
     @Test
@@ -171,6 +178,19 @@ class ListDetailRemoteDataSourceTest {
 
         coVerify(exactly = 1) {
             completeListApi.completeList("list-1", match { it.checkedItemIds == listOf("item-1", "item-2") })
+        }
+    }
+
+    @Test
+    fun `completeList propagates http 409 editing conflict`() = runTest {
+        val conflict = HttpException(Response.error<Any>(409, "conflict".toResponseBody()))
+        coEvery { completeListApi.completeList(any(), any()) } throws conflict
+
+        try {
+            dataSource.completeList("list-1", listOf("item-1"))
+            fail("Expected HttpException")
+        } catch (e: HttpException) {
+            assertEquals(409, e.code())
         }
     }
 

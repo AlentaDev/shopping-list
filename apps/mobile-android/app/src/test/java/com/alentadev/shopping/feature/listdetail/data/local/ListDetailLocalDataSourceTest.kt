@@ -8,6 +8,7 @@ import com.alentadev.shopping.core.data.database.entity.ListEntity
 import com.alentadev.shopping.core.data.database.entity.PendingSyncEntity
 import com.alentadev.shopping.feature.listdetail.domain.entity.ManualItem
 import com.alentadev.shopping.feature.listdetail.domain.entity.ListDetail
+import com.alentadev.shopping.feature.listdetail.domain.entity.CatalogItem
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -128,6 +129,38 @@ class ListDetailLocalDataSourceTest {
         assertEquals(1, insertedItems.captured.size)
         assertEquals(false, insertedItems.captured.first().checked)
         coVerify(exactly = 1) { pendingSyncDao.getPendingCheckedState("list-1", "item-1") }
+    }
+
+    @Test
+    fun `saveListDetail persists catalog category snapshots as nullable fields`() = runTest {
+        val listDetail = ListDetail(
+            id = "list-1",
+            title = "Compra",
+            updatedAt = "2026-03-01T10:00:00Z",
+            items = listOf(
+                CatalogItem(
+                    id = "catalog-1",
+                    name = "Leche",
+                    qty = 1.0,
+                    checked = false,
+                    updatedAt = "2026-03-01T10:00:00Z",
+                    sourceProductId = "prod-1",
+                    categorySnapshot = "Lácteos",
+                    subcategorySnapshot = "Leches"
+                )
+            )
+        )
+        val insertedItems = slot<List<ItemEntity>>()
+
+        coEvery { listDao.insert(any()) } returns Unit
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "catalog-1") } returns null
+        coEvery { itemDao.replaceByListId("list-1", capture(insertedItems)) } returns Unit
+
+        dataSource.saveListDetail(listDetail)
+
+        assertTrue(insertedItems.isCaptured)
+        assertEquals("Lácteos", insertedItems.captured.first().categorySnapshot)
+        assertEquals("Leches", insertedItems.captured.first().subcategorySnapshot)
     }
 
     @Test

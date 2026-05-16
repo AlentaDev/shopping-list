@@ -32,4 +32,16 @@ class AppDatabaseMigrationTest {
             )
         }
     }
+
+    @Test
+    fun `migration 5 to 6 adds nullable category snapshot columns in items`() {
+        val database = mockk<SupportSQLiteDatabase>(relaxed = true)
+
+        MIGRATION_5_6.migrate(database)
+
+        verify {
+            database.execSQL("ALTER TABLE items ADD COLUMN categorySnapshot TEXT")
+            database.execSQL("ALTER TABLE items ADD COLUMN subcategorySnapshot TEXT")
+        }
+    }
 }

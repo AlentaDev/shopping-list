@@ -23,7 +23,7 @@ import com.alentadev.shopping.core.data.database.dao.PendingSyncDao
         SyncMetadataEntity::class,
         PendingSyncEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -69,5 +69,12 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(database: SupportSQLiteDatabase) {
         database.execSQL("ALTER TABLE pending_sync ADD COLUMN commandType TEXT NOT NULL DEFAULT 'update_item_check'")
         database.execSQL("ALTER TABLE pending_sync ADD COLUMN checkedItemIdsPayload TEXT")
+    }
+}
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE items ADD COLUMN categorySnapshot TEXT")
+        database.execSQL("ALTER TABLE items ADD COLUMN subcategorySnapshot TEXT")
     }
 }

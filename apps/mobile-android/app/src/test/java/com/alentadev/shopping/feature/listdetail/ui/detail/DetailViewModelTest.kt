@@ -784,6 +784,37 @@ class DetailViewModelTest {
     }
 
     @Test
+    fun `confirmCompleteList on editing conflict refreshes detail and shows conflict message`() = runTest(mainDispatcherRule.testDispatcher) {
+        val listDetail = createListDetail("list-123", "Test List", 1)
+        every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)
+        coEvery { completeListUseCase("list-123", any()) } returns CompleteListResult.EditingConflict
+        coEvery { refreshListDetailIfNeededUseCase("list-123") } returns RefreshDetailDecision.REFRESH_REMOTE_NEWER
+
+        viewModel = DetailViewModel(
+            getListDetailUseCase = getListDetailUseCase,
+            checkItemUseCase = checkItemUseCase,
+            calculateTotalUseCase = calculateTotalUseCase,
+            syncCheckUseCase = syncCheckUseCase,
+            detectRemoteChangesUseCase = detectRemoteChangesUseCase,
+            refreshListDetailIfNeededUseCase = refreshListDetailIfNeededUseCase,
+            completeListUseCase = completeListUseCase,
+            networkMonitor = networkMonitor,
+            savedStateHandle = savedStateHandle
+        )
+        advanceUntilIdle()
+        viewModel.onCompleteListRequested()
+
+        viewModel.confirmCompleteList()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ListDetailUiState.Success
+        assertEquals(CompleteListError.EDITING_CONFLICT, state.completeListError)
+        assertFalse(state.showCompleteConfirmation)
+        assertFalse(state.isCompleting)
+        coVerify(atLeast = 2) { refreshListDetailIfNeededUseCase("list-123") }
+    }
+
+    @Test
     fun `confirmCompleteList emits ListCompleted navigation only once`() = runTest(mainDispatcherRule.testDispatcher) {
         val listDetail = createListDetail("list-123", "Test List", 1)
         every { getListDetailUseCase("list-123", any()) } returns flowOf(listDetail)

@@ -83,7 +83,9 @@ class ListDetailRemoteDataSource @Inject constructor(
                 unitPrice = unitPrice,
                 isApproxSize = isApproxSize,
                 source = source ?: "mercadona",
-                sourceProductId = sourceProductId ?: ""
+                sourceProductId = sourceProductId ?: "",
+                categorySnapshot = categorySnapshot,
+                subcategorySnapshot = subcategorySnapshot
             )
             else -> ManualItem(
                 id = id,
@@ -96,5 +98,4 @@ class ListDetailRemoteDataSource @Inject constructor(
         }
     }
 }
-
 

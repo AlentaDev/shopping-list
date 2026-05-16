@@ -47,6 +47,8 @@ const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
   checked: false,
   source: "mercadona",
   sourceProductId: normalizeSourceProductId(item),
+  categorySnapshot: item.categorySnapshot ?? item.category ?? null,
+  subcategorySnapshot: item.subcategorySnapshot ?? null,
   thumbnail: item.thumbnail ?? null,
   price: item.price ?? null,
 });

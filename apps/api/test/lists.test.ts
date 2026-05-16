@@ -373,6 +373,8 @@ describe("lists endpoints", () => {
       isApproxSize: false,
       source: "mercadona",
       sourceProductId: "123",
+      categorySnapshot: "Sin categoría",
+      subcategorySnapshot: null,
     });
   });
 
@@ -495,6 +497,8 @@ describe("lists endpoints", () => {
           isApproxSize: false,
           source: "mercadona",
           sourceProductId: "123",
+          categorySnapshot: "Sin categoría",
+          subcategorySnapshot: null,
         },
         {
           id: catalogResponseTwo.body.id,
@@ -511,6 +515,8 @@ describe("lists endpoints", () => {
           isApproxSize: false,
           source: "mercadona",
           sourceProductId: "123",
+          categorySnapshot: "Sin categoría",
+          subcategorySnapshot: null,
         },
       ],
       updatedAt: expect.any(String),

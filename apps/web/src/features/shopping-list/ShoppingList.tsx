@@ -23,6 +23,7 @@ import {
 } from "./services/ListDetailActionsService";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
 import { canActivateList } from "./services/listStatus";
+import { groupItemsByCategory } from "./services/groupItemsByCategory";
 import {
   createListTabSyncSourceId,
   publishListTabSyncEvent,
@@ -207,6 +208,7 @@ type ShoppingListListViewProps = {
   detailActionLoading: "reuse" | "delete" | null;
   isLoading: boolean;
   sortedItems: ShoppingListItem[];
+  groupedItems: ReturnType<typeof groupItemsByCategory>;
   isReadOnlyMobile: boolean;
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
@@ -224,6 +226,7 @@ const ShoppingListListView = ({
   detailActionLoading,
   isLoading,
   sortedItems,
+  groupedItems,
   isReadOnlyMobile,
   onIncrement,
   onDecrement,
@@ -252,6 +255,7 @@ const ShoppingListListView = ({
     return (
       <ItemList
         items={sortedItems}
+        groupedItems={groupedItems}
         onIncrement={onIncrement}
         onDecrement={onDecrement}
         onRemove={onRemove}
@@ -447,6 +451,7 @@ const ShoppingList = ({
       }),
     [items],
   );
+  const groupedItems = useMemo(() => groupItemsByCategory(sortedItems), [sortedItems]);
   const handleIncrement = (id: string) => {
     const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;
     updateQuantity(id, currentQuantity + 1);
@@ -690,6 +695,7 @@ const ShoppingList = ({
         detailActionLoading={detailActionLoading}
         isLoading={isLoading}
         sortedItems={sortedItems}
+        groupedItems={groupedItems}
         isReadOnlyMobile={false}
         onIncrement={handleIncrement}
         onDecrement={handleDecrement}

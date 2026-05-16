@@ -6,7 +6,7 @@ Esta API sigue arquitectura de monolito modular (feature-first) y usa validació
 
 ---
 
-## Quick start
+## Inicio rápido
 
 1. Crear env local
 
@@ -116,3 +116,13 @@ src/
 ```
 
 Regla clave: no importar internals de otros módulos.
+
+---
+
+## Notas de release (resumen)
+
+- Versión planeada del release actual: `1.1.0`.
+- Se persisten `categorySnapshot` y `subcategorySnapshot` en autosave y en `POST /api/lists/:id/items/from-catalog`.
+- Se refuerza agrupación por categoría L1 para `DRAFT`, `ACTIVE` y `COMPLETED` (usando `categorySnapshot` como eje; subcategoría como metadata).
+- `POST /api/lists/:id/complete` devuelve `409` con error `list_editing_locked` si la lista `ACTIVE` está en edición web (`isEditing=true`).
+- Migración incluida en este corte: SQL `009`.

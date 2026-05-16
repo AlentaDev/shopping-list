@@ -169,6 +169,9 @@ class DetailViewModel @Inject constructor(
                         showCompleteConfirmation = false,
                         completeListError = result.toUiError()
                     )
+                    if (result == CompleteListResult.EditingConflict) {
+                        triggerBackgroundRefresh("complete-editing-conflict")
+                    }
                 }
             }
         }
@@ -178,6 +181,7 @@ class DetailViewModel @Inject constructor(
         CompleteListResult.Offline -> CompleteListError.OFFLINE
         CompleteListResult.NoConnection -> CompleteListError.NO_CONNECTION
         CompleteListResult.InvalidTransition -> CompleteListError.INVALID_TRANSITION
+        CompleteListResult.EditingConflict -> CompleteListError.EDITING_CONFLICT
         CompleteListResult.Unauthorized -> CompleteListError.UNAUTHORIZED
         CompleteListResult.Forbidden -> CompleteListError.FORBIDDEN
         CompleteListResult.NotFound -> CompleteListError.NOT_FOUND

@@ -71,6 +71,8 @@ class ListDetailLocalDataSource @Inject constructor(
                 price = (item as? CatalogItem)?.price,
                 source = (item as? CatalogItem)?.source,
                 sourceProductId = (item as? CatalogItem)?.sourceProductId,
+                categorySnapshot = (item as? CatalogItem)?.categorySnapshot,
+                subcategorySnapshot = (item as? CatalogItem)?.subcategorySnapshot,
                 unitSize = (item as? CatalogItem)?.unitSize,
                 unitFormat = (item as? CatalogItem)?.unitFormat,
                 unitPrice = (item as? CatalogItem)?.unitPrice,
@@ -150,7 +152,9 @@ class ListDetailLocalDataSource @Inject constructor(
                 unitPrice = unitPrice,
                 isApproxSize = isApproxSize,
                 source = source ?: "mercadona",
-                sourceProductId = sourceProductId ?: ""
+                sourceProductId = sourceProductId ?: "",
+                categorySnapshot = categorySnapshot,
+                subcategorySnapshot = subcategorySnapshot
             )
 
             else -> ManualItem(
