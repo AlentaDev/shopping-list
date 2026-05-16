@@ -29,11 +29,13 @@ android {
         create("local") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+            manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
 
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"https://api-shopping-list.onrender.com\"")
+            manifestPlaceholders["usesCleartextTraffic"] = "false"
         }
     }
 

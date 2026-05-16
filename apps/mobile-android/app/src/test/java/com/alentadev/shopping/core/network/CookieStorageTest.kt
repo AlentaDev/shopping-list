@@ -3,10 +3,27 @@ package com.alentadev.shopping.core.network
 import okhttp3.Cookie
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CookieStorageTest {
+
+    @Test
+    fun `allows cookie only for active API host domain`() {
+        assertTrue(PersistentCookieJar.isCookieDomainAllowed("10.0.2.2", "10.0.2.2"))
+        assertFalse(PersistentCookieJar.isCookieDomainAllowed("10.0.2.2", "api-shopping-list.onrender.com"))
+    }
+
+    @Test
+    fun `allows parent domain cookie for active subdomain`() {
+        assertTrue(
+            PersistentCookieJar.isCookieDomainAllowed(
+                "onrender.com",
+                "api-shopping-list.onrender.com"
+            )
+        )
+    }
 
     @Test
     fun `loadFor returns cookie saved for same host`() {

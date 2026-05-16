@@ -9,7 +9,6 @@
 
     <!-- HTTPS para producción y otros dominios -->
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="true">api.tu-dominio.com</domain>
+        <domain includeSubdomains="true">api-shopping-list.onrender.com</domain>
     </domain-config>
 </network-security-config>
-

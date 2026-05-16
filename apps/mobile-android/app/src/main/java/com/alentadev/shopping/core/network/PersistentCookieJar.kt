@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.alentadev.shopping.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -14,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 private val Context.cookieDataStore by preferencesDataStore(name = "cookies")
 private const val TAG = "PersistentCookieJar"
@@ -25,9 +27,10 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
 
     init {
         runCatching {
-            val persistedCookies = runBlocking {
-                loadCookies().values.mapNotNull { deserializeCookie(it) }
-            }
+                val persistedCookies = runBlocking {
+                    val activeHost = activeApiHost()
+                    loadCookies().values.mapNotNull { deserializeCookie(it, activeHost) }
+                }
             cookieStorage.save(persistedCookies)
         }.onFailure {
             Log.e(TAG, "Error cargando cookies persistidas", it)
@@ -36,7 +39,11 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
         // Guardado inmediato en memoria para que un retry inmediato use cookies nuevas
-        cookieStorage.save(cookies)
+            val activeHost = activeApiHost()
+            val hostScopedCookies = cookies.filter { cookie ->
+                cookie.domain.equals(activeHost, ignoreCase = true) || cookie.matchesHost(activeHost)
+            }
+            cookieStorage.save(hostScopedCookies)
 
         scope.launch {
             try {
@@ -105,21 +112,63 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
     }
 
     private fun serializeCookie(cookie: Cookie): String {
-        return "${cookie.name}=${cookie.value}"
+        return listOf(
+            cookie.name,
+            cookie.value,
+            cookie.domain,
+            cookie.path,
+            cookie.secure.toString(),
+            cookie.httpOnly.toString(),
+            cookie.persistent.toString(),
+            cookie.expiresAt.toString()
+        ).joinToString("|")
     }
 
-    private fun deserializeCookie(serialized: String): Cookie? {
+    private fun deserializeCookie(serialized: String, activeHost: String): Cookie? {
         return try {
-            val parts = serialized.split("=", limit = 2)
-            if (parts.size != 2) return null
+            val parts = serialized.split("|")
+            if (parts.size != 8) return null
+
+            val domain = parts[2]
+            if (!isCookieDomainAllowed(domain, activeHost)) {
+                return null
+            }
+
             Cookie.Builder()
                 .name(parts[0])
                 .value(parts[1])
-                .domain("10.0.2.2")
+                .domain(domain)
+                .path(parts[3])
+                .apply {
+                    if (parts[4].toBoolean()) secure()
+                    if (parts[5].toBoolean()) httpOnly()
+                    if (parts[6].toBoolean()) {
+                        expiresAt(parts[7].toLongOrNull() ?: Long.MAX_VALUE)
+                    }
+                }
                 .build()
         } catch (e: Exception) {
             Log.e(TAG, "Error al deserializar cookie: $serialized", e)
             null
+        }
+    }
+
+    private fun activeApiHost(): String {
+        return BuildConfig.API_BASE_URL.toHttpUrlOrNull()?.host ?: ""
+    }
+
+    private fun Cookie.matchesHost(host: String): Boolean {
+        if (host.isBlank()) return false
+        val scheme = if (secure) "https" else "http"
+        val url = "$scheme://$host".toHttpUrlOrNull() ?: return false
+        return matches(url)
+    }
+
+    companion object {
+        internal fun isCookieDomainAllowed(cookieDomain: String, activeHost: String): Boolean {
+            if (cookieDomain.isBlank() || activeHost.isBlank()) return false
+            if (cookieDomain.equals(activeHost, ignoreCase = true)) return true
+            return activeHost.endsWith(".$cookieDomain", ignoreCase = true)
         }
     }
 }
