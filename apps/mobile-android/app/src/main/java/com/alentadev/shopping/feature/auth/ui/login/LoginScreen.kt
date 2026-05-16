@@ -31,7 +31,6 @@ fun LoginScreen(
     val uiState by viewModel.uiState.collectAsState()
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
-    val cookieTestResult by viewModel.cookieTestResult.collectAsState()
     val context = LocalContext.current
 
     // Navegar al completar login exitoso y mostrar Toast
@@ -158,32 +157,5 @@ fun LoginScreen(
             )
         }
 
-        // Botón para probar cookies (solo visible después de login exitoso)
-        if (uiState is LoginUiState.Success) {
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.testCookies() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                )
-            ) {
-                Text("🍪 Probar Cookies")
-            }
-
-            // Mostrar resultado de prueba de cookies
-            if (cookieTestResult.isNotEmpty()) {
-                Text(
-                    text = cookieTestResult,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (cookieTestResult.startsWith("✅"))
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
     }
 }

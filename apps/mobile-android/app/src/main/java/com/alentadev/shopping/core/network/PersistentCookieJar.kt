@@ -96,15 +96,7 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
                 prefs[COOKIES_KEY] ?: ""
             }.first()
 
-            if (cookiesString.isEmpty()) return emptyMap()
-
-            cookiesString.split(";")
-                .filter { it.isNotBlank() }
-                .mapNotNull {
-                    val parts = it.split("=", limit = 2)
-                    if (parts.size == 2) parts[0] to it else null
-                }
-                .toMap()
+            parsePersistedCookiesMap(cookiesString)
         } catch (e: Exception) {
             Log.e(TAG, "Error al cargar cookies de DataStore", e)
             emptyMap()
@@ -126,7 +118,7 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
 
     private fun deserializeCookie(serialized: String, activeHost: String): Cookie? {
         return try {
-            val parts = serialized.split("|")
+            val parts = parseSerializedCookieParts(serialized)
             if (parts.size != 8) return null
 
             val domain = parts[2]
@@ -165,6 +157,21 @@ class PersistentCookieJar(private val context: Context) : CookieJar, AuthCredent
     }
 
     companion object {
+        internal fun parsePersistedCookieEntries(cookiesString: String): List<String> {
+            if (cookiesString.isEmpty()) return emptyList()
+            return cookiesString.split(";").filter { it.isNotBlank() }
+        }
+
+        internal fun parsePersistedCookiesMap(cookiesString: String): Map<String, String> {
+            return parsePersistedCookieEntries(cookiesString)
+                .mapIndexed { index, serializedCookie -> index.toString() to serializedCookie }
+                .toMap()
+        }
+
+        internal fun parseSerializedCookieParts(serialized: String): List<String> {
+            return serialized.split('|')
+        }
+
         internal fun isCookieDomainAllowed(cookieDomain: String, activeHost: String): Boolean {
             if (cookieDomain.isBlank() || activeHost.isBlank()) return false
             if (cookieDomain.equals(activeHost, ignoreCase = true)) return true

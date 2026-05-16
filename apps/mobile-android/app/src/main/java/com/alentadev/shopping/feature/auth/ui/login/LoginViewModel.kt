@@ -3,7 +3,6 @@ package com.alentadev.shopping.feature.auth.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alentadev.shopping.feature.auth.domain.usecase.GetCurrentUserUseCase
 import com.alentadev.shopping.feature.auth.domain.usecase.LoginUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,8 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val loginUseCase: LoginUseCase,
-    private val getCurrentUserUseCase: GetCurrentUserUseCase
+    private val loginUseCase: LoginUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -26,9 +24,6 @@ class LoginViewModel @Inject constructor(
 
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
-
-    private val _cookieTestResult = MutableStateFlow<String>("")
-    val cookieTestResult: StateFlow<String> = _cookieTestResult.asStateFlow()
 
     fun onEmailChanged(newEmail: String) {
         _email.value = newEmail
@@ -77,22 +72,6 @@ class LoginViewModel @Inject constructor(
                         else -> "Error: ${e.message ?: "Desconocido"}"
                     }
                 )
-            }
-        }
-    }
-
-    fun testCookies() {
-        viewModelScope.launch {
-            try {
-                safeLog("d", "LoginViewModel", "Probando cookies con getCurrentUser...")
-                val user = getCurrentUserUseCase.execute()
-                val message = "✅ Cookies funcionan! Usuario: ${user.name} (${user.email})"
-                safeLog("d", "LoginViewModel", message)
-                _cookieTestResult.value = message
-            } catch (e: Exception) {
-                val message = "❌ Cookies NO funcionan: ${e.message}"
-                safeLog("e", "LoginViewModel", message, e)
-                _cookieTestResult.value = message
             }
         }
     }

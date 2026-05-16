@@ -10,6 +10,51 @@ import org.junit.Test
 class CookieStorageTest {
 
     @Test
+    fun `parsePersistedCookieEntries supports multiple serialized cookies separated by semicolon`() {
+        val cookie1 = "session|tokenA|10.0.2.2|/|true|true|true|1715940000000"
+        val cookie2 = "refresh|tokenB|10.0.2.2|/|true|true|true|1715940000000"
+
+        val entries = PersistentCookieJar.parsePersistedCookieEntries("$cookie1;$cookie2")
+
+        assertEquals(2, entries.size)
+        assertEquals(cookie1, entries[0])
+        assertEquals(cookie2, entries[1])
+    }
+
+    @Test
+    fun `parsePersistedCookieEntries does not require equal sign in each cookie entry`() {
+        val cookie = "session|token-without-equals|10.0.2.2|/|true|true|true|1715940000000"
+
+        val entries = PersistentCookieJar.parsePersistedCookieEntries(cookie)
+
+        assertEquals(1, entries.size)
+        assertEquals(cookie, entries[0])
+    }
+
+    @Test
+    fun `parsePersistedCookiesMap preserves serialized entries for load round-trip`() {
+        val cookie1 = "session|tokenA|10.0.2.2|/|true|true|true|1715940000000"
+        val cookie2 = "refresh|tokenB|10.0.2.2|/|true|true|true|1715940000001"
+
+        val map = PersistentCookieJar.parsePersistedCookiesMap("$cookie1;$cookie2")
+
+        assertEquals(2, map.size)
+        assertEquals(cookie1, map["0"])
+        assertEquals(cookie2, map["1"])
+    }
+
+    @Test
+    fun `parseSerializedCookieParts splits cookie payload into expected fields`() {
+        val serialized = "session|token|api-shopping-list.onrender.com|/|true|true|true|1715940000000"
+
+        val parts = PersistentCookieJar.parseSerializedCookieParts(serialized)
+
+        assertEquals(8, parts.size)
+        assertEquals("session", parts[0])
+        assertEquals("token", parts[1])
+    }
+
+    @Test
     fun `allows cookie only for active API host domain`() {
         assertTrue(PersistentCookieJar.isCookieDomainAllowed("10.0.2.2", "10.0.2.2"))
         assertFalse(PersistentCookieJar.isCookieDomainAllowed("10.0.2.2", "api-shopping-list.onrender.com"))
