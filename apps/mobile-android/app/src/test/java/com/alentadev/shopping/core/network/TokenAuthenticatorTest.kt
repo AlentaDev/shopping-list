@@ -114,6 +114,36 @@ class TokenAuthenticatorTest {
         verify(exactly = 0) { authCredentialProvider.buildCookieHeader(any()) }
     }
 
+    @Test
+    fun `second 401 in same request chain invalidates session without second refresh`() {
+        every { authRetryPolicy.shouldAttemptRefresh(any(), any()) } returns false
+        every { authCredentialProvider.hasCredentials(any()) } returns false
+        val authenticator = TokenAuthenticator(
+            authRetryPolicy,
+            refreshCoordinator,
+            sessionInvalidationNotifier,
+            authCredentialProvider
+        )
+        val retriedRequest = Request.Builder()
+            .url("https://example.com/api/lists")
+            .header(AUTH_RETRY_MARKER_HEADER, AUTH_RETRY_MARKER_VALUE)
+            .build()
+        val firstUnauthorized = response(code = 401, method = "GET", path = "/api/lists")
+        val secondUnauthorized = Response.Builder()
+            .request(retriedRequest)
+            .protocol(Protocol.HTTP_1_1)
+            .code(401)
+            .message("test")
+            .priorResponse(firstUnauthorized)
+            .build()
+
+        val result = authenticator.authenticate(null, secondUnauthorized)
+
+        assertNull(result)
+        coVerify(exactly = 0) { refreshCoordinator.refresh() }
+        coVerify(exactly = 1) { sessionInvalidationNotifier.notifySessionInvalidated() }
+    }
+
     private fun response(code: Int, method: String, path: String, prior: Response? = null): Response {
         val request = Request.Builder()
             .url("https://example.com$path")

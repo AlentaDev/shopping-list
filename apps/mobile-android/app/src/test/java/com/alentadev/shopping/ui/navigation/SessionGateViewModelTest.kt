@@ -51,7 +51,7 @@ class SessionGateViewModelTest {
         fakeAuthRepository = FakeAuthRepository()
         observeSessionUseCase = ObserveSessionUseCase(fakeAuthRepository)
         getCurrentUserUseCase = GetCurrentUserUseCase(fakeAuthRepository)
-        connectivityGate = FakeConnectivityGate(isOnline = true)
+        connectivityGate = FakeConnectivityGate(online = true)
         networkMonitor = mockk()
     }
 
@@ -100,7 +100,7 @@ class SessionGateViewModelTest {
     fun `state machine transitions offline recoverable to authenticated on reconnect`() = runTest(mainDispatcherRule.testDispatcher) {
         val connectivityFlow = MutableSharedFlow<Boolean>(replay = 0)
         every { networkMonitor.isConnected } returns connectivityFlow
-        connectivityGate.isOnline = false
+        connectivityGate.online = false
         fakeAuthRepository.sessionFlow.value = testSession()
         fakeAuthRepository.currentSessionResult = Result.success(testSession())
 
@@ -114,7 +114,7 @@ class SessionGateViewModelTest {
         advanceUntilIdle()
         assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
 
-        connectivityGate.isOnline = true
+        connectivityGate.online = true
         connectivityFlow.emit(false)
         connectivityFlow.emit(true)
         advanceUntilIdle()
@@ -126,7 +126,7 @@ class SessionGateViewModelTest {
     fun `state machine transitions offline recoverable to unauthenticated on definitive auth failure`() = runTest(mainDispatcherRule.testDispatcher) {
         val connectivityFlow = MutableSharedFlow<Boolean>(replay = 0)
         every { networkMonitor.isConnected } returns connectivityFlow
-        connectivityGate.isOnline = false
+        connectivityGate.online = false
         fakeAuthRepository.sessionFlow.value = testSession()
         fakeAuthRepository.currentSessionResult = Result.failure(
             HttpException(Response.error<Any>(401, "unauthorized".toResponseBody(null)))
@@ -142,7 +142,7 @@ class SessionGateViewModelTest {
         advanceUntilIdle()
         assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
 
-        connectivityGate.isOnline = true
+        connectivityGate.online = true
         connectivityFlow.emit(false)
         connectivityFlow.emit(true)
         advanceUntilIdle()
@@ -154,7 +154,7 @@ class SessionGateViewModelTest {
     fun `dedup retries run once per connectivity transition`() = runTest(mainDispatcherRule.testDispatcher) {
         val connectivityFlow = MutableSharedFlow<Boolean>(replay = 0)
         every { networkMonitor.isConnected } returns connectivityFlow
-        connectivityGate.isOnline = false
+        connectivityGate.online = false
         fakeAuthRepository.sessionFlow.value = testSession()
         fakeAuthRepository.currentSessionResult = Result.failure(IOException("network down"))
 
@@ -169,7 +169,7 @@ class SessionGateViewModelTest {
         assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
         assertEquals(0, fakeAuthRepository.getCurrentSessionCalls)
 
-        connectivityGate.isOnline = true
+        connectivityGate.online = true
         connectivityFlow.emit(false)
         connectivityFlow.emit(true)
         connectivityFlow.emit(true)
@@ -187,6 +187,31 @@ class SessionGateViewModelTest {
         assertEquals(AuthBootstrapState.OfflineRecoverable, viewModel.state.value)
     }
 
+    @Test
+    fun `state machine transitions to unauthenticated when persisted session is cleared after auth failure`() = runTest(mainDispatcherRule.testDispatcher) {
+        val connectivityFlow = MutableStateFlow(true)
+        every { networkMonitor.isConnected } returns connectivityFlow
+        fakeAuthRepository.sessionFlow.value = testSession()
+        fakeAuthRepository.currentSessionResult = Result.failure(
+            HttpException(Response.error<Any>(401, "unauthorized".toResponseBody(null)))
+        )
+
+        val viewModel = SessionGateViewModel(
+            observeSessionUseCase = observeSessionUseCase,
+            getCurrentUserUseCase = getCurrentUserUseCase,
+            connectivityGate = connectivityGate,
+            networkMonitor = networkMonitor
+        )
+
+        advanceUntilIdle()
+        assertEquals(AuthBootstrapState.Unauthenticated, viewModel.state.value)
+
+        fakeAuthRepository.sessionFlow.value = null
+        advanceUntilIdle()
+
+        assertEquals(AuthBootstrapState.Unauthenticated, viewModel.state.value)
+    }
+
     private fun testSession() = Session(
         user = User(
             id = "user-1",
@@ -200,9 +225,9 @@ class SessionGateViewModelTest {
 }
 
 private class FakeConnectivityGate(
-    var isOnline: Boolean
+    var online: Boolean
 ) : ConnectivityGate {
-    override fun isOnline(): Boolean = isOnline
+    override fun isOnline(): Boolean = online
 }
 
 private class FakeAuthRepository : AuthRepository {

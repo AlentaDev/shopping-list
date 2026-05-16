@@ -31,6 +31,10 @@ class TokenAuthenticator(
         Log.d(TAG, "  → Status: ${response.code}")
 
         if (!authRetryPolicy.shouldAttemptRefresh(request, response)) {
+            if (shouldInvalidateSessionWhenRefreshSkipped(request, response)) {
+                Log.e(TAG, "  🔓 second 401 in retried chain - invalidating session event=session_invalidation")
+                runBlocking { sessionInvalidationNotifier.notifySessionInvalidated() }
+            }
             Log.d(TAG, "  ❌ refresh skipped due to loop protection")
             return null
         }
@@ -69,5 +73,15 @@ class TokenAuthenticator(
         val hasCredentials = authCredentialProvider.hasCredentials(request.url)
         val presence = if (hasCredentials) "present" else "absent"
         Log.d(TAG, "  🔎 credential_state stage=$stage credentials=$presence")
+    }
+
+    private fun shouldInvalidateSessionWhenRefreshSkipped(request: Request, response: Response): Boolean {
+        if (response.code != 401) {
+            return false
+        }
+
+        val hasRetryMarker = request.header(AUTH_RETRY_MARKER_HEADER) == AUTH_RETRY_MARKER_VALUE
+        val hasPriorResponse = response.priorResponse != null
+        return hasRetryMarker || hasPriorResponse
     }
 }

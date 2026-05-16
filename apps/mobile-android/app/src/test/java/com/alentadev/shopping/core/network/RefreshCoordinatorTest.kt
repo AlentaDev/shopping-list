@@ -89,6 +89,24 @@ class RefreshCoordinatorTest {
     }
 
     @Test
+    fun `invalid refresh token response is treated as unrecoverable unauthorized`() = runTest {
+        every { connectivityGate.isOnline() } returns true
+        val coordinator = RefreshCoordinator(connectivityGate) { authApi }
+
+        coEvery { authApi.refreshToken() } throws HttpException(
+            Response.error<Any>(
+                401,
+                "{\"error\":\"invalid_refresh_token\"}".toResponseBody(null)
+            )
+        )
+
+        val result = coordinator.refresh()
+
+        assertEquals(RefreshCoordinator.Result.FAILED_UNAUTHORIZED, result)
+        coVerify(exactly = 1) { authApi.refreshToken() }
+    }
+
+    @Test
     fun `lock resets after failure so a future attempt can run`() = runTest {
         every { connectivityGate.isOnline() } returns true
         val coordinator = RefreshCoordinator(connectivityGate) { authApi }
