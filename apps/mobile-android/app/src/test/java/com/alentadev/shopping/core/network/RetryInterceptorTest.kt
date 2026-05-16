@@ -42,7 +42,7 @@ class RetryInterceptorTest {
 
         every { chain.request() } returns request
         every { chain.proceed(request) } throws exception
-        every { connectivityGate.isOnline() } returns false
+        every { connectivityGate.isOnline() } returnsMany listOf(true, false)
 
         val retryInterceptor = RetryInterceptor(connectivityGate, sleep = {})
 
@@ -50,7 +50,7 @@ class RetryInterceptorTest {
 
         assertSame(exception, thrown)
         verify(exactly = 1) { chain.proceed(request) }
-        verify(exactly = 1) { connectivityGate.isOnline() }
+        verify(exactly = 2) { connectivityGate.isOnline() }
     }
 
     @Test
@@ -88,7 +88,7 @@ class RetryInterceptorTest {
 
         assertEquals(response, result)
         verify(exactly = 3) { chain.proceed(request) }
-        verify(exactly = 2) { connectivityGate.isOnline() }
+        verify(exactly = 3) { connectivityGate.isOnline() }
     }
 
     @Test
@@ -97,6 +97,8 @@ class RetryInterceptorTest {
         val request = mockk<Request>()
         val connectivityGate = mockk<ConnectivityGate>()
         val exception = IllegalStateException("boom")
+
+        every { connectivityGate.isOnline() } returns true
 
         every { chain.request() } returns request
         every { chain.proceed(request) } throws exception
@@ -107,6 +109,6 @@ class RetryInterceptorTest {
 
         assertSame(exception, thrown)
         verify(exactly = 1) { chain.proceed(request) }
-        verify(exactly = 0) { connectivityGate.isOnline() }
+        verify(exactly = 1) { connectivityGate.isOnline() }
     }
 }

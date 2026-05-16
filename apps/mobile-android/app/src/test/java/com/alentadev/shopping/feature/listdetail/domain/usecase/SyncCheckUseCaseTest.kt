@@ -7,6 +7,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -112,7 +113,7 @@ class SyncCheckUseCaseTest {
     fun `invoke validates list id`() = runTest {
         try {
             useCase("", "item-1", true)
-            kotlin.test.fail("Expected IllegalArgumentException")
+            fail("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             assertEquals("El ID de la lista no puede estar vacío", e.message)
         }

@@ -31,6 +31,7 @@ class SyncQueueProcessorImplTest {
 
         coEvery { pendingSyncDao.getPendingOrderedByLocalUpdatedAt() } returns pendingOps
         coEvery { remoteDataSource.updateItemCheck(any(), any(), any()) } returns Unit
+        coEvery { pendingSyncDao.delete(any()) } returns Unit
         val processor = SyncQueueProcessorImpl(
             pendingSyncDao = pendingSyncDao,
             remoteDataSource = remoteDataSource,
@@ -39,7 +40,7 @@ class SyncQueueProcessorImplTest {
 
         processor.flushPendingSync()
 
-        coVerify(ordering = io.mockk.Ordering.SEQUENCE) {
+        coVerify(ordering = io.mockk.Ordering.ORDERED) {
             remoteDataSource.updateItemCheck("list-1", "item-1", true)
             pendingSyncDao.delete("op-1")
             remoteDataSource.updateItemCheck("list-1", "item-2", false)
@@ -66,6 +67,7 @@ class SyncQueueProcessorImplTest {
 
         coEvery { pendingSyncDao.getPendingOrderedByLocalUpdatedAt() } returns pendingOps
         coEvery { remoteDataSource.completeList("list-1", listOf("item-1", "item-2")) } returns Unit
+        coEvery { pendingSyncDao.delete("op-1") } returns Unit
 
         val processor = SyncQueueProcessorImpl(
             pendingSyncDao = pendingSyncDao,

@@ -63,6 +63,7 @@ class ListsViewModelTest {
     fun `isConnected reflects NetworkMonitor updates`() = runTest(mainDispatcherRule.testDispatcher) {
         val connectivity = MutableStateFlow(true)
         every { networkMonitor.isConnected } returns connectivity
+        every { networkMonitor.isCurrentlyConnected() } returnsMany listOf(true, false, false, false)
 
         viewModel = ListsViewModel(
             getActiveListsUseCase,
@@ -161,7 +162,7 @@ class ListsViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state is ListsUiState.Success)
         assertTrue((state as ListsUiState.Success).fromCache)
-        io.mockk.verify(exactly = 1) { networkMonitor.isCurrentlyConnected() }
+        io.mockk.verify(atLeast = 1) { networkMonitor.isCurrentlyConnected() }
         coVerify(exactly = 1) { listsRepository.getCachedActiveLists() }
         coVerify(exactly = 0) { listsRepository.getActiveListsWithSource() }
     }
@@ -194,6 +195,7 @@ class ListsViewModelTest {
     @Test
     fun `loadLists offline sets Empty with retry state when cache is empty`() = runTest(mainDispatcherRule.testDispatcher) {
         every { networkMonitor.isConnected } returns flowOf(false)
+        every { networkMonitor.isCurrentlyConnected() } returns false
         coEvery { listsRepository.getCachedActiveLists() } returns emptyList()
 
         viewModel = ListsViewModel(

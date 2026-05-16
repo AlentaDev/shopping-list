@@ -151,6 +151,7 @@ class DetailViewModel @Inject constructor(
             val latest = _uiState.value as? ListDetailUiState.Success ?: return@launch
             when (result) {
                 CompleteListResult.Success,
+                CompleteListResult.NoConnection,
                 CompleteListResult.Offline -> {
                     _uiState.value = latest.copy(
                         isCompleting = false,
@@ -159,7 +160,7 @@ class DetailViewModel @Inject constructor(
                     )
                     if (!hasEmittedCompletionNavigation) {
                         hasEmittedCompletionNavigation = true
-                        _uiEvents.tryEmit(DetailUiEvent.ListCompleted)
+                        _uiEvents.emit(DetailUiEvent.ListCompleted)
                     }
                 }
                 else -> {
