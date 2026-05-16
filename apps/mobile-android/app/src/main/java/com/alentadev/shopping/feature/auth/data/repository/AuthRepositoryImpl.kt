@@ -5,12 +5,14 @@ import com.alentadev.shopping.feature.auth.data.mapper.AuthMapper.toDomain
 import com.alentadev.shopping.feature.auth.data.remote.AuthRemoteDataSource
 import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.repository.AuthRepository
+import com.alentadev.shopping.core.session.LogoutLocalDataCleaner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 
 class AuthRepositoryImpl(
     private val remoteDataSource: AuthRemoteDataSource,
-    private val localDataSource: AuthLocalDataSource
+    private val localDataSource: AuthLocalDataSource,
+    private val logoutLocalDataCleaner: LogoutLocalDataCleaner
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Session {
@@ -34,6 +36,7 @@ class AuthRepositoryImpl(
         } catch (_: Exception) {
         } finally {
             localDataSource.clearSession()
+            logoutLocalDataCleaner.clear()
         }
     }
 

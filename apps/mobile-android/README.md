@@ -22,6 +22,18 @@ Foco: app robusta, simple y **offline-first** con arquitectura **Clean + MVVM**.
 ./gradlew :app:testLocalDebugUnitTest
 ```
 
+### SDK setup (required for CLI)
+
+If Gradle fails with `SDK location not found`, create a local `local.properties` file from the example:
+
+```bash
+cp local.properties.example local.properties
+```
+
+Then edit `local.properties` and set your real Android SDK path in `sdk.dir`.
+
+Note: `local.properties` is intentionally gitignored (machine-specific), while `local.properties.example` is versioned.
+
 ---
 
 ## Flavors y entornos

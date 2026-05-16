@@ -78,7 +78,7 @@ class ListDetailLocalDataSource @Inject constructor(
                 syncedAt = System.currentTimeMillis()
             )
         }
-        itemDao.insertAll(itemEntities)
+        itemDao.replaceByListId(listId = listDetail.id, items = itemEntities)
     }
 
     suspend fun updateItemChecked(itemId: String, checked: Boolean) {

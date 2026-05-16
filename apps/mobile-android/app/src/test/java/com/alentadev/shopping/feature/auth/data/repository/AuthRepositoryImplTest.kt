@@ -5,6 +5,7 @@ import com.alentadev.shopping.feature.auth.data.local.AuthLocalDataSource
 import com.alentadev.shopping.feature.auth.data.remote.AuthRemoteDataSource
 import com.alentadev.shopping.feature.auth.domain.entity.Session
 import com.alentadev.shopping.feature.auth.domain.entity.User
+import com.alentadev.shopping.core.session.LogoutLocalDataCleaner
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -19,13 +20,15 @@ import org.junit.Test
 class AuthRepositoryImplTest {
     private lateinit var remoteDataSource: AuthRemoteDataSource
     private lateinit var localDataSource: AuthLocalDataSource
+    private lateinit var logoutLocalDataCleaner: LogoutLocalDataCleaner
     private lateinit var authRepository: AuthRepositoryImpl
 
     @Before
     fun setup() {
         remoteDataSource = mockk()
         localDataSource = mockk()
-        authRepository = AuthRepositoryImpl(remoteDataSource, localDataSource)
+        logoutLocalDataCleaner = mockk()
+        authRepository = AuthRepositoryImpl(remoteDataSource, localDataSource, logoutLocalDataCleaner)
     }
 
     @Test
@@ -98,6 +101,7 @@ class AuthRepositoryImplTest {
         // Arrange
         coEvery { remoteDataSource.logout() } returns Unit
         coEvery { localDataSource.clearSession() } returns Unit
+        coEvery { logoutLocalDataCleaner.clear() } returns Unit
 
         // Act
         authRepository.logout()
@@ -105,6 +109,7 @@ class AuthRepositoryImplTest {
         // Assert
         coVerify(exactly = 1) { remoteDataSource.logout() }
         coVerify(exactly = 1) { localDataSource.clearSession() }
+        coVerify(exactly = 1) { logoutLocalDataCleaner.clear() }
     }
 
     @Test
@@ -112,12 +117,14 @@ class AuthRepositoryImplTest {
         // Arrange
         coEvery { remoteDataSource.logout() } throws Exception("Network error")
         coEvery { localDataSource.clearSession() } returns Unit
+        coEvery { logoutLocalDataCleaner.clear() } returns Unit
 
         // Act
         authRepository.logout()
 
         // Assert
         coVerify { localDataSource.clearSession() }
+        coVerify { logoutLocalDataCleaner.clear() }
     }
 
     @Test

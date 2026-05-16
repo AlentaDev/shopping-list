@@ -21,6 +21,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,6 +46,7 @@ fun ActiveListsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isConnected by viewModel.isConnected.collectAsState()
+    val userName by viewModel.userName.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val syncMessage = stringResource(R.string.background_sync_snackbar)
@@ -87,10 +89,16 @@ fun ActiveListsScreen(
                     Column {
                         Text(text = stringResource(R.string.lists_title))
                         Text(
-                            text = stringResource(R.string.lists_subtitle),
+                            text = userName?.let { stringResource(R.string.lists_user_label, it) }
+                                ?: stringResource(R.string.lists_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                },
+                actions = {
+                    TextButton(onClick = { viewModel.logout() }) {
+                        Text(text = stringResource(R.string.logout_button))
                     }
                 }
             )

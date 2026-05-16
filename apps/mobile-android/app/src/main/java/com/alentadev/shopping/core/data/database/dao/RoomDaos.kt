@@ -74,8 +74,17 @@ interface ListEntityDao {
     @Query("DELETE FROM lists WHERE id = :id")
     suspend fun deleteById(id: String)
 
+    @Query("DELETE FROM lists WHERE status = :status")
+    suspend fun deleteByStatus(status: String)
+
     @Query("DELETE FROM lists")
     suspend fun deleteAll()
+
+    @androidx.room.Transaction
+    suspend fun replaceByStatus(status: String, lists: List<ListEntity>) {
+        deleteByStatus(status)
+        insertAll(lists)
+    }
 }
 
 // ============================================================================
@@ -122,6 +131,12 @@ interface ItemEntityDao {
 
     @Query("DELETE FROM items")
     suspend fun deleteAll()
+
+    @androidx.room.Transaction
+    suspend fun replaceByListId(listId: String, items: List<ItemEntity>) {
+        deleteByListId(listId)
+        insertAll(items)
+    }
 }
 
 // ============================================================================

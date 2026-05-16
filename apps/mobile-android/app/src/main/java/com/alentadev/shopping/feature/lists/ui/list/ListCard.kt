@@ -18,6 +18,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.alentadev.shopping.R
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+private val LIST_UPDATED_AT_FORMATTER: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.forLanguageTag("es-ES"))
+private val MADRID_ZONE_ID: ZoneId = ZoneId.of("Europe/Madrid")
+
+internal fun formatListUpdatedAt(updatedAt: Long): String {
+    if (updatedAt <= 0L) return "—"
+    return Instant.ofEpochMilli(updatedAt)
+        .atZone(MADRID_ZONE_ID)
+        .format(LIST_UPDATED_AT_FORMATTER)
+}
 
 @Composable
 fun ListCard(
@@ -52,7 +67,7 @@ fun ListCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = stringResource(R.string.lists_updated_at, list.updatedAt),
+                    text = stringResource(R.string.lists_updated_at, formatListUpdatedAt(list.updatedAt)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

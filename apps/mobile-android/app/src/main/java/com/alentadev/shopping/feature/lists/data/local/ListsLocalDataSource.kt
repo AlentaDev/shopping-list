@@ -49,7 +49,10 @@ class ListsLocalDataSource @Inject constructor(
      * @param lists Lista de ShoppingList a guardar
      */
     suspend fun saveLists(lists: List<ShoppingList>) {
-        listDao.insertAll(lists.map { it.toEntity() })
+        val activeEntities = lists
+            .filter { it.status == ListStatus.ACTIVE }
+            .map { it.toEntity() }
+        listDao.replaceByStatus(status = "ACTIVE", lists = activeEntities)
     }
 
     /**

@@ -31,10 +31,33 @@ internal data class AuthenticatedNavigationCommand(
     val launchSingleTop: Boolean
 )
 
+internal data class UnauthenticatedNavigationCommand(
+    val route: String,
+    val clearActiveListsRoute: String,
+    val clearBootstrapRoute: String,
+    val launchSingleTop: Boolean
+)
+
+internal fun detailBackRefreshKey(): String = ACTIVE_LISTS_REFRESH_KEY
+
+private fun emitListsRefreshSignal(navController: NavHostController) {
+    navController.previousBackStackEntry
+        ?.savedStateHandle
+        ?.set(detailBackRefreshKey(), System.currentTimeMillis())
+}
+
 internal fun buildAuthenticatedNavigationCommand(): AuthenticatedNavigationCommand =
     AuthenticatedNavigationCommand(
         route = ACTIVE_LISTS_ROUTE,
         clearLoginRoute = LOGIN_ROUTE_PATTERN,
+        clearBootstrapRoute = BOOTSTRAP_ROUTE,
+        launchSingleTop = true
+    )
+
+internal fun buildUnauthenticatedNavigationCommand(): UnauthenticatedNavigationCommand =
+    UnauthenticatedNavigationCommand(
+        route = loginRoute(recoverableMode = false),
+        clearActiveListsRoute = ACTIVE_LISTS_ROUTE,
         clearBootstrapRoute = BOOTSTRAP_ROUTE,
         launchSingleTop = true
     )
@@ -48,13 +71,26 @@ fun AppNavHost(
     val bootstrapState by sessionGateViewModel.state.collectAsState()
 
     LaunchedEffect(bootstrapState) {
-        if (bootstrapState == AuthBootstrapState.Authenticated) {
-            val command = buildAuthenticatedNavigationCommand()
-            navController.navigate(command.route) {
-                popUpTo(command.clearLoginRoute) { inclusive = true }
-                popUpTo(command.clearBootstrapRoute) { inclusive = true }
-                launchSingleTop = command.launchSingleTop
+        when (bootstrapState) {
+            AuthBootstrapState.Authenticated -> {
+                val command = buildAuthenticatedNavigationCommand()
+                navController.navigate(command.route) {
+                    popUpTo(command.clearLoginRoute) { inclusive = true }
+                    popUpTo(command.clearBootstrapRoute) { inclusive = true }
+                    launchSingleTop = command.launchSingleTop
+                }
             }
+            AuthBootstrapState.Unauthenticated -> {
+                val command = buildUnauthenticatedNavigationCommand()
+                navController.navigate(command.route) {
+                    popUpTo(command.clearActiveListsRoute) { inclusive = true }
+                    popUpTo(command.clearBootstrapRoute) { inclusive = true }
+                    launchSingleTop = command.launchSingleTop
+                }
+            }
+            AuthBootstrapState.OfflineRecoverable,
+            AuthBootstrapState.Unknown,
+            AuthBootstrapState.Checking -> Unit
         }
     }
 
@@ -96,12 +132,11 @@ fun AppNavHost(
         )
         listDetailScreen(
             onBackClick = {
+                emitListsRefreshSignal(navController)
                 navController.popBackStack()
             },
             onListCompleted = {
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set(ACTIVE_LISTS_REFRESH_KEY, System.currentTimeMillis())
+                emitListsRefreshSignal(navController)
                 navController.popBackStack()
             }
         )

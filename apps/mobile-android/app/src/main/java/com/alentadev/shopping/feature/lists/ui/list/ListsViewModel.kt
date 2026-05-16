@@ -5,18 +5,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.core.network.resolveConnectivity
+import com.alentadev.shopping.feature.auth.domain.usecase.LogoutUseCase
+import com.alentadev.shopping.feature.auth.domain.usecase.ObserveSessionUseCase
 import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
 import com.alentadev.shopping.feature.lists.domain.usecase.GetActiveListsUseCase
 import com.alentadev.shopping.feature.lists.domain.usecase.RefreshListsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -24,7 +28,9 @@ class ListsViewModel @Inject constructor(
     private val getActiveListsUseCase: GetActiveListsUseCase,
     private val refreshListsUseCase: RefreshListsUseCase,
     private val listsRepository: ListsRepository,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val observeSessionUseCase: ObserveSessionUseCase,
+    private val logoutUseCase: LogoutUseCase
 ) : ViewModel() {
 
     private companion object {
@@ -40,8 +46,12 @@ class ListsViewModel @Inject constructor(
     private val _syncSnackbarEvents = MutableSharedFlow<ListSyncSnackbarEvent>(extraBufferCapacity = 2)
     val syncSnackbarEvents: SharedFlow<ListSyncSnackbarEvent> = _syncSnackbarEvents.asSharedFlow()
 
+    private val _userName = MutableStateFlow<String?>(null)
+    val userName: StateFlow<String?> = _userName.asStateFlow()
+
     private var refreshJob: Job? = null
     private var wasEffectivelyConnected = networkMonitor.isCurrentlyConnected()
+    private var wasAuthenticated = false
 
     init {
         viewModelScope.launch {
@@ -58,6 +68,27 @@ class ListsViewModel @Inject constructor(
                 }
                 wasEffectivelyConnected = connectivity.effectiveConnected
             }
+        }
+
+        viewModelScope.launch {
+            observeSessionUseCase.execute()
+                .map { it?.user?.name }
+                .distinctUntilChanged()
+                .collect { name ->
+                    _userName.value = name
+                }
+        }
+
+        viewModelScope.launch {
+            observeSessionUseCase.execute()
+                .map { it?.isAuthenticated == true }
+                .distinctUntilChanged()
+                .collect { isAuthenticated ->
+                    if (!wasAuthenticated && isAuthenticated) {
+                        triggerBackgroundRefresh("login")
+                    }
+                    wasAuthenticated = isAuthenticated
+                }
         }
     }
 
@@ -127,6 +158,12 @@ class ListsViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.value = ListsUiState.Error(e.message ?: "Error al refrescar")
             }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            logoutUseCase.execute()
         }
     }
 }

@@ -1,6 +1,10 @@
 package com.alentadev.shopping.feature.lists.ui.list
 
 import com.alentadev.shopping.core.network.NetworkMonitor
+import com.alentadev.shopping.feature.auth.domain.entity.Session
+import com.alentadev.shopping.feature.auth.domain.entity.User
+import com.alentadev.shopping.feature.auth.domain.usecase.LogoutUseCase
+import com.alentadev.shopping.feature.auth.domain.usecase.ObserveSessionUseCase
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
 import com.alentadev.shopping.feature.lists.domain.entity.ShoppingList
 import com.alentadev.shopping.feature.lists.domain.repository.ListsRepository
@@ -36,6 +40,9 @@ class ListsViewModelTest {
     private lateinit var refreshListsUseCase: RefreshListsUseCase
     private lateinit var listsRepository: ListsRepository
     private lateinit var networkMonitor: NetworkMonitor
+    private lateinit var observeSessionUseCase: ObserveSessionUseCase
+    private lateinit var logoutUseCase: LogoutUseCase
+    private lateinit var sessionFlow: MutableStateFlow<Session?>
     private lateinit var viewModel: ListsViewModel
 
     @get:Rule
@@ -47,15 +54,22 @@ class ListsViewModelTest {
         refreshListsUseCase = mockk()
         listsRepository = mockk()
         networkMonitor = mockk()
+        observeSessionUseCase = mockk()
+        logoutUseCase = mockk()
+        sessionFlow = MutableStateFlow(null)
 
         every { networkMonitor.isConnected } returns flowOf(true)
         every { networkMonitor.isCurrentlyConnected() } returns true
+        every { observeSessionUseCase.execute() } returns sessionFlow
+        coEvery { logoutUseCase.execute() } returns Unit
 
         viewModel = ListsViewModel(
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
     }
 
@@ -69,7 +83,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
         advanceUntilIdle()
 
@@ -153,7 +169,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -179,7 +197,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -202,7 +222,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -277,7 +299,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.refreshLists()
@@ -305,7 +329,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -334,7 +360,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -363,7 +391,9 @@ class ListsViewModelTest {
             getActiveListsUseCase,
             refreshListsUseCase,
             listsRepository,
-            networkMonitor
+            networkMonitor,
+            observeSessionUseCase,
+            logoutUseCase
         )
 
         viewModel.loadLists()
@@ -380,6 +410,53 @@ class ListsViewModelTest {
         assertTrue((refreshedState as ListsUiState.Empty).isOffline)
         coVerify(exactly = 2) { listsRepository.getCachedActiveLists() }
         coVerify(exactly = 0) { refreshListsUseCase.execute() }
+    }
+
+    @Test
+    fun `login transition triggers background refresh even when cache exists`() = runTest(mainDispatcherRule.testDispatcher) {
+        val cached = listOf(ShoppingList("1", "Lista cache", ListStatus.ACTIVE, 1000L, 1))
+        val remote = listOf(ShoppingList("1", "Lista remota", ListStatus.ACTIVE, 2000L, 1))
+        coEvery { listsRepository.getCachedActiveLists() } returns cached
+        coEvery { refreshListsUseCase.execute() } returns remote
+
+        viewModel.loadLists()
+        advanceUntilIdle()
+
+        sessionFlow.value = Session(
+            user = User(
+                id = "u-1",
+                name = "Ana",
+                email = "ana@example.com",
+                postalCode = "28001"
+            )
+        )
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { refreshListsUseCase.execute() }
+    }
+
+    @Test
+    fun `session user name reflects authenticated session`() = runTest(mainDispatcherRule.testDispatcher) {
+        sessionFlow.value = Session(
+            user = User(
+                id = "u-1",
+                name = "Ana Pérez",
+                email = "ana@example.com",
+                postalCode = "28001"
+            )
+        )
+
+        advanceUntilIdle()
+
+        assertEquals("Ana Pérez", viewModel.userName.value)
+    }
+
+    @Test
+    fun `logout delegates to logout use case`() = runTest(mainDispatcherRule.testDispatcher) {
+        viewModel.logout()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { logoutUseCase.execute() }
     }
 
 

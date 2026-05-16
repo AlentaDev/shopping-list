@@ -90,7 +90,7 @@ class ListDetailLocalDataSourceTest {
 
         coEvery { listDao.insert(any()) } returns Unit
         coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-1") } returns true
-        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+        coEvery { itemDao.replaceByListId("list-1", capture(insertedItems)) } returns Unit
 
         dataSource.saveListDetail(listDetail)
 
@@ -120,7 +120,7 @@ class ListDetailLocalDataSourceTest {
 
         coEvery { listDao.insert(any()) } returns Unit
         coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-1") } returns null
-        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+        coEvery { itemDao.replaceByListId("list-1", capture(insertedItems)) } returns Unit
 
         dataSource.saveListDetail(listDetail)
 
@@ -212,7 +212,7 @@ class ListDetailLocalDataSourceTest {
         coEvery { listDao.insert(any()) } returns Unit
         coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-with-pending") } returns true
         coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-no-pending") } returns null
-        coEvery { itemDao.insertAll(capture(insertedItems)) } returns Unit
+        coEvery { itemDao.replaceByListId("list-1", capture(insertedItems)) } returns Unit
 
         dataSource.saveListDetail(listDetail)
 
@@ -220,6 +220,36 @@ class ListDetailLocalDataSourceTest {
         val itemById = insertedItems.captured.associateBy { it.id }
         assertEquals(true, itemById.getValue("item-with-pending").checked)
         assertEquals(false, itemById.getValue("item-no-pending").checked)
+    }
+
+    @Test
+    fun `saveListDetail replaces full list snapshot before saving remote items`() = runTest {
+        val listDetail = ListDetail(
+            id = "list-1",
+            title = "Compra",
+            updatedAt = "2026-03-01T10:00:00Z",
+            items = listOf(
+                ManualItem(
+                    id = "item-1",
+                    name = "Pan",
+                    qty = 1.0,
+                    checked = true,
+                    updatedAt = "2026-03-01T10:00:00Z"
+                )
+            )
+        )
+        val insertedItems = slot<List<ItemEntity>>()
+
+        coEvery { listDao.insert(any()) } returns Unit
+        coEvery { pendingSyncDao.getPendingCheckedState("list-1", "item-1") } returns null
+        coEvery { itemDao.replaceByListId("list-1", capture(insertedItems)) } returns Unit
+
+        dataSource.saveListDetail(listDetail)
+
+        coVerify(exactly = 1) { itemDao.replaceByListId("list-1", any()) }
+        assertTrue(insertedItems.isCaptured)
+        assertEquals(1, insertedItems.captured.size)
+        assertEquals("item-1", insertedItems.captured.first().id)
     }
 
 
