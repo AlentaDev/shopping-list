@@ -16,6 +16,7 @@ enum class CompleteListError {
     OFFLINE,
     NO_CONNECTION,
     INVALID_TRANSITION,
+    EDITING_CONFLICT,
     UNAUTHORIZED,
     FORBIDDEN,
     NOT_FOUND,

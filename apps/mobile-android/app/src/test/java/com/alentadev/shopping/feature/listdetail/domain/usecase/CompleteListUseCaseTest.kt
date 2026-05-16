@@ -53,6 +53,7 @@ class CompleteListUseCaseTest {
         val failures = listOf(
             CompleteListResult.Offline,
             CompleteListResult.InvalidTransition,
+            CompleteListResult.EditingConflict,
             CompleteListResult.Unauthorized,
             CompleteListResult.Forbidden,
             CompleteListResult.NotFound,

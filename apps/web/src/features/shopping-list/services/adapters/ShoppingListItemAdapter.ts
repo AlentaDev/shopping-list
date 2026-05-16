@@ -7,6 +7,8 @@ type ShoppingListItemPayload = {
   qty?: number;
   thumbnail?: string | null;
   price?: number | null;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 const normalizeSourceProductId = ({
@@ -56,7 +58,9 @@ export const adaptShoppingListItems = (
     }),
     serverItemId: item.id ?? null,
     name: item.name ?? "",
-    category: "",
+    category: item.categorySnapshot?.trim() || "Sin categoría",
+    categorySnapshot: item.categorySnapshot ?? null,
+    subcategorySnapshot: item.subcategorySnapshot ?? null,
     thumbnail: item.thumbnail ?? null,
     price: item.price ?? null,
     quantity: item.qty ?? 0,

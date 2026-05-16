@@ -20,6 +20,8 @@ data class ListItemDto(
     val price: Double? = null,
     val source: String? = null, // "mercadona"
     val sourceProductId: String? = null,
+    val categorySnapshot: String? = null,
+    val subcategorySnapshot: String? = null,
     val unitSize: Double? = null,
     val unitFormat: String? = null,
     val unitPrice: Double? = null,
@@ -41,4 +43,3 @@ data class ListDetailDto(
     val items: List<ListItemDto> = emptyList(),
     val updatedAt: String
 )
-

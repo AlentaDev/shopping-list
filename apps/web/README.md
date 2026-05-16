@@ -6,7 +6,7 @@ Sigue arquitectura por features y reglas estrictas de separación entre UI y ser
 
 ---
 
-## Quick start
+## Inicio rápido
 
 Desde la raíz del repo:
 
@@ -14,7 +14,7 @@ Desde la raíz del repo:
 pnpm -C apps/web dev
 ```
 
-Build producción:
+Build de producción:
 
 ```bash
 pnpm -C apps/web build
@@ -96,8 +96,15 @@ Si se agregan nuevas variables, se documentan en este README y en `docs/`.
 ## Versionado y releases
 
 - Versión inicial estable: `1.0.0`
+- Versión planeada del release actual: `1.1.0`
 - SemVer independiente por app (web/api/android)
 - Cambios de versión gestionados por Changesets desde la raíz del repo
+
+### Notas de release (resumen)
+
+- La UI de listas ahora mantiene agrupación por categorías L1 (`categorySnapshot`) en `DRAFT`, `ACTIVE` y `COMPLETED`.
+- `subcategorySnapshot` se conserva como metadata y no cambia la regla de agrupación.
+- El flujo de autosave y add-from-catalog queda alineado con snapshots persistidos por backend.
 
 Guía completa:
 

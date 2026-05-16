@@ -55,6 +55,26 @@ const selectedDetail: ListDetail = {
       checked: false,
       updatedAt: "2024-01-09",
       price: 1.2,
+      categorySnapshot: "Lácteos",
+    },
+    {
+      id: "item-2",
+      kind: "catalog",
+      name: "Pan",
+      qty: 1,
+      checked: false,
+      updatedAt: "2024-01-09",
+      price: 0.9,
+      categorySnapshot: "Panadería",
+    },
+    {
+      id: "item-3",
+      kind: "catalog",
+      name: "Salsa",
+      qty: 3,
+      checked: false,
+      updatedAt: "2024-01-09",
+      price: 2,
     },
   ],
 };
@@ -137,8 +157,13 @@ describe("ListsScreen", () => {
     expect(dialog).toBeInTheDocument();
     expect(screen.getByTestId("list-modal-backdrop")).toBeInTheDocument();
     expect(within(dialog).getByText("Leche")).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Lácteos" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Panadería" })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("heading", { name: "Sin categoría" }),
+    ).toBeInTheDocument();
     expect(within(dialog).getByText("Productos: 2")).toBeInTheDocument();
-    expect(within(dialog).getAllByText(/2,40\s*€/)).toHaveLength(2);
+    expect(within(dialog).getByText(/9,30/)).toBeInTheDocument();
     expect(within(dialog).getByTestId("list-detail-item-item-1")).toBeInTheDocument();
     expect(
       within(dialog).queryByRole("button", { name: "Añadir más productos" }),
@@ -200,6 +225,11 @@ describe("ListsScreen", () => {
     expect(
       within(dialog).queryByRole("button", { name: UI_TEXT.LISTS.ACTIONS.EDIT }),
     ).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Lácteos" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("heading", { name: "Panadería" })).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("heading", { name: "Sin categoría" }),
+    ).toBeInTheDocument();
 
     await userEvent.click(
       within(dialog).getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }),

@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -162,6 +163,12 @@ private fun SuccessState(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
+        val uncategorizedLabel = stringResource(R.string.detail_uncategorized)
+        val groupedItems = groupItemsByCategoryLevel1(
+            items = state.listDetail.items,
+            fallbackLabel = uncategorizedLabel
+        )
+
         Column(modifier = Modifier.fillMaxSize()) {
             if (!isConnected) {
                 OfflineBanner(modifier = Modifier.fillMaxWidth())
@@ -184,8 +191,20 @@ private fun SuccessState(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(items = state.listDetail.items, key = { it.id }) { item ->
-                    ItemCard(item = item, onCheckedChange = { checked -> onItemCheckedChange(item.id, checked) })
+                groupedItems.forEach { group ->
+                    item(key = "category-${group.category}") {
+                        Text(
+                            text = group.category,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                        )
+                    }
+
+                    items(items = group.items, key = { it.id }) { item ->
+                        ItemCard(item = item, onCheckedChange = { checked -> onItemCheckedChange(item.id, checked) })
+                    }
                 }
             }
 
@@ -214,6 +233,7 @@ private fun CompleteListErrorBanner(error: CompleteListError, modifier: Modifier
         CompleteListError.OFFLINE -> R.string.detail_complete_error_offline
         CompleteListError.NO_CONNECTION -> R.string.detail_complete_error_no_connection
         CompleteListError.INVALID_TRANSITION -> R.string.detail_complete_error_invalid_transition
+        CompleteListError.EDITING_CONFLICT -> R.string.detail_complete_error_editing_conflict
         CompleteListError.UNAUTHORIZED -> R.string.detail_complete_error_unauthorized
         CompleteListError.FORBIDDEN -> R.string.detail_complete_error_forbidden
         CompleteListError.NOT_FOUND -> R.string.detail_complete_error_not_found

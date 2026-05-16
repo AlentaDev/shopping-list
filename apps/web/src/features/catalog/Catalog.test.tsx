@@ -1,12 +1,20 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Catalog from "./Catalog";
 import { ListProvider } from "@src/context/ListContext";
 import { ToastProvider } from "@src/context/ToastContext";
 import Toast from "@src/shared/components/toast/Toast";
+
+const addItemMock = vi.fn();
+
+vi.mock("@src/context/useList", () => ({
+  useList: () => ({
+    addItem: addItemMock,
+  }),
+}));
 
 vi.mock("./services/useCatalog", () => ({
   useCatalog: () => ({
@@ -60,6 +68,30 @@ vi.mock("./services/useCatalog", () => ({
 }));
 
 describe("Catalog", () => {
+  it("setea snapshots al agregar producto desde catálogo", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(addItemMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "prod-1",
+        category: "Dulces",
+        categorySnapshot: "Bollería",
+        subcategorySnapshot: "Dulces",
+      }),
+    );
+  });
+
   it("renders the category title with all subcategories and products", () => {
     render(
       <ToastProvider>
@@ -103,5 +135,9 @@ describe("Catalog", () => {
       within(toastStack).getByText("Añadido a la lista"),
     ).toBeInTheDocument();
     expect(within(toastStack).getByText("Ensaimada")).toBeInTheDocument();
+  });
+
+  afterEach(() => {
+    addItemMock.mockReset();
   });
 });

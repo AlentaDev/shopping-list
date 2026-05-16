@@ -14,6 +14,8 @@ export type AutosaveCatalogItemInput = {
   unitFormat?: string | null;
   unitPrice?: number | null;
   isApproxSize?: boolean;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 export type AutosaveDraftInput = {

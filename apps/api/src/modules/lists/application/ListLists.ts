@@ -27,9 +27,10 @@ export class ListLists {
     filters: ListListsFilters = {},
   ): Promise<ListListsResult> {
     const lists = await this.listRepository.listByOwner(userId);
+    const normalizedLists = lists.map(normalizeLegacyStatus);
     const filteredLists = filters.status
-      ? lists.filter((list) => list.status === filters.status)
-      : lists.filter(
+      ? normalizedLists.filter((list) => list.status === filters.status)
+      : normalizedLists.filter(
           (list) => list.status !== "DRAFT" && !list.isAutosaveDraft,
         );
 
@@ -50,6 +51,18 @@ export class ListLists {
         })),
     };
   }
+}
+
+function normalizeLegacyStatus(list: List): List {
+  const status =
+    list.status && ["DRAFT", "ACTIVE", "COMPLETED"].includes(list.status)
+      ? list.status
+      : "DRAFT";
+
+  return {
+    ...list,
+    status,
+  };
 }
 
 function compareListsByStatusAndDate(a: List, b: List): number {

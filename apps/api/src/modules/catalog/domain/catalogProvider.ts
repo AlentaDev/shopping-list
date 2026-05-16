@@ -58,6 +58,21 @@ export type MercadonaProductDetail = {
     approx_size?: boolean | null;
     size_format?: string | null;
   };
+  categories?: Array<{
+    id?: number | string;
+    name?: string;
+    level?: number;
+    categories?: Array<{
+      id?: number | string;
+      name?: string;
+      level?: number;
+      categories?: Array<{
+        id?: number | string;
+        name?: string;
+        level?: number;
+      }>;
+    }>;
+  }>;
 };
 
 export type CatalogProvider = {

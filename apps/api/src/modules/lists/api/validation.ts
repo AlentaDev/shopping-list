@@ -54,6 +54,8 @@ const autosaveCatalogItemSchema = z.object({
   unitFormat: z.string().optional().nullable(),
   unitPrice: z.number().optional().nullable(),
   isApproxSize: z.boolean().optional(),
+  categorySnapshot: z.string().optional().nullable(),
+  subcategorySnapshot: z.string().optional().nullable(),
 });
 
 export const upsertAutosaveSchema = z.object({

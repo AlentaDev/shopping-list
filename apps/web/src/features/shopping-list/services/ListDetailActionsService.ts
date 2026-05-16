@@ -15,6 +15,8 @@ type ReuseListItemPayload = {
   checked?: boolean;
   thumbnail?: string | null;
   price?: number | null;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 type ReuseListPayload = {

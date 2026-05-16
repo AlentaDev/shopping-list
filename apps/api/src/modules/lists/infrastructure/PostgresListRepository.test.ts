@@ -28,6 +28,8 @@ const catalogItem = {
   unitFormatSnapshot: "g",
   unitPricePerUnitSnapshot: 0.0025,
   isApproxSizeSnapshot: false,
+  categorySnapshot: "Lácteos",
+  subcategorySnapshot: "Yogures",
   qty: 1,
   checked: true,
   createdAt: new Date("2024-01-01T10:20:00.000Z"),
@@ -47,6 +49,8 @@ const catalogItemTwo = {
   unitFormatSnapshot: null,
   unitPricePerUnitSnapshot: null,
   isApproxSizeSnapshot: false,
+  categorySnapshot: null,
+  subcategorySnapshot: null,
   qty: 1,
   checked: false,
   createdAt: baseList.createdAt,
@@ -94,6 +98,8 @@ describe("PostgresListRepository", () => {
               unit_price_per_unit_snapshot:
                 catalogItem.unitPricePerUnitSnapshot,
               is_approx_size_snapshot: catalogItem.isApproxSizeSnapshot,
+              category_snapshot: catalogItem.categorySnapshot,
+              subcategory_snapshot: catalogItem.subcategorySnapshot,
               qty: catalogItem.qty,
               checked: catalogItem.checked,
               created_at: catalogItem.createdAt,
@@ -196,6 +202,8 @@ describe("PostgresListRepository", () => {
               unit_price_per_unit_snapshot:
                 catalogItem.unitPricePerUnitSnapshot,
               is_approx_size_snapshot: catalogItem.isApproxSizeSnapshot,
+              category_snapshot: catalogItem.categorySnapshot,
+              subcategory_snapshot: catalogItem.subcategorySnapshot,
               qty: catalogItem.qty,
               checked: catalogItem.checked,
               created_at: catalogItem.createdAt,
@@ -214,6 +222,8 @@ describe("PostgresListRepository", () => {
               unit_price_per_unit_snapshot:
                 catalogItemTwo.unitPricePerUnitSnapshot,
               is_approx_size_snapshot: catalogItemTwo.isApproxSizeSnapshot,
+              category_snapshot: catalogItemTwo.categorySnapshot,
+              subcategory_snapshot: catalogItemTwo.subcategorySnapshot,
               qty: catalogItemTwo.qty,
               checked: catalogItemTwo.checked,
               created_at: catalogItemTwo.createdAt,
@@ -251,8 +261,10 @@ describe("PostgresListRepository", () => {
             unitSizeSnapshot: catalogItemTwo.unitSizeSnapshot,
             unitFormatSnapshot: catalogItemTwo.unitFormatSnapshot,
             unitPricePerUnitSnapshot: catalogItemTwo.unitPricePerUnitSnapshot,
-            isApproxSizeSnapshot: catalogItemTwo.isApproxSizeSnapshot,
-            qty: catalogItemTwo.qty,
+             isApproxSizeSnapshot: catalogItemTwo.isApproxSizeSnapshot,
+             categorySnapshot: catalogItemTwo.categorySnapshot,
+             subcategorySnapshot: catalogItemTwo.subcategorySnapshot,
+             qty: catalogItemTwo.qty,
             checked: catalogItemTwo.checked,
             createdAt: catalogItemTwo.createdAt,
             updatedAt: catalogItemTwo.updatedAt,
@@ -294,7 +306,7 @@ describe("PostgresListRepository", () => {
       [list.id],
     );
     expect(pool.query).toHaveBeenCalledWith(
-      "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)",
+      "INSERT INTO list_items (id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, category_snapshot, subcategory_snapshot, qty, checked, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
       [
         catalogItem.id,
         catalogItem.listId,
@@ -307,6 +319,8 @@ describe("PostgresListRepository", () => {
         catalogItem.unitFormatSnapshot,
         catalogItem.unitPricePerUnitSnapshot,
         catalogItem.isApproxSizeSnapshot,
+        catalogItem.categorySnapshot,
+        catalogItem.subcategorySnapshot,
         catalogItem.qty,
         catalogItem.checked,
         catalogItem.createdAt,
@@ -314,6 +328,61 @@ describe("PostgresListRepository", () => {
       ],
     );
     expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
+  });
+
+  it("maps legacy rows without snapshots as null metadata", async () => {
+    const pool = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: baseList.id,
+              owner_user_id: baseList.ownerUserId,
+              title: baseList.title,
+              status: baseList.status,
+              is_autosave_draft: baseList.isAutosaveDraft,
+              activated_at: baseList.activatedAt,
+              is_editing: baseList.isEditing,
+              editing_target_list_id: baseList.editingTargetListId,
+              created_at: baseList.createdAt,
+              updated_at: baseList.updatedAt,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: catalogItem.id,
+              list_id: catalogItem.listId,
+              source: catalogItem.source,
+              source_product_id: catalogItem.sourceProductId,
+              name_snapshot: catalogItem.nameSnapshot,
+              thumbnail_snapshot: catalogItem.thumbnailSnapshot,
+              price_snapshot: catalogItem.priceSnapshot,
+              unit_size_snapshot: catalogItem.unitSizeSnapshot,
+              unit_format_snapshot: catalogItem.unitFormatSnapshot,
+              unit_price_per_unit_snapshot:
+                catalogItem.unitPricePerUnitSnapshot,
+              is_approx_size_snapshot: catalogItem.isApproxSizeSnapshot,
+              qty: catalogItem.qty,
+              checked: catalogItem.checked,
+              created_at: catalogItem.createdAt,
+              updated_at: catalogItem.updatedAt,
+            },
+          ],
+        }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    const persisted = await repository.findById(baseList.id);
+
+    expect(persisted?.items[0]).toMatchObject({
+      kind: "catalog",
+      categorySnapshot: null,
+      subcategorySnapshot: null,
+    });
   });
 
   it("deletes list items and list in a transaction", async () => {

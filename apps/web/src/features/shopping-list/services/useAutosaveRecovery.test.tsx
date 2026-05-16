@@ -20,6 +20,8 @@ const SAMPLE_REMOTE = {
       updatedAt: "2024-01-01T10:00:00.000Z",
       source: "mercadona",
       sourceProductId: "item-1",
+      categorySnapshot: "Lácteos",
+      subcategorySnapshot: "Leche",
     },
   ],
 };
@@ -133,6 +135,8 @@ describe("useAutosaveRecovery", () => {
             unitFormat: null,
             unitPrice: null,
             isApproxSize: false,
+            categorySnapshot: "Lácteos",
+            subcategorySnapshot: "Leche",
           },
         ],
       });

@@ -8,6 +8,7 @@ sealed interface CompleteListResult {
     data object Offline : CompleteListResult
     data object NoConnection : CompleteListResult
     data object InvalidTransition : CompleteListResult
+    data object EditingConflict : CompleteListResult
     data object Unauthorized : CompleteListResult
     data object Forbidden : CompleteListResult
     data object NotFound : CompleteListResult

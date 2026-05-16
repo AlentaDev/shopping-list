@@ -6,7 +6,7 @@ Foco: app robusta, simple y **offline-first** con arquitectura **Clean + MVVM**.
 
 ---
 
-## Quick start
+## Inicio rápido
 
 1. Abrir `apps/mobile-android/` en Android Studio.
 2. Sincronizar Gradle.
@@ -22,17 +22,17 @@ Foco: app robusta, simple y **offline-first** con arquitectura **Clean + MVVM**.
 ./gradlew :app:testLocalDebugUnitTest
 ```
 
-### SDK setup (required for CLI)
+### Configuración de SDK (requerida para CLI)
 
-If Gradle fails with `SDK location not found`, create a local `local.properties` file from the example:
+Si Gradle falla con `SDK location not found`, creá un archivo local `local.properties` a partir del ejemplo:
 
 ```bash
 cp local.properties.example local.properties
 ```
 
-Then edit `local.properties` and set your real Android SDK path in `sdk.dir`.
+Después editá `local.properties` y configurá la ruta real de Android SDK en `sdk.dir`.
 
-Note: `local.properties` is intentionally gitignored (machine-specific), while `local.properties.example` is versioned.
+Nota: `local.properties` está intencionalmente en gitignore (específico de máquina), mientras que `local.properties.example` sí se versiona.
 
 ---
 
@@ -54,6 +54,10 @@ Regla de seguridad activa:
 Fuente de verdad de versión:
 
 - `apps/mobile-android/package.json` -> `version` (SemVer)
+
+Versión planeada del release actual:
+
+- `0.9.2`
 
 Sincronización automática al hacer release en main:
 
@@ -112,8 +116,17 @@ Detalle completo:
 
 ---
 
-## Troubleshooting y docs
+## Resolución de problemas y docs
 
 - Arquitectura: `apps/mobile-android/docs/architecture.md`
 - Plan/implementación: `apps/mobile-android/docs/implementation/`
 - Debugging: `apps/mobile-android/.github/docs/debugging/`
+
+---
+
+## Notas de release (resumen)
+
+- La app usa agrupación por categoría L1 (`categorySnapshot`) en listas `DRAFT`, `ACTIVE` y `COMPLETED`.
+- `subcategorySnapshot` se mantiene como metadata para detalle, sin alterar la agrupación principal.
+- Al completar una lista desde Android, si existe edición activa en web, el backend puede responder `409 list_editing_locked`; Android debe tratarlo como lock cross-platform.
+- Migración de storage local incluida: Room `v5 -> v6`.

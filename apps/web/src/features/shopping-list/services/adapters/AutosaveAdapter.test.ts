@@ -94,4 +94,31 @@ describe("AutosaveAdapter", () => {
     });
   });
 
+  it("preserva categorySnapshot y subcategorySnapshot en GET remoto", () => {
+    expect(
+      adaptAutosaveResponse({
+        id: "autosave-2",
+        title: "Lista con snapshots",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        items: [
+          {
+            id: "4706",
+            kind: "catalog",
+            name: "Leche",
+            qty: 1,
+            checked: false,
+            sourceProductId: "4706",
+            categorySnapshot: "Lácteos",
+            subcategorySnapshot: "Leche",
+          },
+        ],
+      })?.items[0],
+    ).toEqual(
+      expect.objectContaining({
+        categorySnapshot: "Lácteos",
+        subcategorySnapshot: "Leche",
+      }),
+    );
+  });
+
 });

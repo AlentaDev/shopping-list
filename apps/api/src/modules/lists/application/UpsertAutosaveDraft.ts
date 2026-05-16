@@ -28,6 +28,8 @@ type AutosaveItemInput =
       unitFormat?: string | null;
       unitPrice?: number | null;
       isApproxSize?: boolean;
+      categorySnapshot?: string | null;
+      subcategorySnapshot?: string | null;
     };
 
 type UpsertAutosaveDraftInput = {
@@ -132,10 +134,11 @@ function toListItem(
     unitFormatSnapshot: item.unitFormat ?? null,
     unitPricePerUnitSnapshot: item.unitPrice ?? null,
     isApproxSizeSnapshot: item.isApproxSize ?? false,
+    categorySnapshot: item.categorySnapshot ?? null,
+    subcategorySnapshot: item.subcategorySnapshot ?? null,
     qty: item.qty,
     checked: item.checked,
     createdAt: now,
     updatedAt: now,
   };
 }
-

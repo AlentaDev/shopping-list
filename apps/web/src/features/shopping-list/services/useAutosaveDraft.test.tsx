@@ -13,6 +13,8 @@ const sampleItem: ListItem = {
   sourceProductId: "4706",
   name: "Leche",
   category: "Bebidas",
+  categorySnapshot: "Lácteos",
+  subcategorySnapshot: "Leche entera",
   thumbnail: null,
   price: 1.5,
   quantity: 2,
@@ -125,6 +127,39 @@ const DirtySourceProductHarness = () => {
       }
     >
       Add dirty item
+    </button>
+  );
+};
+
+const LegacyCategoryOnlyHarness = () => {
+  const [items, setItems] = useState<ListItem[]>([]);
+
+  useAutosaveDraft(
+    {
+      title: "Lista semanal",
+      items,
+    },
+    { enabled: true },
+  );
+
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setItems([
+          {
+            id: "legacy-1",
+            sourceProductId: "legacy-1",
+            name: "Pan",
+            category: "Panadería",
+            thumbnail: null,
+            price: 1.2,
+            quantity: 1,
+          },
+        ])
+      }
+    >
+      Add legacy item
     </button>
   );
 };
@@ -293,6 +328,8 @@ describe("useAutosaveDraft", () => {
           checked: false,
           source: "mercadona",
           sourceProductId: "4706",
+          categorySnapshot: "Lácteos",
+          subcategorySnapshot: "Leche entera",
           thumbnail: null,
           price: 1.5,
         },
@@ -306,6 +343,51 @@ describe("useAutosaveDraft", () => {
       "/api/lists/autosave",
       expect.objectContaining({ method: "PUT" })
     );
+  });
+
+  it("usa category legacy como fallback de categorySnapshot en payload autosave", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-legacy",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<LegacyCategoryOnlyHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add legacy item" }));
+    await vi.advanceTimersByTimeAsync(1500);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/lists/autosave",
+      expect.objectContaining({ method: "PUT" }),
+    );
+
+    const autosaveCall = fetchMock.mock.calls.find(
+      ([input, init]) => input === "/api/lists/autosave" && init?.method === "PUT",
+    );
+
+    expect(autosaveCall).toBeTruthy();
+
+    const payload = JSON.parse(String(autosaveCall?.[1]?.body)) as {
+      items: Array<{
+        categorySnapshot: string | null;
+        subcategorySnapshot: string | null;
+      }>;
+    };
+
+    expect(payload.items).toHaveLength(1);
+    expect(payload.items[0]).toMatchObject({
+      categorySnapshot: "Panadería",
+      subcategorySnapshot: null,
+    });
   });
 
   it("rehidrata desde el borrador local al montar", () => {

@@ -155,18 +155,31 @@ describe("ShoppingList", () => {
       </AuthContext.Provider>,
     );
 
-  it("sorts items by category", () => {
+  it("renders grouped sections by category level 1", () => {
     renderShoppingList();
 
-    const itemNames = screen
-      .getAllByTestId("item-name")
-      .map((item) => item.textContent);
+    expect(screen.getByRole("heading", { name: "Bebidas" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Frutas" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Panadería" })).toBeInTheDocument();
+  });
 
-    expect(itemNames).toEqual([
-      "Leche entera",
-      "Manzanas Fuji",
-      "Pan integral multicereal extra largo",
-    ]);
+  it("uses defensive fallback group when category is missing", () => {
+    renderShoppingList({
+      items: [
+        {
+          id: "item-1",
+          name: "Producto suelto",
+          category: "",
+          thumbnail: null,
+          price: 1,
+          quantity: 1,
+        },
+      ],
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Sin categoría" }),
+    ).toBeInTheDocument();
   });
 
   it("never decrements below 1", async () => {

@@ -373,6 +373,40 @@ describe("UpsertAutosaveDraft", () => {
       }),
     );
   });
+
+  it("persists category and subcategory snapshots for catalog autosave items", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "autosave-1" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [
+        {
+          id: "4749",
+          kind: "catalog",
+          name: "Aceite",
+          qty: 1,
+          checked: false,
+          source: "mercadona",
+          sourceProductId: "4749",
+          categorySnapshot: "Aceites",
+          subcategorySnapshot: "Oliva",
+        },
+      ],
+    });
+
+    const savedList = await listRepository.findById("autosave-1");
+    expect(savedList?.items[0]).toEqual(
+      expect.objectContaining({
+        categorySnapshot: "Aceites",
+        subcategorySnapshot: "Oliva",
+      }),
+    );
+  });
+
   it("ignores non-draft autosave candidates when checking version conflicts", async () => {
     const listRepository = new InMemoryListRepository();
     const idGenerator = { generate: () => "autosave-1" };

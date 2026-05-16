@@ -25,6 +25,8 @@ export type ListItem = {
   isApproxSize?: boolean;
   source?: "mercadona";
   sourceProductId?: string;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 export type ListDetail = {

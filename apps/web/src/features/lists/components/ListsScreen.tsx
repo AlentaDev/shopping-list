@@ -8,6 +8,7 @@ import {
   type ListActionKey,
 } from "../services/listActions";
 import type { ListDetail, ListSummary } from "../services/types";
+import { adaptListDetailItemsToCategoryGroups } from "../services/adapters/ListDetailGroupingAdapter";
 
 type TabKey = "ACTIVE" | "COMPLETED";
 
@@ -167,34 +168,46 @@ type ReadOnlyDetailItemsProps = {
 
 const ReadOnlyDetailItems = ({ items }: ReadOnlyDetailItemsProps) => (
   <div className="max-h-[55vh] overflow-auto pr-1">
-    <ul className="space-y-4">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          data-testid={`list-detail-item-${item.id}`}
-          className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
-        >
-          {item.thumbnail ? (
-            <img
-              src={item.thumbnail}
-              alt={item.name}
-              className="h-12 w-12 rounded-xl object-cover"
-            />
-          ) : (
-            <div className="h-12 w-12 rounded-xl bg-slate-100" aria-hidden="true" />
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-900">{item.name}</p>
-            <p className="text-xs text-slate-500">
-              {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {item.qty}
-            </p>
-          </div>
-          <span className="text-sm font-semibold text-slate-700">
-            {formatPrice((item.price ?? 0) * item.qty)}
-          </span>
-        </li>
+    <div className="space-y-5">
+      {adaptListDetailItemsToCategoryGroups(items).map((group) => (
+        <section key={group.category} aria-label={group.category}>
+          <h3 className="mb-2 text-sm font-semibold text-slate-700">{group.category}</h3>
+          <ul className="space-y-4">
+            {group.items.map((item) => (
+              <li
+                key={item.id}
+                data-testid={`list-detail-item-${item.id}`}
+                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
+              >
+                {item.thumbnail ? (
+                  <img
+                    src={item.thumbnail}
+                    alt={item.name}
+                    className="h-12 w-12 rounded-xl object-cover"
+                  />
+                ) : (
+                  <div
+                    className="h-12 w-12 rounded-xl bg-slate-100"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {item.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {item.quantity}
+                  </p>
+                </div>
+                <span className="text-sm font-semibold text-slate-700">
+                  {formatPrice((item.price ?? 0) * item.quantity)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   </div>
 );
 

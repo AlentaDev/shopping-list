@@ -7,6 +7,8 @@ export type ListItem = {
   checked?: boolean;
   name: string;
   category: string;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
   thumbnail?: string | null;
   price?: number | null;
   quantity: number;

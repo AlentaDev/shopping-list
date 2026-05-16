@@ -18,6 +18,60 @@ const createList = (overrides: Partial<List> = {}): List => ({
 });
 
 describe("ListLists", () => {
+  it("filters draft lists by explicit status", async () => {
+    const draftList = createList({
+      id: "list-draft",
+      status: "DRAFT",
+      updatedAt: new Date("2024-02-01T10:00:00.000Z"),
+    });
+    const activeList = createList({
+      id: "list-active",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-02T10:00:00.000Z"),
+    });
+    const listRepository: ListRepository = {
+      listByOwner: vi.fn(async () => [draftList, activeList] as List[]),
+      findById: vi.fn(async () => null),
+      save: vi.fn(async () => undefined),
+      deleteById: vi.fn(async () => undefined),
+    };
+    const listLists = new ListLists(listRepository);
+
+    const result = await listLists.execute("user-1", {
+      status: "DRAFT",
+    });
+
+    expect(result.lists.map((list) => list.id)).toEqual(["list-draft"]);
+  });
+
+  it("filters active lists by explicit status", async () => {
+    const activeList = createList({
+      id: "list-active",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-02T10:00:00.000Z"),
+    });
+    const completedList = createList({
+      id: "list-completed",
+      status: "COMPLETED",
+      updatedAt: new Date("2024-02-01T10:00:00.000Z"),
+    });
+    const listRepository: ListRepository = {
+      listByOwner: vi.fn(async () => [activeList, completedList] as List[]),
+      findById: vi.fn(async () => null),
+      save: vi.fn(async () => undefined),
+      deleteById: vi.fn(async () => undefined),
+    };
+    const listLists = new ListLists(listRepository);
+
+    const result = await listLists.execute("user-1", {
+      status: "ACTIVE",
+    });
+
+    expect(result.lists.map((list) => list.id)).toEqual(["list-active"]);
+  });
+
   it("filters lists by status when provided", async () => {
     const completedList = createList({
       id: "list-completed",
@@ -157,5 +211,31 @@ describe("ListLists", () => {
       "list-completed-newer",
       "list-completed-older",
     ]);
+  });
+
+  it("keeps legacy behavior when repository returns lists without status", async () => {
+    const legacyWithoutStatus = {
+      ...createList({
+        id: "legacy-list",
+      }),
+      status: undefined,
+    } as unknown as List;
+    const activeList = createList({
+      id: "list-active",
+      status: "ACTIVE",
+      activatedAt: new Date("2024-02-03T10:00:00.000Z"),
+      updatedAt: new Date("2024-02-03T11:00:00.000Z"),
+    });
+    const listRepository: ListRepository = {
+      listByOwner: vi.fn(async () => [legacyWithoutStatus, activeList] as List[]),
+      findById: vi.fn(async () => null),
+      save: vi.fn(async () => undefined),
+      deleteById: vi.fn(async () => undefined),
+    };
+    const listLists = new ListLists(listRepository);
+
+    const result = await listLists.execute("user-1");
+
+    expect(result.lists.map((list) => list.id)).toEqual(["list-active"]);
   });
 });

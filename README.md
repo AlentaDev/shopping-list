@@ -6,7 +6,7 @@ Objetivo: construir producto real con foco en **claridad**, **TDD** y **cambios 
 
 ---
 
-## Quick start
+## Inicio rápido
 
 1. Instalar dependencias
 
@@ -90,7 +90,7 @@ Si querés contexto completo de decisiones, empezá por:
 - Persistencia **PostgreSQL por defecto** en runtime normal
 - Modo in-memory disponible solo con `DB_PROVIDER=inmemory`
 
-> README específico: `apps/api/README.md` *(pendiente de crear/actualizar)*
+> README específico: `apps/api/README.md` 
 
 ### Android (`apps/mobile-android`)
 
@@ -109,6 +109,19 @@ Se usa **SemVer independiente por app**:
 - `web` -> `1.0.0`
 - `api` -> `1.0.0`
 - `android` -> `0.9.0`
+
+Versión planeada para este release:
+
+- `web` -> `1.1.0`
+- `api` -> `1.1.0`
+- `android` -> `0.9.2`
+
+### Puntos destacados del release
+
+- Agrupación por categorías L1 (`categorySnapshot`) en listas `DRAFT`, `ACTIVE` y `COMPLETED`.
+- Persistencia de snapshots `categorySnapshot`/`subcategorySnapshot` en autosave y alta desde catálogo.
+- Lock de edición cross-platform: al completar desde Android, si la edición web está activa, la API responde `409 list_editing_locked`.
+- Migraciones relevantes incluidas en el corte: API SQL `009` y Android Room `v5 -> v6`.
 
 Automatización actual:
 
@@ -173,3 +186,15 @@ Por diseño actual del backend:
 ```bash
 DB_PROVIDER=inmemory pnpm api
 ```
+
+---
+
+## Estándar editorial de documentación
+
+Todo documento del repo debe escribirse en castellano.
+
+Excepciones permitidas:
+
+- nombres de archivos y rutas
+- identificadores y contratos de código (`categorySnapshot`, `list_editing_locked`, etc.)
+- comandos, snippets y términos técnicos en inglés cuando corresponda

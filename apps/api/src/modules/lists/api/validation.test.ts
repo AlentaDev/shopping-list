@@ -28,4 +28,26 @@ describe("list title validation", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts autosave catalog snapshots when present", () => {
+    expect(() =>
+      upsertAutosaveSchema.parse({
+        title: "Autosave",
+        baseUpdatedAt: new Date().toISOString(),
+        items: [
+          {
+            id: "item-1",
+            kind: "catalog",
+            name: "Leche",
+            qty: 1,
+            checked: false,
+            source: "mercadona",
+            sourceProductId: "4706",
+            categorySnapshot: "Lácteos",
+            subcategorySnapshot: null,
+          },
+        ],
+      }),
+    ).not.toThrow();
+  });
 });

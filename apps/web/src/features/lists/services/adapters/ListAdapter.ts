@@ -38,6 +38,8 @@ type ListItemPayload = {
   isApproxSize?: boolean;
   source?: "mercadona";
   sourceProductId?: string;
+  categorySnapshot?: string | null;
+  subcategorySnapshot?: string | null;
 };
 
 type ListDetailPayload = {
@@ -79,6 +81,8 @@ const adaptListItem = (item: ListItemPayload): ListItem => ({
   isApproxSize: item.isApproxSize ?? false,
   source: item.source,
   sourceProductId: item.sourceProductId,
+  categorySnapshot: item.categorySnapshot ?? null,
+  subcategorySnapshot: item.subcategorySnapshot ?? null,
 });
 
 const adaptListSummary = (list: ListSummaryPayload): ListSummary => ({

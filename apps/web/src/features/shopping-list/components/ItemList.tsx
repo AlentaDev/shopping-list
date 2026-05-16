@@ -1,9 +1,11 @@
 import type { ShoppingListItem } from "@src/features/shopping-list/types";
+import type { ShoppingListCategoryGroup } from "@src/features/shopping-list/services/groupItemsByCategory";
 import { formatUnitPrice } from "@src/shared/utils/formatPrice";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ItemListProps = {
   items: ShoppingListItem[];
+  groupedItems?: ShoppingListCategoryGroup[];
   onIncrement: (id: string) => void;
   onDecrement: (id: string) => void;
   onRemove: (item: ShoppingListItem) => void;
@@ -12,14 +14,23 @@ type ItemListProps = {
 
 const ItemList = ({
   items,
+  groupedItems,
   onIncrement,
   onDecrement,
   onRemove,
   isReadOnly = false,
 }: ItemListProps) => (
   <div className="max-h-[60vh] overflow-auto pr-1">
-    <ul className="space-y-4">
-      {items.map((item) => (
+    <div className="space-y-5">
+      {(groupedItems ?? [{ category: "", items }]).map((group) => (
+        <section key={group.category || "default"} aria-label={group.category}>
+          {group.category ? (
+            <h3 className="mb-2 text-sm font-semibold text-slate-700">
+              {group.category}
+            </h3>
+          ) : null}
+          <ul className="space-y-4">
+            {group.items.map((item) => (
         <li
           key={item.id}
           data-testid="shopping-list-item"
@@ -108,8 +119,11 @@ const ItemList = ({
             </svg>
           </button>
         </li>
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   </div>
 );
 
