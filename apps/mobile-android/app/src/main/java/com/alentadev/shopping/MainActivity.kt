@@ -12,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.alentadev.shopping.ui.ActivityWindowPolicy
 import com.alentadev.shopping.ui.navigation.AppNavHost
 import com.alentadev.shopping.ui.navigation.AppSessionSyncViewModel
 import com.alentadev.shopping.ui.theme.ShoppingTheme
@@ -23,6 +24,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityWindowPolicy.screenOrientation
+        window.addFlags(ActivityWindowPolicy.keepScreenOnFlags)
         enableEdgeToEdge()
 
         Log.d("MainActivity", "=== Iniciando MainActivity con Hilt ===")
