@@ -28,10 +28,10 @@ export const UI_TEXT = {
     VERSION_LABEL: "Versión:",
     UPDATED_AT_LABEL: "Última actualización:",
     RELEASE: {
-      VERSION: "v0.9.0-beta.1",
-      UPDATED_AT: "03/05/2026",
+      VERSION: "v0.9.1",
+      UPDATED_AT: "16/05/2026",
       APK_URL:
-        "https://github.com/alentadev/shopping-list/releases/latest/download/shopping-list-android.apk",
+        "https://github.com/AlentaDev/shopping-list/releases/download/android-v0.9.1/shopping-list-android.apk",
     },
     INSTALL_STEPS: {
       TITLE: "Cómo instalar",
@@ -43,7 +43,7 @@ export const UI_TEXT = {
     KNOWN_LIMITATIONS: {
       TITLE: "Limitaciones conocidas de esta beta",
       FIRST: "La sincronización puede requerir reintentos en conexiones inestables.",
-      SECOND: "Algunas interacciones de sesión siguen en ajuste para mejorar robustez.",
+      SECOND: "Puede haber latencia puntual al refrescar listas con mala conexión.",
       THIRD: "Soporte inicial solo para Android.",
     },
   },
