@@ -34,11 +34,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.R
 
 @Composable
 fun ActiveListsScreen(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToHealthCheck: () -> Unit = {},
     refreshSignal: Long? = null,
     onRefreshSignalConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -97,6 +99,11 @@ fun ActiveListsScreen(
                     }
                 },
                 actions = {
+                    if (BuildConfig.FLAVOR == "local") {
+                        TextButton(onClick = onNavigateToHealthCheck) {
+                            Text(text = stringResource(R.string.debug_health_check_button))
+                        }
+                    }
                     TextButton(onClick = { viewModel.logout() }) {
                         Text(text = stringResource(R.string.logout_button))
                     }

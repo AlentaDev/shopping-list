@@ -15,6 +15,13 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties().apply {
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 fun readSigningValue(key: String): String? {
     return (System.getenv(key)
         ?: keystoreProperties.getProperty(key))
@@ -25,6 +32,10 @@ val releaseStoreFile = readSigningValue("RELEASE_STORE_FILE")
 val releaseStorePassword = readSigningValue("RELEASE_STORE_PASSWORD")
 val releaseKeyAlias = readSigningValue("RELEASE_KEY_ALIAS")
 val releaseKeyPassword = readSigningValue("RELEASE_KEY_PASSWORD")
+val sentryDsn = (System.getenv("SENTRY_ANDROID_DSN")
+    ?: localProperties.getProperty("SENTRY_ANDROID_DSN")
+    ?: "")
+    .replace("\"", "\\\"")
 
 val hasReleaseSigning = listOf(
     releaseStoreFile,
@@ -47,6 +58,7 @@ android {
         versionName = "0.10.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
 
     }
 
@@ -163,6 +175,9 @@ dependencies {
 
     // Coil - Carga de imágenes
     implementation(libs.coil.compose)
+
+    // Sentry - Crash reporting
+    implementation(libs.sentry.android)
 
     // Testing
     testImplementation(libs.junit)

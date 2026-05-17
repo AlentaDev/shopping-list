@@ -9,11 +9,13 @@ const val ACTIVE_LISTS_ROUTE = "active_lists"
 const val ACTIVE_LISTS_REFRESH_KEY = "active_lists_refresh_key"
 
 fun NavGraphBuilder.activeListsScreen(
-    onNavigateToDetail: (String) -> Unit
+    onNavigateToDetail: (String) -> Unit,
+    onNavigateToHealthCheck: () -> Unit = {}
 ) {
     composable(route = ACTIVE_LISTS_ROUTE) { backStackEntry ->
         ActiveListsScreen(
             onNavigateToDetail = onNavigateToDetail,
+            onNavigateToHealthCheck = onNavigateToHealthCheck,
             refreshSignal = backStackEntry.savedStateHandle.get<Long?>(ACTIVE_LISTS_REFRESH_KEY),
             onRefreshSignalConsumed = {
                 backStackEntry.savedStateHandle[ACTIVE_LISTS_REFRESH_KEY] = null
@@ -27,4 +29,3 @@ fun NavController.navigateToActiveLists() {
         popUpTo(0)  // Limpia el back stack
     }
 }
-

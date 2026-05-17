@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import * as Sentry from "@sentry/node";
 import { ZodError } from "zod";
 import { AppError } from "@src/shared/errors/appError.js";
 
@@ -20,5 +21,6 @@ export function errorMiddleware(
     return;
   }
 
+  Sentry.captureException(error);
   res.status(500).json({ error: "internal_server_error" });
 }

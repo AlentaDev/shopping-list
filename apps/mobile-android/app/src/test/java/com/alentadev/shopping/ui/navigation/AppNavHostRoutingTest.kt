@@ -75,4 +75,9 @@ class AppNavHostRoutingTest {
     fun `detail back should emit active lists refresh key`() {
         assertEquals(ACTIVE_LISTS_REFRESH_KEY, detailBackRefreshKey())
     }
+
+    @Test
+    fun `health check route constant is stable`() {
+        assertEquals("health_check", HEALTH_CHECK_ROUTE)
+    }
 }

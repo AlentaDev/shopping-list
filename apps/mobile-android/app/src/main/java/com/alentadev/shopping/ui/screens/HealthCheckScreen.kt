@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.core.network.ApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.sentry.Sentry
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -101,6 +103,10 @@ class HealthViewModel @Inject constructor(
     fun reset() {
         uiState = HealthUiState.Idle
     }
+
+    fun sendSentryTestError() {
+        Sentry.captureException(IllegalStateException("Android Sentry test error from HealthCheckScreen"))
+    }
 }
 
 @Composable
@@ -180,6 +186,23 @@ fun HealthCheckScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+
+        if (BuildConfig.DEBUG && BuildConfig.SENTRY_DSN.isNotBlank()) {
+            OutlinedButton(
+                onClick = { viewModel.sendSentryTestError() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "🐞 Enviar error de prueba a Sentry",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
         // Results
         when (val state = viewModel.uiState) {

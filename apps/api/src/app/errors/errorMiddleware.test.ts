@@ -1,11 +1,21 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 import { AppError } from "@src/shared/errors/appError.js";
 import { errorMiddleware } from "./errorMiddleware.js";
 
+vi.mock("@sentry/node", () => ({
+  captureException: vi.fn(),
+}));
+
+const { captureException } = await import("@sentry/node");
+
 describe("errorMiddleware", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("returns 400 with validation details for ZodError", () => {
     const schema = z.object({ name: z.string() });
     const result = schema.safeParse({});
@@ -24,6 +34,7 @@ describe("errorMiddleware", () => {
       error: "validation_error",
       details: result.error.issues,
     });
+    expect(captureException).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -44,6 +55,7 @@ describe("errorMiddleware", () => {
 
     expect(status).toHaveBeenCalledWith(401);
     expect(json).toHaveBeenCalledWith({ error: "not_authenticated" });
+    expect(captureException).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -65,17 +77,20 @@ describe("errorMiddleware", () => {
       error: "autosave_version_conflict",
       remoteUpdatedAt: "2024-01-01T11:10:00.000Z",
     });
+    expect(captureException).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
 
   it("returns 500 for unknown errors", () => {
     const { res, json, status } = createMockResponse();
     const next = vi.fn();
+    const error = new Error("boom");
 
-    errorMiddleware(new Error("boom"), {} as Request, res, next);
+    errorMiddleware(error, {} as Request, res, next);
 
     expect(status).toHaveBeenCalledWith(500);
     expect(json).toHaveBeenCalledWith({ error: "internal_server_error" });
+    expect(captureException).toHaveBeenCalledWith(error);
     expect(next).not.toHaveBeenCalled();
   });
 });

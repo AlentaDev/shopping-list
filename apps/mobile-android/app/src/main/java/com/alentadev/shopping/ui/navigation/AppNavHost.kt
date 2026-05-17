@@ -21,8 +21,10 @@ import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_ROUTE
 import com.alentadev.shopping.feature.lists.ui.navigation.activeListsScreen
 import com.alentadev.shopping.feature.listdetail.ui.navigation.listDetailScreen
 import com.alentadev.shopping.feature.listdetail.ui.navigation.navigateToListDetail
+import com.alentadev.shopping.ui.screens.HealthCheckScreen
 
 const val BOOTSTRAP_ROUTE = "bootstrap"
+const val HEALTH_CHECK_ROUTE = "health_check"
 
 internal data class AuthenticatedNavigationCommand(
     val route: String,
@@ -128,6 +130,9 @@ fun AppNavHost(
         activeListsScreen(
             onNavigateToDetail = { listId ->
                 navController.navigateToListDetail(listId)
+            },
+            onNavigateToHealthCheck = {
+                navController.navigate(HEALTH_CHECK_ROUTE)
             }
         )
         listDetailScreen(
@@ -140,6 +145,9 @@ fun AppNavHost(
                 navController.popBackStack()
             }
         )
+        composable(route = HEALTH_CHECK_ROUTE) {
+            HealthCheckScreen()
+        }
     }
 }
 

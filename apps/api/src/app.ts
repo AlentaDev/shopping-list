@@ -61,6 +61,12 @@ export function createApp(deps: RouterDependencies = {}) {
     res.status(200).json({ status: "ok" });
   });
 
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/debug/sentry", () => {
+      throw new Error("Sentry test error from /debug/sentry");
+    });
+  }
+
   app.use(errorMiddleware);
 
   return app;
