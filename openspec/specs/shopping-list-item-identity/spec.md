@@ -11,7 +11,7 @@ Definir identidad dual de ítems en web para eliminar colisiones entre `idProduc
 ## Requisitos
 
 ### Requisito: Identidad canónica del cliente
-El sistema DEBE tratar `sourceProductId` como identidad canónica de cliente para ítems de catálogo, y DEBE tratar `serverItemId` solo como referencia técnica del servidor. La metadata opcional `categorySnapshot` / `subcategorySnapshot` NO DEBE alterar la semántica de deduplicación.
+El sistema DEBE tratar `sourceProductId` como identidad canónica de cliente para ítems de catálogo, y DEBE tratar `serverItemId` solo como referencia técnica del servidor. Además, DEBE soportar `categorySnapshot` / `subcategorySnapshot` opcionales como metadata de clasificación que NO DEBE alterar la semántica de deduplicación.
 
 #### Escenario: Identidad legacy mixta se normaliza
 - DADO un ítem cargado con `sourceProductId = active-1:4706` o `idProducto = 4706`
