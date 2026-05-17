@@ -110,11 +110,11 @@ Se usa **SemVer independiente por app**:
 - `api` -> `1.0.0`
 - `android` -> `0.9.0`
 
-Versión planeada para este release:
+Versión actual:
 
-- `web` -> `1.1.0`
-- `api` -> `1.1.0`
-- `android` -> `0.9.2`
+- `web` -> `1.2.1`
+- `api` -> `1.2.1`
+- `android` -> `0.10.0`
 
 ### Puntos destacados del release
 
