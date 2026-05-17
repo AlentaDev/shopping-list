@@ -28,10 +28,10 @@ export const UI_TEXT = {
     VERSION_LABEL: "Versión:",
     UPDATED_AT_LABEL: "Última actualización:",
     RELEASE: {
-      VERSION: "v0.9.2",
+      VERSION: "v0.10.0",
       UPDATED_AT: "17/05/2026",
       APK_URL:
-        "https://github.com/AlentaDev/shopping-list/releases/download/android-v0.9.2/shopping-list-android.apk",
+        "https://github.com/AlentaDev/shopping-list/releases/download/android-v0.10.0/shopping-list-android.apk",
     },
     INSTALL_STEPS: {
       TITLE: "Cómo instalar",
