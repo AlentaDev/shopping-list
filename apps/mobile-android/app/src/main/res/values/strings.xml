@@ -70,6 +70,6 @@
     <!-- Item Card -->
     <string name="item_thumbnail_description">Imagen de %1$s</string>
     <string name="item_quantity">Cantidad: %.1f</string>
-    <string name="item_price_detail">%.2f € × %.1f</string>
+    <string name="item_price_detail">%1$.2f € × %2$.1f</string>
     <string name="item_subtotal">%.2f €</string>
 </resources>

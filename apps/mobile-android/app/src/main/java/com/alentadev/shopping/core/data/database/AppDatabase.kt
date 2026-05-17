@@ -37,15 +37,15 @@ abstract class AppDatabase : RoomDatabase() {
 
 
 val MIGRATION_2_3 = object : Migration(2, 3) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE lists ADD COLUMN itemCount INTEGER NOT NULL DEFAULT 0")
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE lists ADD COLUMN itemCount INTEGER NOT NULL DEFAULT 0")
     }
 }
 
 
 val MIGRATION_3_4 = object : Migration(3, 4) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL(
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
             """
             CREATE TABLE IF NOT EXISTS pending_sync (
                 operationId TEXT NOT NULL PRIMARY KEY,
@@ -58,7 +58,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
             )
             """.trimIndent()
         )
-        database.execSQL(
+        db.execSQL(
             "CREATE UNIQUE INDEX IF NOT EXISTS index_pending_sync_listId_itemId ON pending_sync(listId, itemId)"
         )
     }
@@ -66,15 +66,15 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 
 
 val MIGRATION_4_5 = object : Migration(4, 5) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE pending_sync ADD COLUMN commandType TEXT NOT NULL DEFAULT 'update_item_check'")
-        database.execSQL("ALTER TABLE pending_sync ADD COLUMN checkedItemIdsPayload TEXT")
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE pending_sync ADD COLUMN commandType TEXT NOT NULL DEFAULT 'update_item_check'")
+        db.execSQL("ALTER TABLE pending_sync ADD COLUMN checkedItemIdsPayload TEXT")
     }
 }
 
 val MIGRATION_5_6 = object : Migration(5, 6) {
-    override fun migrate(database: SupportSQLiteDatabase) {
-        database.execSQL("ALTER TABLE items ADD COLUMN categorySnapshot TEXT")
-        database.execSQL("ALTER TABLE items ADD COLUMN subcategorySnapshot TEXT")
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE items ADD COLUMN categorySnapshot TEXT")
+        db.execSQL("ALTER TABLE items ADD COLUMN subcategorySnapshot TEXT")
     }
 }
