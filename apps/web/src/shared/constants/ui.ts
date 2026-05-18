@@ -275,4 +275,8 @@ export const UI_TEXT = {
     NO_IMAGE_LABEL: "Sin imagen",
     CLOSE_NOTIFICATION_LABEL: "Cerrar notificación",
   },
+  ERROR_BOUNDARY: {
+    TITLE: "Something went wrong",
+    MESSAGE: "Please refresh the page and try again.",
+  },
 } as const;

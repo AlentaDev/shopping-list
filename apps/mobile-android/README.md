@@ -34,6 +34,9 @@ Después editá `local.properties` y configurá la ruta real de Android SDK en `
 
 Nota: `local.properties` está intencionalmente en gitignore (específico de máquina), mientras que `local.properties.example` sí se versiona.
 
+Android no usa `.env` para runtime. La configuración local se toma de `local.properties`
+y/o variables de entorno del sistema (por ejemplo `SENTRY_ANDROID_DSN`).
+
 ---
 
 ## Flavors y entornos

@@ -1,133 +1,221 @@
-# Shopping List Monorepo
+# Shopping List — Monorepo
 
-Monorepo de **Shopping List** con arquitectura de **monolito modular**.
+Aplicación multiplataforma para gestionar listas de compra, construida como **monolito modular** con foco en calidad de código, TDD y evolución incremental.
 
-Objetivo: construir producto real con foco en **claridad**, **TDD** y **cambios pequeños**.
+Este repositorio integra web, API y Android bajo un mismo flujo de desarrollo y versionado.
 
 ---
 
-## Inicio rápido
+## 1) Descripción general
 
-1. Instalar dependencias
+Shopping List resuelve la gestión de listas de compra en escenarios reales:
+
+- creación y gestión de listas desde web,
+- consumo operativo desde Android en contexto de supermercado,
+- sincronización mediante API REST con reglas de dominio compartidas.
+
+El proyecto sigue arquitectura **feature-first**, separación de responsabilidades por capas y validaciones explícitas en backend.
+
+---
+
+## 2) Stack tecnológico
+
+### Web (`apps/web`)
+
+- React + TypeScript
+- Vite
+- Vitest (unit/integration)
+- Playwright (E2E críticos a nivel repo)
+
+### API (`apps/api`)
+
+- Node.js + Express + TypeScript (strict)
+- Zod para validación de inputs
+- PostgreSQL por defecto en runtime normal
+- Persistencia in-memory disponible con `DB_PROVIDER=inmemory`
+
+### Android (`apps/mobile-android`)
+
+- Kotlin
+- Clean Architecture + MVVM
+- Persistencia local (Room) para soporte de trabajo offline
+
+### Tooling transversal
+
+- pnpm workspaces
+- Husky
+- Changesets (versionado por app)
+- Sentry (observabilidad en web, API y Android)
+
+---
+
+## 3) Instalación y ejecución
+
+### Requisitos
+
+- Node.js 20+
+- pnpm
+- Docker (para PostgreSQL local)
+
+### Puesta en marcha (raíz)
+
+1. Instalar dependencias:
 
 ```bash
 pnpm install
 ```
 
-2. Configurar entorno API
+2. Configurar variables de entorno de la API:
 
-- Copiar `apps/api/.env.example` -> `apps/api/.env`
-- Completar variables mínimas (`PORT`, `CORS_ORIGIN`)
+```bash
+cp apps/api/.env.example apps/api/.env
+```
 
-3. Levantar Postgres (obligatorio por defecto)
+3. Levantar base de datos local:
 
 ```bash
 docker compose up -d
 ```
 
-4. (Opcional recomendado) ejecutar migraciones
+4. Ejecutar migraciones (recomendado):
 
 ```bash
 pnpm -C apps/api database:migrate
 ```
 
-5. Levantar web + api
+5. Levantar aplicaciones en paralelo:
 
 ```bash
 pnpm dev
 ```
 
-6. Verificar calidad
+### Scripts de uso frecuente
 
 ```bash
-pnpm quality
+pnpm lint
 pnpm test
+pnpm quality
+pnpm verify
 ```
+
+### E2E del repositorio
+
+```bash
+pnpm test:e2e
+```
+
+> Nota: los E2E requieren PostgreSQL levantado porque preparan la DB de test en modo `postgres`.
 
 ---
 
-## Estructura del repo
+## 4) Estructuración del proyecto
 
 ```txt
 apps/
-├─ web/               # Frontend React + Vite
-├─ api/               # Backend Express + TypeScript
-└─ mobile-android/    # Android app (Kotlin)
+├─ web/               # Frontend React
+├─ api/               # Backend Express
+└─ mobile-android/    # Aplicación Android
 
-docs/                 # Documentación de arquitectura, features y releases
+docs/                 # ADRs, features y guías operativas
+e2e/                  # Tests End-to-End de flujos críticos
+scripts/              # Scripts de versionado y release
 ```
 
----
+### Criterios de arquitectura
 
-## Arquitectura y reglas clave
-
-- Monolito modular, organización por **features**.
-- Dependencias hacia adentro, sin importar internals entre módulos.
-- **TDD obligatorio**: test primero, implementación mínima, refactor después.
-- Frontend y backend con límites de responsabilidades estrictos (ver `AGENTS.md`).
+- Organización por features.
+- Dependencias orientadas hacia adentro.
+- Límites claros entre UI, servicios y adapters.
 - Integraciones externas encapsuladas en backend.
+- TDD como práctica obligatoria del proyecto.
 
-Si querés contexto completo de decisiones, empezá por:
+Referencias clave:
 
 - `AGENTS.md`
 - `docs/003-rest-api-feature-first.md`
 
 ---
 
-## Workspaces
+## 5) Funcionalidades cubiertas
 
-### Web (`apps/web`)
+Según el estado actual documentado en código y docs del repo, el sistema cubre:
 
-- React + TypeScript + Vite
-- Tests con Vitest (+ Playwright para E2E críticos)
+- autenticación de usuarios,
+- gestión de listas de compra,
+- flujos de catálogo y carga de ítems a listas,
+- agrupación de listas por categoría L1 (`categorySnapshot`) en estados `DRAFT`, `ACTIVE` y `COMPLETED`,
+- persistencia de snapshots (`categorySnapshot` y `subcategorySnapshot`) en operaciones clave,
+- lock de edición cross-platform al completar listas (`409 list_editing_locked`),
+- operación móvil orientada a uso offline con sincronización posterior.
 
-> README específico: `apps/web/README.md`
+Además:
 
-### API (`apps/api`)
+- el catálogo actual está centrado en productos de Mercadona,
+- la APK Android beta se descarga desde la web en la ruta `/app`.
 
-- Express + TypeScript (`strict`)
-- Zod para validación
-- Persistencia **PostgreSQL por defecto** en runtime normal
-- Modo in-memory disponible solo con `DB_PROVIDER=inmemory`
+Para detalle por módulo:
 
-> README específico: `apps/api/README.md` 
-
-### Android (`apps/mobile-android`)
-
-- Kotlin
-- Arquitectura Clean + MVVM
-- Publicación manual (firma y subida)
-
-> README específico: `apps/mobile-android/README.md`
+- Web: `docs/features/web/`
+- API: `docs/features/api/`
+- Android: `apps/mobile-android/docs/use-cases/`
 
 ---
 
-## Versionado y releases
+## 6) Despliegue (producción) y comportamiento esperado
 
-Se usa **SemVer independiente por app**:
+### Entorno de despliegue
 
-- `web` -> `1.0.0`
-- `api` -> `1.0.0`
-- `android` -> `0.9.0`
+- **Web**: Vercel
+- **API**: Render
+- **Base de datos**: PostgreSQL gestionado (Neon)
 
-Versión actual:
+### Guardrails de push y CI/CD
 
-- `web` -> `1.2.1`
-- `api` -> `1.2.1`
-- `android` -> `0.10.0`
+- Hay **guardrails/checks en GitHub Actions** para controlar PR y versionado.
+- Web y API se despliegan de forma automática tras integración en `main`.
+- Android es **semi-manual**: tiene guardrails de CI para versionado/tag, pero el build/firma/publicación final sigue siendo manual.
 
-### Puntos destacados del release
+Referencias:
 
-- Agrupación por categorías L1 (`categorySnapshot`) en listas `DRAFT`, `ACTIVE` y `COMPLETED`.
-- Persistencia de snapshots `categorySnapshot`/`subcategorySnapshot` en autosave y alta desde catálogo.
-- Lock de edición cross-platform: al completar desde Android, si la edición web está activa, la API responde `409 list_editing_locked`.
-- Migraciones relevantes incluidas en el corte: API SQL `009` y Android Room `v5 -> v6`.
+- `.github/workflows/versioning-pr-check.yml`
+- `.github/workflows/versioning-release.yml`
 
-Automatización actual:
+Notas técnicas visibles en el repo:
 
-- PR check exige changeset cuando hay cambios en apps.
-- En `main` se aplican bumps y tags por app.
-- Android mantiene publish manual (firma/subida).
+- `apps/web/vercel.json` reescribe `/api/*` hacia `https://api-shopping-list.onrender.com/api/*`.
+- `apps/mobile-android/README.md` y docs mobile apuntan el flavor `prod` a `https://api-shopping-list.onrender.com`.
+
+### Importante sobre Render (plan free)
+
+En plan free, Render puede “dormir” el servicio por inactividad.
+Cuando se abre la web tras un tiempo sin uso, el catálogo puede tardar en aparecer
+mientras la API despierta (aprox. 1 minuto, según carga del servicio).
+
+Esto es esperado en este entorno y no implica un error funcional de la aplicación.
+
+### Descarga de Android desde web
+
+La app Android se descarga directamente desde la web, entrando en `/app`,
+donde se publica el enlace a la APK beta actual.
+
+Referencia: `docs/features/web/android-beta-download.md`.
+
+---
+
+## 7) Versionado y releases
+
+El repositorio utiliza **SemVer independiente por app** (web/api/android) con Changesets y automatización de tags.
+
+Nota Android: el pipeline sincroniza versión y tags, pero el build/publicación final es manual por seguridad de firma y distribución.
+
+Comandos principales:
+
+```bash
+pnpm changeset
+pnpm version:packages
+pnpm version:android:sync
+pnpm release:tag
+```
 
 Guía completa:
 
@@ -135,66 +223,9 @@ Guía completa:
 
 ---
 
-## Scripts útiles (raíz)
+## 8) Documentación relacionada
 
-```bash
-pnpm dev
-pnpm lint
-pnpm test
-pnpm quality
-pnpm verify
-
-pnpm changeset
-pnpm version:packages
-pnpm version:android:sync
-pnpm release:tag
-```
-
----
-
-## E2E y base de datos
-
-Los tests E2E del repo **requieren Postgres**.
-
-- El script raíz `pnpm test:e2e` ejecuta primero `apps/api database:test:prepare`.
-- Ese paso está configurado con `DB_PROVIDER=postgres`.
-
-Antes de correr E2E, levantá la DB:
-
-```bash
-docker compose up -d
-```
-
----
-
-## Estado actual
-
-Web y API están estables en producción.
-
-El foco de evolución principal está en Android (iteración funcional + release manual seguro).
-
----
-
-## Nota importante sobre BBDD
-
-Por diseño actual del backend:
-
-- En entorno normal, si no se define `DB_PROVIDER`, la API usa **Postgres**.
-- En tests, la API usa **in-memory** por defecto.
-- Si querés correr sin Postgres en local, definí explícitamente:
-
-```bash
-DB_PROVIDER=inmemory pnpm api
-```
-
----
-
-## Estándar editorial de documentación
-
-Todo documento del repo debe escribirse en castellano.
-
-Excepciones permitidas:
-
-- nombres de archivos y rutas
-- identificadores y contratos de código (`categorySnapshot`, `list_editing_locked`, etc.)
-- comandos, snippets y términos técnicos en inglés cuando corresponda
+- README Web: `apps/web/README.md`
+- README API: `apps/api/README.md`
+- README Android: `apps/mobile-android/README.md`
+- ADRs y diseño: `docs/`

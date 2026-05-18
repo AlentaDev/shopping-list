@@ -87,16 +87,25 @@ Referencia completa de normas: `AGENTS.md` (raíz).
 
 ## Variables de entorno
 
-Actualmente la web puede funcionar sin `.env` propio en local.
+La web funciona en local sin configurar variables obligatorias.
 
-Si se agregan nuevas variables, se documentan en este README y en `docs/`.
+Si querés habilitar Sentry en desarrollo, copiá el ejemplo:
+
+```bash
+cp .env.example .env
+```
+
+Variables disponibles:
+
+- `VITE_SENTRY_DSN` (opcional; vacío = Sentry deshabilitado)
+- `VITE_SENTRY_RELEASE` (opcional; etiqueta de release)
 
 ---
 
 ## Versionado y releases
 
 - Versión inicial estable: `1.0.0`
-- Versión planeada del release actual: `1.1.0`
+- Versión planeada del release actual: `1.2.1`
 - SemVer independiente por app (web/api/android)
 - Cambios de versión gestionados por Changesets desde la raíz del repo
 

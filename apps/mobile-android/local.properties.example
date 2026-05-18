@@ -7,3 +7,7 @@
 # Linux example:
 # sdk.dir=/home/your-user/Android/Sdk
 sdk.dir=/path/to/your/android/sdk
+
+# Optional for crash reporting in Android
+# Empty value disables Sentry initialization at runtime.
+SENTRY_ANDROID_DSN=

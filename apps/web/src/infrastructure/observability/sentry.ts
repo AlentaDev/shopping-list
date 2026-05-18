@@ -17,5 +17,6 @@ export function initSentry() {
     dsn,
     environment: resolveEnvironment(),
     release: resolveRelease(),
+    sendDefaultPii: true,
   });
 }
