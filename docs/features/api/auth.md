@@ -30,7 +30,7 @@ Proveer registro, login y refresh de tokens usando access + refresh tokens en co
 ## Reglas importantes
 - Password policy: 12-20 caracteres, minúscula, mayúscula, número y carácter especial.
 - Refresh token es opaco y se rota en cada refresh.
-- Access token expira a los 15 min; refresh a 7 días.
+- Access token expira a los 15 min en `production` y a 1 min en entornos no productivos (`development`/`test`); refresh a 7 días.
 
 ## Notas de implementación
 - Persistencia in-memory por defecto para usuarios y refresh tokens (con alternativa Postgres disponible).

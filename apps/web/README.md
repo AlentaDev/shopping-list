@@ -105,7 +105,7 @@ Variables disponibles:
 ## Versionado y releases
 
 - Versión inicial estable: `1.0.0`
-- Versión actual del release: `1.3.0`
+- Versión actual del release: `1.4.0`
 - SemVer independiente por app (web/api/android)
 - Cambios de versión gestionados por Changesets desde la raíz del repo
 

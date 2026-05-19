@@ -1,13 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCESS_TOKEN_TTL_MS,
+  ACCESS_TOKEN_TTL_DEV_MS,
+  ACCESS_TOKEN_TTL_PROD_MS,
   REFRESH_TOKEN_TTL_MS,
   getAccessTokenExpiresAt,
+  getAccessTokenTtlMs,
   getRefreshTokenExpiresAt,
 } from "./tokenPolicy.js";
 
 describe("tokenPolicy", () => {
-  it("define un TTL de 1 minuto para access token", () => {
+  it("define un TTL de 1 minuto para access token en development", () => {
+    expect(ACCESS_TOKEN_TTL_DEV_MS).toBe(60 * 1000);
+    expect(getAccessTokenTtlMs("development")).toBe(60 * 1000);
+  });
+
+  it("define un TTL de 15 minutos para access token en production", () => {
+    expect(ACCESS_TOKEN_TTL_PROD_MS).toBe(15 * 60 * 1000);
+    expect(getAccessTokenTtlMs("production")).toBe(15 * 60 * 1000);
+  });
+
+  it("mantiene export de TTL por defecto fuera de production", () => {
     expect(ACCESS_TOKEN_TTL_MS).toBe(60 * 1000);
   });
 
