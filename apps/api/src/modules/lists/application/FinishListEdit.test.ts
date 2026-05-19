@@ -111,6 +111,132 @@ describe("FinishListEdit", () => {
     vi.useRealTimers();
   });
 
+  it("preserves categorySnapshot and subcategorySnapshot for catalog items", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+
+    await listRepository.save({
+      id: "active-1",
+      ownerUserId: "user-1",
+      title: "Activa",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-1",
+      ownerUserId: "user-1",
+      title: "Activa editada",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      editingTargetListId: "active-1",
+      items: [
+        {
+          id: "draft-1:4241",
+          listId: "draft-1",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "4241",
+          nameSnapshot: "Aceite",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          categorySnapshot: "Aceites",
+          subcategorySnapshot: "Oliva",
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    await useCase.execute({ userId: "user-1", listId: "active-1" });
+
+    const updatedActive = await listRepository.findById("active-1");
+    expect(updatedActive?.items[0]).toEqual(
+      expect.objectContaining({
+        categorySnapshot: "Aceites",
+        subcategorySnapshot: "Oliva",
+      }),
+    );
+  });
+
+  it("preserves explicit null category/subcategory snapshots for catalog items", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new FinishListEdit(listRepository);
+
+    await listRepository.save({
+      id: "active-1",
+      ownerUserId: "user-1",
+      title: "Activa",
+      isAutosaveDraft: false,
+      status: "ACTIVE",
+      activatedAt: new Date("2024-01-01T09:00:00.000Z"),
+      isEditing: true,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:00:00.000Z"),
+    });
+
+    await listRepository.save({
+      id: "draft-1",
+      ownerUserId: "user-1",
+      title: "Activa editada",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: true,
+      editingTargetListId: "active-1",
+      items: [
+        {
+          id: "draft-1:4241",
+          listId: "draft-1",
+          kind: "catalog",
+          source: "mercadona",
+          sourceProductId: "4241",
+          nameSnapshot: "Aceite",
+          thumbnailSnapshot: null,
+          priceSnapshot: 1.2,
+          unitSizeSnapshot: null,
+          unitFormatSnapshot: null,
+          unitPricePerUnitSnapshot: null,
+          isApproxSizeSnapshot: false,
+          categorySnapshot: null,
+          subcategorySnapshot: null,
+          qty: 1,
+          checked: false,
+          createdAt: new Date("2024-01-02T10:00:00.000Z"),
+          updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+        },
+      ],
+      createdAt: new Date("2024-01-02T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-02T10:00:00.000Z"),
+    });
+
+    await useCase.execute({ userId: "user-1", listId: "active-1" });
+
+    const updatedActive = await listRepository.findById("active-1");
+    expect(updatedActive?.items[0]).toEqual(
+      expect.objectContaining({
+        categorySnapshot: null,
+        subcategorySnapshot: null,
+      }),
+    );
+  });
+
   it("throws when there is no autosave draft", async () => {
     const listRepository = new InMemoryListRepository();
     const useCase = new FinishListEdit(listRepository);
