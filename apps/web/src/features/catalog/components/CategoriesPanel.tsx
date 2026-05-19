@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { CatalogCategoryNode } from "@src/features/catalog/services/types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type CategoriesPanelProps = {
   open: boolean;
+  isMobile?: boolean;
   categories: CatalogCategoryNode[];
   selectedCategoryId: string | null;
   onSelectCategory: (id: string) => void;
@@ -17,6 +18,7 @@ const LOAD_ERROR_MESSAGE =
 
 const CategoriesPanel = ({
   open,
+  isMobile = false,
   categories,
   selectedCategoryId,
   onSelectCategory,
@@ -24,6 +26,9 @@ const CategoriesPanel = ({
   errorCategories = null,
   onRetryLoadCategories,
 }: CategoriesPanelProps) => {
+  const [mobileExpandedParentId, setMobileExpandedParentId] = useState<
+    string | null
+  >(null);
   const parents = useMemo(
     () => categories.filter((category) => category.level === 0),
     [categories],
@@ -50,6 +55,10 @@ const CategoriesPanel = ({
   }, [categories]);
 
   const expandedParentId = useMemo(() => {
+    if (isMobile) {
+      return mobileExpandedParentId;
+    }
+
     if (!selectedCategoryId) {
       return null;
     }
@@ -59,7 +68,7 @@ const CategoriesPanel = ({
     );
 
     return selectedCategory?.parentId ?? null;
-  }, [categories, selectedCategoryId]);
+  }, [categories, isMobile, mobileExpandedParentId, selectedCategoryId]);
 
   if (!open) {
     return null;
@@ -111,6 +120,13 @@ const CategoriesPanel = ({
                       <button
                         type="button"
                         onClick={() => {
+                          if (isMobile) {
+                            setMobileExpandedParentId((currentParentId) =>
+                              currentParentId === parent.id ? null : parent.id,
+                            );
+                            return;
+                          }
+
                           const firstChild = children[0];
                           if (firstChild) {
                             onSelectCategory(firstChild.id);

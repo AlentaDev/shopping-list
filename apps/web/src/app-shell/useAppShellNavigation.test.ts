@@ -14,6 +14,7 @@ const baseArgs = {
   isAuthSubmitting: false,
   authError: null,
   isCategoriesOpen: false,
+  openMobileCategoriesRequestKey: 0,
   linesCount: 0,
   onLogin: vi.fn(),
   onRegister: vi.fn(),

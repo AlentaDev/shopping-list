@@ -20,11 +20,14 @@ import {
   adaptListDetailItemsToShoppingListItems,
   adaptListStatusToShoppingListStatus,
 } from "@src/features/shopping-list/services/adapters/AppShellListAdapter";
+import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
 const CATALOG_PATH = "/";
 
 export const AppShell = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [openMobileCategoriesRequestKey, setOpenMobileCategoriesRequestKey] =
+    useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
@@ -121,6 +124,7 @@ export const AppShell = () => {
     isAuthSubmitting,
     authError,
     isCategoriesOpen,
+    openMobileCategoriesRequestKey,
     linesCount,
     onLogin: handleLogin,
     onRegister: handleRegister,
@@ -137,7 +141,15 @@ export const AppShell = () => {
         linesCount={linesCount}
         onNavigateHome={() => navigate("/")}
         onOpenCart={() => setIsCartOpen(true)}
-        onToggleCategories={() => setIsCategoriesOpen((prev) => !prev)}
+        onToggleCategories={() => {
+          if (isMobileCatalogInteractionMode()) {
+            setIsCategoriesOpen(true);
+            setOpenMobileCategoriesRequestKey((prev) => prev + 1);
+            return;
+          }
+
+          setIsCategoriesOpen((prev) => !prev);
+        }}
         onNavigateDownloadApp={() => navigate("/app")}
         onNavigateLogin={() => navigate("/auth/login")}
         onNavigateRegister={() => navigate("/auth/register")}

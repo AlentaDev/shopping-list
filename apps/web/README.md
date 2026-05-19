@@ -105,15 +105,15 @@ Variables disponibles:
 ## Versionado y releases
 
 - Versión inicial estable: `1.0.0`
-- Versión actual del release: `1.2.2`
+- Versión actual del release: `1.3.0`
 - SemVer independiente por app (web/api/android)
 - Cambios de versión gestionados por Changesets desde la raíz del repo
 
 ### Notas de release (resumen)
 
-- La UI de listas ahora mantiene agrupación por categorías L1 (`categorySnapshot`) en `DRAFT`, `ACTIVE` y `COMPLETED`.
-- `subcategorySnapshot` se conserva como metadata y no cambia la regla de agrupación.
-- El flujo de autosave y add-from-catalog queda alineado con snapshots persistidos por backend.
+- Catálogo responsive mobile-first: overlay de categorías en móvil, cierre al seleccionar subcategoría y navegación más consistente.
+- Header en móvil abre categorías desde cualquier punto del scroll sin romper el comportamiento de escritorio.
+- Grilla de productos ajustada para mejorar densidad en pantallas pequeñas y mantener estabilidad visual en escritorio.
 
 Guía completa:
 

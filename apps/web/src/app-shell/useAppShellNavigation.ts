@@ -22,6 +22,7 @@ type UseAppShellNavigationArgs = {
   isAuthSubmitting: boolean;
   authError: string | null;
   isCategoriesOpen: boolean;
+  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
@@ -37,6 +38,7 @@ type MainContentParams = {
   isAuthSubmitting: boolean;
   authError: string | null;
   isCategoriesOpen: boolean;
+  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
@@ -51,6 +53,7 @@ export const useAppShellNavigation = ({
   isAuthSubmitting,
   authError,
   isCategoriesOpen,
+  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
@@ -91,6 +94,7 @@ export const useAppShellNavigation = ({
         isAuthSubmitting,
         authError,
         isCategoriesOpen,
+        openMobileCategoriesRequestKey,
         linesCount,
         onLogin,
         onRegister,
@@ -106,6 +110,7 @@ export const useAppShellNavigation = ({
       isAuthSubmitting,
       authError,
       isCategoriesOpen,
+      openMobileCategoriesRequestKey,
       linesCount,
       onLogin,
       onRegister,
@@ -138,6 +143,7 @@ function resolveMainContent({
   isAuthSubmitting,
   authError,
   isCategoriesOpen,
+  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
@@ -147,7 +153,10 @@ function resolveMainContent({
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
-      return createElement(Catalog, { isCategoriesOpen });
+      return createElement(Catalog, {
+        isCategoriesOpen,
+        openMobileCategoriesRequestKey,
+      });
     }
 
     return authUser
@@ -183,5 +192,8 @@ function resolveMainContent({
     return createElement(MobileAppDownloadPage);
   }
 
-  return createElement(Catalog, { isCategoriesOpen });
+  return createElement(Catalog, {
+    isCategoriesOpen,
+    openMobileCategoriesRequestKey,
+  });
 }

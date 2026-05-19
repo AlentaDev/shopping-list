@@ -60,7 +60,7 @@ describe("CategoriesPanel", () => {
     expect(screen.queryByRole("button", { name: "Hojas" })).toBeNull();
   });
 
-  it("selects the first child when expanding another category", async () => {
+  it("selects the first child when expanding another category on desktop", async () => {
     const onSelectCategory = vi.fn();
 
     render(
@@ -75,5 +75,24 @@ describe("CategoriesPanel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Verduras" }));
 
     expect(onSelectCategory).toHaveBeenCalledWith("child-2");
+  });
+
+  it("on mobile, parent click does not select category and reveals children", async () => {
+    const onSelectCategory = vi.fn();
+
+    render(
+      <CategoriesPanel
+        open
+        isMobile
+        categories={categories}
+        selectedCategoryId={"child-1"}
+        onSelectCategory={onSelectCategory}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Verduras" }));
+
+    expect(onSelectCategory).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Hojas" })).toBeInTheDocument();
   });
 });
