@@ -139,6 +139,8 @@ const cloneItemForList = (
     unitFormatSnapshot: item.unitFormatSnapshot,
     unitPricePerUnitSnapshot: item.unitPricePerUnitSnapshot,
     isApproxSizeSnapshot: item.isApproxSizeSnapshot,
+    categorySnapshot: item.categorySnapshot,
+    subcategorySnapshot: item.subcategorySnapshot,
     qty: item.qty,
     checked: false,
     createdAt: now,
