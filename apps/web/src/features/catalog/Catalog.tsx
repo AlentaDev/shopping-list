@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "@src/context/useList";
@@ -6,29 +6,41 @@ import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useToast } from "@src/context/useToast";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
+import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 
-const getGridClasses = (isCategoriesOpen: boolean) =>
-  isCategoriesOpen
-    ? "grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
-    : "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48";
+const scrollToCatalogStart = () => {
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+};
+
+const getGridClasses = (
+  isCategoriesOpen: boolean,
+  isMobileInteractionMode: boolean,
+) =>
+  isCategoriesOpen && !isMobileInteractionMode
+    ? "grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 *:48"
+    : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 *:48";
 
 type ProductSkeletonGridProps = {
   count: number;
   isCategoriesOpen: boolean;
+  isMobileInteractionMode: boolean;
 };
 
 type CatalogProps = {
   isCategoriesOpen?: boolean;
+  openMobileCategoriesRequestKey?: number;
   onItemsCountChange?: (count: number) => void;
 };
 
 const ProductSkeletonGrid = ({
   count,
   isCategoriesOpen,
+  isMobileInteractionMode,
 }: ProductSkeletonGridProps) => (
-  <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen)}`}>
+  <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen, isMobileInteractionMode)}`}>
     {Array.from({ length: count }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
@@ -50,8 +62,11 @@ const ProductSkeletonGrid = ({
 
 const Catalog = ({
   isCategoriesOpen = false,
+  openMobileCategoriesRequestKey = 0,
   onItemsCountChange,
 }: CatalogProps) => {
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
   const { showToast } = useToast();
   const {
@@ -80,16 +95,25 @@ const Catalog = ({
       return;
     }
 
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    scrollToCatalogStart();
   }, [selectedCategoryId]);
 
   useEffect(() => {
     onItemsCountChange?.(totalProducts);
   }, [onItemsCountChange, totalProducts]);
 
+  useEffect(() => {
+    if (!isCategoriesOpen || openMobileCategoriesRequestKey === 0) {
+      return;
+    }
+
+    setIsMobileCategoriesOpen(true);
+  }, [isCategoriesOpen, openMobileCategoriesRequestKey]);
+
   const handleSelectCategory = (id: string) => {
     selectCategory(id);
+    scrollToCatalogStart();
+    setIsMobileCategoriesOpen(false);
   };
 
   const categoriesEmpty =
@@ -101,9 +125,9 @@ const Catalog = ({
     <>
       {isCategoriesOpen ? (
         <div
-          className="pointer-events-none fixed top-24 z-30 w-80"
+          className="pointer-events-none fixed top-24 z-30 hidden w-80 md:block"
           style={{
-            left: "calc((100vw - 80rem) / 2 + 1rem)",
+            left: "max(1rem, calc((100vw - 80rem) / 2 + 1rem))",
           }}
         >
           <div className="pointer-events-auto">
@@ -120,9 +144,36 @@ const Catalog = ({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:overflow-visible">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:overflow-visible">
         {isCategoriesOpen ? (
-          <div className="w-full sm:w-80 sm:shrink-0" />
+          <>
+            {isMobileCategoriesOpen ? (
+              <div
+                className="fixed inset-0 z-50 md:hidden"
+                data-testid="mobile-categories-overlay"
+              >
+                <button
+                  type="button"
+                  aria-label="Close categories panel"
+                  className="absolute inset-0 bg-slate-900/30"
+                  onClick={() => setIsMobileCategoriesOpen(false)}
+                />
+                <div className="absolute inset-x-0 top-24 bottom-0 overflow-y-auto rounded-t-2xl bg-white p-4">
+                  <CategoriesPanel
+                    open={isCategoriesOpen}
+                    isMobile
+                    categories={categories}
+                    selectedCategoryId={selectedCategoryId}
+                    onSelectCategory={handleSelectCategory}
+                    loadingCategories={categoriesStatus === FETCH_STATUS.LOADING}
+                    errorCategories={categoriesError}
+                    onRetryLoadCategories={reloadCategories}
+                  />
+                </div>
+              </div>
+            ) : null}
+            <div className="hidden w-80 shrink-0 md:block" />
+          </>
         ) : null}
         <section className="flex-1 space-y-6">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
@@ -136,6 +187,7 @@ const Catalog = ({
               <ProductSkeletonGrid
                 count={skeletonCount}
                 isCategoriesOpen={isCategoriesOpen}
+                isMobileInteractionMode={isMobileInteractionMode}
               />
             </div>
           ) : null}
@@ -161,7 +213,10 @@ const Catalog = ({
                     key={section.subcategoryName}
                     subcategoryName={section.subcategoryName}
                     products={section.products}
-                    gridClassName={getGridClasses(isCategoriesOpen)}
+                    gridClassName={getGridClasses(
+                      isCategoriesOpen,
+                      isMobileInteractionMode,
+                    )}
                     onAddProduct={(product) => {
                       addItem({
                         id: product.id,
