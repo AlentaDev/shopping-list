@@ -18,6 +18,9 @@ export const UI_TEXT = {
     DOWNLOAD_APP_LABEL: "Descargar app",
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
+    HANDSHAKE_WAITING_BANNER:
+      "Estamos preparando tu lista para que puedas seguir comprando.",
+    HANDSHAKE_READY_TOAST: "Tu lista ya está lista para continuar.",
   },
   APP_DOWNLOAD: {
     BADGE_LABEL: "Beta",

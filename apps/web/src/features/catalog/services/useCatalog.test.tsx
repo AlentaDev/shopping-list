@@ -10,8 +10,8 @@ type FetchResponse = {
   json: () => Promise<unknown>;
 };
 
-const rootCategoriesUrl = "/api/catalog/categories";
-const categoryDetailUrl = (id: string) => `/api/catalog/categories/${id}`;
+const rootCategoriesUrl = "/api/catalog/mercadona/categories";
+const categoryDetailUrl = (id: string) => `/api/catalog/mercadona/categories/${id}`;
 
 const productFixtures = {
   ensaimada: {
@@ -39,7 +39,7 @@ const productFixtures = {
 };
 
 const CatalogHarness = () => {
-  const { categoryDetail, selectCategory } = useCatalog();
+  const { categoryDetail, selectCategory } = useCatalog({ providerId: "mercadona" });
 
   return (
     <div>
@@ -66,6 +66,7 @@ const CatalogHarness = () => {
 describe("useCatalog", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    window.localStorage.clear();
   });
 
   afterEach(() => {
@@ -180,7 +181,7 @@ describe("useCatalog", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const ErrorHarness = () => {
-      const { categoriesError, categoriesStatus } = useCatalog();
+      const { categoriesError, categoriesStatus } = useCatalog({ providerId: "mercadona" });
 
       return (
         <div>
@@ -231,7 +232,7 @@ describe("useCatalog", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const ErrorHarness = () => {
-      const { detailError, detailStatus } = useCatalog();
+      const { detailError, detailStatus } = useCatalog({ providerId: "mercadona" });
 
       return (
         <div>
@@ -264,7 +265,7 @@ describe("useCatalog", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const EmptyHarness = () => {
-      const { categoryDetail, categoriesStatus } = useCatalog();
+      const { categoryDetail, categoriesStatus } = useCatalog({ providerId: "mercadona" });
 
       return (
         <div>
@@ -323,7 +324,7 @@ describe("useCatalog", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const ReloadHarness = () => {
-      const { reloadCategories, reloadDetail, categoryDetail } = useCatalog();
+      const { reloadCategories, reloadDetail, categoryDetail } = useCatalog({ providerId: "mercadona" });
 
       return (
         <div>
@@ -371,7 +372,7 @@ describe("useCatalog", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     const NoSelectionHarness = () => {
-      const { reloadDetail } = useCatalog();
+      const { reloadDetail } = useCatalog({ providerId: "mercadona" });
 
       return (
         <div>
@@ -397,5 +398,142 @@ describe("useCatalog", () => {
 
     // Should not make additional calls since no category is selected
     expect(fetchMock.mock.calls.length).toBe(callsBefore);
+  });
+
+  it("reabre la última categoría guardada por user+provider", async () => {
+    window.localStorage.setItem(
+      "catalog.lastCategoryByUserProvider",
+      JSON.stringify({ "user-1:mercadona": "child-2" }),
+    );
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                { id: "root-2", name: "Lácteos", order: 2, level: 0 },
+                { id: "child-1", name: "Bollería", order: 1, level: 1, parentId: "root-1" },
+                { id: "child-2", name: "Yogures", order: 1, level: 1, parentId: "root-2" },
+              ],
+            }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-2")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-2", name: "Yogures", subcategories: [] }),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const RememberedHarness = () => {
+      const { categoryDetail } = useCatalog({ providerId: "mercadona", userId: "user-1" });
+      return <span>{categoryDetail?.categoryName ?? ""}</span>;
+    };
+
+    render(<RememberedHarness />);
+
+    expect(await screen.findByText("Yogures")).toBeInTheDocument();
+  });
+
+  it("si no hay historial abre la primera categoría de forma determinística", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-b", name: "B", order: 2, level: 0 },
+                { id: "root-a", name: "A", order: 1, level: 0 },
+                { id: "child-b", name: "B-child", order: 1, level: 1, parentId: "root-b" },
+                { id: "child-a", name: "A-child", order: 1, level: 1, parentId: "root-a" },
+              ],
+            }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-a")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-a", name: "A-child", subcategories: [] }),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const FallbackHarness = () => {
+      const { categoryDetail } = useCatalog({ providerId: "mercadona", userId: "user-1" });
+      return <span>{categoryDetail?.categoryName ?? ""}</span>;
+    };
+
+    render(<FallbackHarness />);
+    expect(await screen.findByText("A-child")).toBeInTheDocument();
+  });
+
+  it("aísla historial por user+provider y no filtra mercadona hacia carrefour", async () => {
+    window.localStorage.setItem(
+      "catalog.lastCategoryByUserProvider",
+      JSON.stringify({ "user-1:mercadona": "merc-child-2" }),
+    );
+
+    const carrefourRootUrl = "/api/catalog/carrefour/categories";
+    const carrefourDetailUrl = (id: string) => `/api/catalog/carrefour/categories/${id}`;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === carrefourRootUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "car-root-b", name: "B", order: 2, level: 0 },
+                { id: "car-root-a", name: "A", order: 1, level: 0 },
+                { id: "car-child-b", name: "B-child", order: 1, level: 1, parentId: "car-root-b" },
+                { id: "car-child-a", name: "A-child", order: 1, level: 1, parentId: "car-root-a" },
+              ],
+            }),
+          };
+        }
+
+        if (input === carrefourDetailUrl("car-child-a")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "car-child-a", name: "A-child", subcategories: [] }),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const IsolationHarness = () => {
+      const { categoryDetail } = useCatalog({ providerId: "carrefour", userId: "user-1" });
+      return <span>{categoryDetail?.categoryName ?? ""}</span>;
+    };
+
+    render(<IsolationHarness />);
+
+    expect(await screen.findByText("A-child")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      carrefourDetailUrl("car-child-a"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/catalog/carrefour/categories/merc-child-2",
+      expect.anything(),
+    );
   });
 });

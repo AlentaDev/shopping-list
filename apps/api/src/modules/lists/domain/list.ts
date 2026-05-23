@@ -39,6 +39,7 @@ export type List = {
   id: string;
   ownerUserId: string;
   title: string;
+  providerId: string;
   isAutosaveDraft: boolean;
   status: ListStatus;
   items: ListItem[];
@@ -48,6 +49,71 @@ export type List = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export const DEFAULT_PROVIDER_ID = "provider-mercadona";
+export const DEFAULT_PROVIDER_SLUG = "mercadona";
+
+export class ListProviderInvariantError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ListProviderInvariantError";
+  }
+}
+
+export function resolveListProviderId(providerId: string | null | undefined): string {
+  if (typeof providerId !== "string") {
+    return DEFAULT_PROVIDER_ID;
+  }
+
+  const normalized = providerId.trim();
+  if (normalized.length === 0) {
+    return DEFAULT_PROVIDER_ID;
+  }
+
+  if (normalized === DEFAULT_PROVIDER_SLUG) {
+    return DEFAULT_PROVIDER_ID;
+  }
+
+  return normalized;
+}
+
+export function resolveListProviderSlug(providerId: string | null | undefined): string {
+  const normalizedId = resolveListProviderId(providerId);
+
+  if (normalizedId === DEFAULT_PROVIDER_ID || normalizedId === DEFAULT_PROVIDER_SLUG) {
+    return DEFAULT_PROVIDER_SLUG;
+  }
+
+  if (normalizedId.startsWith("provider-")) {
+    return normalizedId.slice("provider-".length);
+  }
+
+  return normalizedId;
+}
+
+export function ensureProviderCanChange(input: {
+  status: ListStatus;
+  itemCount: number;
+  currentProviderId: string;
+  nextProviderId: string;
+}): void {
+  const currentProviderSlug = resolveListProviderSlug(input.currentProviderId);
+  const nextProviderSlug = resolveListProviderSlug(input.nextProviderId);
+
+  if (currentProviderSlug === nextProviderSlug) {
+    return;
+  }
+
+  const isDraft = input.status === "DRAFT";
+  const isEmpty = input.itemCount === 0;
+  if (isDraft && isEmpty) {
+    return;
+  }
+
+  throw new ListProviderInvariantError(
+    "List provider can only change for empty draft lists.",
+  );
+}
 
 type NormalizeEditingStateInput = {
   status: ListStatus;

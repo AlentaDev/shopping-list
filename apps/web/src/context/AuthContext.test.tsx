@@ -8,6 +8,12 @@ import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
+const apiAwakeState = { apiAwake: true };
+
+vi.mock("./ApiAwakeContext", () => ({
+  useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
+}));
+
 // Mock auth service
 vi.mock("@src/features/auth/services/AuthService", async () => {
   const actual = await vi.importActual<
@@ -149,6 +155,7 @@ describe("AuthProvider", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    apiAwakeState.apiAwake = true;
     vi.mocked(refreshSession).mockRejectedValue(new Error("No refresh"));
     BroadcastChannelMock.reset();
     globalThis.BroadcastChannel = BroadcastChannelMock as never;
@@ -199,6 +206,48 @@ describe("AuthProvider", () => {
       );
     });
     expect(getCurrentUser).toHaveBeenCalled();
+  });
+
+  it("no llama getCurrentUser antes de que apiAwake sea true", async () => {
+    apiAwakeState.apiAwake = false;
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(getCurrentUser).not.toHaveBeenCalled();
+  });
+
+  it("llama getCurrentUser cuando apiAwake pasa a true", async () => {
+    apiAwakeState.apiAwake = false;
+    vi.mocked(getCurrentUser).mockRejectedValueOnce(
+      new AuthServiceError("not_authenticated"),
+    );
+
+    const { rerender } = render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    expect(getCurrentUser).not.toHaveBeenCalled();
+
+    apiAwakeState.apiAwake = true;
+    rerender(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    });
   });
 
 

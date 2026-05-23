@@ -3,6 +3,7 @@ import type {
   MercadonaProductDetail,
 } from "@src/modules/catalog/public.js";
 import type { ListItem } from "../domain/list.js";
+import { resolveListProviderSlug } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 import {
@@ -67,6 +68,7 @@ function readOptionalSnapshot(
 type AddCatalogItemInput = {
   userId: string;
   listId: string;
+  provider: "mercadona";
   productId: string;
   qty?: number;
 };
@@ -89,6 +91,12 @@ export class AddCatalogItem {
     }
 
     if (list.status === "COMPLETED") {
+      throw new ListStatusTransitionError();
+    }
+
+    const listProviderSlug = resolveListProviderSlug(list.providerId);
+
+    if (listProviderSlug !== input.provider) {
       throw new ListStatusTransitionError();
     }
 

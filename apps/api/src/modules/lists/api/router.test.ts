@@ -48,4 +48,80 @@ describe("lists router - complete list", () => {
       checkedItemIds: [],
     });
   });
+
+  it("returns 400 when adding catalog item without provider payload", async () => {
+    const addCatalogItemExecute = vi.fn();
+    const app = express();
+    app.use(express.json());
+    app.use(
+      "/api/lists",
+      createListsRouter({
+        createList: { execute: vi.fn() } as never,
+        listLists: { execute: vi.fn() } as never,
+        getList: { execute: vi.fn() } as never,
+        deleteList: { execute: vi.fn() } as never,
+        addCatalogItem: { execute: addCatalogItemExecute } as never,
+        updateItem: { execute: vi.fn() } as never,
+        removeItem: { execute: vi.fn() } as never,
+        updateListStatus: { execute: vi.fn() } as never,
+        completeList: { execute: vi.fn() } as never,
+        reuseList: { execute: vi.fn() } as never,
+        startListEditing: { execute: vi.fn() } as never,
+        finishListEdit: { execute: vi.fn() } as never,
+        getAutosaveDraft: { execute: vi.fn() } as never,
+        resetAutosaveDraft: { execute: vi.fn() } as never,
+        upsertAutosaveDraft: { execute: vi.fn() } as never,
+        requireAuth: (req, _res, next) => {
+          (req as { userId?: string }).userId = "user-1";
+          next();
+        },
+      }),
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app)
+      .post("/api/lists/list-1/items/from-catalog")
+      .send({ source: "mercadona", productId: "123" });
+
+    expect(response.status).toBe(400);
+    expect(addCatalogItemExecute).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 when adding catalog item with unsupported provider", async () => {
+    const addCatalogItemExecute = vi.fn();
+    const app = express();
+    app.use(express.json());
+    app.use(
+      "/api/lists",
+      createListsRouter({
+        createList: { execute: vi.fn() } as never,
+        listLists: { execute: vi.fn() } as never,
+        getList: { execute: vi.fn() } as never,
+        deleteList: { execute: vi.fn() } as never,
+        addCatalogItem: { execute: addCatalogItemExecute } as never,
+        updateItem: { execute: vi.fn() } as never,
+        removeItem: { execute: vi.fn() } as never,
+        updateListStatus: { execute: vi.fn() } as never,
+        completeList: { execute: vi.fn() } as never,
+        reuseList: { execute: vi.fn() } as never,
+        startListEditing: { execute: vi.fn() } as never,
+        finishListEdit: { execute: vi.fn() } as never,
+        getAutosaveDraft: { execute: vi.fn() } as never,
+        resetAutosaveDraft: { execute: vi.fn() } as never,
+        upsertAutosaveDraft: { execute: vi.fn() } as never,
+        requireAuth: (req, _res, next) => {
+          (req as { userId?: string }).userId = "user-1";
+          next();
+        },
+      }),
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app)
+      .post("/api/lists/list-1/items/from-catalog")
+      .send({ source: "mercadona", provider: "otro-provider", productId: "123" });
+
+    expect(response.status).toBe(400);
+    expect(addCatalogItemExecute).not.toHaveBeenCalled();
+  });
 });

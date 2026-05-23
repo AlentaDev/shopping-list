@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createListSchema, upsertAutosaveSchema } from "./validation.js";
+import { addCatalogItemSchema, createListSchema, upsertAutosaveSchema } from "./validation.js";
 
 describe("list title validation", () => {
   it("accepts titles between 3 and 35 characters", () => {
@@ -49,5 +49,23 @@ describe("list title validation", () => {
         ],
       }),
     ).not.toThrow();
+  });
+});
+
+describe("add catalog item validation", () => {
+  it("requires provider in payload", () => {
+    expect(() =>
+      addCatalogItemSchema.parse({ source: "mercadona", productId: "4706" }),
+    ).toThrow();
+  });
+
+  it("rejects unsupported provider slug", () => {
+    expect(() =>
+      addCatalogItemSchema.parse({
+        source: "mercadona",
+        provider: "otro-provider",
+        productId: "4706",
+      }),
+    ).toThrow();
   });
 });

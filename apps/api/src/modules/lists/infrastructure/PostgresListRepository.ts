@@ -1,5 +1,9 @@
 import type { List, ListItem, ListStatus } from "../domain/list.js";
-import { LIST_STATUSES, normalizeEditingState } from "../domain/list.js";
+import {
+  LIST_STATUSES,
+  normalizeEditingState,
+  resolveListProviderId,
+} from "../domain/list.js";
 import type { ListRepository } from "../application/ports.js";
 
 type PgPool = {
@@ -10,7 +14,7 @@ type PgPool = {
 };
 
 const LIST_COLUMNS =
-  "id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at" as const;
+  "id, owner_user_id, title, provider_id, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at" as const;
 const ITEM_COLUMNS =
   "id, list_id, source, source_product_id, name_snapshot, thumbnail_snapshot, price_snapshot, unit_size_snapshot, unit_format_snapshot, unit_price_per_unit_snapshot, is_approx_size_snapshot, category_snapshot, subcategory_snapshot, qty, checked, created_at, updated_at" as const;
 
@@ -68,11 +72,12 @@ export class PostgresListRepository implements ListRepository {
     await this.pool.query("BEGIN");
     try {
       await this.pool.query(
-        "INSERT INTO lists (id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, editing_target_list_id = EXCLUDED.editing_target_list_id, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+        "INSERT INTO lists (id, owner_user_id, title, provider_id, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, provider_id = EXCLUDED.provider_id, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, editing_target_list_id = EXCLUDED.editing_target_list_id, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
         [
           list.id,
           list.ownerUserId,
           list.title,
+          resolveListProviderId(list.providerId),
           list.status,
           list.isAutosaveDraft,
           list.activatedAt ?? null,
@@ -112,6 +117,17 @@ export class PostgresListRepository implements ListRepository {
       throw error;
     }
   }
+
+  async backfillMissingProvider(providerId: string): Promise<number> {
+    const normalizedProviderId = resolveListProviderId(providerId);
+
+    const result = await this.pool.query(
+      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR provider_id = 'mercadona' RETURNING id",
+      [normalizedProviderId],
+    );
+
+    return result.rows.length;
+  }
 }
 
 function mapListWithItems(
@@ -137,6 +153,9 @@ function mapListWithItems(
     id: String(listRow.id),
     ownerUserId: String(listRow.owner_user_id),
     title: String(listRow.title),
+    providerId: resolveListProviderId(
+      (listRow.provider_id as string | null | undefined) ?? null,
+    ),
     isAutosaveDraft: Boolean(listRow.is_autosave_draft),
     status,
     activatedAt: listRow.activated_at

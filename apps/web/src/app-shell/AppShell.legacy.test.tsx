@@ -17,7 +17,7 @@ type FetchResponse = {
   json: () => Promise<unknown>;
 };
 
-const rootCategoriesUrl = "/api/catalog/categories";
+const rootCategoriesUrl = "/api/catalog/mercadona/categories";
 const CURRENT_USER_URL = "/api/users/me";
 const AUTH_LOGIN_URL = "/api/auth/login";
 const AUTH_LOGOUT_URL = "/api/auth/logout";
@@ -27,7 +27,7 @@ const TEST_POSTAL_CODE = "28001";
 const CHILD_CATEGORY_ID = "child-1";
 const CHILD_CATEGORY_NAME = "Bollería";
 const UNEXPECTED_REQUEST_ERROR = "Unexpected request";
-const categoryDetailUrl = (id: string) => `/api/catalog/categories/${id}`;
+const categoryDetailUrl = (id: string) => `/api/catalog/mercadona/categories/${id}`;
 
 const productFixtures = {
   ensaimada: {
@@ -57,8 +57,8 @@ const productFixtures = {
 describe("AppShell", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    // Reset navigation to root path
-    window.history.pushState({}, "", "/");
+    // Reset navigation to canonical catalog path
+    window.history.pushState({}, "", "/mercadona/catalog");
   });
 
   afterEach(() => {

@@ -1,5 +1,6 @@
-import type { List } from "../domain/list.js";
+import { DEFAULT_PROVIDER_ID, type List } from "../domain/list.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
+import { toListProviderDto, type ListProviderDto } from "./providerDto.js";
 
 type CreateListInput = {
   userId: string;
@@ -14,6 +15,8 @@ type ListSummary = {
   isEditing: boolean;
   updatedAt: string;
   status: List["status"];
+  providerId: string;
+  provider: ListProviderDto;
 };
 
 export class CreateList {
@@ -30,6 +33,7 @@ export class CreateList {
       id: existingDraft?.id ?? this.idGenerator.generate(),
       ownerUserId: input.userId,
       title: input.title,
+      providerId: existingDraft?.providerId ?? DEFAULT_PROVIDER_ID,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: [],
@@ -48,6 +52,8 @@ export class CreateList {
       isEditing: list.isEditing,
       updatedAt: list.updatedAt.toISOString(),
       status: list.status,
+      providerId: list.providerId,
+      provider: toListProviderDto(list.providerId),
     };
   }
 }

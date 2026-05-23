@@ -14,7 +14,7 @@ export class ProductCatalogPage {
   }
 
   async goto(): Promise<void> {
-    await this.page.goto("/");
+    await this.page.goto("/catalog");
   }
 
   getProduct(name: string): Locator {

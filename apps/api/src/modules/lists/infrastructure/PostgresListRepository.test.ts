@@ -6,6 +6,7 @@ const baseList = {
   id: "list-1",
   ownerUserId: "user-1",
   title: "Weekly groceries",
+  providerId: "provider-mercadona",
   isAutosaveDraft: false,
   status: "DRAFT",
   activatedAt: new Date("2024-01-01T09:30:00.000Z"),
@@ -241,6 +242,7 @@ describe("PostgresListRepository", () => {
         id: "list-2",
         ownerUserId: "user-1",
         title: "Party",
+        providerId: "provider-mercadona",
         isAutosaveDraft: false,
         status: "ACTIVE",
         activatedAt: undefined,
@@ -286,11 +288,12 @@ describe("PostgresListRepository", () => {
     expect(pool.query).toHaveBeenNthCalledWith(1, "BEGIN");
     expect(pool.query).toHaveBeenNthCalledWith(
       2,
-      "INSERT INTO lists (id, owner_user_id, title, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, editing_target_list_id = EXCLUDED.editing_target_list_id, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
+      "INSERT INTO lists (id, owner_user_id, title, provider_id, status, is_autosave_draft, activated_at, is_editing, editing_target_list_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (id) DO UPDATE SET owner_user_id = EXCLUDED.owner_user_id, title = EXCLUDED.title, provider_id = EXCLUDED.provider_id, status = EXCLUDED.status, is_autosave_draft = EXCLUDED.is_autosave_draft, activated_at = EXCLUDED.activated_at, is_editing = EXCLUDED.is_editing, editing_target_list_id = EXCLUDED.editing_target_list_id, created_at = EXCLUDED.created_at, updated_at = EXCLUDED.updated_at",
       [
         list.id,
         list.ownerUserId,
         list.title,
+        list.providerId,
         list.status,
         list.isAutosaveDraft,
         list.activatedAt ?? null,
@@ -406,5 +409,19 @@ describe("PostgresListRepository", () => {
       ["list-1"],
     );
     expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
+  });
+
+  it("backfills missing provider ids", async () => {
+    const pool = {
+      query: vi.fn().mockResolvedValue({ rows: [{ id: "1" }, { id: "2" }] }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    await expect(repository.backfillMissingProvider("mercadona")).resolves.toBe(2);
+    expect(pool.query).toHaveBeenCalledWith(
+      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR provider_id = 'mercadona' RETURNING id",
+      ["provider-mercadona"],
+    );
   });
 });

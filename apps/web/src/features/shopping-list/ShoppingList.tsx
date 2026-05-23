@@ -39,6 +39,7 @@ type ShoppingListProps = {
   initialListTitle?: string;
   initialIsEditing?: boolean;
   isLoading?: boolean;
+  mutationsEnabled?: boolean;
 };
 
 const DETAIL_ACTION_BASE_CLASS =
@@ -215,6 +216,7 @@ type ShoppingListListViewProps = {
   onRemove: (item: ShoppingListItem) => void;
   total: number;
   onAddMore: () => void;
+  disableMutations: boolean;
 };
 
 const ShoppingListListView = ({
@@ -233,6 +235,7 @@ const ShoppingListListView = ({
   onRemove,
   total,
   onAddMore,
+  disableMutations,
 }: ShoppingListListViewProps) => {
   const renderListContent = () => {
     if (isLoading) {
@@ -253,14 +256,14 @@ const ShoppingListListView = ({
     }
 
     return (
-      <ItemList
+        <ItemList
         items={sortedItems}
         groupedItems={groupedItems}
         onIncrement={onIncrement}
         onDecrement={onDecrement}
         onRemove={onRemove}
-        isReadOnly={isReadOnlyMobile}
-      />
+          isReadOnly={isReadOnlyMobile || disableMutations}
+        />
     );
   };
 
@@ -279,7 +282,7 @@ const ShoppingListListView = ({
       {isLoading ? (
         <ShoppingListTotalSkeleton />
       ) : (
-        <Total total={total} onAddMore={onAddMore} />
+        <Total total={total} onAddMore={onAddMore} disabled={disableMutations} />
       )}
     </div>
   );
@@ -294,6 +297,7 @@ const ShoppingList = ({
   isLoading = false,
   onAddMoreProducts,
   initialIsEditing = false,
+  mutationsEnabled = true,
 }: ShoppingListProps) => {
   const { authUser } = useAuth();
   const { showToast } = useToast();
@@ -317,7 +321,7 @@ const ShoppingList = ({
   const [pendingListDeletion, setPendingListDeletion] = useState(false);
   const canShowReadyToShop =
     Boolean(authUser) && canActivateList(listStatus);
-  const isReadyToShopDisabled = items.length === 0 || isLoading;
+  const isReadyToShopDisabled = items.length === 0 || isLoading || !mutationsEnabled;
   const draftTitle = listName.trim() || listTitle;
   const isActiveList = listStatus === LIST_STATUS.ACTIVE;
   const isCompletedList = listStatus === LIST_STATUS.COMPLETED;
@@ -327,7 +331,7 @@ const ShoppingList = ({
     Boolean(authUser) &&
     Boolean(listId) &&
     (isCompletedList || (isActiveList && !isEditingSession));
-  const isActionsDisabled = isLoading || detailActionLoading !== null;
+  const isActionsDisabled = isLoading || detailActionLoading !== null || !mutationsEnabled;
   const canEditTitle =
     listStatus === LIST_STATUS.LOCAL_DRAFT ||
     listStatus === LIST_STATUS.DRAFT ||
@@ -398,7 +402,7 @@ const ShoppingList = ({
   useAutosaveDraft(
     { title: draftTitle, items },
     {
-      enabled: Boolean(authUser),
+      enabled: Boolean(authUser) && isOpen && mutationsEnabled,
       onRehydrate: handleRehydrate,
       skipInitialLocalRehydrate: Boolean(initialListId) && !initialIsEditing,
     },
@@ -434,6 +438,9 @@ const ShoppingList = ({
   };
 
   const handleAddMore = () => {
+    if (!mutationsEnabled) {
+      return;
+    }
     handleClose();
     onAddMoreProducts?.();
   };
@@ -453,16 +460,19 @@ const ShoppingList = ({
   );
   const groupedItems = useMemo(() => groupItemsByCategory(sortedItems), [sortedItems]);
   const handleIncrement = (id: string) => {
+    if (!mutationsEnabled) return;
     const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;
     updateQuantity(id, currentQuantity + 1);
   };
 
   const handleDecrement = (id: string) => {
+    if (!mutationsEnabled) return;
     const currentQuantity = items.find((item) => item.id === id)?.quantity ?? 1;
     updateQuantity(id, currentQuantity - 1);
   };
 
   const handleRemoveRequest = (item: ShoppingListItem) => {
+    if (!mutationsEnabled) return;
     setPendingRemoval(item);
   };
 
@@ -702,6 +712,7 @@ const ShoppingList = ({
         onRemove={handleRemoveRequest}
         total={total}
         onAddMore={handleAddMore}
+        disableMutations={!mutationsEnabled}
       />
       <AutosaveConflictModal
         isOpen={Boolean(conflict)}

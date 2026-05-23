@@ -16,6 +16,7 @@ const log = (message: string) => {
 const RESET_TABLES = [
   "list_items",
   "lists",
+  "providers",
   "refresh_tokens",
   "users",
   MIGRATIONS_TABLE,

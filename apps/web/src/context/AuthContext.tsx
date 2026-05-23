@@ -17,6 +17,7 @@ import {
   type RegisterInput,
   type AuthUser,
 } from "@src/features/auth/services/AuthService";
+import { useApiAwake } from "./ApiAwakeContext";
 
 export type AuthContextType = {
   authUser: AuthUser | null;
@@ -72,6 +73,7 @@ function createTabId(): string {
 
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const { apiAwake } = useApiAwake();
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const sourceTabId = useMemo(() => createTabId(), []);
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
@@ -120,6 +122,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Cargar usuario autenticado al montar
   useEffect(() => {
+    if (!apiAwake) {
+      return;
+    }
+
     let isActive = true;
 
     const runInitialSync = async () => {
@@ -182,7 +188,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       channel?.close();
       window.removeEventListener("storage", onStorage);
     };
-  }, [sourceTabId, syncAuthenticatedUser]);
+  }, [apiAwake, sourceTabId, syncAuthenticatedUser]);
 
   const register = useCallback(async (values: RegisterInput) => {
     setAuthError(null);

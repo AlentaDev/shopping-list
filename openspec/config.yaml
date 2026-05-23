@@ -1,0 +1,17 @@
+version: 1
+project:
+  name: shopping-list
+  repository: monorepo
+defaults:
+  language: es
+  artifact_store: openspec
+workflow:
+  phases:
+    - explore
+    - propose
+    - spec
+    - design
+    - tasks
+    - apply
+    - verify
+    - archive

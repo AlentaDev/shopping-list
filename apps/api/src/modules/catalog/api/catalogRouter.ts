@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { GetCategoryDetail } from "../application/getCategoryDetail.js";
 import { GetRootCategories } from "../application/getRootCategories.js";
-import { categoryDetailParamsSchema } from "./schemas.js";
+import { categoryDetailParamsSchema, providerParamsSchema } from "./schemas.js";
 
 type CatalogRouterDependencies = {
   getRootCategories: GetRootCategories;
@@ -11,8 +11,9 @@ type CatalogRouterDependencies = {
 export function createCatalogRouter(deps: CatalogRouterDependencies): Router {
   const router = Router();
 
-  router.get("/categories", async (_req, res, next) => {
+  router.get("/:provider/categories", async (req, res, next) => {
     try {
+      providerParamsSchema.parse(req.params);
       const response = await deps.getRootCategories.execute();
       res.status(200).json(response);
     } catch (error) {
@@ -20,7 +21,7 @@ export function createCatalogRouter(deps: CatalogRouterDependencies): Router {
     }
   });
 
-  router.get("/categories/:id", async (req, res, next) => {
+  router.get("/:provider/categories/:id", async (req, res, next) => {
     try {
       const params = categoryDetailParamsSchema.parse(req.params);
       const response = await deps.getCategoryDetail.execute(params.id);

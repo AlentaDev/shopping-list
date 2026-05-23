@@ -4,9 +4,10 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 type TotalProps = {
   total: number;
   onAddMore: () => void;
+  disabled?: boolean;
 };
 
-const Total = ({ total, onAddMore }: TotalProps) => (
+const Total = ({ total, onAddMore, disabled = false }: TotalProps) => (
   <div className="space-y-3 border-t border-slate-200 pt-4">
     <div className="flex items-center justify-between">
       <span className="text-base font-semibold text-slate-900">
@@ -22,7 +23,12 @@ const Total = ({ total, onAddMore }: TotalProps) => (
     <button
       type="button"
       onClick={onAddMore}
-      className="w-full rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+      disabled={disabled}
+      className={`w-full rounded-full px-4 py-2 text-sm font-semibold text-white transition ${
+        disabled
+          ? "cursor-not-allowed bg-emerald-300"
+          : "bg-emerald-500 hover:bg-emerald-600"
+      }`}
     >
       {UI_TEXT.TOTAL.ADD_MORE_PRODUCTS_LABEL}
     </button>
