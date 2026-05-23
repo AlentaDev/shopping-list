@@ -70,6 +70,15 @@ jobs:
             const run = (command) =>
               execSync(command, { encoding: 'utf8' }).trim()
 
+            const tagExists = (tag) => {
+              try {
+                run(`git rev-parse -q --verify refs/tags/${tag}`)
+                return true
+              } catch {
+                return false
+              }
+            }
+
             const getPreviousTag = (app, currentTag) => {
               const tags = run(`git tag --list '${app}-v*' --sort=-v:refname`)
                 .split('\n')
@@ -86,7 +95,14 @@ jobs:
                 ? `git log --pretty=format:%s ${range} -- '${appPath}'`
                 : `git log --pretty=format:%s -n 20 ${range} -- '${appPath}'`
 
-              const rawMessages = run(command)
+              let rawMessages = ''
+
+              try {
+                rawMessages = run(command)
+              } catch {
+                return []
+              }
+
               if (!rawMessages) return []
 
               return [...new Set(
@@ -129,6 +145,12 @@ jobs:
 
             for (const { app, version, makeLatest } of releases) {
               const tag = `${app}-v${version}`
+
+              if (!tagExists(tag)) {
+                core.info(`Tag ${tag} not found. Skipping release creation for ${app}.`)
+                continue
+              }
+
               const previousTag = getPreviousTag(app, tag)
               const keyChanges = getKeyChanges(app, previousTag, tag)
               const body = buildReleaseBody({ app, version, tag, previousTag, keyChanges })
