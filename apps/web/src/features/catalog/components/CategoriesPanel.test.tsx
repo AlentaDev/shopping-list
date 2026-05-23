@@ -95,4 +95,19 @@ describe("CategoriesPanel", () => {
     expect(onSelectCategory).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Hojas" })).toBeInTheDocument();
   });
+
+  it("renders categories skeleton while loading and hides loading copy", () => {
+    render(
+      <CategoriesPanel
+        open
+        categories={[]}
+        selectedCategoryId={null}
+        onSelectCategory={vi.fn()}
+        loadingCategories
+      />,
+    );
+
+    expect(screen.getAllByTestId("categories-loading-skeleton-item")).toHaveLength(14);
+    expect(screen.queryByText("Cargando categorías...")).toBeNull();
+  });
 });

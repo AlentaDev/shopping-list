@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import type { CatalogCategoryNode } from "@src/features/catalog/services/types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
@@ -16,6 +16,8 @@ type CategoriesPanelProps = {
 const LOAD_ERROR_MESSAGE =
   UI_TEXT.CATEGORIES_PANEL.LOAD_CATEGORIES_ERROR_MESSAGE;
 
+const CATEGORIES_SKELETON_ROWS = 14;
+
 const CategoriesPanel = ({
   open,
   isMobile = false,
@@ -30,7 +32,10 @@ const CategoriesPanel = ({
     string | null
   >(null);
   const parents = useMemo(
-    () => categories.filter((category) => category.level === 0),
+    () =>
+      categories
+        .filter((category) => category.level === 0)
+        .sort((a, b) => a.order - b.order),
     [categories],
   );
 
@@ -76,17 +81,23 @@ const CategoriesPanel = ({
 
   return (
     <aside className="w-full">
-      <div className="flex max-h-[calc(100vh-144px)] flex-col rounded-2xl border border-slate-200 bg-white">
+      <div className="flex h-[calc(100vh-144px)] max-h-[calc(100vh-144px)] flex-col rounded-2xl border border-slate-200 bg-white">
         <div className="border-b border-slate-100 px-4 py-3">
           <h2 className="text-sm font-semibold text-slate-900">
             {UI_TEXT.CATEGORIES_PANEL.TITLE}
           </h2>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4" data-testid="categories-panel-scroll">
           {loadingCategories ? (
-            <p className="text-sm text-slate-500">
-              {UI_TEXT.CATEGORIES_PANEL.LOADING_CATEGORIES_MESSAGE}
-            </p>
+            <div className="min-h-full space-y-3" aria-live="polite" aria-busy="true">
+              {Array.from({ length: CATEGORIES_SKELETON_ROWS }).map((_, index) => (
+                <div
+                  key={`categories-loading-skeleton-${index}`}
+                  data-testid="categories-loading-skeleton-item"
+                  className="h-10 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-100"
+                />
+              ))}
+            </div>
           ) : null}
           {errorCategories ? (
             <div className="space-y-3">
@@ -106,9 +117,7 @@ const CategoriesPanel = ({
           ) : null}
           {!loadingCategories && !errorCategories ? (
             <div className="space-y-3">
-              {parents
-                .sort((a, b) => a.order - b.order)
-                .map((parent) => {
+              {parents.map((parent) => {
                   const children = childrenByParent.get(parent.id) ?? [];
                   const isExpanded = expandedParentId === parent.id;
 
@@ -174,7 +183,7 @@ const CategoriesPanel = ({
                       ) : null}
                     </div>
                   );
-                })}
+              })}
             </div>
           ) : null}
           {!loadingCategories && !errorCategories && parents.length === 0 ? (
@@ -188,4 +197,4 @@ const CategoriesPanel = ({
   );
 };
 
-export default CategoriesPanel;
+export default memo(CategoriesPanel);

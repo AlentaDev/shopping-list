@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "@src/context/useList";
@@ -10,6 +10,7 @@ import { FETCH_STATUS } from "@src/shared/constants/appState";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
+const SWITCHING_PRODUCTS_MESSAGE = UI_TEXT.CATALOG.SWITCHING_PRODUCTS_MESSAGE;
 
 const scrollToCatalogStart = () => {
   document.documentElement.scrollTop = 0;
@@ -44,20 +45,30 @@ const ProductSkeletonGrid = ({
   isCategoriesOpen,
   isMobileInteractionMode,
 }: ProductSkeletonGridProps) => (
-  <div className={`grid gap-4 ${getGridClasses(isCategoriesOpen, isMobileInteractionMode)}`}>
+  <div
+    data-testid="catalog-product-skeleton-grid"
+    className={`grid gap-4 ${getGridClasses(isCategoriesOpen, isMobileInteractionMode)}`}
+  >
     {Array.from({ length: count }).map((_, index) => (
       <div
         key={`skeleton-${index}`}
-        className="flex h-full flex-col rounded-2xl bg-white shadow-sm"
+        data-testid={`catalog-product-skeleton-card-${index}`}
+        className="flex h-full flex-col rounded-2xl bg-white shadow-sm animate-pulse"
       >
-        <div className="flex flex-col gap-3 p-3">
-          <div className="aspect-square animate-pulse rounded-xl bg-slate-200" />
-          <div className="space-y-2">
-            <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
-            <div className="h-4 w-1/3 animate-pulse rounded-full bg-slate-200" />
-            <div className="h-3 w-2/5 animate-pulse rounded-full bg-slate-100" />
+        <div className="flex flex-col p-3">
+          <div className="aspect-square rounded-xl bg-slate-200" />
+          <div className="mt-3 space-y-1">
+            <div
+              data-testid={`catalog-product-skeleton-name-${index}`}
+              className="flex min-h-[2.5rem] flex-col justify-center gap-1"
+            >
+              <div className="h-4 w-3/4 rounded-full bg-slate-200" />
+              <div className="h-4 w-1/2 rounded-full bg-slate-200" />
+            </div>
+            <div className="h-6 w-1/3 rounded-full bg-slate-200" />
+            <div className="h-3 w-2/5 rounded-full bg-slate-100" />
           </div>
-          <div className="mt-2 h-8 animate-pulse rounded-full bg-slate-200" />
+          <div className="mt-4 h-8 rounded-full bg-slate-200" />
         </div>
       </div>
     ))}
@@ -126,16 +137,17 @@ const Catalog = ({
     setIsMobileCategoriesOpen(true);
   }, [isCategoriesOpen, openMobileCategoriesRequestKey]);
 
-  const handleSelectCategory = (id: string) => {
+  const handleSelectCategory = useCallback((id: string) => {
     selectCategory(id);
     scrollToCatalogStart();
     setIsMobileCategoriesOpen(false);
-  };
+  }, [selectCategory]);
 
   const categoriesEmpty =
     categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
   const itemsEmpty =
     detailStatus === FETCH_STATUS.SUCCESS && !hasItems && !categoriesEmpty;
+  const isInitialProductsLoading = detailStatus === FETCH_STATUS.LOADING && !hasItems;
 
   return (
     <>
@@ -195,16 +207,20 @@ const Catalog = ({
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
             {categoryDetail?.categoryName || UI_TEXT.CATALOG.TITLE}
           </h1>
-          {detailStatus === FETCH_STATUS.LOADING ? (
-            <div className="space-y-4">
-              <p className="text-sm text-slate-500">
+          {isInitialProductsLoading ? (
+            <div className="space-y-4" aria-live="polite" aria-busy="true">
+              <h2 className="text-lg font-semibold text-slate-900">
                 {UI_TEXT.CATALOG.LOADING_PRODUCTS_MESSAGE}
-              </p>
-              <ProductSkeletonGrid
-                count={skeletonCount}
-                isCategoriesOpen={isCategoriesOpen}
-                isMobileInteractionMode={isMobileInteractionMode}
-              />
+              </h2>
+              <div className="flex justify-center">
+                <div className="w-full">
+                  <ProductSkeletonGrid
+                    count={skeletonCount}
+                    isCategoriesOpen={isCategoriesOpen}
+                    isMobileInteractionMode={isMobileInteractionMode}
+                  />
+                </div>
+              </div>
             </div>
           ) : null}
           {detailStatus === FETCH_STATUS.ERROR ? (
@@ -221,9 +237,16 @@ const Catalog = ({
               </button>
             </div>
           ) : null}
-          {detailStatus === FETCH_STATUS.SUCCESS && hasItems ? (
-            <div className="flex justify-center transition-opacity duration-300">
+          {hasItems ? (
+            <div
+              className={`flex justify-center transition-opacity duration-200 ${
+                detailStatus === FETCH_STATUS.LOADING ? "opacity-60" : "opacity-100"
+              }`}
+            >
               <div className="flex w-full flex-col gap-8">
+                {detailStatus === FETCH_STATUS.LOADING ? (
+                  <p className="text-sm text-slate-500">{SWITCHING_PRODUCTS_MESSAGE}</p>
+                ) : null}
                 {sections.map((section) => (
                   <ProductsCategory
                     key={section.subcategoryName}

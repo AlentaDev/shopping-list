@@ -118,6 +118,7 @@ export const UI_TEXT = {
     TITLE: "Catálogo",
     LOAD_PRODUCTS_ERROR_MESSAGE: "No se pudieron cargar los productos.",
     LOADING_PRODUCTS_MESSAGE: "Cargando productos...",
+    SWITCHING_PRODUCTS_MESSAGE: "Cargando productos de la categoría seleccionada...",
     RETRY_BUTTON_LABEL: "Reintentar",
     TOAST_ADDED_MESSAGE: "Añadido a la lista",
     EMPTY_PRODUCTS_TITLE: "No hay productos disponibles",

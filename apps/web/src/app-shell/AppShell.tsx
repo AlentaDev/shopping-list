@@ -127,7 +127,7 @@ export const AppShell = () => {
     setIsCartOpen(true);
   };
 
-  const { authMode, currentPath, navigate, mainContent } = useAppShellNavigation({
+  const { currentPath, navigate, mainContent } = useAppShellNavigation({
     authUser,
     authRedirectPending,
     isAuthSubmitting,
@@ -199,7 +199,7 @@ export const AppShell = () => {
             {UI_TEXT.APP.HANDSHAKE_WAITING_BANNER}
           </div>
         ) : null}
-        <div key={`${currentPath}-${authMode ?? "main"}`} className="page-transition" data-testid="page-transition">
+        <div className="page-transition" data-testid="page-transition">
           {mainContent}
         </div>
       </main>

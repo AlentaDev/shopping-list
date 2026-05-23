@@ -41,6 +41,45 @@ const categoriesFixture: CategoryNode[] = [
 
 let selectedCategoryIdMock = "child-1";
 let isMobileCatalogInteractionModeMock = false;
+let categoriesStatusMock = "success";
+let detailStatusMock = "success";
+let categoryDetailMock = {
+  categoryName: "Bollería",
+  sections: [
+    {
+      subcategoryName: "Dulces",
+      products: [
+        {
+          id: "prod-1",
+          name: "Ensaimada",
+          thumbnail: null,
+          packaging: null,
+          price: 1.5,
+          unitSize: null,
+          unitFormat: null,
+          unitPrice: null,
+          isApproxSize: false,
+        },
+      ],
+    },
+    {
+      subcategoryName: "Salados",
+      products: [
+        {
+          id: "prod-2",
+          name: "Empanada",
+          thumbnail: null,
+          packaging: null,
+          price: 2.1,
+          unitSize: null,
+          unitFormat: null,
+          unitPrice: null,
+          isApproxSize: false,
+        },
+      ],
+    },
+  ],
+};
 
 vi.mock("@src/context/useList", () => ({
   useList: () => ({
@@ -48,50 +87,20 @@ vi.mock("@src/context/useList", () => ({
   }),
 }));
 
+vi.mock("@src/context/useAuth", () => ({
+  useAuth: () => ({
+    authUser: { id: "user-1" },
+  }),
+}));
+
 vi.mock("./services/useCatalog", () => ({
   useCatalog: () => ({
-    categoriesStatus: "success",
+    categoriesStatus: categoriesStatusMock,
     categoriesError: null,
     categories: categoriesFixture,
-    detailStatus: "success",
+    detailStatus: detailStatusMock,
     detailError: null,
-    categoryDetail: {
-      categoryName: "Bollería",
-      sections: [
-        {
-          subcategoryName: "Dulces",
-          products: [
-            {
-              id: "prod-1",
-              name: "Ensaimada",
-              thumbnail: null,
-              packaging: null,
-              price: 1.5,
-              unitSize: null,
-              unitFormat: null,
-              unitPrice: null,
-              isApproxSize: false,
-            },
-          ],
-        },
-        {
-          subcategoryName: "Salados",
-          products: [
-            {
-              id: "prod-2",
-              name: "Empanada",
-              thumbnail: null,
-              packaging: null,
-              price: 2.1,
-              unitSize: null,
-              unitFormat: null,
-              unitPrice: null,
-              isApproxSize: false,
-            },
-          ],
-        },
-      ],
-    },
+    categoryDetail: categoryDetailMock,
     selectedCategoryId: selectedCategoryIdMock,
     selectCategory: selectCategoryMock,
     reloadCategories: reloadCategoriesMock,
@@ -298,6 +307,106 @@ describe("Catalog", () => {
     expect(document.body.scrollTop).toBe(0);
   });
 
+  it("keeps current products visible while loading a new category detail", () => {
+    const { rerender } = render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.getByText("Ensaimada")).toBeInTheDocument();
+
+    detailStatusMock = "loading";
+
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.getByText("Ensaimada")).toBeInTheDocument();
+    expect(
+      screen.getByText("Cargando productos de la categoría seleccionada..."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Cargando productos...")).not.toBeInTheDocument();
+  });
+
+  it("preserves categories panel scroll position on category route updates", () => {
+    const { rerender } = render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog isCategoriesOpen />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    const scrollContainer = screen.getByTestId("categories-panel-scroll");
+    scrollContainer.scrollTop = 180;
+    selectedCategoryIdMock = "child-2";
+
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog isCategoriesOpen />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.getByTestId("categories-panel-scroll").scrollTop).toBe(180);
+  });
+
+  it("keeps h1 title and shows loading message as h2 with skeleton state", () => {
+    detailStatusMock = "loading";
+    categoryDetailMock = null;
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.getByTestId("catalog-product-skeleton-grid")).toBeInTheDocument();
+    expect(screen.getByTestId("catalog-product-skeleton-card-0")).toHaveClass("animate-pulse");
+    expect(
+      screen.getByRole("heading", { name: "Catálogo", level: 1 }),
+    ).toBeInTheDocument();
+    const loadingTitle = screen.getByRole("heading", {
+      name: "Cargando productos...",
+      level: 2,
+    });
+    expect(loadingTitle).toHaveClass("text-lg");
+    expect(screen.getByTestId("catalog-product-skeleton-name-0")).toHaveClass(
+      "min-h-[2.5rem]",
+    );
+  });
+
+  it("shows categories loading skeleton and hides categories loading text", () => {
+    categoriesStatusMock = "loading";
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog isCategoriesOpen />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.getAllByTestId("categories-loading-skeleton-item")).toHaveLength(14);
+    expect(screen.queryByText("Cargando categorías...")).not.toBeInTheDocument();
+  });
+
   afterEach(() => {
     addItemMock.mockReset();
     selectCategoryMock.mockReset();
@@ -305,5 +414,44 @@ describe("Catalog", () => {
     reloadDetailMock.mockReset();
     selectedCategoryIdMock = "child-1";
     isMobileCatalogInteractionModeMock = false;
+    categoriesStatusMock = "success";
+    detailStatusMock = "success";
+    categoryDetailMock = {
+      categoryName: "Bollería",
+      sections: [
+        {
+          subcategoryName: "Dulces",
+          products: [
+            {
+              id: "prod-1",
+              name: "Ensaimada",
+              thumbnail: null,
+              packaging: null,
+              price: 1.5,
+              unitSize: null,
+              unitFormat: null,
+              unitPrice: null,
+              isApproxSize: false,
+            },
+          ],
+        },
+        {
+          subcategoryName: "Salados",
+          products: [
+            {
+              id: "prod-2",
+              name: "Empanada",
+              thumbnail: null,
+              packaging: null,
+              price: 2.1,
+              unitSize: null,
+              unitFormat: null,
+              unitPrice: null,
+              isApproxSize: false,
+            },
+          ],
+        },
+      ],
+    };
   });
 });

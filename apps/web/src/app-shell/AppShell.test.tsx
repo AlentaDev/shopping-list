@@ -5,12 +5,14 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "./AppShell";
 
-const useAppShellNavigationMock = vi.fn(() => ({
-  authMode: "login",
+let navigationState = {
+  authMode: "login" as "login" | "register" | null,
   currentPath: "/auth/login",
   navigate: vi.fn(),
   mainContent: <div>auth-login-screen</div>,
-}));
+};
+
+const useAppShellNavigationMock = vi.fn(() => navigationState);
 
 const showToastMock = vi.fn();
 const authState = { authUser: null as { id: string } | null };
@@ -115,6 +117,13 @@ describe("app-shell/AppShell", () => {
       writable: true,
       value: vi.fn().mockReturnValue({ matches: false }),
     });
+    navigationState = {
+      authMode: "login",
+      currentPath: "/auth/login",
+      navigate: vi.fn(),
+      mainContent: <div>auth-login-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
   });
 
   it("renderiza contenido auth canónico", () => {
@@ -294,5 +303,21 @@ describe("app-shell/AppShell", () => {
     await user.click(screen.getByRole("button", { name: "add-more-products" }));
 
     expect(navigateMock).toHaveBeenCalledWith("/catalog");
+  });
+
+  it("does not remount the page container on route changes", () => {
+    const { rerender } = render(<AppShell />);
+    const firstContainer = screen.getByTestId("page-transition");
+
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog/child-2",
+      navigate: navigationState.navigate,
+      mainContent: <div>catalog-screen</div>,
+    };
+    rerender(<AppShell />);
+
+    expect(screen.getByTestId("page-transition")).toBe(firstContainer);
+    expect(screen.getByText("catalog-screen")).toBeInTheDocument();
   });
 });
