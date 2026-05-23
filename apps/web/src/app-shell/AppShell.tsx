@@ -24,7 +24,7 @@ import {
 } from "@src/shared/domain/listStatus";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
-const CATALOG_PATH = "/";
+const CATALOG_PATH = "/catalog";
 type HandshakeStatus = "WAITING" | "READY";
 
 export const AppShell = () => {

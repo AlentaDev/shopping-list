@@ -62,13 +62,18 @@ vi.mock("@src/features/shopping-list/ShoppingList", () => ({
   default: ({
     isOpen,
     mutationsEnabled,
+    onAddMoreProducts,
   }: {
     isOpen: boolean;
     mutationsEnabled?: boolean;
+    onAddMoreProducts?: () => void;
   }) => (
     <div>
       <div data-testid="shopping-list-open">{String(isOpen)}</div>
       <div data-testid="shopping-list-mutations">{String(Boolean(mutationsEnabled))}</div>
+      <button type="button" onClick={onAddMoreProducts}>
+        add-more-products
+      </button>
     </div>
   ),
 }));
@@ -272,5 +277,22 @@ describe("app-shell/AppShell", () => {
 
     expect(lastCallArgs.isCategoriesOpen).toBe(false);
     expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(0);
+  });
+
+  it("navega a /catalog al añadir más productos desde la lista", async () => {
+    const user = userEvent.setup();
+    const navigateMock = vi.fn();
+    useAppShellNavigationMock.mockImplementation(() => ({
+      authMode: null,
+      currentPath: "/lists",
+      navigate: navigateMock,
+      mainContent: <div>lists-screen</div>,
+    }));
+
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "add-more-products" }));
+
+    expect(navigateMock).toHaveBeenCalledWith("/catalog");
   });
 });
