@@ -57,8 +57,69 @@ jobs:
         with:
           script: |
             const fs = require('node:fs')
+            const { execSync } = require('node:child_process')
 
             const readVersion = (file) => JSON.parse(fs.readFileSync(file, 'utf8')).version
+
+            const APP_PATHS = {
+              web: 'apps/web',
+              api: 'apps/api',
+              android: 'apps/mobile-android',
+            }
+
+            const run = (command) =>
+              execSync(command, { encoding: 'utf8' }).trim()
+
+            const getPreviousTag = (app, currentTag) => {
+              const tags = run(`git tag --list '${app}-v*' --sort=-v:refname`)
+                .split('\n')
+                .map((tag) => tag.trim())
+                .filter(Boolean)
+
+              return tags.find((tag) => tag !== currentTag) || null
+            }
+
+            const getKeyChanges = (app, previousTag, currentTag) => {
+              const appPath = APP_PATHS[app]
+              const range = previousTag ? `${previousTag}..${currentTag}` : currentTag
+              const command = previousTag
+                ? `git log --pretty=format:%s ${range} -- '${appPath}'`
+                : `git log --pretty=format:%s -n 20 ${range} -- '${appPath}'`
+
+              const rawMessages = run(command)
+              if (!rawMessages) return []
+
+              return [...new Set(
+                rawMessages
+                  .split('\n')
+                  .map((message) => message.trim())
+                  .filter((message) => message && !message.startsWith('chore(release): apply semantic version bumps'))
+              )].slice(0, 8)
+            }
+
+            const buildReleaseBody = ({ app, version, tag, previousTag, keyChanges }) => {
+              const appLabel = app.toUpperCase()
+              const previousTagLabel = previousTag ? `\`${previousTag}\`` : 'Initial release for this app tag stream'
+              const keyChangesSection = keyChanges.length
+                ? keyChanges.map((change) => `- ${change}`).join('\n')
+                : '- No app-scoped commit messages found in this version window.'
+
+              return [
+                `## What's Included`,
+                `- App: ${appLabel}`,
+                `- Version: \`${version}\``,
+                `- Tag: \`${tag}\``,
+                `- Based on: ${previousTagLabel}`,
+                '',
+                '## Key Changes',
+                keyChangesSection,
+                '',
+                '## Impact & Notes',
+                '- Generated automatically from git history (deterministic, no AI summarization).',
+                '- Release flow, versioning, and tag strategy remain unchanged.',
+                '- If key changes are empty, review merged commits for non app-scoped updates.',
+              ].join('\n')
+            }
 
             const releases = [
               { app: 'web', version: readVersion('apps/web/package.json'), makeLatest: 'false' },
@@ -68,6 +129,9 @@ jobs:
 
             for (const { app, version, makeLatest } of releases) {
               const tag = `${app}-v${version}`
+              const previousTag = getPreviousTag(app, tag)
+              const keyChanges = getKeyChanges(app, previousTag, tag)
+              const body = buildReleaseBody({ app, version, tag, previousTag, keyChanges })
 
               try {
                 await github.rest.repos.getReleaseByTag({
@@ -85,8 +149,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 tag_name: tag,
-                name: `${app.toUpperCase()} ${version}`,
-                body: `Automated ${app.toUpperCase()} release ${version}`,
+                name: `${app.toUpperCase()} Release v${version}`,
+                body,
                 make_latest: makeLatest,
               })
 
