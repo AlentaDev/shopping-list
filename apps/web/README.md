@@ -109,6 +109,12 @@ Variables disponibles:
 - SemVer independiente por app (web/api/android)
 - Cambios de versión gestionados por Changesets desde la raíz del repo
 
+### Cambios recientes (fixes/refactors)
+
+- `fetchWithAuth` runtime se movió a `src/infrastructure/http/` y se dejó un shim de compatibilidad temporal.
+- Limpieza de boundaries en `app-shell` para reducir acoplamientos no permitidos.
+- Hardening en `AuthContext`: parseo defensivo de storage/eventos para tolerar JSON inválido.
+
 ### Notas de release (resumen)
 
 - Catálogo responsive mobile-first: overlay de categorías en móvil, cierre al seleccionar subcategoría y navegación más consistente.

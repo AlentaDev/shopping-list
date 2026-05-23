@@ -126,3 +126,9 @@ Regla clave: no importar internals de otros módulos.
 - Se refuerza agrupación por categoría L1 para `DRAFT`, `ACTIVE` y `COMPLETED` (usando `categorySnapshot` como eje; subcategoría como metadata).
 - `POST /api/lists/:id/complete` devuelve `409` con error `list_editing_locked` si la lista `ACTIVE` está en edición web (`isEditing=true`).
 - Migración incluida en este corte: SQL `009`.
+
+### Cambios recientes (fixes/refactors)
+
+- Validación **fail-fast** de entorno en arranque para auth (`ACCESS_TOKEN_SECRET`) y runtime (`PORT`).
+- Parser de cookies extraído a módulo compartido (`src/shared/web/cookies.ts`) para auth y middleware.
+- Middleware CORS extraído a `src/shared/web/corsMiddleware.ts` con tests unitarios de política de orígenes.

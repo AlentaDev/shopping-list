@@ -133,3 +133,4 @@ Detalle completo:
 - `subcategorySnapshot` se mantiene como metadata para detalle, sin alterar la agrupación principal.
 - Al completar una lista desde Android, si existe edición activa en web, el backend puede responder `409 list_editing_locked`; Android debe tratarlo como lock cross-platform.
 - Migración de storage local incluida: Room `v5 -> v6`.
+- Textos de `ApiConfigScreen` movidos a recursos (`strings.xml`) para eliminar hardcode en UI.
