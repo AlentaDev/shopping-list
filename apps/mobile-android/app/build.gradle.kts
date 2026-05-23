@@ -54,8 +54,8 @@ android {
         applicationId = "com.alentadev.shopping"
         minSdk = 27
         targetSdk = 36
-        versionCode = 1000
-        versionName = "0.10.0"
+        versionCode = 1001
+        versionName = "0.10.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "SENTRY_DSN", "\"$sentryDsn\"")
