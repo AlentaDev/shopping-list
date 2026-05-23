@@ -18,7 +18,7 @@ describe("CatalogService", () => {
     vi.resetAllMocks();
   });
 
-  it("requests the root categories endpoint", async () => {
+  it("requests the provider-aware root categories endpoint", async () => {
     const responsePayload = {
       categories: [{ id: "root-1", name: "Panadería", order: 1, level: 0 }],
     };
@@ -31,11 +31,11 @@ describe("CatalogService", () => {
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
-    await expect(getRootCategories()).resolves.toEqual(responsePayload);
-    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/catalog/categories");
+    await expect(getRootCategories("mercadona")).resolves.toEqual(responsePayload);
+    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/catalog/mercadona/categories");
   });
 
-  it("requests the category detail endpoint", async () => {
+  it("requests the provider-aware category detail endpoint", async () => {
     const responsePayload = {
       id: "child-1",
       name: "Bollería",
@@ -68,7 +68,7 @@ describe("CatalogService", () => {
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
-    await expect(getCategoryDetail("child-1")).resolves.toEqual({
+    await expect(getCategoryDetail("mercadona", "child-1")).resolves.toEqual({
       categoryName: "Bollería",
       sections: [
         {
@@ -89,7 +89,9 @@ describe("CatalogService", () => {
         },
       ],
     });
-    expect(fetchWithAuthMock).toHaveBeenCalledWith("/api/catalog/categories/child-1");
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/catalog/mercadona/categories/child-1",
+    );
   });
 
   it("throws error when getRootCategories fails", async () => {
@@ -102,7 +104,7 @@ describe("CatalogService", () => {
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
-    await expect(getRootCategories()).rejects.toThrow(
+    await expect(getRootCategories("mercadona")).rejects.toThrow(
       "Unable to load categories."
     );
   });
@@ -117,7 +119,7 @@ describe("CatalogService", () => {
 
     fetchWithAuthMock.mockImplementation(fetchMock as typeof fetchWithAuth);
 
-    await expect(getCategoryDetail("child-1")).rejects.toThrow(
+    await expect(getCategoryDetail("mercadona", "child-1")).rejects.toThrow(
       "Unable to load category detail."
     );
   });

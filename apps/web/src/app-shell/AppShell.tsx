@@ -6,6 +6,8 @@ import {
 } from "@src/features/shopping-list";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
+import { useToast } from "@src/context/useToast";
+import { useApiAwake } from "@src/context/ApiAwakeContext";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
@@ -23,6 +25,7 @@ import {
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
 const CATALOG_PATH = "/";
+type HandshakeStatus = "WAITING" | "READY";
 
 export const AppShell = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -39,6 +42,8 @@ export const AppShell = () => {
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
   const { linesCount, setItems } = useList();
+  const { showToast } = useToast();
+  const { apiAwake } = useApiAwake();
   const {
     authUser,
     isAuthSubmitting,
@@ -50,6 +55,8 @@ export const AppShell = () => {
     logout,
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
+  const hasShownReadyToastRef = useRef(false);
 
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
@@ -134,6 +141,31 @@ export const AppShell = () => {
     onStartOpenList: handleStartOpenList,
   });
 
+  useEffect(() => {
+    if (!authUser) {
+      setHandshakeStatus("READY");
+      return;
+    }
+
+    setHandshakeStatus(apiAwake ? "READY" : "WAITING");
+  }, [apiAwake, authUser]);
+
+  useEffect(() => {
+    if (handshakeStatus !== "READY" || !authUser) {
+      hasShownReadyToastRef.current = false;
+      return;
+    }
+
+    if (!hasShownReadyToastRef.current) {
+      showToast({
+        message: UI_TEXT.APP.HANDSHAKE_READY_TOAST,
+        productName: "",
+        thumbnail: null,
+      });
+      hasShownReadyToastRef.current = true;
+    }
+  }, [authUser, handshakeStatus, showToast]);
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <AppHeader
@@ -162,6 +194,11 @@ export const AppShell = () => {
         userMenuRef={userMenuRef}
       />
       <main className="mx-auto max-w-7xl px-4 py-8">
+        {handshakeStatus === "WAITING" ? (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {UI_TEXT.APP.HANDSHAKE_WAITING_BANNER}
+          </div>
+        ) : null}
         <div key={`${currentPath}-${authMode ?? "main"}`} className="page-transition" data-testid="page-transition">
           {mainContent}
         </div>
@@ -181,6 +218,7 @@ export const AppShell = () => {
         initialListTitle={currentListTitle}
         initialIsEditing={currentListIsEditing}
         isLoading={isListLoading}
+        mutationsEnabled={handshakeStatus === "READY"}
       />
       <Toast />
     </div>

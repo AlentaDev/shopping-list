@@ -9,11 +9,15 @@ import {
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
+import { CatalogHome } from "./components/CatalogHome";
 
 const LOGIN_PATH = "/auth/login";
 const REGISTER_PATH = "/auth/register";
 const LISTS_PATH = "/lists";
 const APP_DOWNLOAD_PATH = "/app";
+const CATALOG_ALIAS_PATH = "/catalog";
+const DEFAULT_PROVIDER = "mercadona";
+const LAST_PROVIDER_STORAGE_KEY = "lastProvider";
 
 type UseAppShellNavigationArgs = {
   authUser: AuthUser | null;
@@ -42,6 +46,8 @@ type MainContentParams = {
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
   onNavigateHome: () => void;
+  onNavigateCatalog: () => void;
+  onNavigateCatalogCategory: (providerId: string, categoryId: string) => void;
   onOpenList: (list: ListDetail) => void;
   onStartOpenList: (list: ListSummary) => void;
 };
@@ -59,20 +65,32 @@ export const useAppShellNavigation = ({
   onOpenList,
   onStartOpenList,
 }: UseAppShellNavigationArgs) => {
-  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+  const initialPath = resolveCatalogAlias(window.location.pathname);
+  const [currentPath, setCurrentPath] = useState(() => initialPath);
   const [authMode, setAuthMode] = useState<AuthMode | null>(() =>
-    resolveAuthMode(window.location.pathname),
+    resolveAuthMode(initialPath),
   );
 
+  useEffect(() => {
+    if (window.location.pathname !== initialPath) {
+      window.history.replaceState({}, "", initialPath);
+    }
+  }, [initialPath]);
+
   const navigate = useCallback((path: string) => {
-    window.history.pushState({}, "", path);
-    setCurrentPath(path);
-    setAuthMode(resolveAuthMode(path));
+    const nextPath = resolveCatalogAlias(path);
+    if (window.location.pathname === nextPath) {
+      return;
+    }
+
+    window.history.pushState({}, "", nextPath);
+    setCurrentPath(nextPath);
+    setAuthMode(resolveAuthMode(nextPath));
   }, []);
 
   useEffect(() => {
     const handlePopState = () => {
-      const path = window.location.pathname;
+      const path = resolveCatalogAlias(window.location.pathname);
       setCurrentPath(path);
       setAuthMode(resolveAuthMode(path));
     };
@@ -98,6 +116,9 @@ export const useAppShellNavigation = ({
         onLogin,
         onRegister,
         onNavigateHome: () => navigate("/"),
+        onNavigateCatalog: () => navigate(CATALOG_ALIAS_PATH),
+        onNavigateCatalogCategory: (providerId: string, categoryId: string) =>
+          navigate(`/${providerId}/catalog/${categoryId}`),
         onOpenList,
         onStartOpenList,
       }),
@@ -147,6 +168,8 @@ function resolveMainContent({
   onLogin,
   onRegister,
   onNavigateHome,
+  onNavigateCatalog,
+  onNavigateCatalogCategory,
   onOpenList,
   onStartOpenList,
 }: MainContentParams) {
@@ -191,8 +214,51 @@ function resolveMainContent({
     return createElement(MobileAppDownloadPage);
   }
 
+  if (currentPath === "/") {
+    return createElement(CatalogHome, {
+      onGoToCatalog: onNavigateCatalog,
+    });
+  }
+
+  const catalogPath = parseCatalogPath(currentPath);
+
+  if (catalogPath) {
+    return createElement(Catalog, {
+      providerId: catalogPath.providerId,
+      initialCategoryId: catalogPath.categoryId,
+      onCategoryRouteChange: (categoryId: string) => {
+        onNavigateCatalogCategory(catalogPath.providerId, categoryId);
+      },
+      isCategoriesOpen,
+      openMobileCategoriesRequestKey,
+    });
+  }
+
   return createElement(Catalog, {
+    providerId: DEFAULT_PROVIDER,
     isCategoriesOpen,
     openMobileCategoriesRequestKey,
   });
+}
+
+function parseCatalogPath(pathname: string): { providerId: string; categoryId?: string } | null {
+  const match = pathname.match(/^\/([^/]+)\/catalog(?:\/([^/]+))?$/);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    providerId: match[1],
+    categoryId: match[2],
+  };
+}
+
+function resolveCatalogAlias(pathname: string): string {
+  if (pathname !== CATALOG_ALIAS_PATH) {
+    return pathname;
+  }
+
+  const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
+  const provider = lastProvider || DEFAULT_PROVIDER;
+  return `/${provider}/catalog`;
 }

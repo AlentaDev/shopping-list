@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import Catalog from "@src/features/catalog/Catalog";
 import { ListsContainer } from "@src/features/lists";
 import { AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
+import { CatalogHome } from "@src/app-shell/components/CatalogHome";
 
 const baseArgs = {
   authUser: null,
@@ -36,9 +37,91 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(result.current.mainContent.type).toBe(AuthScreen);
   });
 
-  it("renderiza catálogo en /", () => {
+  it("renderiza home en /", () => {
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+    expect(result.current.mainContent.type).toBe(CatalogHome);
+  });
+
+  it("renderiza home en / sin requerir request de catálogo", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.mainContent.type).toBe(CatalogHome);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("renderiza catálogo en /mercadona/catalog", () => {
+    window.history.pushState({}, "", "/mercadona/catalog");
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
     expect(result.current.mainContent.type).toBe(Catalog);
+  });
+
+  it("inicializa categoría desde /:provider/catalog/:category", () => {
+    window.history.pushState({}, "", "/mercadona/catalog/child-2");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.mainContent.type).toBe(Catalog);
+    expect(result.current.mainContent.props.initialCategoryId).toBe("child-2");
+    expect(result.current.mainContent.props.providerId).toBe("mercadona");
+  });
+
+  it("actualiza pathname con :category cuando se selecciona categoría", () => {
+    window.history.pushState({}, "", "/mercadona/catalog");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    act(() => {
+      result.current.mainContent.props.onCategoryRouteChange("child-2");
+    });
+
+    expect(result.current.currentPath).toBe("/mercadona/catalog/child-2");
+    expect(window.location.pathname).toBe("/mercadona/catalog/child-2");
+  });
+
+  it("redirige /catalog a /mercadona/catalog cuando no hay lastProvider", () => {
+    window.localStorage.removeItem("lastProvider");
+    window.history.pushState({}, "", "/catalog");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.currentPath).toBe("/mercadona/catalog");
+    expect(window.location.pathname).toBe("/mercadona/catalog");
+    expect(result.current.mainContent.type).toBe(Catalog);
+  });
+
+  it("redirige /catalog al lastProvider guardado", () => {
+    window.localStorage.setItem("lastProvider", "carrefour");
+    window.history.pushState({}, "", "/catalog");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.currentPath).toBe("/carrefour/catalog");
+    expect(window.location.pathname).toBe("/carrefour/catalog");
+    expect(result.current.mainContent.type).toBe(Catalog);
+  });
+
+  it("respeta semántica de URL aislada al cambiar provider", () => {
+    window.history.pushState({}, "", "/mercadona/catalog");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    act(() => {
+      result.current.mainContent.props.onCategoryRouteChange("merc-child");
+    });
+    expect(window.location.pathname).toBe("/mercadona/catalog/merc-child");
+
+    act(() => {
+      result.current.navigate("/carrefour/catalog");
+    });
+
+    act(() => {
+      result.current.mainContent.props.onCategoryRouteChange("car-child");
+    });
+
+    expect(window.location.pathname).toBe("/carrefour/catalog/car-child");
   });
 
   it("renderiza listas en /lists con usuario", () => {

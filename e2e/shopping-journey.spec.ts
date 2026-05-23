@@ -106,7 +106,7 @@ const mockCatalogRoutes = async (
   const { detailFailCount = 0, categories = CATEGORIES } = options;
   let detailCalls = 0;
 
-  await page.route("**/api/catalog/categories", async (route) => {
+  await page.route("**/api/catalog/*/categories", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -114,7 +114,7 @@ const mockCatalogRoutes = async (
     });
   });
 
-  await page.route("**/api/catalog/categories/*", async (route) => {
+  await page.route("**/api/catalog/*/categories/*", async (route) => {
     detailCalls += 1;
 
     if (detailCalls <= detailFailCount) {
@@ -126,6 +126,29 @@ const mockCatalogRoutes = async (
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(DETAIL_SUCCESS_RESPONSE),
+    });
+  });
+};
+
+const mockHealthRoute = async (
+  page: Page,
+  options: { failCount?: number } = {},
+) => {
+  const { failCount = 0 } = options;
+  let attempts = 0;
+
+  await page.route("**/health", async (route) => {
+    attempts += 1;
+
+    if (attempts <= failCount) {
+      await route.fulfill({ status: 503, body: "" });
+      return;
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ status: "ok" }),
     });
   });
 };
@@ -250,6 +273,37 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
     cartButton.locator("span"),
     "El badge del carrito debe reflejar las líneas únicas",
   ).toHaveText("1");
+});
+
+test("/catalog redirige, espera handshake y luego permite añadir producto", async ({
+  page,
+}) => {
+  await mockAuthRoutes(page);
+  await mockCatalogRoutes(page);
+  await mockHealthRoute(page, { failCount: 3 });
+
+  await page.goto("/auth/login");
+  await page.getByLabel("Email").fill(USER.email);
+  await page.getByLabel("Contraseña").fill("Password123!");
+  await page.getByRole("button", { name: "Entrar" }).click();
+
+  await page.goto("/catalog");
+
+  await expect(page).toHaveURL(/\/mercadona\/catalog$/);
+
+  const waitingBanner = page.getByText(
+    "Estamos preparando tu lista para que puedas seguir comprando.",
+  );
+  const waitingCount = await waitingBanner.count();
+  if (waitingCount > 0) {
+    await expect(waitingBanner).toBeHidden({ timeout: 15000 });
+  }
+
+  const addButton = page.getByTestId("catalog-add-button").first();
+  await expect(addButton).toBeEnabled();
+  await addButton.click();
+
+  await expect(page.getByRole("button", { name: "Abrir carrito" }).locator("span")).toHaveText("1");
 });
 
 test("modal permite ajustar cantidades, eliminar items, estado vacío y volver al catálogo", async ({

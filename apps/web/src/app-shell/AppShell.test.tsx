@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "./AppShell";
 
@@ -12,8 +12,16 @@ const useAppShellNavigationMock = vi.fn(() => ({
   mainContent: <div>auth-login-screen</div>,
 }));
 
+const showToastMock = vi.fn();
+const authState = { authUser: null as { id: string } | null };
+const apiAwakeState = { apiAwake: true };
+
 vi.mock("@src/shared/components/toast/Toast", () => ({
   default: () => <div data-testid="toast-placeholder" />,
+}));
+
+vi.mock("@src/context/useToast", () => ({
+  useToast: () => ({ showToast: showToastMock }),
 }));
 
 vi.mock("@src/context/useList", () => ({
@@ -25,7 +33,7 @@ vi.mock("@src/context/useList", () => ({
 
 vi.mock("@src/context/useAuth", () => ({
   useAuth: () => ({
-    authUser: null,
+    authUser: authState.authUser,
     isAuthSubmitting: false,
     authError: null,
     isUserMenuOpen: false,
@@ -36,13 +44,32 @@ vi.mock("@src/context/useAuth", () => ({
   }),
 }));
 
+vi.mock("@src/context/ApiAwakeContext", () => ({
+  useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
+}));
+
+const fetchWithAuthMock = vi.fn();
+
+vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
+  fetchWithAuth: (url: string) => fetchWithAuthMock(url),
+}));
+
 vi.mock("@src/app-shell/useAppShellNavigation", () => ({
   useAppShellNavigation: (args: unknown) => useAppShellNavigationMock(args),
 }));
 
 vi.mock("@src/features/shopping-list/ShoppingList", () => ({
-  default: ({ isOpen }: { isOpen: boolean }) => (
-    <div data-testid="shopping-list-open">{String(isOpen)}</div>
+  default: ({
+    isOpen,
+    mutationsEnabled,
+  }: {
+    isOpen: boolean;
+    mutationsEnabled?: boolean;
+  }) => (
+    <div>
+      <div data-testid="shopping-list-open">{String(isOpen)}</div>
+      <div data-testid="shopping-list-mutations">{String(Boolean(mutationsEnabled))}</div>
+    </div>
   ),
 }));
 
@@ -76,6 +103,8 @@ describe("app-shell/AppShell", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.authUser = null;
+    apiAwakeState.apiAwake = true;
     window.history.pushState({}, "", "/auth/login");
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -88,6 +117,80 @@ describe("app-shell/AppShell", () => {
 
     expect(screen.getByText("auth-login-screen")).toBeInTheDocument();
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("false");
+    expect(screen.queryByText("Tu lista ya está lista para continuar.")).not.toBeInTheDocument();
+  });
+
+  it("mantiene banner WAITING y bloquea mutaciones hasta handshake READY", async () => {
+    authState.authUser = { id: "user-1" };
+    apiAwakeState.apiAwake = false;
+    fetchWithAuthMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ lists: [{ provider: { slug: "mercadona" } }] }),
+    });
+
+    const { rerender } = render(<AppShell />);
+
+    expect(screen.getByText("Estamos preparando tu lista para que puedas seguir comprando.")).toBeInTheDocument();
+    expect(screen.getByTestId("shopping-list-mutations")).toHaveTextContent("false");
+
+    apiAwakeState.apiAwake = true;
+    rerender(<AppShell />);
+
+    await waitFor(() => {
+      expect(showToastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: "Tu lista ya está lista para continuar." }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("shopping-list-mutations")).toHaveTextContent("true");
+    });
+
+    expect(screen.queryByText("Estamos preparando tu lista para que puedas seguir comprando.")).not.toBeInTheDocument();
+  });
+
+  it("no hace polling infinito de drafts cuando falla la lista", async () => {
+    authState.authUser = { id: "user-1" };
+
+    render(<AppShell />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("shopping-list-mutations")).toHaveTextContent("true");
+    });
+
+    expect(fetchWithAuthMock).not.toHaveBeenCalled();
+    expect(screen.queryByText("Estamos preparando tu lista para que puedas seguir comprando.")).not.toBeInTheDocument();
+  });
+
+  it("sale de WAITING a READY cuando health responde ok", async () => {
+    authState.authUser = { id: "user-1" };
+    apiAwakeState.apiAwake = false;
+
+    const { rerender } = render(<AppShell />);
+
+    expect(screen.getByText("Estamos preparando tu lista para que puedas seguir comprando.")).toBeInTheDocument();
+
+    apiAwakeState.apiAwake = true;
+    rerender(<AppShell />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Estamos preparando tu lista para que puedas seguir comprando.")).not.toBeInTheDocument();
+    });
+
+    expect(showToastMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("si health ok y drafts falla, no deja banner de waking clavado", async () => {
+    authState.authUser = { id: "user-1" };
+
+    render(<AppShell />);
+
+    await waitFor(() => {
+      expect(screen.queryByText("Estamos preparando tu lista para que puedas seguir comprando.")).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId("shopping-list-mutations")).toHaveTextContent("true");
+    expect(fetchWithAuthMock).not.toHaveBeenCalled();
   });
 
   it("abre carrito desde la cabecera canónica", async () => {

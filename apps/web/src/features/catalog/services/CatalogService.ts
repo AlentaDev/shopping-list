@@ -10,9 +10,10 @@ type CatalogServiceOptions = {
 };
 
 export const getRootCategories = async (
+  providerId: string,
   options: CatalogServiceOptions = {}
 ): Promise<GetRootCategoriesResponse> => {
-  const response = await fetchWithAuth("/api/catalog/categories");
+  const response = await fetchWithAuth(`/api/catalog/${providerId}/categories`);
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load categories.");
@@ -24,10 +25,13 @@ export const getRootCategories = async (
 };
 
 export const getCategoryDetail = async (
+  providerId: string,
   categoryId: string,
   options: CatalogServiceOptions = {}
 ): Promise<CatalogCategoryDetail> => {
-  const response = await fetchWithAuth(`/api/catalog/categories/${categoryId}`);
+  const response = await fetchWithAuth(
+    `/api/catalog/${providerId}/categories/${categoryId}`,
+  );
 
   if (!response.ok) {
     throw new Error(options.errorMessage ?? "Unable to load category detail.");

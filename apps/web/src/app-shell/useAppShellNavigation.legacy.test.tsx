@@ -7,6 +7,7 @@ import { ListsContainer } from "@src/features/lists";
 import { AuthLoggedInNotice, AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
+import { CatalogHome } from "@src/app-shell/components/CatalogHome";
 
 const baseArgs = {
   authUser: null,
@@ -55,7 +56,15 @@ describe("useAppShellNavigation", () => {
     expect(result.current.mainContent.type).toBe(AuthLoggedInNotice);
   });
 
-  it("renderiza el catálogo por defecto", () => {
+  it("renderiza home en /", () => {
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.mainContent.type).toBe(CatalogHome);
+  });
+
+  it("renderiza catálogo en ruta canónica provider-aware", () => {
+    window.history.pushState({}, "", "/mercadona/catalog");
+
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
 
     expect(result.current.mainContent.type).toBe(Catalog);

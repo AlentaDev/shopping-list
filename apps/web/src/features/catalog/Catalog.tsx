@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
 import { useList } from "@src/context/useList";
+import { useAuth } from "@src/context/useAuth";
 import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useToast } from "@src/context/useToast";
@@ -30,6 +31,9 @@ type ProductSkeletonGridProps = {
 };
 
 type CatalogProps = {
+  providerId?: string;
+  initialCategoryId?: string;
+  onCategoryRouteChange?: (categoryId: string) => void;
   isCategoriesOpen?: boolean;
   openMobileCategoriesRequestKey?: number;
   onItemsCountChange?: (count: number) => void;
@@ -61,6 +65,9 @@ const ProductSkeletonGrid = ({
 );
 
 const Catalog = ({
+  providerId = "mercadona",
+  initialCategoryId,
+  onCategoryRouteChange,
   isCategoriesOpen = false,
   openMobileCategoriesRequestKey = 0,
   onItemsCountChange,
@@ -68,6 +75,7 @@ const Catalog = ({
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
+  const { authUser } = useAuth();
   const { showToast } = useToast();
   const {
     categoriesStatus,
@@ -80,7 +88,7 @@ const Catalog = ({
     selectCategory,
     reloadCategories,
     reloadDetail,
-  } = useCatalog();
+  } = useCatalog({ providerId, initialCategoryId, userId: authUser?.id });
 
   const sections = categoryDetail?.sections ?? [];
   const totalProducts = sections.reduce(
@@ -101,6 +109,14 @@ const Catalog = ({
   useEffect(() => {
     onItemsCountChange?.(totalProducts);
   }, [onItemsCountChange, totalProducts]);
+
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      return;
+    }
+
+    onCategoryRouteChange?.(selectedCategoryId);
+  }, [onCategoryRouteChange, selectedCategoryId]);
 
   useEffect(() => {
     if (!isCategoriesOpen || openMobileCategoriesRequestKey === 0) {

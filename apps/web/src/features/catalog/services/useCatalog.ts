@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { CatalogCategoryDetail, CatalogCategoryNode } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
+import { getLastCategory, saveLastCategory } from "./CatalogNavigationState";
 
 export type FetchStatus =
   | typeof FETCH_STATUS.IDLE
@@ -50,7 +51,13 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   return children[0] ?? null;
 };
 
-export const useCatalog = (): UseCatalogResult => {
+type UseCatalogArgs = {
+  providerId: string;
+  initialCategoryId?: string;
+  userId?: string;
+};
+
+export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalogArgs): UseCatalogResult => {
   const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>(
     FETCH_STATUS.IDLE,
   );
@@ -71,7 +78,7 @@ export const useCatalog = (): UseCatalogResult => {
     setCategoriesError(null);
 
     try {
-      const data = await getRootCategories({
+      const data = await getRootCategories(providerId, {
         errorMessage: CATEGORIES_ERROR_MESSAGE,
       });
       const nextCategories = Array.isArray(data.categories)
@@ -86,7 +93,7 @@ export const useCatalog = (): UseCatalogResult => {
       setCategoriesError(message);
       setCategoriesStatus(FETCH_STATUS.ERROR);
     }
-  }, []);
+  }, [providerId]);
 
   const loadDetail = useCallback(
     async (categoryId: string, categoryName?: string) => {
@@ -99,7 +106,7 @@ export const useCatalog = (): UseCatalogResult => {
       });
 
       try {
-        const data = await getCategoryDetail(categoryId, {
+        const data = await getCategoryDetail(providerId, categoryId, {
           errorMessage: DETAIL_ERROR_MESSAGE,
         });
 
@@ -112,7 +119,7 @@ export const useCatalog = (): UseCatalogResult => {
         setDetailStatus(FETCH_STATUS.ERROR);
       }
     },
-    [],
+    [providerId],
   );
 
   useEffect(() => {
@@ -122,6 +129,21 @@ export const useCatalog = (): UseCatalogResult => {
 
   useEffect(() => {
     if (categoriesStatus !== FETCH_STATUS.SUCCESS || selectedCategoryId) {
+      return;
+    }
+
+    if (initialCategoryId) {
+      setSelectedCategoryId(initialCategoryId);
+      return;
+    }
+
+    const rememberedCategory =
+      !initialCategoryId && userId
+        ? getLastCategory(userId, providerId)
+        : null;
+
+    if (rememberedCategory) {
+      setSelectedCategoryId(rememberedCategory);
       return;
     }
 
@@ -136,7 +158,7 @@ export const useCatalog = (): UseCatalogResult => {
     }
 
     setSelectedCategoryId(defaultCategory.id);
-  }, [categories, categoriesStatus, selectedCategoryId]);
+  }, [categories, categoriesStatus, selectedCategoryId, initialCategoryId, providerId, userId]);
 
   useEffect(() => {
     if (!selectedCategoryId) {
@@ -150,6 +172,9 @@ export const useCatalog = (): UseCatalogResult => {
 
   const selectCategory = (id: string) => {
     setSelectedCategoryId(id);
+    if (userId) {
+      saveLastCategory(userId, providerId, id);
+    }
   };
 
   const reloadCategories = () => {
