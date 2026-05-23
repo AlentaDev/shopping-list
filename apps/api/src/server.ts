@@ -1,7 +1,8 @@
 import { createApp } from "@src/app.js";
 import { initSentry } from "@src/infrastructure/observability/sentry.js";
+import { resolvePort } from "@src/shared/config/env.js";
 
-const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
+const PORT = resolvePort();
 
 initSentry();
 

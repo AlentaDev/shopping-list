@@ -10,6 +10,7 @@ import { JwtAccessTokenService } from "./infrastructure/JwtAccessTokenService.js
 import { SystemClock } from "./infrastructure/SystemClock.js";
 import { createAuthRouter } from "./api/authRouter.js";
 import type { RefreshTokenStore } from "./application/ports.js";
+import { resolveAccessTokenSecret } from "@src/shared/config/env.js";
 
 type AuthModuleDependencies = {
   userRepository?: UserRepository;
@@ -22,7 +23,7 @@ export function createAuthModule(deps: AuthModuleDependencies = {}) {
   const refreshTokenStore =
     deps.refreshTokenStore ?? new InMemoryRefreshTokenStore();
   const accessTokenService = new JwtAccessTokenService(
-    process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret",
+    resolveAccessTokenSecret(),
   );
   const clock = new SystemClock();
 

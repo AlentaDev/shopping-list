@@ -2,10 +2,10 @@ import type { Request, RequestHandler } from "express";
 import { AppError } from "@src/shared/errors/appError.js";
 import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 import { verifyJwt } from "@src/shared/security/jwt.js";
+import { resolveAccessTokenSecret } from "@src/shared/config/env.js";
 
 const ACCESS_TOKEN_COOKIE_NAME = "access_token";
-const ACCESS_TOKEN_SECRET =
-  process.env.ACCESS_TOKEN_SECRET ?? "dev-access-token-secret";
+const ACCESS_TOKEN_SECRET = resolveAccessTokenSecret();
 
 export type AuthenticatedRequest = Request & { userId: string };
 
