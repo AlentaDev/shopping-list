@@ -23,6 +23,11 @@ describe("CreateList", () => {
       isEditing: false,
       updatedAt: now.toISOString(),
       status: "DRAFT",
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
     });
 
     await expect(listRepository.findById("list-1")).resolves.toMatchObject({
@@ -31,6 +36,7 @@ describe("CreateList", () => {
       title: "Weekly groceries",
       status: "DRAFT",
       isAutosaveDraft: true,
+      providerId: "provider-mercadona",
       items: [],
       isEditing: false,
       createdAt: now,
@@ -52,6 +58,7 @@ describe("CreateList", () => {
       title: "Old title",
       isAutosaveDraft: true,
       status: "DRAFT",
+      providerId: "provider-mercadona",
       activatedAt: undefined,
       isEditing: true,
       items: [
@@ -86,6 +93,11 @@ describe("CreateList", () => {
       isEditing: false,
       updatedAt: now.toISOString(),
       status: "DRAFT",
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
     });
 
     await expect(listRepository.findById("draft-1")).resolves.toMatchObject({
@@ -115,6 +127,7 @@ describe("CreateList", () => {
       title: "Autosave",
       isAutosaveDraft: true,
       status: "DRAFT",
+      providerId: "provider-mercadona",
       activatedAt: undefined,
       isEditing: false,
       items: [],

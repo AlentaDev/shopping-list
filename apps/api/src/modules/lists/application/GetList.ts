@@ -1,7 +1,8 @@
 import type { ListRepository } from "./ports.js";
-import type { ListStatus } from "../domain/list.js";
+import { resolveListProviderId, type ListStatus } from "../domain/list.js";
 import { ListForbiddenError, ListNotFoundError } from "./errors.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
+import { toListProviderDto, type ListProviderDto } from "./providerDto.js";
 
 type ListDetail = {
   id: string;
@@ -12,6 +13,8 @@ type ListDetail = {
   items: ListItemDto[];
   updatedAt: string;
   status: ListStatus;
+  providerId: string;
+  provider: ListProviderDto;
 };
 
 export class GetList {
@@ -27,6 +30,8 @@ export class GetList {
       throw new ListForbiddenError();
     }
 
+    const providerId = resolveListProviderId(list.providerId);
+
     return {
       id: list.id,
       title: list.title,
@@ -36,6 +41,8 @@ export class GetList {
       items: list.items.map((item) => toListItemDto(item)),
       updatedAt: list.updatedAt.toISOString(),
       status: list.status,
+      providerId,
+      provider: toListProviderDto(providerId),
     };
   }
 }

@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  ensureProviderCanChange,
+  ListProviderInvariantError,
   ListEditingStateInvariantError,
   normalizeEditingState,
+  resolveListProviderId,
+  resolveListProviderSlug,
 } from "./list.js";
 
 describe("normalizeEditingState", () => {
@@ -95,5 +99,64 @@ describe("normalizeEditingState", () => {
         editingTargetListId: null,
       }),
     ).toThrow(ListEditingStateInvariantError);
+  });
+});
+
+describe("ensureProviderCanChange", () => {
+  it("treats FK id and legacy mercadona slug as the same provider", () => {
+    expect(() =>
+      ensureProviderCanChange({
+        status: "ACTIVE",
+        itemCount: 1,
+        currentProviderId: "provider-mercadona",
+        nextProviderId: "mercadona",
+      }),
+    ).not.toThrow();
+  });
+
+  it("allows provider change for empty draft", () => {
+    expect(() =>
+      ensureProviderCanChange({
+        status: "DRAFT",
+        itemCount: 0,
+        currentProviderId: "mercadona",
+        nextProviderId: "carrefour",
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects provider change for non-empty draft", () => {
+    expect(() =>
+      ensureProviderCanChange({
+        status: "DRAFT",
+        itemCount: 1,
+        currentProviderId: "mercadona",
+        nextProviderId: "carrefour",
+      }),
+    ).toThrow(ListProviderInvariantError);
+  });
+
+  it.each(["ACTIVE", "COMPLETED"] as const)(
+    "rejects provider change for %s lists",
+    (status) => {
+      expect(() =>
+        ensureProviderCanChange({
+          status,
+          itemCount: 0,
+          currentProviderId: "mercadona",
+          nextProviderId: "carrefour",
+        }),
+      ).toThrow(ListProviderInvariantError);
+    },
+  );
+});
+
+describe("provider reference resolution", () => {
+  it("normalizes legacy mercadona slug to provider FK id", () => {
+    expect(resolveListProviderId("mercadona")).toBe("provider-mercadona");
+  });
+
+  it("resolves mercadona slug from FK id", () => {
+    expect(resolveListProviderSlug("provider-mercadona")).toBe("mercadona");
   });
 });

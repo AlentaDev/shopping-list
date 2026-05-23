@@ -7,6 +7,7 @@ const createList = (overrides: Partial<List> = {}): List => ({
   id: "list-1",
   ownerUserId: "user-1",
   title: "Groceries",
+  providerId: "provider-mercadona",
   isAutosaveDraft: false,
   status: "ACTIVE",
   activatedAt: undefined,
@@ -107,6 +108,11 @@ describe("ListLists", () => {
         activatedAt: null,
         isEditing: false,
         updatedAt: "2024-02-01T10:00:00.000Z",
+        providerId: "provider-mercadona",
+        provider: {
+          slug: "mercadona",
+          displayName: "Mercadona",
+        },
       },
     ]);
   });
@@ -156,6 +162,11 @@ describe("ListLists", () => {
         activatedAt: "2024-02-03T10:00:00.000Z",
         isEditing: false,
         updatedAt: "2024-02-03T11:00:00.000Z",
+        providerId: "provider-mercadona",
+        provider: {
+          slug: "mercadona",
+          displayName: "Mercadona",
+        },
       },
       {
         id: "list-completed",
@@ -165,6 +176,11 @@ describe("ListLists", () => {
         activatedAt: null,
         isEditing: false,
         updatedAt: "2024-02-04T10:00:00.000Z",
+        providerId: "provider-mercadona",
+        provider: {
+          slug: "mercadona",
+          displayName: "Mercadona",
+        },
       },
     ]);
   });
@@ -237,5 +253,41 @@ describe("ListLists", () => {
     const result = await listLists.execute("user-1");
 
     expect(result.lists.map((list) => list.id)).toEqual(["list-active"]);
+    expect(result.lists[0]?.providerId).toBe("provider-mercadona");
+    expect(result.lists[0]?.provider).toEqual({
+      slug: "mercadona",
+      displayName: "Mercadona",
+    });
+  });
+
+  it("falls back providerId to mercadona for legacy lists", async () => {
+    const activeWithoutProvider = {
+      ...createList({
+        id: "list-active",
+        status: "ACTIVE",
+      }),
+      providerId: undefined,
+    } as unknown as List;
+    const listRepository: ListRepository = {
+      listByOwner: vi.fn(async () => [activeWithoutProvider] as List[]),
+      findById: vi.fn(async () => null),
+      save: vi.fn(async () => undefined),
+      deleteById: vi.fn(async () => undefined),
+      backfillMissingProvider: vi.fn(async () => 0),
+    };
+    const listLists = new ListLists(listRepository);
+
+    const result = await listLists.execute("user-1", { status: "ACTIVE" });
+
+    expect(result.lists).toEqual([
+      expect.objectContaining({
+        id: "list-active",
+        providerId: "provider-mercadona",
+        provider: {
+          slug: "mercadona",
+          displayName: "Mercadona",
+        },
+      }),
+    ]);
   });
 });

@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { LIST_STATUSES } from "../domain/list.js";
+import { providerIdSchema } from "@src/modules/catalog/api/schemas.js";
 
 export const createListSchema = z.object({
   title: z.string().trim().min(3).max(35),
 });
 
 export const addCatalogItemSchema = z.object({
-  source: z.literal("mercadona"),
+  source: providerIdSchema,
+  provider: providerIdSchema,
   productId: z.string().min(1),
   qty: z.number().int().min(1).max(99).optional(),
 });
@@ -46,7 +48,7 @@ const autosaveCatalogItemSchema = z.object({
   name: z.string().min(1).max(120),
   qty: z.number().int().min(1).max(99),
   checked: z.boolean(),
-  source: z.literal("mercadona"),
+  source: providerIdSchema,
   sourceProductId: z.string().min(1),
   thumbnail: z.string().optional().nullable(),
   price: z.number().optional().nullable(),

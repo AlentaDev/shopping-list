@@ -5,6 +5,7 @@ export type ListRepository = {
   listByOwner(ownerUserId: string): Promise<List[]>;
   save(list: List): Promise<void>;
   deleteById(id: string): Promise<void>;
+  backfillMissingProvider(providerId: string): Promise<number>;
 };
 
 export type IdGenerator = {

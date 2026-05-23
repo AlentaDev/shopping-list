@@ -1,5 +1,6 @@
 import type { ListRepository } from "./ports.js";
-import type { List, ListStatus } from "../domain/list.js";
+import { resolveListProviderId, type List, type ListStatus } from "../domain/list.js";
+import { toListProviderDto, type ListProviderDto } from "./providerDto.js";
 
 type ListSummary = {
   id: string;
@@ -9,6 +10,8 @@ type ListSummary = {
   isEditing: boolean;
   updatedAt: string;
   status: ListStatus;
+  providerId: string;
+  provider: ListProviderDto;
 };
 
 type ListListsResult = {
@@ -48,6 +51,8 @@ export class ListLists {
           isEditing: list.isEditing,
           updatedAt: list.updatedAt.toISOString(),
           status: list.status,
+          providerId: resolveListProviderId(list.providerId),
+          provider: toListProviderDto(resolveListProviderId(list.providerId)),
         })),
     };
   }

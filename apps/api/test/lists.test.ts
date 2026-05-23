@@ -90,7 +90,7 @@ describe("lists endpoints", () => {
     {
       method: "post",
       path: "/api/lists/any-list/items/from-catalog",
-      body: { source: "mercadona", productId: "123" },
+      body: { source: "mercadona", provider: "mercadona", productId: "123" },
     },
   ])("%s returns 401 without session", async ({ method, path, body }) => {
     const app = createApp();
@@ -116,11 +116,40 @@ describe("lists endpoints", () => {
       id: expect.any(String),
       title: "Groceries",
       status: "DRAFT",
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
       itemCount: 0,
       activatedAt: null,
       isEditing: false,
       updatedAt: expect.any(String),
     });
+  });
+
+  it("POST /api/lists normaliza provider legacy mercadona y mantiene flujo operable", async () => {
+    const app = createAppWithCatalogProvider(catalogProvider);
+    const cookie = await loginUser(app, defaultUser);
+
+    const createResponse = await request(app)
+      .post("/api/lists")
+      .set("Cookie", cookie)
+      .send({ title: "Legacy", providerId: "mercadona" });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body.providerId).toBe("provider-mercadona");
+    expect(createResponse.body.provider).toEqual({
+      slug: "mercadona",
+      displayName: "Mercadona",
+    });
+
+    const addResponse = await request(app)
+      .post(`/api/lists/${createResponse.body.id}/items/from-catalog`)
+      .set("Cookie", cookie)
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
+
+    expect(addResponse.status).toBe(201);
   });
 
   it("GET /api/lists returns lists for the authenticated user", async () => {
@@ -164,6 +193,11 @@ describe("lists endpoints", () => {
       isEditing: false,
       updatedAt: expect.any(String),
       status: "DRAFT",
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
     });
   });
 
@@ -221,7 +255,7 @@ describe("lists endpoints", () => {
     const itemResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     const response = await request(app)
       .patch(`/api/lists/${listResponse.body.id}/items/${itemResponse.body.id}`)
@@ -255,7 +289,7 @@ describe("lists endpoints", () => {
     const itemResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     const deleteResponse = await request(app)
       .delete(
@@ -296,7 +330,7 @@ describe("lists endpoints", () => {
     const invalidItemResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "", qty: 0 });
+      .send({ source: "mercadona", provider: "mercadona", productId: "", qty: 0 });
 
     expect(invalidItemResponse.status).toBe(400);
     expect(invalidItemResponse.body).toEqual({
@@ -312,7 +346,7 @@ describe("lists endpoints", () => {
     const response = await request(app)
       .post("/api/lists/missing/items/from-catalog")
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: "list_not_found" });
@@ -337,7 +371,7 @@ describe("lists endpoints", () => {
     const response = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", otherCookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     expect(response.status).toBe(403);
     expect(response.body).toEqual({ error: "forbidden" });
@@ -355,7 +389,7 @@ describe("lists endpoints", () => {
     const response = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 2 });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123", qty: 2 });
 
     expect(response.status).toBe(201);
     expect(response.body).toEqual({
@@ -390,7 +424,7 @@ describe("lists endpoints", () => {
     const defaultQtyResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     expect(defaultQtyResponse.status).toBe(201);
     expect(defaultQtyResponse.body).toEqual(
@@ -400,7 +434,7 @@ describe("lists endpoints", () => {
     const invalidMinResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 0 });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123", qty: 0 });
 
     expect(invalidMinResponse.status).toBe(400);
     expect(invalidMinResponse.body).toEqual({
@@ -411,7 +445,7 @@ describe("lists endpoints", () => {
     const invalidMaxResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 100 });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123", qty: 100 });
 
     expect(invalidMaxResponse.status).toBe(400);
     expect(invalidMaxResponse.body).toEqual({
@@ -444,7 +478,7 @@ describe("lists endpoints", () => {
     const response = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     expect(response.status).toBe(502);
     expect(response.body).toEqual({ error: "catalog_provider_failed" });
@@ -462,12 +496,12 @@ describe("lists endpoints", () => {
     const catalogResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     const catalogResponseTwo = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123", qty: 2 });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123", qty: 2 });
 
     const response = await request(app)
       .get(`/api/lists/${listResponse.body.id}`)
@@ -478,6 +512,11 @@ describe("lists endpoints", () => {
       id: listResponse.body.id,
       title: "Weekly",
       status: "DRAFT",
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
       itemCount: 2,
       activatedAt: null,
       isEditing: false,
@@ -535,7 +574,7 @@ describe("lists endpoints", () => {
     const itemResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -587,7 +626,7 @@ describe("lists endpoints", () => {
     await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", ownerCookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -615,7 +654,7 @@ describe("lists endpoints", () => {
     await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -667,7 +706,7 @@ describe("lists endpoints", () => {
     await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -738,7 +777,7 @@ describe("lists endpoints", () => {
     await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -821,7 +860,7 @@ describe("lists endpoints", () => {
     await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)
@@ -1058,7 +1097,7 @@ describe("lists endpoints", () => {
     const itemResponse = await request(app)
       .post(`/api/lists/${listResponse.body.id}/items/from-catalog`)
       .set("Cookie", cookie)
-      .send({ source: "mercadona", productId: "123" });
+      .send({ source: "mercadona", provider: "mercadona", productId: "123" });
 
     await request(app)
       .patch(`/api/lists/${listResponse.body.id}/activate`)

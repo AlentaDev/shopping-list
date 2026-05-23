@@ -138,7 +138,7 @@ describe("catalog endpoints", () => {
     } as CatalogProvider;
   }
 
-  it("GET /api/catalog/categories returns mapped root categories", async () => {
+  it("GET /api/catalog/:provider/categories returns mapped root categories", async () => {
     const provider = createProvider();
     const app = createApp({
       catalogModule: createCatalogModule({
@@ -147,13 +147,13 @@ describe("catalog endpoints", () => {
       }),
     });
 
-    const response = await request(app).get("/api/catalog/categories");
+    const response = await request(app).get("/api/catalog/mercadona/categories");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mappedRootCategories);
   });
 
-  it("GET /api/catalog/categories/:id returns mapped category detail", async () => {
+  it("GET /api/catalog/:provider/categories/:id returns mapped category detail", async () => {
     const provider = createProvider();
     const app = createApp({
       catalogModule: createCatalogModule({
@@ -162,7 +162,7 @@ describe("catalog endpoints", () => {
       }),
     });
 
-    const response = await request(app).get("/api/catalog/categories/12");
+    const response = await request(app).get("/api/catalog/mercadona/categories/12");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mappedCategoryDetail);
@@ -179,7 +179,7 @@ describe("catalog endpoints", () => {
       catalogModule: createCatalogModule({ provider, cache }),
     });
 
-    const response = await request(app).get("/api/catalog/categories");
+    const response = await request(app).get("/api/catalog/mercadona/categories");
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mappedRootCategories);
@@ -196,7 +196,7 @@ describe("catalog endpoints", () => {
       }),
     });
 
-    const response = await request(app).get("/api/catalog/categories/12");
+    const response = await request(app).get("/api/catalog/mercadona/categories/12");
 
     expect(response.status).toBe(502);
     expect(response.body).toEqual({ error: "catalog_provider_unavailable" });

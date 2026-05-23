@@ -243,6 +243,7 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       const response = await deps.addCatalogItem.execute({
         userId,
         listId: params.id,
+        provider: input.provider,
         productId: input.productId,
         qty: input.qty,
       });

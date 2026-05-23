@@ -8,6 +8,7 @@ const createDraftList = (): List => ({
   id: "list-1",
   ownerUserId: "user-1",
   title: "Draft list",
+  providerId: "provider-mercadona",
   isAutosaveDraft: true,
   status: "DRAFT",
   activatedAt: undefined,
@@ -35,6 +36,7 @@ describe("AddCatalogItem", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Done list",
+      providerId: "provider-mercadona",
       isAutosaveDraft: false,
       status: "COMPLETED",
       activatedAt: undefined,
@@ -50,6 +52,7 @@ describe("AddCatalogItem", () => {
       useCase.execute({
         userId: "user-1",
         listId: "list-1",
+        provider: "mercadona",
         productId: "sku-1",
       }),
     ).rejects.toBeInstanceOf(ListStatusTransitionError);
@@ -104,6 +107,7 @@ describe("AddCatalogItem", () => {
     const result = await useCase.execute({
       userId: "user-1",
       listId: "list-1",
+      provider: "mercadona",
       productId: "4706",
     });
 
@@ -158,6 +162,7 @@ describe("AddCatalogItem", () => {
     const result = await useCase.execute({
       userId: "user-1",
       listId: "list-1",
+      provider: "mercadona",
       productId: "4706",
     });
 
@@ -192,10 +197,44 @@ describe("AddCatalogItem", () => {
     const result = await useCase.execute({
       userId: "user-1",
       listId: "list-1",
+      provider: "mercadona",
       productId: "4706",
     });
 
     expect(result.categorySnapshot).toBe("Sin categoría");
     expect(result.subcategorySnapshot).toBeNull();
+  });
+
+  it("accepts catalog mutations when provider is resolved from FK id", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: vi.fn().mockReturnValue("item-1") };
+    const catalogProvider = {
+      getProduct: vi.fn(async () => ({
+        id: "4706",
+        display_name: "Leche",
+        thumbnail: null,
+        price_instructions: {
+          unit_price: 1.5,
+          bulk_price: 1.5,
+        },
+      })),
+      getRootCategories: vi.fn(),
+      getCategoryDetail: vi.fn(),
+    };
+    const useCase = new AddCatalogItem(
+      listRepository,
+      idGenerator,
+      catalogProvider,
+    );
+    await listRepository.save(createDraftList());
+
+    await expect(
+      useCase.execute({
+        userId: "user-1",
+        listId: "list-1",
+        provider: "mercadona",
+        productId: "4706",
+      }),
+    ).resolves.toMatchObject({ id: "item-1" });
   });
 });
