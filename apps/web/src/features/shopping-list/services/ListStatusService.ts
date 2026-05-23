@@ -5,7 +5,7 @@ import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
 import type { ListStatusSummary } from "./types";
 import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 import { saveAlignedEmptyLocalDraft } from "./AutosaveService";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 
 const LISTS_ENDPOINT = "/api/lists";
 

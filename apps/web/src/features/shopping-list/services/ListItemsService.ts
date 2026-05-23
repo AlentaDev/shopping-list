@@ -1,4 +1,4 @@
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 type DeleteListItemInput = {
   listId: string;
   itemId: string;

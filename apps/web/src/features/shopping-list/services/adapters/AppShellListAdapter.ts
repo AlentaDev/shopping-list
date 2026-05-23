@@ -14,6 +14,22 @@ type AppShellListItemPayload = {
   price?: number | null;
 };
 
+type AppShellListPayload = {
+  id: string;
+  title: string;
+  status?: string;
+  isEditing: boolean;
+  items: AppShellListItemPayload[];
+};
+
+export type AppShellShoppingListState = {
+  listId: string;
+  listTitle: string;
+  listStatus: ShoppingListStatus;
+  isEditing: boolean;
+  items: ShoppingListItem[];
+};
+
 export const adaptListDetailItemsToShoppingListItems = (
   items: AppShellListItemPayload[],
 ): ShoppingListItem[] =>
@@ -42,3 +58,13 @@ export const adaptListStatusToShoppingListStatus = (
       return LIST_STATUS.DRAFT;
   }
 };
+
+export const adaptListToShoppingListState = (
+  list: AppShellListPayload,
+): AppShellShoppingListState => ({
+  listId: list.id,
+  listTitle: list.title,
+  listStatus: adaptListStatusToShoppingListStatus(list.status),
+  isEditing: list.isEditing,
+  items: adaptListDetailItemsToShoppingListItems(list.items),
+});

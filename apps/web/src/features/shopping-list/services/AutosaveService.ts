@@ -8,7 +8,7 @@ import {
   adaptAutosaveResponse,
   adaptAutosaveSummaryResponse,
 } from "./adapters/AutosaveAdapter";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 
 
 export class AutosaveConflictError extends Error {

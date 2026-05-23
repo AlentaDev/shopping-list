@@ -46,6 +46,22 @@ type AuthSyncEvent = {
 
 const AUTH_TAB_SYNC_KEY = "auth.tabSync";
 
+const isAuthSyncEvent = (value: unknown): value is AuthSyncEvent => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
+  return (
+    (candidate.type === "login" ||
+      candidate.type === "register" ||
+      candidate.type === "logout") &&
+    typeof candidate.timestamp === "number" &&
+    typeof candidate.sourceTabId === "string"
+  );
+};
+
 function createTabId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -129,7 +145,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      const parsedEvent = JSON.parse(storageEvent.newValue) as AuthSyncEvent;
+      let parsedValue: unknown;
+
+      try {
+        parsedValue = JSON.parse(storageEvent.newValue);
+      } catch {
+        return;
+      }
+
+      if (!isAuthSyncEvent(parsedValue)) {
+        return;
+      }
+
+      const parsedEvent = parsedValue as AuthSyncEvent;
       onSyncEvent(parsedEvent);
     };
 

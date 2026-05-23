@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { AUTH_401_RETRY_PRESETS, fetchWithAuth } from "./fetchWithAuth";
 
 describe("fetchWithAuth", () => {
@@ -7,6 +9,14 @@ describe("fetchWithAuth", () => {
     vi.spyOn(console, "info").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  it("keeps shared/http entrypoint as a thin shim without runtime fetch logic", () => {
+    const source = readFileSync(join(__dirname, "fetchWithAuth.ts"), "utf-8");
+
+    expect(source).not.toContain("fetchWithAuthInternal");
+    expect(source).not.toContain("executeRequest");
+    expect(source).not.toContain("fetch(");
   });
 
   it("returns the original response when status is not 401", async () => {

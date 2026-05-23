@@ -1,5 +1,5 @@
 import { getDeviceFingerprint } from "@src/shared/utils/deviceFingerprint";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import {
   mapHttpErrorToDomainError,
   type HttpDomainError,

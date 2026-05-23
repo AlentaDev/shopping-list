@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
 
-vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
   fetchWithAuth: vi.fn(),
 }));
 

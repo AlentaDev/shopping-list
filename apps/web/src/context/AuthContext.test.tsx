@@ -610,6 +610,78 @@ describe("AuthProvider", () => {
     });
   });
 
+  it("ignora payload JSON inválido en storage auth.tabSync sin romper el provider", async () => {
+    globalThis.BroadcastChannel = undefined as never;
+    vi.mocked(getCurrentUser).mockResolvedValueOnce({
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "auth.tabSync",
+          newValue: "{invalid-json",
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+      expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("ignora payload con shape inválido en storage auth.tabSync", async () => {
+    globalThis.BroadcastChannel = undefined as never;
+    vi.mocked(getCurrentUser).mockResolvedValueOnce({
+      id: "1",
+      name: TEST_NAME,
+      email: TEST_EMAIL,
+      postalCode: TEST_POSTAL_CODE,
+    });
+
+    render(
+      <AuthProvider>
+        <TestComponent />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+    });
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "auth.tabSync",
+          newValue: JSON.stringify({
+            type: "unknown",
+            timestamp: "not-a-number",
+            sourceTabId: 123,
+          }),
+        }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("authUser")).toHaveTextContent(TEST_EMAIL);
+      expect(getCurrentUser).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("sincroniza login entre pestañas y actualiza authUser en la pestaña secundaria", async () => {
     const tabAUser = {
       id: "1",

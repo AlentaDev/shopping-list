@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "@src/app-shell/AppShell";
-import type { ListDetail } from "@src/features/lists/services/types";
+import type { ListDetail } from "@src/features/lists";
 
 type ShoppingListMockProps = {
   isOpen: boolean;
@@ -15,15 +15,35 @@ type ShoppingListMockProps = {
 const shoppingListSpy = vi.fn();
 
 const adapterMocks = vi.hoisted(() => ({
-  adaptListDetailItemsToShoppingListItemsMock: vi.fn((items) => items),
+  adaptListToShoppingListStateMock: vi.fn((list) => ({
+    listId: list.id,
+    listTitle: list.title,
+    listStatus: "ACTIVE",
+    isEditing: list.isEditing,
+    items: list.items,
+  })),
   adaptListStatusToShoppingListStatusMock: vi.fn(() => "ACTIVE"),
 }));
 
-vi.mock("@src/features/shopping-list/services/adapters/AppShellListAdapter", () => ({
-  adaptListDetailItemsToShoppingListItems:
-    adapterMocks.adaptListDetailItemsToShoppingListItemsMock,
+vi.mock("@src/features/shopping-list", () => ({
+  adaptListToShoppingListState: adapterMocks.adaptListToShoppingListStateMock,
   adaptListStatusToShoppingListStatus:
     adapterMocks.adaptListStatusToShoppingListStatusMock,
+  ShoppingList: (props: ShoppingListMockProps) => {
+    shoppingListSpy(props);
+
+    return (
+      <div>
+        <span data-testid="shopping-list-open">{String(props.isOpen)}</span>
+        <span data-testid="shopping-list-editing">
+          {String(props.initialIsEditing)}
+        </span>
+        <button type="button" onClick={props.onClose}>
+          close-shopping-list
+        </button>
+      </div>
+    );
+  },
 }));
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
@@ -91,33 +111,19 @@ vi.mock("@src/app-shell/components/AppHeader", () => ({
   ),
 }));
 
-vi.mock("@src/features/shopping-list/ShoppingList", () => ({
-  default: (props: ShoppingListMockProps) => {
-    shoppingListSpy(props);
-
-    return (
-      <div>
-        <span data-testid="shopping-list-open">{String(props.isOpen)}</span>
-        <span data-testid="shopping-list-editing">
-          {String(props.initialIsEditing)}
-        </span>
-        <button type="button" onClick={props.onClose}>
-          close-shopping-list
-        </button>
-      </div>
-    );
-  },
-}));
-
 describe("AppShell editing session persistence", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.pushState({}, "", "/");
-    adapterMocks.adaptListDetailItemsToShoppingListItemsMock.mockReset();
+    adapterMocks.adaptListToShoppingListStateMock.mockReset();
     adapterMocks.adaptListStatusToShoppingListStatusMock.mockReset();
-    adapterMocks.adaptListDetailItemsToShoppingListItemsMock.mockImplementation(
-      (items) => items,
-    );
+    adapterMocks.adaptListToShoppingListStateMock.mockImplementation((list) => ({
+      listId: list.id,
+      listTitle: list.title,
+      listStatus: "ACTIVE",
+      isEditing: list.isEditing,
+      items: list.items,
+    }));
     adapterMocks.adaptListStatusToShoppingListStatusMock.mockImplementation(
       () => "ACTIVE",
     );
@@ -159,20 +165,21 @@ describe("AppShell editing session persistence", () => {
 
     await user.click(screen.getByRole("button", { name: "open-editing-list" }));
 
-    expect(
-      adapterMocks.adaptListDetailItemsToShoppingListItemsMock,
-    ).toHaveBeenCalledWith([
-      {
-        id: "item-1",
-        kind: "catalog",
-        name: "Pan",
-        qty: 2,
-        checked: false,
-        updatedAt: "2024-02-01T10:00:00.000Z",
-      },
-    ]);
-    expect(adapterMocks.adaptListStatusToShoppingListStatusMock).toHaveBeenCalledWith(
-      "ACTIVE",
-    );
+    expect(adapterMocks.adaptListToShoppingListStateMock).toHaveBeenCalledWith({
+      id: "active-list-1",
+      title: "Lista activa",
+      status: "ACTIVE",
+      isEditing: true,
+      items: [
+        {
+          id: "item-1",
+          kind: "catalog",
+          name: "Pan",
+          qty: 2,
+          checked: false,
+          updatedAt: "2024-02-01T10:00:00.000Z",
+        },
+      ],
+    });
   });
 });

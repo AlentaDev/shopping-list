@@ -1,5 +1,5 @@
 import type { CatalogCategoryDetail, GetRootCategoriesResponse } from "./types";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import {
   adaptCategoryDetailResponse,
   adaptRootCategoriesResponse,

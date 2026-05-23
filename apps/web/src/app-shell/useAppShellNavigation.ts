@@ -1,6 +1,6 @@
 import { createElement, useCallback, useEffect, useMemo, useState } from "react";
 import Catalog from "@src/features/catalog/Catalog";
-import { ListsContainer } from "@src/features/lists";
+import { ListsContainer, type ListDetail, type ListSummary } from "@src/features/lists";
 import {
   AuthLoggedInNotice,
   AuthScreen,
@@ -8,7 +8,6 @@ import {
 } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
-import type { ListDetail, ListSummary } from "@src/features/lists/services/types";
 import type { AuthUser } from "@src/context";
 
 const LOGIN_PATH = "/auth/login";

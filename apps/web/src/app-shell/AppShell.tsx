@@ -1,5 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import ShoppingList from "@src/features/shopping-list/ShoppingList";
+import {
+  ShoppingList,
+  adaptListStatusToShoppingListStatus,
+  adaptListToShoppingListState,
+} from "@src/features/shopping-list";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import Toast from "@src/shared/components/toast/Toast";
@@ -11,15 +15,11 @@ import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
   ListDetail,
   ListSummary,
-} from "@src/features/lists/services/types";
+} from "@src/features/lists";
 import {
   LIST_STATUS,
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
-import {
-  adaptListDetailItemsToShoppingListItems,
-  adaptListStatusToShoppingListStatus,
-} from "@src/features/shopping-list/services/adapters/AppShellListAdapter";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
 const CATALOG_PATH = "/";
@@ -100,12 +100,14 @@ export const AppShell = () => {
   };
 
   const handleOpenList = (list: ListDetail) => {
-    setItems(adaptListDetailItemsToShoppingListItems(list.items));
-    setCurrentListId(list.id);
-    setCurrentListStatus(adaptListStatusToShoppingListStatus(list.status));
-    setCurrentListTitle(list.title);
+    const shoppingListState = adaptListToShoppingListState(list);
+
+    setItems(shoppingListState.items);
+    setCurrentListId(shoppingListState.listId);
+    setCurrentListStatus(shoppingListState.listStatus);
+    setCurrentListTitle(shoppingListState.listTitle);
     setIsListLoading(false);
-    setCurrentListIsEditing(list.isEditing);
+    setCurrentListIsEditing(shoppingListState.isEditing);
     setIsCartOpen(true);
   };
 

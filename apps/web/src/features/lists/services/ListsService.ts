@@ -6,7 +6,7 @@ import {
   adaptListSummaryResponse,
 } from "./adapters/ListAdapter";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import type {
   ListCollection,
   ListDetail,

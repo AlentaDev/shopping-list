@@ -1,6 +1,6 @@
 import type { ShoppingListItem } from "../types";
 import { adaptShoppingListItems } from "./adapters/ShoppingListItemAdapter";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
 type ListActionOptions = {

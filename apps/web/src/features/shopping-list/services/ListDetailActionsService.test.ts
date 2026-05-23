@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchWithAuth } from "@src/shared/services/http/fetchWithAuth";
+import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import {
   cancelListEditing,
   deleteList,
@@ -8,7 +8,7 @@ import {
   startListEditing,
 } from "./ListDetailActionsService";
 
-vi.mock("@src/shared/services/http/fetchWithAuth", () => ({
+vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
   fetchWithAuth: vi.fn(),
 }));
 

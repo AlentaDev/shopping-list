@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { AppShell as canonicalAppShell } from "@src/app-shell/AppShell";
-import { AppShell as compatibilityAppShell } from "./index";
+import { AppShell as compatibilityAppShell } from "../features/app-shell";
 
-const WEB_SRC_ROOT = join(__dirname, "..", "..");
+const WEB_SRC_ROOT = join(__dirname, "..");
 const ALLOWED_FALLBACK_FILE = "features/app-shell/index.ts";
 const LEGACY_APP_SHELL_DIR = join(WEB_SRC_ROOT, "features", "app-shell");
-const ALLOWED_FEATURE_APP_SHELL_FILES = ["index.ts", "index.test.ts"] as const;
+const ALLOWED_FEATURE_APP_SHELL_FILES = ["index.ts"] as const;
 
 const LEGACY_TEST_FILES = [
   "AppShell.test.tsx",
@@ -91,5 +91,29 @@ describe("app shell compatibility entrypoint", () => {
       .sort();
 
     expect(featureFiles).toEqual([...ALLOWED_FEATURE_APP_SHELL_FILES].sort());
+  });
+
+  it("blocks app-shell imports from feature service internals", () => {
+    const APP_SHELL_DIR = join(WEB_SRC_ROOT, "app-shell");
+    const forbiddenImportPattern =
+      /from\s+["']@src\/features\/[^/]+\/services(?:\/[^"']*)?["']/;
+
+    const offenders = listSourceFiles(APP_SHELL_DIR)
+      .map((filePath) => ({
+        relativePath: relative(WEB_SRC_ROOT, filePath).replaceAll("\\", "/"),
+        content: readFileSync(filePath, "utf-8"),
+      }))
+      .filter(({ relativePath, content }) => {
+        const isTestFile = relativePath.endsWith(".test.ts") || relativePath.endsWith(".test.tsx");
+
+        if (isTestFile) {
+          return false;
+        }
+
+        return forbiddenImportPattern.test(content);
+      })
+      .map(({ relativePath }) => relativePath);
+
+    expect(offenders).toEqual([]);
   });
 });
