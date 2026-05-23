@@ -39,6 +39,19 @@
     <string name="lists_retry_button">Reintentar</string>
     <string name="debug_health_check_button">Health Check</string>
 
+    <!-- API Config -->
+    <string name="api_config_title">⚙️ Configuración de API</string>
+    <string name="api_config_current_url_label">URL actual:</string>
+    <string name="api_config_quick_options_label">Opciones rápidas:</string>
+    <string name="api_config_emulator_option">Emulador (10.0.2.2)</string>
+    <string name="api_config_localhost_option">Localhost</string>
+    <string name="api_config_loopback_option">127.0.0.1</string>
+    <string name="api_config_custom_url_label">URL personalizada:</string>
+    <string name="api_config_custom_url_example">Ej: http://192.168.1.100:3000</string>
+    <string name="api_config_save_url_button">Guardar URL</string>
+    <string name="api_config_tips_title">💡 Tips de configuración:</string>
+    <string name="api_config_tips_body">• Emulador: http://10.0.2.2:3000\n• Dispositivo físico: obtén tu IP con \'ipconfig\' (cmd)\n• Asegúrate que el firewall permite la conexión\n• El servidor debe estar corriendo en tu máquina</string>
+
     <!-- List Detail -->
     <string name="detail_title">Detalle de Lista</string>
     <string name="detail_back_button">Volver</string>

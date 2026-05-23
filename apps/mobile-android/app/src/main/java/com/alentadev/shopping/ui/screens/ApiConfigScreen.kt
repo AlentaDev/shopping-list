@@ -9,8 +9,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.alentadev.shopping.R
 
 @Composable
 fun ApiConfigScreen(
@@ -30,7 +32,7 @@ fun ApiConfigScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "⚙️ Configuración de API",
+            text = stringResource(R.string.api_config_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
@@ -49,7 +51,7 @@ fun ApiConfigScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "URL actual:",
+                    text = stringResource(R.string.api_config_current_url_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -66,7 +68,7 @@ fun ApiConfigScreen(
 
         // Opciones preestablecidas
         Text(
-            text = "Opciones rápidas:",
+            text = stringResource(R.string.api_config_quick_options_label),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -76,9 +78,9 @@ fun ApiConfigScreen(
 
         // Botones de opciones
         val options = listOf(
-            "Emulador (10.0.2.2)" to "http://10.0.2.2:3000",
-            "Localhost" to "http://localhost:3000",
-            "127.0.0.1" to "http://127.0.0.1:3000"
+            stringResource(R.string.api_config_emulator_option) to "http://10.0.2.2:3000",
+            stringResource(R.string.api_config_localhost_option) to "http://localhost:3000",
+            stringResource(R.string.api_config_loopback_option) to "http://127.0.0.1:3000"
         )
 
         options.forEach { (label, url) ->
@@ -106,7 +108,7 @@ fun ApiConfigScreen(
 
         // Campo personalizado
         Text(
-            text = "URL personalizada:",
+            text = stringResource(R.string.api_config_custom_url_label),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -117,7 +119,7 @@ fun ApiConfigScreen(
         OutlinedTextField(
             value = urlInput,
             onValueChange = { urlInput = it },
-            label = { Text("Ej: http://192.168.1.100:3000") },
+            label = { Text(stringResource(R.string.api_config_custom_url_example)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
@@ -137,7 +139,7 @@ fun ApiConfigScreen(
                 .padding(vertical = 8.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Guardar URL")
+            Text(stringResource(R.string.api_config_save_url_button))
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -154,17 +156,14 @@ fun ApiConfigScreen(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "💡 Tips de configuración:",
+                    text = stringResource(R.string.api_config_tips_title),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "• Emulador: http://10.0.2.2:3000\n" +
-                            "• Dispositivo físico: obtén tu IP con 'ipconfig' (cmd)\n" +
-                            "• Asegúrate que el firewall permite la conexión\n" +
-                            "• El servidor debe estar corriendo en tu máquina",
+                    text = stringResource(R.string.api_config_tips_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -172,4 +171,3 @@ fun ApiConfigScreen(
         }
     }
 }
-
