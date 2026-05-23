@@ -6,6 +6,7 @@ import { RefreshAccessToken } from "../application/refreshAccessToken.js";
 import { InvalidRefreshTokenError } from "../application/errors.js";
 import { toPublicUser } from "@src/modules/users/public.js";
 import { AppError } from "@src/shared/errors/appError.js";
+import { getCookieFromRequest } from "@src/shared/web/cookies.js";
 import { loginSchema, signupSchema } from "./schemas.js";
 
 const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
@@ -137,23 +138,4 @@ function clearAuthCookies(res: Response) {
     ...COOKIE_OPTIONS,
     maxAge: 0,
   });
-}
-
-function getCookieFromRequest(
-  cookieHeader: string | undefined,
-  name: string,
-): string | null {
-  if (!cookieHeader) {
-    return null;
-  }
-
-  const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
-  for (const cookie of cookies) {
-    const [cookieName, ...rest] = cookie.split("=");
-    if (cookieName === name) {
-      return rest.join("=") || null;
-    }
-  }
-
-  return null;
 }

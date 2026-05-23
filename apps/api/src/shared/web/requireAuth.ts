@@ -3,6 +3,7 @@ import { AppError } from "@src/shared/errors/appError.js";
 import { API_ERROR_MESSAGES } from "@src/shared/constants/apiErrorMessages.js";
 import { verifyJwt } from "@src/shared/security/jwt.js";
 import { resolveAccessTokenSecret } from "@src/shared/config/env.js";
+import { getCookieFromRequest } from "@src/shared/web/cookies.js";
 
 const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 const ACCESS_TOKEN_SECRET = resolveAccessTokenSecret();
@@ -47,23 +48,4 @@ export function requireAuth(): RequestHandler {
       next(error);
     }
   };
-}
-
-function getCookieFromRequest(
-  cookieHeader: string | undefined,
-  name: string,
-): string | null {
-  if (!cookieHeader) {
-    return null;
-  }
-
-  const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
-  for (const cookie of cookies) {
-    const [cookieName, ...rest] = cookie.split("=");
-    if (cookieName === name) {
-      return rest.join("=") || null;
-    }
-  }
-
-  return null;
 }
