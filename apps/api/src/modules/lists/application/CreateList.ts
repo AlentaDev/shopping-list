@@ -29,11 +29,12 @@ export class CreateList {
     const lists = await this.listRepository.listByOwner(input.userId);
     const existingDraft = findLatestDraft(lists);
     const now = new Date();
+    const providerId = existingDraft?.providerId ?? DEFAULT_PROVIDER_ID;
     const list: List = {
       id: existingDraft?.id ?? this.idGenerator.generate(),
       ownerUserId: input.userId,
       title: input.title,
-      providerId: existingDraft?.providerId ?? DEFAULT_PROVIDER_ID,
+      providerId,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: [],
@@ -52,8 +53,8 @@ export class CreateList {
       isEditing: list.isEditing,
       updatedAt: list.updatedAt.toISOString(),
       status: list.status,
-      providerId: list.providerId,
-      provider: toListProviderDto(list.providerId),
+      providerId,
+      provider: toListProviderDto(providerId),
     };
   }
 }

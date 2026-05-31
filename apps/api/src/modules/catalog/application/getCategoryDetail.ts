@@ -9,6 +9,7 @@ import type {
 } from "../domain/catalogProvider.js";
 import type {
   CatalogProductSummary,
+  CatalogProviderRef,
   GetCategoryDetailResponse,
 } from "../domain/catalogTypes.js";
 
@@ -19,7 +20,8 @@ export class GetCategoryDetail {
   ) {}
 
   async execute(id: string): Promise<GetCategoryDetailResponse> {
-    const cacheKey = categoryDetailCacheKey(id);
+    const providerSlug = this.provider.metadata?.slug ?? "mercadona";
+    const cacheKey = categoryDetailCacheKey(providerSlug, id);
     const cached = this.cache.get<GetCategoryDetailResponse>(cacheKey);
     if (cached) {
       return cached;
@@ -27,7 +29,10 @@ export class GetCategoryDetail {
 
     try {
       const response = await this.provider.getCategoryDetail(id);
-      const mapped = mapCategoryDetail(response);
+      const mapped = mapCategoryDetail(
+        response,
+        toCatalogProviderRef(this.provider.metadata),
+      );
 
       this.cache.set(cacheKey, mapped, CATEGORY_DETAIL_TTL_MS);
       return mapped;
@@ -48,6 +53,7 @@ export class GetCategoryDetail {
 
 function mapCategoryDetail(
   response: MercadonaCategoryDetailResponse,
+  provider: CatalogProviderRef,
 ): GetCategoryDetailResponse {
   return {
     id: String(response.id),
@@ -55,12 +61,15 @@ function mapCategoryDetail(
     subcategories: response.categories.map((category) => ({
       id: String(category.id),
       name: category.name,
-      products: category.products.map(mapProduct),
+      products: category.products.map((product) => mapProduct(product, provider)),
     })),
   };
 }
 
-function mapProduct(product: MercadonaCategoryProduct): CatalogProductSummary {
+function mapProduct(
+  product: MercadonaCategoryProduct,
+  provider: CatalogProviderRef,
+): CatalogProductSummary {
   const priceInstructions = product.price_instructions;
   const unitPrice = Number(priceInstructions.unit_price);
   const bulkPrice = Number(priceInstructions.bulk_price);
@@ -76,5 +85,26 @@ function mapProduct(product: MercadonaCategoryProduct): CatalogProductSummary {
     unitFormat: priceInstructions.size_format ?? null,
     unitPrice: bulkPrice,
     isApproxSize: Boolean(priceInstructions.approx_size),
+    provider,
+  };
+}
+
+function toCatalogProviderRef(metadata: {
+  id: string;
+  slug: "mercadona" | "bonpreuesclat";
+  displayName?: string;
+} | undefined): CatalogProviderRef {
+  if (!metadata) {
+    return {
+      id: "provider-mercadona",
+      slug: "mercadona",
+      displayName: "mercadona",
+    };
+  }
+
+  return {
+    id: metadata.id,
+    slug: metadata.slug,
+    displayName: metadata.displayName ?? metadata.slug,
   };
 }
