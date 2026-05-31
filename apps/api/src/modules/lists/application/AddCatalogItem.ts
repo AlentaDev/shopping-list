@@ -7,10 +7,12 @@ import { resolveListProviderSlug } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 import {
+  DraftProviderConflictError,
   CatalogProviderError,
   ListForbiddenError,
   ListNotFoundError,
   ListStatusTransitionError,
+  ProviderPayloadContractError,
 } from "./errors.js";
 
 const DEFAULT_FALLBACK_CATEGORY = "Sin categoría";
@@ -19,6 +21,13 @@ type ProductCategoryNode = {
   name?: string;
   level?: number;
   categories?: ProductCategoryNode[];
+};
+
+type ProductCategoryPathNode = { name?: string | null };
+
+type ProductWithOptionalCategoryPath = MercadonaProductDetail & {
+  categoryPath?: ProductCategoryPathNode[];
+  price?: { amount?: number | null };
 };
 
 function readNodeName(node: ProductCategoryNode | null | undefined): string | null {
@@ -49,6 +58,46 @@ function readSnapshotsFromCategories(
   };
 }
 
+function readSnapshotsFromCategoryPath(
+  product: ProductWithOptionalCategoryPath,
+): { categorySnapshot: string | null; subcategorySnapshot: string | null } {
+  const categoryPath = product.categoryPath;
+  if (!Array.isArray(categoryPath) || categoryPath.length === 0) {
+    return { categorySnapshot: null, subcategorySnapshot: null };
+  }
+
+  const normalized = categoryPath
+    .map((node) => (typeof node?.name === "string" ? node.name.trim() : ""))
+    .filter((name) => name.length > 0);
+
+  if (normalized.length === 0) {
+    return { categorySnapshot: null, subcategorySnapshot: null };
+  }
+
+  if (normalized.length === 1) {
+    return { categorySnapshot: normalized[0], subcategorySnapshot: null };
+  }
+
+  return {
+    categorySnapshot: normalized[normalized.length - 2] ?? null,
+    subcategorySnapshot: normalized[normalized.length - 1] ?? null,
+  };
+}
+
+function readPriceAmount(product: ProductWithOptionalCategoryPath): number {
+  const rawPriceAmount = product.price?.amount;
+  if (typeof rawPriceAmount === "number" && Number.isFinite(rawPriceAmount)) {
+    return rawPriceAmount;
+  }
+
+  const unitPrice = product.price_instructions?.unit_price;
+  if (typeof unitPrice === "number" && Number.isFinite(unitPrice)) {
+    return unitPrice;
+  }
+
+  throw new ProviderPayloadContractError("price.amount");
+}
+
 function readOptionalSnapshot(
   product: MercadonaProductDetail,
   keys: string[],
@@ -68,7 +117,7 @@ function readOptionalSnapshot(
 type AddCatalogItemInput = {
   userId: string;
   listId: string;
-  provider: "mercadona";
+  provider: "mercadona" | "bonpreuesclat";
   productId: string;
   qty?: number;
 };
@@ -95,9 +144,30 @@ export class AddCatalogItem {
     }
 
     const listProviderSlug = resolveListProviderSlug(list.providerId);
+    const catalogProviderMetadata = this.catalogProvider.metadata ?? {
+      id: "provider-mercadona",
+      slug: "mercadona" as const,
+      displayName: "Mercadona",
+    };
+    const draftProviderId = list.providerId ?? "provider-mercadona";
 
     if (listProviderSlug !== input.provider) {
-      throw new ListStatusTransitionError();
+      throw new DraftProviderConflictError({
+        draftProvider: {
+          id: draftProviderId,
+          slug: listProviderSlug,
+          displayName: listProviderSlug,
+        },
+        requestedProvider: {
+          id: catalogProviderMetadata.id,
+          slug: input.provider,
+          displayName: catalogProviderMetadata.displayName ?? catalogProviderMetadata.slug,
+        },
+        draftSummary: {
+          itemCount: list.items.length,
+          updatedAt: list.updatedAt.toISOString(),
+        },
+      });
     }
 
     let product: MercadonaProductDetail;
@@ -108,8 +178,11 @@ export class AddCatalogItem {
     }
 
     const now = new Date();
+    const typedProduct = product as ProductWithOptionalCategoryPath;
+    const snapshotsFromCategoryPath = readSnapshotsFromCategoryPath(typedProduct);
     const snapshotsFromTree = readSnapshotsFromCategories(product);
     const categorySnapshot =
+      snapshotsFromCategoryPath.categorySnapshot ??
       snapshotsFromTree.categorySnapshot ??
       readOptionalSnapshot(product, [
       "categorySnapshot",
@@ -118,6 +191,7 @@ export class AddCatalogItem {
       "category_name",
     ]);
     const subcategorySnapshot =
+      snapshotsFromCategoryPath.subcategorySnapshot ??
       snapshotsFromTree.subcategorySnapshot ??
       readOptionalSnapshot(product, [
       "subcategorySnapshot",
@@ -127,15 +201,15 @@ export class AddCatalogItem {
     ]);
 
     const item: ListItem = {
-      id: this.idGenerator.generate(),
+      id: `${list.id}:${String(product.id)}`,
       listId: list.id,
       kind: "catalog",
-      source: "mercadona",
+      source: input.provider,
       sourceProductId: String(product.id),
       nameSnapshot: product.display_name,
       thumbnailSnapshot:
         product.thumbnail ?? product.photos?.[0]?.thumbnail ?? null,
-      priceSnapshot: Number(product.price_instructions.unit_price),
+      priceSnapshot: readPriceAmount(typedProduct),
       unitSizeSnapshot: product.price_instructions.unit_size ?? null,
       unitFormatSnapshot: product.price_instructions.size_format ?? null,
       unitPricePerUnitSnapshot:

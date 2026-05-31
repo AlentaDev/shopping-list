@@ -13,7 +13,7 @@ export type CatalogListItem = {
   id: string;
   listId: string;
   kind: "catalog";
-  source: "mercadona";
+  source: "mercadona" | "bonpreuesclat";
   sourceProductId: string;
   nameSnapshot: string;
   thumbnailSnapshot: string | null;
@@ -39,7 +39,7 @@ export type List = {
   id: string;
   ownerUserId: string;
   title: string;
-  providerId: string;
+  providerId?: string;
   isAutosaveDraft: boolean;
   status: ListStatus;
   items: ListItem[];

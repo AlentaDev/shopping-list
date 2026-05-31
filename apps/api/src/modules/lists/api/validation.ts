@@ -6,12 +6,13 @@ export const createListSchema = z.object({
   title: z.string().trim().min(3).max(35),
 });
 
-export const addCatalogItemSchema = z.object({
-  source: providerIdSchema,
-  provider: providerIdSchema,
-  productId: z.string().min(1),
-  qty: z.number().int().min(1).max(99).optional(),
-});
+export const addCatalogItemSchema = z
+  .object({
+    source: providerIdSchema.optional(),
+    provider: providerIdSchema,
+    productId: z.string().min(1),
+    qty: z.number().int().min(1).max(99).optional(),
+  });
 
 export const patchItemSchema = z.object({
   name: z.string().min(1).max(120).optional(),
