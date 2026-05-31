@@ -66,13 +66,28 @@ El sistema DEBE deduplicar ítems de catálogo por `sourceProductId` canónico, 
 - ENTONCES el resultado contiene exactamente un ítem de catálogo para `sourceProductId = 4706`
 
 ### Requisito: Complete y save sin colisiones
-El sistema DEBE ejecutar operaciones save/complete sin colisiones causadas por identificadores mixtos cliente/servidor.
+El sistema DEBE ejecutar operaciones save/complete sin colisiones causadas por identificadores mixtos cliente/servidor, manteniendo `item.id = listId:sourceProductId` como identidad técnica estable para draft/edit/autosave.
 
 #### Escenario: Complete usa IDs técnicos de forma segura
 - DADOS ítems marcados, indexados canónicamente por `sourceProductId`
 - CUANDO llamadas de complete/save requieren IDs técnicos
 - ENTONCES la solicitud mapea determinísticamente a valores `serverItemId` correspondientes
 - Y no se produce ningún ítem marcado duplicado o faltante por mismatch de IDs
+
+#### Escenario: Draft/edit/autosave preserva id compuesto
+- DADO un ítem de catálogo con `sourceProductId = 4706` en lista `L1`
+- CUANDO el ítem pasa por draft, edición y autosave
+- ENTONCES su identidad técnica se mantiene como `L1:4706`
+
+### Requisito: Error de contrato del provider al agregar
+
+El sistema DEBE rechazar mutaciones add-to-list cuando faltan campos obligatorios del payload del provider y DEBE evitar efectos secundarios de persistencia.
+
+#### Escenario: Missing price amount blocks persistence
+- DADO un payload de proveedor sin `price.amount`
+- CUANDO se intenta agregar el producto a una lista draft
+- ENTONCES la API responde error de contrato de provider
+- Y no se persiste ningún item de lista
 
 ## Criterios de aceptación
 - Reuse + edit + autosave flows produce 0 duplicate catalog items for a same `sourceProductId` in automated tests.
