@@ -15,3 +15,7 @@ server_debug.log
 
 # Local AI workspace artifacts
 .atl/
+
+# Coverage reports
+apps/api/coverage/
+apps/web/coverage/
