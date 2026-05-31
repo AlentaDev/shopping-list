@@ -30,6 +30,31 @@ export class ListStatusTransitionError extends AppError {
   }
 }
 
+export class DraftProviderConflictError extends AppError {
+  constructor(input: {
+    draftProvider: { id: string; slug: string; displayName: string };
+    requestedProvider: { id: string; slug: string; displayName: string };
+    draftSummary: { itemCount: number; updatedAt: string };
+  }) {
+    super(409, "draft_provider_conflict", "Draft provider conflict", {
+      errorCode: "draft_provider_conflict",
+      draftProvider: input.draftProvider,
+      requestedProvider: input.requestedProvider,
+      allowedActions: ["switch_and_clear", "keep_draft_provider"],
+      draftSummary: input.draftSummary,
+    });
+  }
+}
+
+export class ProviderPayloadContractError extends AppError {
+  constructor(field: "price.amount") {
+    super(422, "provider_payload_contract_error", "Provider payload contract error", {
+      errorCode: "provider_payload_contract_error",
+      field,
+    });
+  }
+}
+
 export class ListEditingLockedError extends AppError {
   constructor() {
     super(409, "list_editing_locked", "List is being edited");

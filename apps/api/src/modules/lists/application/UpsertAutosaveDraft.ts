@@ -3,6 +3,7 @@ import {
   buildDraftItemId,
   normalizeSourceProductId,
 } from "./itemIdNormalization.js";
+import { DEFAULT_PROVIDER_ID } from "../domain/list.js";
 import type { List, ListItem } from "../domain/list.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 
@@ -20,7 +21,7 @@ type AutosaveItemInput =
       name: string;
       qty: number;
       checked: boolean;
-      source: "mercadona";
+      source: "mercadona" | "bonpreuesclat";
       sourceProductId: string;
       thumbnail?: string | null;
       price?: number | null;
@@ -82,6 +83,7 @@ export class UpsertAutosaveDraft {
       id: listId,
       ownerUserId: input.userId,
       title: input.title,
+      providerId: targetAutosave?.providerId ?? DEFAULT_PROVIDER_ID,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: input.items.map((item) => toListItem(item, listId, now)),
