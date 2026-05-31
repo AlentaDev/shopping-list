@@ -111,6 +111,11 @@ describe("catalog endpoints", () => {
             unitFormat: "kg",
             unitPrice: 1.5,
             isApproxSize: false,
+            provider: {
+              id: "provider-mercadona",
+              slug: "mercadona",
+              displayName: "Mercadona",
+            },
           },
           {
             id: "p-2",
@@ -122,6 +127,11 @@ describe("catalog endpoints", () => {
             unitFormat: "kg",
             unitPrice: 2.5,
             isApproxSize: false,
+            provider: {
+              id: "provider-mercadona",
+              slug: "mercadona",
+              displayName: "Mercadona",
+            },
           },
         ],
       },

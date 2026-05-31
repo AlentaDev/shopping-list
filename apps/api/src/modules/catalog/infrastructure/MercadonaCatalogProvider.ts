@@ -7,6 +7,12 @@ import type {
 import { MercadonaHttpClient } from "./MercadonaHttpClient.js";
 
 export class MercadonaCatalogProvider implements CatalogProvider {
+  readonly metadata = {
+    id: "provider-mercadona",
+    slug: "mercadona",
+    displayName: "Mercadona",
+  } as const;
+
   constructor(private readonly httpClient: MercadonaHttpClient) {}
 
   getRootCategories(): Promise<MercadonaRootCategoriesResponse> {

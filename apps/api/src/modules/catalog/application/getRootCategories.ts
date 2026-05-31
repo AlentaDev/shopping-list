@@ -1,5 +1,5 @@
 import { AppError } from "@src/shared/errors/appError.js";
-import { ROOT_CATEGORIES_CACHE_KEY } from "./cacheKeys.js";
+import { rootCategoriesCacheKey } from "./cacheKeys.js";
 import { ROOT_CATEGORIES_TTL_MS } from "./cacheTtl.js";
 import type { CatalogCache } from "../domain/catalogCache.js";
 import type {
@@ -18,8 +18,10 @@ export class GetRootCategories {
   ) {}
 
   async execute(): Promise<GetRootCategoriesResponse> {
+    const providerSlug = this.provider.metadata?.slug ?? "mercadona";
+    const cacheKey = rootCategoriesCacheKey(providerSlug);
     const cached = this.cache.get<GetRootCategoriesResponse>(
-      ROOT_CATEGORIES_CACHE_KEY,
+      cacheKey,
     );
     if (cached) {
       return cached;
@@ -30,11 +32,11 @@ export class GetRootCategories {
       const mapped = mapRootCategories(response.results);
       const result = { categories: mapped } satisfies GetRootCategoriesResponse;
 
-      this.cache.set(ROOT_CATEGORIES_CACHE_KEY, result, ROOT_CATEGORIES_TTL_MS);
+      this.cache.set(cacheKey, result, ROOT_CATEGORIES_TTL_MS);
       return result;
     } catch (_error) {
       const stale = this.cache.getStale<GetRootCategoriesResponse>(
-        ROOT_CATEGORIES_CACHE_KEY,
+        cacheKey,
       );
       if (stale) {
         return stale;
