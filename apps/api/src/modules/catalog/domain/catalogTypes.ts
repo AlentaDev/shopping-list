@@ -1,3 +1,11 @@
+import type { CatalogProviderSlug } from "./catalogProvider.js";
+
+export type CatalogProviderRef = {
+  id: string;
+  slug: CatalogProviderSlug;
+  displayName: string;
+};
+
 export type CatalogCategoryNode = {
   id: string;
   name: string;
@@ -21,6 +29,7 @@ export type CatalogProductSummary = {
   unitFormat: string | null;
   unitPrice: number | null;
   isApproxSize: boolean;
+  provider: CatalogProviderRef;
 };
 
 export type GetCategoryDetailResponse = {
