@@ -41,6 +41,7 @@ const renderConflictHook = (
 describe("useDraftProviderConflict", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    localStorage.clear();
   });
 
   it("returns shouldSilentSwitch=true when draft has no items", () => {
@@ -140,5 +141,51 @@ describe("useDraftProviderConflict", () => {
     expect(confirmSpy).toHaveBeenCalledWith(
       expect.stringContaining("Custom Provider"),
     );
+  });
+
+  it("delegates to onActiveEditConflict and skips confirm when an edit session exists", async () => {
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-1", isEditing: true }),
+    );
+    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
+    const onActiveEditConflict = vi.fn();
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    let proceed = true;
+    await act(async () => {
+      proceed = await result.current.conflict.confirmAndReset({
+        requestedProviderId: "bonpreuesclat",
+        onActiveEditConflict,
+      });
+    });
+
+    expect(proceed).toBe(false);
+    expect(onActiveEditConflict).toHaveBeenCalledWith({
+      currentProviderId: "mercadona",
+      requestedProviderId: "bonpreuesclat",
+    });
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(result.current.list.draftProviderId).toBe("mercadona");
+    expect(result.current.list.items).toHaveLength(1);
+  });
+
+  it("falls back to confirm when no edit session exists, even if onActiveEditConflict is set", async () => {
+    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
+    const onActiveEditConflict = vi.fn();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    let proceed = false;
+    await act(async () => {
+      proceed = await result.current.conflict.confirmAndReset({
+        requestedProviderId: "bonpreuesclat",
+        onActiveEditConflict,
+      });
+    });
+
+    expect(proceed).toBe(true);
+    expect(onActiveEditConflict).not.toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(result.current.list.draftProviderId).toBe("bonpreuesclat");
   });
 });

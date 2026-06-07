@@ -300,6 +300,39 @@ describe("Catalog", () => {
     expect(setDraftProviderIdMock).not.toHaveBeenCalled();
   });
 
+  it("delegates cross-provider mutation to the active-edit conflict flow when an edit session exists", async () => {
+    const user = userEvent.setup();
+    const onRequestActiveEditConflict = vi.fn();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [{ id: "item-1" }];
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-1", isEditing: true }),
+    );
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestActiveEditConflict={onRequestActiveEditConflict}
+          />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(onRequestActiveEditConflict).toHaveBeenCalledWith({
+      currentProviderId: "mercadona",
+      requestedProviderId: "bonpreuesclat",
+    });
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(addItemMock).not.toHaveBeenCalled();
+  });
+
   it("uses a 2-column mobile product grid while preserving md+ classes", () => {
     render(
       <ToastProvider>

@@ -25,6 +25,10 @@ type ListsContainerProps = {
   onOpenList: (list: ListDetail) => void;
   onStartOpenList?: (list: ListSummary) => void;
   hasDraftItems?: boolean;
+  onRequestActiveEditConflict?: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 const isEmptyLocalDraftPayload = (value: string | null): boolean => {
@@ -64,9 +68,14 @@ const ListsContainer = ({
   onOpenList,
   onStartOpenList,
   hasDraftItems = false,
+  onRequestActiveEditConflict,
 }: ListsContainerProps) => {
   const { showToast } = useToast();
-  const { confirmAndReset } = useDraftProviderConflict();
+  const { confirmAndReset } = useDraftProviderConflict({
+    onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
+      onRequestActiveEditConflict?.({ currentProviderId, requestedProviderId });
+    },
+  });
   const sourceTabId = useMemo(() => createListTabSyncSourceId(), []);
   const [actionLoading, setActionLoading] = useState<{
     listId: string;

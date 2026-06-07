@@ -466,6 +466,79 @@ describe("ListsContainer", () => {
     );
   });
 
+  it("delegates cross-provider reuse to the active-edit conflict flow when an edit session exists", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "completed-bonpreu",
+                title: "Bonpreu reuse",
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.COMPLETED,
+                providerId: "provider-bonpreuesclat",
+                provider: {
+                  slug: "bonpreuesclat",
+                  displayName: "Bonpreu Esclat",
+                },
+              },
+            ],
+          }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    localStorage.setItem(
+      "lists.localDraft",
+      JSON.stringify({
+        title: "Mercadona draft",
+        providerId: "mercadona",
+        items: [{ id: "item-1" }],
+      }),
+    );
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-1", isEditing: true }),
+    );
+    const confirmSpy = vi.spyOn(window, "confirm");
+    confirmSpy.mockClear();
+    const onRequestActiveEditConflict = vi.fn();
+
+    render(
+      <ListsContainer
+        onOpenList={vi.fn()}
+        hasDraftItems
+        onRequestActiveEditConflict={onRequestActiveEditConflict}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
+    await userEvent.click(screen.getByText("Bonpreu reuse"));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }));
+
+    expect(onRequestActiveEditConflict).toHaveBeenCalledWith({
+      currentProviderId: "mercadona",
+      requestedProviderId: "bonpreuesclat",
+    });
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/completed-bonpreu/reuse",
+      expect.anything(),
+    );
+  });
+
   it("bypasses confirm when reuse targets the same provider as the current draft", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>

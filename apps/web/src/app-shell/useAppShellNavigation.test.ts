@@ -25,6 +25,7 @@ const baseArgs = {
   homeDraftProviderId: null,
   showAnonymousDraftGuidance: false,
   onSelectHomeProvider: vi.fn(),
+  onRequestActiveEditConflict: vi.fn(),
 };
 
 describe("useAppShellNavigation (canonical path)", () => {

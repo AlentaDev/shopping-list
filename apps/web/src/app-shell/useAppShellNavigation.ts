@@ -33,6 +33,10 @@ type UseAppShellNavigationArgs = {
   homeDraftProviderId?: string | null;
   showAnonymousDraftGuidance?: boolean;
   onSelectHomeProvider: (providerId: string) => void;
+  onRequestActiveEditConflict: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 type MainContentParams = {
@@ -54,6 +58,10 @@ type MainContentParams = {
   homeDraftProviderId?: string | null;
   showAnonymousDraftGuidance?: boolean;
   onSelectHomeProvider: (providerId: string) => void;
+  onRequestActiveEditConflict: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 export const useAppShellNavigation = ({
@@ -71,6 +79,7 @@ export const useAppShellNavigation = ({
   homeDraftProviderId,
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
+  onRequestActiveEditConflict,
 }: UseAppShellNavigationArgs) => {
   const initialPath = resolveCatalogAlias(window.location.pathname);
   const [currentPath, setCurrentPath] = useState(() => initialPath);
@@ -134,6 +143,7 @@ export const useAppShellNavigation = ({
         homeDraftProviderId,
         showAnonymousDraftGuidance,
         onSelectHomeProvider,
+        onRequestActiveEditConflict,
       }),
     [
       authMode,
@@ -153,6 +163,7 @@ export const useAppShellNavigation = ({
       homeDraftProviderId,
       showAnonymousDraftGuidance,
       onSelectHomeProvider,
+      onRequestActiveEditConflict,
     ],
   );
 
@@ -190,6 +201,7 @@ function resolveMainContent({
   homeDraftProviderId,
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
+  onRequestActiveEditConflict,
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
@@ -217,6 +229,7 @@ function resolveMainContent({
           onOpenList,
           onStartOpenList,
           hasDraftItems: linesCount > 0,
+          onRequestActiveEditConflict,
         })
       : createElement(AuthScreen, {
           mode: "login",
@@ -246,6 +259,7 @@ function resolveMainContent({
           onOpenList,
           onStartOpenList,
           hasDraftItems: linesCount > 0,
+          onRequestActiveEditConflict,
         }),
       );
     }
@@ -268,6 +282,7 @@ function resolveMainContent({
       },
       isCategoriesOpen,
       openMobileCategoriesRequestKey,
+      onRequestActiveEditConflict,
     });
   }
 

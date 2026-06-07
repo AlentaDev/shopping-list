@@ -269,6 +269,14 @@ export const UI_TEXT = {
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: "Continuar",
     },
+    ACTIVE_EDIT_CONFLICT: {
+      TITLE: "Ya estás editando otra lista",
+      MESSAGE:
+        "Ahora mismo estás editando una lista de {currentProvider}. Solo puedes cancelar esa edición y empezar una nueva lista en {requestedProvider}, o volver al catálogo original.",
+      RETURN_LABEL: "Volver al catálogo original",
+      CONFIRM_LABEL: "Cancelar edición y empezar una lista nueva",
+      CANCEL_ERROR: "Unable to cancel active editing.",
+    },
     ACTIVATE_DISABLED_MESSAGE: "Añade productos para poder finalizarla.",
     AUTOSAVE_RECOVERY: {
       TITLE: "Hemos recuperado un borrador sin guardar",

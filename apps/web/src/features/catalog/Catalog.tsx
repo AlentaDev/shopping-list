@@ -39,6 +39,10 @@ type CatalogProps = {
   isCategoriesOpen?: boolean;
   openMobileCategoriesRequestKey?: number;
   onItemsCountChange?: (count: number) => void;
+  onRequestActiveEditConflict?: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 const ProductSkeletonGrid = ({
@@ -83,11 +87,16 @@ const Catalog = ({
   isCategoriesOpen = false,
   openMobileCategoriesRequestKey = 0,
   onItemsCountChange,
+  onRequestActiveEditConflict,
 }: CatalogProps) => {
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
-  const { confirmAndReset } = useDraftProviderConflict();
+  const { confirmAndReset } = useDraftProviderConflict({
+    onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
+      onRequestActiveEditConflict?.({ currentProviderId, requestedProviderId });
+    },
+  });
   const { authUser } = useAuth();
   const { showToast } = useToast();
   const {
