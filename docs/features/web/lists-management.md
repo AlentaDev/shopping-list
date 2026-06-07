@@ -35,6 +35,21 @@ Este documento solo define comportamiento UI de gestión de listas y debe perman
 
 ## Reglas importantes
 
+### Provider-aware draft ownership
+
+- Each account has exactly one draft across providers.
+- The draft owns an explicit `providerId` even when it is empty.
+- Browsing another provider catalog is allowed; blocking happens only when the user tries to mutate the current draft.
+- Generic draft conflicts use a single confirm-and-reset dialog labeled with the current and requested provider names; the conflict check runs only when both a non-empty draft and a different requested provider are present.
+- `DRAFT -> ACTIVE` is a separate transition from `finish-edit` and `reuse`.
+- Reusing a completed list or starting a new provider mutation must respect the current single-draft rule.
+
+### Provider-aware reuse (generic confirm flow)
+
+- Reusing a completed list into the current draft is allowed without confirmation when the requested provider matches the current draft provider.
+- Reusing into a different provider with a non-empty draft requires explicit reset confirmation before the reuse call.
+- When the current draft is empty, reuse proceeds silently without prompting (silent provider switch).
+
 ### Matriz canónica de acciones UI (listas)
 
 Esta matriz define una sola fuente de verdad para las acciones visibles y separa explícitamente:

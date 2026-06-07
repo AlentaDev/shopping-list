@@ -140,6 +140,8 @@ export const UI_TEXT = {
     EMPTY_PRODUCTS_SUBTITLE: "Prueba a seleccionar otra categoría.",
     EMPTY_CATEGORIES_TITLE: "No hay categorías disponibles",
     EMPTY_CATEGORIES_SUBTITLE: "Vuelve a intentarlo más tarde.",
+    DRAFT_PROVIDER_CONFLICT:
+      "Tu borrador actual pertenece a {currentProvider}. Si continúas, lo vaciaremos para empezar una nueva lista en {requestedProvider}.",
   },
   CATEGORIES_PANEL: {
     TITLE: "Categorías",

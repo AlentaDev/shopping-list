@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
-import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useToast } from "@src/context/useToast";
+import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
+import { useList } from "@src/context/useList";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
@@ -86,6 +87,7 @@ const Catalog = ({
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
+  const { confirmAndReset } = useDraftProviderConflict();
   const { authUser } = useAuth();
   const { showToast } = useToast();
   const {
@@ -148,6 +150,41 @@ const Catalog = ({
   const itemsEmpty =
     detailStatus === FETCH_STATUS.SUCCESS && !hasItems && !categoriesEmpty;
   const isInitialProductsLoading = detailStatus === FETCH_STATUS.LOADING && !hasItems;
+
+  const handleAddProduct = useCallback(
+    async (product: (typeof sections)[number]["products"][number], subcategoryName: string) => {
+      const canProceed = await confirmAndReset({ requestedProviderId: providerId });
+
+      if (!canProceed) {
+        return;
+      }
+
+      addItem({
+        id: product.id,
+        sourceProductId: product.id,
+        serverItemId: null,
+        name: product.name,
+        category: subcategoryName,
+        categorySnapshot: categoryDetail?.categoryName ?? subcategoryName,
+        subcategorySnapshot: subcategoryName ?? null,
+        thumbnail: product.thumbnail,
+        price: product.price,
+        quantity: 1,
+      });
+      showToast({
+        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
+        productName: product.name,
+        thumbnail: product.thumbnail ?? null,
+      });
+    },
+    [
+      addItem,
+      categoryDetail?.categoryName,
+      confirmAndReset,
+      providerId,
+      showToast,
+    ],
+  );
 
   return (
     <>
@@ -257,24 +294,7 @@ const Catalog = ({
                       isMobileInteractionMode,
                     )}
                     onAddProduct={(product) => {
-                      addItem({
-                        id: product.id,
-                        sourceProductId: product.id,
-                        serverItemId: null,
-                        name: product.name,
-                        category: section.subcategoryName,
-                        categorySnapshot:
-                          categoryDetail?.categoryName ?? section.subcategoryName,
-                        subcategorySnapshot: section.subcategoryName ?? null,
-                        thumbnail: product.thumbnail,
-                        price: product.price,
-                        quantity: 1,
-                      });
-                      showToast({
-                        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
-                        productName: product.name,
-                        thumbnail: product.thumbnail ?? null,
-                      });
+                      handleAddProduct(product, section.subcategoryName);
                     }}
                   />
                 ))}

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ListsContainer from "./ListsContainer";
@@ -11,10 +11,14 @@ const {
   showToastMock,
   publishListTabSyncEventMock,
   subscribeToListTabSyncEventsMock,
+  draftProviderIdState,
+  itemsState,
 } = vi.hoisted(() => ({
   showToastMock: vi.fn(),
   publishListTabSyncEventMock: vi.fn(),
   subscribeToListTabSyncEventsMock: vi.fn(() => vi.fn()),
+  draftProviderIdState: { value: "mercadona" as string },
+  itemsState: { value: [] as Array<{ id: string }> },
 }));
 
 vi.mock("@src/shared/services/tab-sync/listTabSyncContract", () => ({
@@ -29,12 +33,33 @@ vi.mock("@src/context/useToast", () => ({
   }),
 }));
 
+vi.mock("@src/context/useList", () => ({
+  useList: () => ({
+    items: itemsState.value,
+    linesCount: itemsState.value.length,
+    total: 0,
+    draftProviderId: draftProviderIdState.value,
+    addItem: vi.fn(),
+    setItems: vi.fn(),
+    updateQuantity: vi.fn(),
+    removeItem: vi.fn(),
+    setDraftProviderId: vi.fn(),
+    resetDraft: vi.fn(),
+  }),
+}));
+
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
 };
 
 describe("ListsContainer", () => {
+  beforeEach(() => {
+    draftProviderIdState.value = "mercadona";
+    itemsState.value = [];
+    localStorage.clear();
+  });
+
   it("se suscribe a sincronización de activación y borrado de listas", () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => {})));
 
@@ -269,6 +294,254 @@ describe("ListsContainer", () => {
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/lists/completed-1/close",
       expect.anything(),
+    );
+  });
+
+  it("confirms generic cross-provider reuse with explicit provider labels", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "completed-bonpreu",
+                title: "Bonpreu reuse",
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.COMPLETED,
+                providerId: "provider-bonpreuesclat",
+                provider: {
+                  slug: "bonpreuesclat",
+                  displayName: "Bonpreu Esclat",
+                },
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-bonpreu") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "completed-bonpreu",
+            title: "Bonpreu reuse",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 2,
+            isEditing: false,
+            status: LIST_STATUS.COMPLETED,
+            providerId: "provider-bonpreuesclat",
+            provider: {
+              slug: "bonpreuesclat",
+              displayName: "Bonpreu Esclat",
+            },
+            items: [],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-bonpreu/reuse" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-bonpreu",
+            title: "Bonpreu reuse",
+            updatedAt: "2024-02-02T10:05:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
+            providerId: "provider-bonpreuesclat",
+            provider: {
+              slug: "bonpreuesclat",
+              displayName: "Bonpreu Esclat",
+            },
+            items: [],
+          }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    draftProviderIdState.value = "mercadona";
+    itemsState.value = [{ id: "draft-item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} hasDraftItems />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
+    await userEvent.click(screen.getByText("Bonpreu reuse"));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/completed-bonpreu/reuse",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining("Mercadona"));
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Bonpreu Esclat"),
+    );
+    expect(onOpenList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "draft-bonpreu",
+        provider: {
+          slug: "bonpreuesclat",
+          displayName: "Bonpreu Esclat",
+        },
+      }),
+    );
+  });
+
+  it("does not call /reuse when cross-provider confirm is cancelled", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "completed-bonpreu",
+                title: "Bonpreu reuse",
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.COMPLETED,
+                providerId: "provider-bonpreuesclat",
+                provider: {
+                  slug: "bonpreuesclat",
+                  displayName: "Bonpreu Esclat",
+                },
+              },
+            ],
+          }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    draftProviderIdState.value = "mercadona";
+    itemsState.value = [{ id: "draft-item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onOpenList = vi.fn();
+    publishListTabSyncEventMock.mockClear();
+
+    render(<ListsContainer onOpenList={onOpenList} hasDraftItems />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
+    await userEvent.click(screen.getByText("Bonpreu reuse"));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }));
+
+    await waitFor(() => {
+      expect(confirmSpy).toHaveBeenCalled();
+    });
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/completed-bonpreu/reuse",
+      expect.anything(),
+    );
+    expect(onOpenList).not.toHaveBeenCalled();
+    expect(publishListTabSyncEventMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "list-reused" }),
+    );
+  });
+
+  it("bypasses confirm when reuse targets the same provider as the current draft", async () => {
+    const fetchMock = vi.fn<
+      (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
+    >(async (input, init) => {
+      const url = typeof input === "string" ? input : input.url;
+
+      if (url === "/api/lists") {
+        return {
+          ok: true,
+          json: async () => ({
+            lists: [
+              {
+                id: "completed-mercadona",
+                title: "Mercadona reuse",
+                updatedAt: "2024-02-02T10:00:00.000Z",
+                activatedAt: null,
+                itemCount: 2,
+                isEditing: false,
+                status: LIST_STATUS.COMPLETED,
+                providerId: "provider-mercadona",
+                provider: {
+                  slug: "mercadona",
+                  displayName: "Mercadona",
+                },
+              },
+            ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-mercadona/reuse" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "draft-mercadona",
+            title: "Mercadona reuse",
+            updatedAt: "2024-02-02T10:05:00.000Z",
+            activatedAt: null,
+            itemCount: 1,
+            isEditing: false,
+            status: LIST_STATUS.DRAFT,
+            providerId: "provider-mercadona",
+            provider: {
+              slug: "mercadona",
+              displayName: "Mercadona",
+            },
+            items: [],
+          }),
+        };
+      }
+
+      return { ok: false, json: async () => ({}) };
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+    draftProviderIdState.value = "mercadona";
+    itemsState.value = [{ id: "draft-item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onOpenList = vi.fn();
+
+    render(<ListsContainer onOpenList={onOpenList} hasDraftItems />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
+    await userEvent.click(screen.getByText("Mercadona reuse"));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/lists/completed-mercadona/reuse",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onOpenList).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "draft-mercadona" }),
     );
   });
 
