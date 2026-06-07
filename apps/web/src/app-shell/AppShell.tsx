@@ -45,7 +45,7 @@ export const AppShell = () => {
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
-  const { linesCount, setItems } = useList();
+  const { linesCount, setItems, resetDraft } = useList();
   const { showToast } = useToast();
   const { apiAwake } = useApiAwake();
   const {
@@ -135,7 +135,8 @@ export const AppShell = () => {
   };
 
   const handleSelectHomeProvider = (providerId: string) => {
-    if (!authUser && linesCount === 0) {
+    if (linesCount === 0) {
+      resetDraft(providerId);
       saveLocalDraft({
         title: "",
         providerId,

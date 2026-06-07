@@ -4,7 +4,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import type { ListItem } from "@src/context/ListContextValue";
-import type { AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+} from "./types";
 import { saveLocalDraft } from "./AutosaveService";
 import { useAutosaveDraft } from "./useAutosaveDraft";
 
@@ -42,6 +45,7 @@ const Harness = ({
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled, onRehydrate }
   );
@@ -61,6 +65,7 @@ const TabSyncHarness = () => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled: false,
@@ -105,6 +110,7 @@ const DirtySourceProductHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -138,6 +144,7 @@ const LegacyCategoryOnlyHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -171,6 +178,7 @@ const MixedIdentityHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -214,6 +222,7 @@ const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled,
@@ -255,6 +264,7 @@ const ReuseAfterRehydrateHarness = () => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled: false,
@@ -319,6 +329,7 @@ describe("useAutosaveDraft", () => {
     };
     expect(parsed).toMatchObject({
       title: "Lista semanal",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -394,6 +405,7 @@ describe("useAutosaveDraft", () => {
     const onRehydrate = vi.fn();
     const localDraft = {
       title: "Lista recuperada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -519,6 +531,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote",
@@ -555,6 +568,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote",
@@ -689,6 +703,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota autenticada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote-auth",
@@ -760,6 +775,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota externa",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote-2",
@@ -798,6 +814,7 @@ describe("useAutosaveDraft", () => {
       "lists.localDraft",
       JSON.stringify({
         title: "Lista previa",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [
           {
             id: "item-previo",

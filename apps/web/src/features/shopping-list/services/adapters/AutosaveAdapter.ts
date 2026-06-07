@@ -1,4 +1,9 @@
-import type { AutosaveDraft, AutosaveItem, AutosaveSummary } from "../types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraft,
+  type AutosaveItem,
+  type AutosaveSummary,
+} from "../types";
 
 type AutosaveItemPayload = {
   id?: string;
@@ -22,6 +27,7 @@ type AutosaveItemPayload = {
 type AutosavePayload = {
   id?: string;
   title?: string;
+  providerId?: string;
   isEditing?: boolean;
   editingTargetListId?: string | null;
   items?: AutosaveItemPayload[];
@@ -123,6 +129,7 @@ export const adaptAutosaveResponse = (
   return {
     id: data.id ?? "",
     title: data.title ?? "",
+    providerId: data.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
     isEditing: data.isEditing === true,
     editingTargetListId:
       typeof data.editingTargetListId === "string" ? data.editingTargetListId : null,

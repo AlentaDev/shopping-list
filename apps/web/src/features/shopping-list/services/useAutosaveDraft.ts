@@ -6,7 +6,11 @@ import {
   saveLocalDraft,
 } from "./AutosaveService";
 import { createAutosaveTabSyncService } from "./AutosaveTabSyncService";
-import type { AutosaveCatalogItemInput, AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveCatalogItemInput,
+  type AutosaveDraftInput,
+} from "./types";
 
 type UseAutosaveDraftOptions = {
   enabled?: boolean;
@@ -19,6 +23,7 @@ type UseAutosaveDraftOptions = {
 type UseAutosaveDraftParams = {
   title: string;
   items: ListItem[];
+  providerId: string;
 };
 
 type AutosaveScheduler = ReturnType<typeof createAutosaveScheduler>;
@@ -56,6 +61,7 @@ const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
 const buildAutosaveDraft = (
   title: string,
   items: ListItem[],
+  providerId: string,
 ): AutosaveDraftInput => {
   const deduped = new Map<string, AutosaveCatalogItemInput>();
 
@@ -80,6 +86,7 @@ const buildAutosaveDraft = (
 
   return {
     title,
+    providerId,
     items: [...deduped.values()],
   };
 };
@@ -97,6 +104,7 @@ const mapLocalDraftToInput = (
 
   return {
     title: draft.title,
+    providerId: draft.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
     items: draft.items,
     ...metadata,
   };
@@ -138,7 +146,7 @@ const getIsTabActive = () => {
 };
 
 export const useAutosaveDraft = (
-  { title, items }: UseAutosaveDraftParams,
+  { title, items, providerId }: UseAutosaveDraftParams,
   options: UseAutosaveDraftOptions = {},
 ) => {
   const { enabled = true, debounceMs, onRehydrate, persistLocal = true } =
@@ -156,7 +164,10 @@ export const useAutosaveDraft = (
   const [remoteChangesAvailable, setRemoteChangesAvailable] = useState(false);
   const [isTabActive, setIsTabActive] = useState(getIsTabActive);
 
-  const draft = useMemo(() => buildAutosaveDraft(title, items), [title, items]);
+  const draft = useMemo(
+    () => buildAutosaveDraft(title, items, providerId),
+    [items, providerId, title],
+  );
 
   useEffect(() => {
     draftRef.current = draft;

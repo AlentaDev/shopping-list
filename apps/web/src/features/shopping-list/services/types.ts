@@ -1,5 +1,7 @@
 import type { ListStatus } from "@src/shared/domain/listStatus";
 
+export const DEFAULT_DRAFT_PROVIDER_ID = "mercadona";
+
 export type AutosaveCatalogItemInput = {
   id: string;
   kind: "catalog";
@@ -20,6 +22,7 @@ export type AutosaveCatalogItemInput = {
 
 export type AutosaveDraftInput = {
   title: string;
+  providerId: string;
   items: AutosaveCatalogItemInput[];
   isEditing?: boolean;
   editingTargetListId?: string | null;
@@ -36,6 +39,7 @@ export type AutosaveItem = AutosaveCatalogItemInput & {
 export type AutosaveDraft = {
   id: string;
   title: string;
+  providerId: string;
   isEditing: boolean;
   editingTargetListId: string | null;
   items: AutosaveItem[];

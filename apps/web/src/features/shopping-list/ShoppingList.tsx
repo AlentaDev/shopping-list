@@ -302,7 +302,16 @@ const ShoppingList = ({
   const { authUser } = useAuth();
   const { showToast } = useToast();
   const sourceTabId = useMemo(() => createListTabSyncSourceId(), []);
-  const { items, total, updateQuantity, removeItem, setItems } = useList();
+  const {
+    items,
+    total,
+    updateQuantity,
+    removeItem,
+    setItems,
+    draftProviderId,
+    setDraftProviderId,
+    resetDraft,
+  } = useList();
   const [listName, setListName] = useState(initialListTitle ?? "");
   const [listTitle, setListTitle] = useState<string>(
     initialListTitle ?? UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
@@ -338,16 +347,17 @@ const ShoppingList = ({
     isActiveEditingSession;
 
   const handleResetToEmptyLocalDraft = useCallback(() => {
-    setItems([]);
+    resetDraft();
     setListId(null);
     setListStatus(LIST_STATUS.LOCAL_DRAFT);
     setListName("");
     setListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
     saveLocalDraft({
       title: "",
+      providerId: draftProviderId,
       items: [],
     });
-  }, [setItems]);
+  }, [draftProviderId, resetDraft]);
 
   useEffect(() => {
     return subscribeToListTabSyncEvents({
@@ -380,10 +390,11 @@ const ShoppingList = ({
       const restoredItems = adaptShoppingListItems(draft.items);
 
       setItems(restoredItems);
+      setDraftProviderId(draft.providerId);
       setListName(draft.title);
       setListTitle(restoredTitle);
     },
-    [setItems],
+    [setDraftProviderId, setItems],
   );
 
   const handleAutoRestore = useCallback(
@@ -400,7 +411,7 @@ const ShoppingList = ({
   );
 
   useAutosaveDraft(
-    { title: draftTitle, items },
+    { title: draftTitle, items, providerId: draftProviderId },
     {
       enabled: Boolean(authUser) && isOpen && mutationsEnabled,
       onRehydrate: handleRehydrate,

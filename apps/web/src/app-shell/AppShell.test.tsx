@@ -22,6 +22,7 @@ const loadLocalDraftMock = vi.fn(() => null);
 const listState = {
   linesCount: 3,
   setItems: vi.fn(),
+  resetDraft: vi.fn(),
 };
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
@@ -68,8 +69,8 @@ vi.mock("@src/app-shell/useAppShellNavigation", () => ({
   useAppShellNavigation: (args: unknown) => useAppShellNavigationMock(args),
 }));
 
-vi.mock("@src/features/shopping-list/ShoppingList", () => ({
-  default: ({
+vi.mock("@src/features/shopping-list", () => ({
+  ShoppingList: ({
     isOpen,
     mutationsEnabled,
     onAddMoreProducts,
@@ -86,6 +87,8 @@ vi.mock("@src/features/shopping-list/ShoppingList", () => ({
       </button>
     </div>
   ),
+  adaptListToShoppingListState: vi.fn(),
+  adaptListStatusToShoppingListStatus: vi.fn(),
 }));
 
 vi.mock("@src/app-shell/components/AppHeader", () => ({
@@ -138,6 +141,7 @@ describe("app-shell/AppShell", () => {
     saveLocalDraftMock.mockReset();
     listState.linesCount = 3;
     listState.setItems.mockReset();
+    listState.resetDraft.mockReset();
   });
 
   it("persists the selected provider for an anonymous empty draft from Home", async () => {
@@ -153,6 +157,7 @@ describe("app-shell/AppShell", () => {
       lastCallArgs.onSelectHomeProvider("bonpreuesclat");
     });
 
+    expect(listState.resetDraft).toHaveBeenCalledWith("bonpreuesclat");
     expect(navigationState.navigate).toHaveBeenCalledWith("/bonpreuesclat/catalog");
     expect(saveLocalDraftMock).toHaveBeenCalledWith({
       title: "",
