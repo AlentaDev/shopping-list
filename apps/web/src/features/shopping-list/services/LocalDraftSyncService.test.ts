@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
-import type { AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+} from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type FetchResponse = {
@@ -11,6 +14,7 @@ type FetchResponse = {
 
 const SAMPLE_DRAFT: AutosaveDraftInput = {
   title: "Compra semanal",
+  providerId: DEFAULT_DRAFT_PROVIDER_ID,
   items: [
     {
       id: "item-1",
@@ -101,6 +105,7 @@ describe("LocalDraftSyncService", () => {
   it("incluye items de catálogo en el autosave", async () => {
     const catalogDraft: AutosaveDraftInput = {
       title: "Compra catálogo",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "product-1",

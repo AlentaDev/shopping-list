@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@src/context/useToast";
+import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import type { ListActionKey } from "./services/listActions";
@@ -24,6 +25,10 @@ type ListsContainerProps = {
   onOpenList: (list: ListDetail) => void;
   onStartOpenList?: (list: ListSummary) => void;
   hasDraftItems?: boolean;
+  onRequestActiveEditConflict?: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 const isEmptyLocalDraftPayload = (value: string | null): boolean => {
@@ -63,8 +68,14 @@ const ListsContainer = ({
   onOpenList,
   onStartOpenList,
   hasDraftItems = false,
+  onRequestActiveEditConflict,
 }: ListsContainerProps) => {
   const { showToast } = useToast();
+  const { confirmAndReset } = useDraftProviderConflict({
+    onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
+      onRequestActiveEditConflict?.({ currentProviderId, requestedProviderId });
+    },
+  });
   const sourceTabId = useMemo(() => createListTabSyncSourceId(), []);
   const [actionLoading, setActionLoading] = useState<{
     listId: string;
@@ -161,6 +172,19 @@ const ListsContainer = ({
       }
 
       if (action === "reuse") {
+        const requestedProviderId = list.provider?.slug;
+
+        if (requestedProviderId) {
+          const canProceed = await confirmAndReset({
+            requestedProviderId,
+            requestedProviderName: list.provider?.displayName,
+          });
+
+          if (!canProceed) {
+            return;
+          }
+        }
+
         const reusedList = await reuseList(list.id);
         publishListTabSyncEvent({
           type: "list-reused",

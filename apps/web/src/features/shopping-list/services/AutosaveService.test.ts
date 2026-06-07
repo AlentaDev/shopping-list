@@ -9,10 +9,14 @@ import {
   saveAlignedEmptyLocalDraft,
   deleteAutosave,
 } from "./AutosaveService";
-import type { AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+} from "./types";
 
 const SAMPLE_DRAFT: AutosaveDraftInput = {
   title: "Lista semanal",
+  providerId: DEFAULT_DRAFT_PROVIDER_ID,
   items: [
     {
       id: "item-1",
@@ -64,6 +68,7 @@ describe("AutosaveService", () => {
     expect(localStorage.getItem("lists.localDraft")).toBe(
       JSON.stringify({
         title: "",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [],
         updatedAt: "2024-02-01T10:00:00.000Z",
       })
@@ -706,6 +711,7 @@ describe("AutosaveService", () => {
     const scheduler = createAutosaveScheduler();
     const secondDraft: AutosaveDraftInput = {
       title: "Lista actualizada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-2",

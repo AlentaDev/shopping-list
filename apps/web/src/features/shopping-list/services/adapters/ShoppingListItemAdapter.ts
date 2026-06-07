@@ -2,6 +2,7 @@ import type { ShoppingListItem } from "../../types";
 
 type ShoppingListItemPayload = {
   id?: string;
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
   name?: string;
   qty?: number;
@@ -52,6 +53,7 @@ export const adaptShoppingListItems = (
       id: item.id ?? "",
       sourceProductId: item.sourceProductId,
     }),
+    source: item.source ?? "mercadona",
     sourceProductId: normalizeSourceProductId({
       id: item.id ?? "",
       sourceProductId: item.sourceProductId,

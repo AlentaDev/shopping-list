@@ -6,6 +6,8 @@ import type { ShoppingListItem } from "../../types";
 
 type AppShellListItemPayload = {
   id: string;
+  source?: "mercadona" | "bonpreuesclat";
+  sourceProductId?: string;
   name: string;
   qty: number;
   categorySnapshot?: string | null;
@@ -18,6 +20,10 @@ type AppShellListPayload = {
   id: string;
   title: string;
   status?: string;
+  providerId?: string;
+  provider?: {
+    slug?: string;
+  };
   isEditing: boolean;
   items: AppShellListItemPayload[];
 };
@@ -32,9 +38,12 @@ export type AppShellShoppingListState = {
 
 export const adaptListDetailItemsToShoppingListItems = (
   items: AppShellListItemPayload[],
+  fallbackSource: "mercadona" | "bonpreuesclat" = "mercadona",
 ): ShoppingListItem[] =>
   items.map((item) => ({
     id: item.id,
+    source: item.source ?? fallbackSource,
+    sourceProductId: item.sourceProductId ?? item.id,
     name: item.name,
     category: item.categorySnapshot?.trim() || "Sin categoría",
     categorySnapshot: item.categorySnapshot ?? null,
@@ -66,5 +75,8 @@ export const adaptListToShoppingListState = (
   listTitle: list.title,
   listStatus: adaptListStatusToShoppingListStatus(list.status),
   isEditing: list.isEditing,
-  items: adaptListDetailItemsToShoppingListItems(list.items),
+  items: adaptListDetailItemsToShoppingListItems(
+    list.items,
+    list.provider?.slug === "bonpreuesclat" ? "bonpreuesclat" : "mercadona",
+  ),
 });

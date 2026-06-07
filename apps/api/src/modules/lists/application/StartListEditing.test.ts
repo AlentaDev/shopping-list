@@ -16,6 +16,7 @@ describe("StartListEditing", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
+      providerId: "provider-bonpreuesclat",
       isAutosaveDraft: false,
       status: "ACTIVE",
       activatedAt: new Date("2024-01-01T09:00:00.000Z"),
@@ -61,6 +62,7 @@ describe("StartListEditing", () => {
         expect.objectContaining({
           isAutosaveDraft: true,
           isEditing: true,
+          providerId: "provider-bonpreuesclat",
         }),
       ]),
     );

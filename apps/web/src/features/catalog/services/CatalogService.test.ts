@@ -72,6 +72,7 @@ describe("CatalogService", () => {
       categoryName: "Bollería",
       sections: [
         {
+          subcategoryId: "sub-1",
           subcategoryName: "Dulces",
           products: [
             {

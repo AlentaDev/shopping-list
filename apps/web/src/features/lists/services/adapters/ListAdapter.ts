@@ -1,4 +1,5 @@
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
+import { getProviderDisplayName } from "@src/shared/constants/providers";
 import type {
   ListCollection,
   ListDetail,
@@ -17,6 +18,11 @@ type ListSummaryPayload = {
   activatedAt?: string | null;
   isEditing?: boolean;
   status?: string;
+  providerId?: string;
+  provider?: {
+    slug?: string;
+    displayName?: string;
+  };
 };
 
 type ListCollectionPayload = {
@@ -51,6 +57,11 @@ type ListDetailPayload = {
   activatedAt?: string | null;
   isEditing?: boolean;
   status?: string;
+  providerId?: string;
+  provider?: {
+    slug?: string;
+    displayName?: string;
+  };
 };
 
 type ListStatusSummaryPayload = {
@@ -64,6 +75,35 @@ const resolveStatus = (status?: string): ListSummary["status"] => {
     return status as ListSummary["status"];
   }
   return LIST_STATUS.DRAFT;
+};
+
+const resolveProviderSlug = (providerId?: string, slug?: string): string | undefined => {
+  if (typeof slug === "string" && slug.trim().length > 0) {
+    return slug;
+  }
+
+  if (typeof providerId === "string" && providerId.startsWith("provider-")) {
+    return providerId.replace(/^provider-/, "");
+  }
+
+  return typeof providerId === "string" && providerId.trim().length > 0
+    ? providerId
+    : undefined;
+};
+
+const adaptProvider = (
+  payload: Pick<ListSummaryPayload, "providerId" | "provider">,
+): ListSummary["provider"] | undefined => {
+  const slug = resolveProviderSlug(payload.providerId, payload.provider?.slug);
+
+  if (!slug) {
+    return undefined;
+  }
+
+  return {
+    slug,
+    displayName: payload.provider?.displayName ?? getProviderDisplayName(slug),
+  };
 };
 
 const adaptListItem = (item: ListItemPayload): ListItem => ({
@@ -93,6 +133,8 @@ const adaptListSummary = (list: ListSummaryPayload): ListSummary => ({
   activatedAt: list.activatedAt ?? null,
   isEditing: list.isEditing ?? false,
   status: resolveStatus(list.status),
+  providerId: list.providerId,
+  provider: adaptProvider(list),
 });
 
 export const adaptListSummaryResponse = (payload: unknown): ListSummary =>
@@ -134,5 +176,7 @@ export const adaptListDetailResponse = (payload: unknown): ListDetail => {
     isEditing: data.isEditing ?? false,
     items,
     status: data.status ? resolveStatus(data.status) : undefined,
+    providerId: data.providerId,
+    provider: adaptProvider(data),
   };
 };

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import CategoriesPanel from "./components/CategoriesPanel";
 import ProductsCategory from "./components/ProductsCategory";
-import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useCatalog } from "./services/useCatalog";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { useToast } from "@src/context/useToast";
+import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
+import { useList } from "@src/context/useList";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 
@@ -38,6 +39,10 @@ type CatalogProps = {
   isCategoriesOpen?: boolean;
   openMobileCategoriesRequestKey?: number;
   onItemsCountChange?: (count: number) => void;
+  onRequestActiveEditConflict?: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+  }) => void;
 };
 
 const ProductSkeletonGrid = ({
@@ -82,10 +87,16 @@ const Catalog = ({
   isCategoriesOpen = false,
   openMobileCategoriesRequestKey = 0,
   onItemsCountChange,
+  onRequestActiveEditConflict,
 }: CatalogProps) => {
-  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [dismissedMobileRequestKey, setDismissedMobileRequestKey] = useState(0);
   const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
+  const { confirmAndReset } = useDraftProviderConflict({
+    onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
+      onRequestActiveEditConflict?.({ currentProviderId, requestedProviderId });
+    },
+  });
   const { authUser } = useAuth();
   const { showToast } = useToast();
   const {
@@ -107,7 +118,13 @@ const Catalog = ({
     0,
   );
   const hasItems = totalProducts > 0;
+  const hasBonpreuNavigationSections =
+    providerId === "bonpreuesclat" &&
+    !hasItems &&
+    sections.some((section) => section.subcategoryId);
   const skeletonCount = 8;
+  const isMobileCategoriesOpen =
+    isCategoriesOpen && openMobileCategoriesRequestKey > dismissedMobileRequestKey;
 
   useLayoutEffect(() => {
     if (!selectedCategoryId) {
@@ -129,25 +146,56 @@ const Catalog = ({
     onCategoryRouteChange?.(selectedCategoryId);
   }, [onCategoryRouteChange, selectedCategoryId]);
 
-  useEffect(() => {
-    if (!isCategoriesOpen || openMobileCategoriesRequestKey === 0) {
-      return;
-    }
-
-    setIsMobileCategoriesOpen(true);
-  }, [isCategoriesOpen, openMobileCategoriesRequestKey]);
-
   const handleSelectCategory = useCallback((id: string) => {
     selectCategory(id);
     scrollToCatalogStart();
-    setIsMobileCategoriesOpen(false);
-  }, [selectCategory]);
+    setDismissedMobileRequestKey(openMobileCategoriesRequestKey);
+  }, [openMobileCategoriesRequestKey, selectCategory]);
 
   const categoriesEmpty =
     categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
   const itemsEmpty =
-    detailStatus === FETCH_STATUS.SUCCESS && !hasItems && !categoriesEmpty;
+    detailStatus === FETCH_STATUS.SUCCESS &&
+    !hasItems &&
+    !categoriesEmpty &&
+    !hasBonpreuNavigationSections;
   const isInitialProductsLoading = detailStatus === FETCH_STATUS.LOADING && !hasItems;
+
+  const handleAddProduct = useCallback(
+    async (product: (typeof sections)[number]["products"][number], subcategoryName: string) => {
+      const canProceed = await confirmAndReset({ requestedProviderId: providerId });
+
+      if (!canProceed) {
+        return;
+      }
+
+      addItem({
+        id: product.id,
+        source: providerId,
+        sourceProductId: product.id,
+        serverItemId: null,
+        name: product.name,
+        category: subcategoryName,
+        categorySnapshot: categoryDetail?.categoryName ?? subcategoryName,
+        subcategorySnapshot: subcategoryName ?? null,
+        thumbnail: product.thumbnail,
+        price: product.price,
+        quantity: 1,
+      });
+      showToast({
+        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
+        productName: product.name,
+        thumbnail: product.thumbnail ?? null,
+      });
+    },
+    [
+      addItem,
+      categoryDetail?.categoryName,
+      confirmAndReset,
+      providerId,
+      showToast,
+    ],
+  );
 
   return (
     <>
@@ -184,7 +232,7 @@ const Catalog = ({
                   type="button"
                   aria-label="Close categories panel"
                   className="absolute inset-0 bg-slate-900/30"
-                  onClick={() => setIsMobileCategoriesOpen(false)}
+                  onClick={() => setDismissedMobileRequestKey(openMobileCategoriesRequestKey)}
                 />
                 <div className="absolute inset-x-0 top-24 bottom-0 overflow-y-auto rounded-t-2xl bg-white p-4">
                   <CategoriesPanel
@@ -249,7 +297,7 @@ const Catalog = ({
                 ) : null}
                 {sections.map((section) => (
                   <ProductsCategory
-                    key={section.subcategoryName}
+                    key={section.subcategoryId || section.subcategoryName}
                     subcategoryName={section.subcategoryName}
                     products={section.products}
                     gridClassName={getGridClasses(
@@ -257,28 +305,26 @@ const Catalog = ({
                       isMobileInteractionMode,
                     )}
                     onAddProduct={(product) => {
-                      addItem({
-                        id: product.id,
-                        sourceProductId: product.id,
-                        serverItemId: null,
-                        name: product.name,
-                        category: section.subcategoryName,
-                        categorySnapshot:
-                          categoryDetail?.categoryName ?? section.subcategoryName,
-                        subcategorySnapshot: section.subcategoryName ?? null,
-                        thumbnail: product.thumbnail,
-                        price: product.price,
-                        quantity: 1,
-                      });
-                      showToast({
-                        message: UI_TEXT.CATALOG.TOAST_ADDED_MESSAGE,
-                        productName: product.name,
-                        thumbnail: product.thumbnail ?? null,
-                      });
+                      handleAddProduct(product, section.subcategoryName);
                     }}
                   />
                 ))}
               </div>
+            </div>
+          ) : null}
+          {hasBonpreuNavigationSections ? (
+            <div className="space-y-3">
+              {sections.map((section) => (
+                <button
+                  key={section.subcategoryId || section.subcategoryName}
+                  type="button"
+                  onClick={() => handleSelectCategory(section.subcategoryId)}
+                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <span>{section.subcategoryName}</span>
+                  <span aria-hidden="true">›</span>
+                </button>
+              ))}
             </div>
           ) : null}
           {itemsEmpty ? (

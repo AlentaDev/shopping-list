@@ -8,6 +8,11 @@ export type ListSummary = {
   isEditing: boolean;
   updatedAt: string;
   status: ListStatus;
+  providerId?: string;
+  provider?: {
+    slug: string;
+    displayName: string;
+  };
 };
 
 export type ListItem = {
@@ -23,7 +28,7 @@ export type ListItem = {
   unitFormat?: string | null;
   unitPrice?: number | null;
   isApproxSize?: boolean;
-  source?: "mercadona";
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
   categorySnapshot?: string | null;
   subcategorySnapshot?: string | null;
@@ -38,6 +43,11 @@ export type ListDetail = {
   items: ListItem[];
   updatedAt: string;
   status?: ListStatus;
+  providerId?: string;
+  provider?: {
+    slug: string;
+    displayName: string;
+  };
 };
 
 export type ListStatusSummary = {

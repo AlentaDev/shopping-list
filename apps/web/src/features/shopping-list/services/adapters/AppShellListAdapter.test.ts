@@ -11,6 +11,8 @@ describe("AppShellListAdapter", () => {
       {
         id: "item-1",
         kind: "catalog",
+        source: "bonpreuesclat",
+        sourceProductId: "sku-1",
         name: "Pan",
         qty: 2,
         checked: false,
@@ -24,6 +26,8 @@ describe("AppShellListAdapter", () => {
     expect(items).toEqual([
       {
         id: "item-1",
+        source: "bonpreuesclat",
+        sourceProductId: "sku-1",
         name: "Pan",
         category: "L1",
         categorySnapshot: "L1",
@@ -40,6 +44,7 @@ describe("AppShellListAdapter", () => {
       {
         id: "item-2",
         kind: "catalog",
+        source: "mercadona",
         name: "Leche",
         qty: 1,
         checked: false,
@@ -52,6 +57,8 @@ describe("AppShellListAdapter", () => {
     expect(items).toEqual([
       {
         id: "item-2",
+        source: "mercadona",
+        sourceProductId: "item-2",
         name: "Leche",
         category: "Sin categoría",
         categorySnapshot: null,

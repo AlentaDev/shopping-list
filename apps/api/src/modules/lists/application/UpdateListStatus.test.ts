@@ -13,6 +13,7 @@ describe("UpdateListStatus", () => {
       id: "list-1",
       ownerUserId: "user-1",
       title: "Weekly groceries",
+      providerId: "provider-bonpreuesclat",
       isAutosaveDraft: false,
       status: "DRAFT",
       activatedAt: undefined,
@@ -59,6 +60,10 @@ describe("UpdateListStatus", () => {
     await expect(listRepository.findById("list-1")).resolves.toMatchObject({
       status: "ACTIVE",
       updatedAt: now,
+    });
+
+    await expect(listRepository.findById("draft-2")).resolves.toMatchObject({
+      providerId: "provider-bonpreuesclat",
     });
 
     vi.useRealTimers();

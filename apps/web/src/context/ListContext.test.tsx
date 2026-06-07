@@ -11,6 +11,7 @@ const FIRST_ITEM_QUANTITY_TEST_ID = "first-item-quantity";
 const LINES_COUNT_TEST_ID = "lines-count";
 const TOTAL_AMOUNT_TEST_ID = "total-amount";
 const FIRST_ITEM_CHECKED_TEST_ID = "first-item-checked";
+const DRAFT_PROVIDER_TEST_ID = "draft-provider";
 
 const TestConsumer = () => {
   const {
@@ -21,6 +22,9 @@ const TestConsumer = () => {
     setItems,
     updateQuantity,
     removeItem,
+    draftProviderId,
+    setDraftProviderId,
+    resetDraft,
   } = useList();
 
   return (
@@ -33,6 +37,7 @@ const TestConsumer = () => {
       <span data-testid={FIRST_ITEM_CHECKED_TEST_ID}>
         {String((items[0] as { checked?: boolean } | undefined)?.checked ?? false)}
       </span>
+      <span data-testid={DRAFT_PROVIDER_TEST_ID}>{draftProviderId}</span>
       <button
         type="button"
         onClick={() =>
@@ -120,6 +125,15 @@ const TestConsumer = () => {
         }
       >
         Replace all with mixed duplicates
+      </button>
+      <button type="button" onClick={() => setDraftProviderId("bonpreuesclat")}>
+        Switch provider
+      </button>
+      <button type="button" onClick={() => resetDraft()}>
+        Reset draft
+      </button>
+      <button type="button" onClick={() => resetDraft("bonpreuesclat")}>
+        Reset draft to Bonpreu
       </button>
     </div>
   );
@@ -279,5 +293,36 @@ describe("ListContext", () => {
     expect(screen.getByTestId(FIRST_ITEM_CHECKED_TEST_ID)).toHaveTextContent(
       "true"
     );
+  });
+
+  it("tracks a single draft provider and preserves it across reset", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    expect(screen.getByTestId(DRAFT_PROVIDER_TEST_ID)).toHaveTextContent("mercadona");
+
+    await userEvent.click(screen.getByRole("button", { name: "Switch provider" }));
+    await userEvent.click(screen.getByRole("button", { name: "Reset draft" }));
+
+    expect(screen.getByTestId(DRAFT_PROVIDER_TEST_ID)).toHaveTextContent("bonpreuesclat");
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("0");
+  });
+
+  it("can reset directly into another empty-draft provider", async () => {
+    render(
+      <ListProvider initialItems={initialItems}>
+        <TestConsumer />
+      </ListProvider>
+    );
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reset draft to Bonpreu" })
+    );
+
+    expect(screen.getByTestId(DRAFT_PROVIDER_TEST_ID)).toHaveTextContent("bonpreuesclat");
+    expect(screen.getByTestId(LINES_COUNT_TEST_ID)).toHaveTextContent("0");
   });
 });

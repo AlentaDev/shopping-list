@@ -41,7 +41,7 @@ const catalogItemTwo = {
   id: "item-2",
   listId: "list-2",
   kind: "catalog",
-  source: "mercadona",
+  source: "bonpreuesclat",
   sourceProductId: "sku-999",
   nameSnapshot: "Bread",
   thumbnailSnapshot: null,
@@ -113,6 +113,63 @@ describe("PostgresListRepository", () => {
     const repository = new PostgresListRepository(pool);
 
     await expect(repository.findById(baseList.id)).resolves.toEqual(list);
+  });
+
+  it("reads item source from postgres rows instead of hardcoding mercadona", async () => {
+    const pool = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: baseList.id,
+              owner_user_id: baseList.ownerUserId,
+              title: baseList.title,
+              provider_id: "provider-bonpreuesclat",
+              status: baseList.status,
+              is_autosave_draft: baseList.isAutosaveDraft,
+              activated_at: baseList.activatedAt,
+              is_editing: baseList.isEditing,
+              editing_target_list_id: baseList.editingTargetListId,
+              created_at: baseList.createdAt,
+              updated_at: baseList.updatedAt,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: catalogItem.id,
+              list_id: catalogItem.listId,
+              source: "bonpreuesclat",
+              source_product_id: catalogItem.sourceProductId,
+              name_snapshot: catalogItem.nameSnapshot,
+              thumbnail_snapshot: catalogItem.thumbnailSnapshot,
+              price_snapshot: catalogItem.priceSnapshot,
+              unit_size_snapshot: catalogItem.unitSizeSnapshot,
+              unit_format_snapshot: catalogItem.unitFormatSnapshot,
+              unit_price_per_unit_snapshot:
+                catalogItem.unitPricePerUnitSnapshot,
+              is_approx_size_snapshot: catalogItem.isApproxSizeSnapshot,
+              category_snapshot: catalogItem.categorySnapshot,
+              subcategory_snapshot: catalogItem.subcategorySnapshot,
+              qty: catalogItem.qty,
+              checked: catalogItem.checked,
+              created_at: catalogItem.createdAt,
+              updated_at: catalogItem.updatedAt,
+            },
+          ],
+        }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    const persisted = await repository.findById(baseList.id);
+
+    expect(persisted?.providerId).toBe("provider-bonpreuesclat");
+    expect(persisted?.items[0]).toEqual(
+      expect.objectContaining({ source: "bonpreuesclat" }),
+    );
   });
 
 

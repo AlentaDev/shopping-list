@@ -156,7 +156,19 @@ describe("provider reference resolution", () => {
     expect(resolveListProviderId("mercadona")).toBe("provider-mercadona");
   });
 
+  it("normalizes bonpreu slug to provider FK id", () => {
+    expect(resolveListProviderId("bonpreuesclat")).toBe(
+      "provider-bonpreuesclat",
+    );
+  });
+
   it("resolves mercadona slug from FK id", () => {
     expect(resolveListProviderSlug("provider-mercadona")).toBe("mercadona");
+  });
+
+  it("resolves bonpreu slug from FK id", () => {
+    expect(resolveListProviderSlug("provider-bonpreuesclat")).toBe(
+      "bonpreuesclat",
+    );
   });
 });

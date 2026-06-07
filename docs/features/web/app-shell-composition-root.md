@@ -1,36 +1,35 @@
 # App Shell Composition Root (web)
 
-## Objetivo
+## Objective
 
-Definir `apps/web/src/app-shell/*` como único composition root de la app web para evitar duplicación con `features/app-shell/*`, manteniendo el comportamiento observable sin cambios.
+Define `apps/web/src/app-shell/*` as the single composition root for shell routing and cross-feature orchestration, while keeping feature business rules inside their owning features.
 
-## Alcance
+## Scope
 
-- El entrypoint `App.tsx` delega composición en `AppShell`.
-- `app-shell/*` orquesta navegación y composición global.
-- La lógica de negocio y adaptación de datos permanece en cada feature (`features/*/services` y `features/*/services/adapters`).
+- `App.tsx` delegates application composition to `AppShell`.
+- `app-shell/*` owns route composition for `/`, `/catalog`, `/:provider/catalog`, and `/:provider/catalog/:category`.
+- Feature logic stays inside feature services/components. The shell wires screens together; it does not own shopping-list business rules.
 
-## Límites de dependencia
+## Current provider-aware behavior
 
-- `app-shell/*` **puede** importar `features/*` (solo entrypoints públicos), `context/*` y `shared/*`.
-- `features/*` **no puede** importar `app-shell/*`.
-- `features/*` **no puede** importar internals de otras features.
-- `app-shell/*` **no debe** incluir transformaciones DTO ni lógica de negocio de feature.
+- `/` is the canonical Home entry point.
+- Home requires an explicit provider choice before catalog navigation. Rendering Home alone never assigns a hidden default provider.
+- Anonymous Home can show draft-provider guidance when local draft ownership already exists.
+- Authenticated Home can still show lists across multiple providers; Home is not filtered to a single provider.
+- `/catalog` remains a compatibility alias:
+  - redirect to `/{lastProvider}/catalog` when `lastProvider` exists;
+  - redirect to `/` when no provider has been stored yet.
 
-## Guardrails de migración
+## Dependency boundaries
 
-- No se permiten imports activos a `features/app-shell/*` salvo fallback temporal explícito en `features/app-shell/index.ts`.
-- Los tests de composición deben vivir en árbol canónico `apps/web/src/app-shell/*`.
-- La verificación de no regresión se ejecuta con suites unit/integration del área shell.
+- `app-shell/*` may import public feature entrypoints, `context/*`, and `shared/*`.
+- `features/*` must not import `app-shell/*`.
+- `app-shell/*` must not contain DTO mapping, persistence rules, or feature business invariants.
 
-## Rollback por slice
+## Verification focus
 
-- **Slice 1 (compat bridge):** revertir re-export temporal en `features/app-shell/index.ts`.
-- **Slice 2 (import migration):** revertir commits de migración de imports/tests al path canónico.
-- **Slice 3 (cleanup):** restaurar archivos duplicados eliminados bajo `features/app-shell/*` si aparece regresión.
-- **Slice 4 (verification/docs):** revertir cambios documentales/estado de tareas; no requiere rollback runtime.
+- `AppShell.test.tsx`
+- `CatalogHome.test.tsx`
+- `useAppShellNavigation.test.ts`
 
-## Notas de implementación
-
-- Esta migración no introduce nuevos endpoints ni cambia contratos API.
-- No agrega providers nuevos ni modifica boundaries de providers existentes.
+These tests cover canonical Home routing, provider-entry behavior, alias redirect behavior, and anonymous draft guidance.

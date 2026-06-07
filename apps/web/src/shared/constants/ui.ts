@@ -22,6 +22,21 @@ export const UI_TEXT = {
       "Estamos preparando tu lista para que puedas seguir comprando.",
     HANDSHAKE_READY_TOAST: "Tu lista ya está lista para continuar.",
   },
+  HOME: {
+    TITLE: "Tu lista de compras",
+    SUBTITLE: "Elige un catálogo para empezar a crear tu lista.",
+    PROVIDER_ENTRY_LABEL: "Entrar en {provider}",
+    ANONYMOUS_DRAFT_GUIDANCE:
+      "Tienes un borrador asociado a {provider}. Puedes seguir ahí o elegir otro catálogo antes de añadir productos.",
+  },
+  PROVIDERS: {
+    MERCADONA: {
+      DISPLAY_NAME: "Mercadona",
+    },
+    BONPREUESCLAT: {
+      DISPLAY_NAME: "Bonpreu Esclat",
+    },
+  },
   APP_DOWNLOAD: {
     BADGE_LABEL: "Beta",
     TITLE: "Shopping List para Android",
@@ -125,6 +140,8 @@ export const UI_TEXT = {
     EMPTY_PRODUCTS_SUBTITLE: "Prueba a seleccionar otra categoría.",
     EMPTY_CATEGORIES_TITLE: "No hay categorías disponibles",
     EMPTY_CATEGORIES_SUBTITLE: "Vuelve a intentarlo más tarde.",
+    DRAFT_PROVIDER_CONFLICT:
+      "Tu borrador actual pertenece a {currentProvider}. Si continúas, lo vaciaremos para empezar una nueva lista en {requestedProvider}.",
   },
   CATEGORIES_PANEL: {
     TITLE: "Categorías",
@@ -235,6 +252,7 @@ export const UI_TEXT = {
       ITEM_COUNT_LABEL: "Productos:",
       ACTIVATED_AT_LABEL: "Activada:",
       UPDATED_AT_LABEL: "Actualizada:",
+      PROVIDER_LABEL: "Proveedor:",
     },
     EMPTY_STATE: {
       ACTIVE_TITLE: "No hay listas activas",
@@ -251,6 +269,14 @@ export const UI_TEXT = {
       MESSAGE: DRAFT_LOSS_MESSAGE,
       CANCEL_LABEL: "Cancelar",
       CONFIRM_LABEL: "Continuar",
+    },
+    ACTIVE_EDIT_CONFLICT: {
+      TITLE: "Ya estás editando otra lista",
+      MESSAGE:
+        "Ahora mismo estás editando una lista de {currentProvider}. Solo puedes cancelar esa edición y empezar una nueva lista en {requestedProvider}, o volver al catálogo original.",
+      RETURN_LABEL: "Volver al catálogo original",
+      CONFIRM_LABEL: "Cancelar edición y empezar una lista nueva",
+      CANCEL_ERROR: "Unable to cancel active editing.",
     },
     ACTIVATE_DISABLED_MESSAGE: "Añade productos para poder finalizarla.",
     AUTOSAVE_RECOVERY: {

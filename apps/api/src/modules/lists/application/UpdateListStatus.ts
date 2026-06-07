@@ -102,6 +102,7 @@ export class UpdateListStatus {
       id: this.idGenerator.generate(),
       ownerUserId: activeList.ownerUserId,
       title: DEFAULT_AUTOSAVE_DRAFT_TITLE,
+      providerId: activeList.providerId,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: [],

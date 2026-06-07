@@ -4,12 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import type { ListItem } from "@src/context/ListContextValue";
-import type { AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+} from "./types";
 import { saveLocalDraft } from "./AutosaveService";
 import { useAutosaveDraft } from "./useAutosaveDraft";
 
 const sampleItem: ListItem = {
   id: "item-1",
+  source: "mercadona",
   sourceProductId: "4706",
   name: "Leche",
   category: "Bebidas",
@@ -28,12 +32,16 @@ type FetchResponse = {
 type HarnessProps = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
+  providerId?: string;
+  item?: ListItem;
   title?: string;
 };
 
 const Harness = ({
   enabled = true,
   onRehydrate,
+  providerId = DEFAULT_DRAFT_PROVIDER_ID,
+  item = sampleItem,
   title = "Lista semanal",
 }: HarnessProps) => {
   const [items, setItems] = useState<ListItem[]>([]);
@@ -42,15 +50,21 @@ const Harness = ({
     {
       title,
       items,
+      providerId,
     },
     { enabled, onRehydrate }
   );
 
   return (
-    <button type="button" onClick={() => setItems([sampleItem])}>
+    <button type="button" onClick={() => setItems([item])}>
       Add item
     </button>
   );
+};
+
+const bonpreuItem: ListItem = {
+  ...sampleItem,
+  source: "bonpreuesclat",
 };
 
 const TabSyncHarness = () => {
@@ -61,6 +75,7 @@ const TabSyncHarness = () => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled: false,
@@ -105,6 +120,7 @@ const DirtySourceProductHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -138,6 +154,7 @@ const LegacyCategoryOnlyHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -171,6 +188,7 @@ const MixedIdentityHarness = () => {
     {
       title: "Lista semanal",
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     { enabled: true },
   );
@@ -214,6 +232,7 @@ const SecondaryTabHarness = ({ enabled = true }: { enabled?: boolean }) => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled,
@@ -255,6 +274,7 @@ const ReuseAfterRehydrateHarness = () => {
     {
       title,
       items,
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
     },
     {
       enabled: false,
@@ -319,6 +339,7 @@ describe("useAutosaveDraft", () => {
     };
     expect(parsed).toMatchObject({
       title: "Lista semanal",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -394,6 +415,7 @@ describe("useAutosaveDraft", () => {
     const onRehydrate = vi.fn();
     const localDraft = {
       title: "Lista recuperada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -414,6 +436,7 @@ describe("useAutosaveDraft", () => {
 
     expect(onRehydrate).toHaveBeenCalledWith({
       title: "Lista recuperada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -455,6 +478,39 @@ describe("useAutosaveDraft", () => {
 
     expect(typeof body).toBe("string");
     expect(body).toContain('"sourceProductId":"4706"');
+  });
+
+  it("envía providerId y source reales en autosave cross-provider", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-bonpreu-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness providerId="bonpreuesclat" item={bonpreuItem} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    const putCall = fetchMock.mock.calls.find((call) => call[1]?.method === "PUT");
+    const payload = JSON.parse(String(putCall?.[1]?.body)) as {
+      providerId: string;
+      items: Array<{ source: string; sourceProductId: string }>;
+    };
+
+    expect(payload).toMatchObject({
+      providerId: "bonpreuesclat",
+      items: [{ source: "bonpreuesclat", sourceProductId: "4706" }],
+    });
   });
 
   it("serializa un solo item canónico cuando entran ids legacy mezclados", async () => {
@@ -519,6 +575,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote",
@@ -555,6 +612,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote",
@@ -689,6 +747,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota autenticada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote-auth",
@@ -760,6 +819,7 @@ describe("useAutosaveDraft", () => {
 
     saveLocalDraft({
       title: "Lista remota externa",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-remote-2",
@@ -798,6 +858,7 @@ describe("useAutosaveDraft", () => {
       "lists.localDraft",
       JSON.stringify({
         title: "Lista previa",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [
           {
             id: "item-previo",

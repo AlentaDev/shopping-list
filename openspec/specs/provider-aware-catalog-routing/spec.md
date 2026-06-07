@@ -8,14 +8,14 @@ Define deterministic catalog navigation by provider, including a home entrypoint
 
 ### Requirement: Home Entry and Canonical Provider Routes
 
-The system MUST render `/` as a non-technical home page with a visible CTA labeled `Ir al catálogo`. The catalog MUST be reachable only through canonical routes `/:provider/catalog` and `/:provider/catalog/:category`.
+The system MUST render `/` as the canonical non-technical home page for provider entry. The home flow MUST avoid implicit default-provider ownership and MUST route provider navigation through explicit provider choice. The catalog MUST remain reachable through canonical routes `/:provider/catalog` and `/:provider/catalog/:category`.
 
-#### Scenario: Home shows CTA before catalog navigation
+#### Scenario: Home shows provider entry before catalog navigation
 
 - GIVEN a user opens `/`
 - WHEN the page is rendered
-- THEN the user sees a non-technical home view with CTA `Ir al catálogo`
-- AND no catalog data request is required to render the home view
+- THEN the user sees a non-technical home view with explicit provider entry
+- AND no implicit provider is assigned only by rendering Home
 
 #### Scenario: Catalog route requires provider segment
 
@@ -52,19 +52,19 @@ The system MUST expose provider display metadata and SHALL fallback `displayName
 
 ### Requirement: `/catalog` Alias Redirect
 
-The system MUST support `/catalog` as a compatibility alias and SHALL redirect to `/{lastProvider}/catalog` when a last provider exists, otherwise to `/mercadona/catalog`.
+The system MUST support `/catalog` as a compatibility alias and SHALL redirect to `/{lastProvider}/catalog` when a last provider exists. When no last provider exists, the system MUST redirect to `/` instead of assigning a hidden default provider.
 
 #### Scenario: Redirect uses last provider
 
-- GIVEN the user has `lastProvider = "carrefour"`
+- GIVEN the user has `lastProvider = "bonpreuesclat"`
 - WHEN the user navigates to `/catalog`
-- THEN the response redirects to `/carrefour/catalog`
+- THEN the response redirects to `/bonpreuesclat/catalog`
 
-#### Scenario: Redirect falls back to mercadona
+#### Scenario: Redirect falls back to Home without default provider
 
 - GIVEN no last provider is stored
 - WHEN the user navigates to `/catalog`
-- THEN the response redirects to `/mercadona/catalog`
+- THEN the response redirects to `/`
 
 ### Requirement: Return to Last Category per User and Provider
 

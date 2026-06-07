@@ -66,14 +66,29 @@ describe("CatalogAdapter", () => {
       categoryName: "Bollería",
       sections: [
         {
+          subcategoryId: "sub-1",
           subcategoryName: "Dulces",
           products: [productFixtures.ensaimada],
         },
         {
+          subcategoryId: "sub-2",
           subcategoryName: "Salados",
           products: [productFixtures.empanada],
         },
       ],
+    });
+  });
+
+  it("preserves detail subcategory ids for deeper navigation", () => {
+    expect(
+      adaptCategoryDetailResponse({
+        id: "root-1",
+        name: "Frescos",
+        subcategories: [{ id: "leaf-1", name: "Fruta", products: [] }],
+      }),
+    ).toEqual({
+      categoryName: "Frescos",
+      sections: [{ subcategoryId: "leaf-1", subcategoryName: "Fruta", products: [] }],
     });
   });
 

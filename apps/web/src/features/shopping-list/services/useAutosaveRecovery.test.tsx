@@ -4,11 +4,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAutosaveRecovery } from "./useAutosaveRecovery";
-import type { AutosaveDraftInput, LocalDraft } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+  type LocalDraft,
+} from "./types";
 
 const SAMPLE_REMOTE = {
   id: "autosave-1",
   title: "Lista recuperada",
+  providerId: DEFAULT_DRAFT_PROVIDER_ID,
   updatedAt: "2024-01-01T10:00:00.000Z",
   items: [
     {
@@ -100,6 +105,7 @@ describe("useAutosaveRecovery", () => {
     const onAutoRestore = vi.fn();
     const localDraft: LocalDraft = {
       title: "",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [],
       updatedAt: "2024-01-01T09:00:00.000Z",
     };
@@ -120,6 +126,7 @@ describe("useAutosaveRecovery", () => {
     await waitFor(() => {
       expect(onRehydrate).toHaveBeenCalledWith({
         title: "Lista recuperada",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [
           {
             id: "item-1",
@@ -149,6 +156,7 @@ describe("useAutosaveRecovery", () => {
   it("sincroniza el borrador local si es más reciente", async () => {
     const localDraft: LocalDraft = {
       title: "Lista local",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-local",
@@ -201,6 +209,7 @@ describe("useAutosaveRecovery", () => {
   it("no crea conflicto cuando local/remoto difieren solo en id técnico", async () => {
     const localDraft: LocalDraft = {
       title: "Lista local",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "4706",
@@ -251,6 +260,7 @@ describe("useAutosaveRecovery", () => {
     const onRehydrate = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-local",
@@ -330,6 +340,7 @@ describe("useAutosaveRecovery", () => {
     const onKeepLocalConflict = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-local",
@@ -385,6 +396,7 @@ describe("useAutosaveRecovery", () => {
     const onRehydrate = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-local",
@@ -425,6 +437,7 @@ describe("useAutosaveRecovery", () => {
     const onRehydrate = vi.fn();
     const localDraft: LocalDraft = {
       title: "Lista local runtime",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-local-runtime",
@@ -468,6 +481,7 @@ describe("useAutosaveRecovery", () => {
     await waitFor(() => {
       expect(onRehydrate).toHaveBeenCalledWith({
         title: "Lista local runtime",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [
           {
             id: "item-local-runtime",

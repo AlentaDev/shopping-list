@@ -17,6 +17,10 @@ const sampleLists: ListSummary[] = [
     itemCount: 3,
     isEditing: false,
     status: LIST_STATUS.ACTIVE,
+    provider: {
+      slug: "bonpreuesclat",
+      displayName: "Bonpreu Esclat",
+    },
   },
   {
     id: "draft-1",
@@ -126,6 +130,7 @@ describe("ListsScreen", () => {
         name: UI_TEXT.LISTS.ACTIONS.DELETE,
       }),
     ).toBeInTheDocument();
+    expect(activeCard).toHaveTextContent("Proveedor: Bonpreu Esclat");
 
     expect(
       within(activeCard as HTMLElement).queryByRole("button", {

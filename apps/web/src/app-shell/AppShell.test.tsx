@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "./AppShell";
 
@@ -17,6 +17,13 @@ const useAppShellNavigationMock = vi.fn(() => navigationState);
 const showToastMock = vi.fn();
 const authState = { authUser: null as { id: string } | null };
 const apiAwakeState = { apiAwake: true };
+const saveLocalDraftMock = vi.fn();
+const loadLocalDraftMock = vi.fn(() => null);
+const listState = {
+  linesCount: 3,
+  setItems: vi.fn(),
+  resetDraft: vi.fn(),
+};
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
   default: () => <div data-testid="toast-placeholder" />,
@@ -27,10 +34,7 @@ vi.mock("@src/context/useToast", () => ({
 }));
 
 vi.mock("@src/context/useList", () => ({
-  useList: () => ({
-    linesCount: 3,
-    setItems: vi.fn(),
-  }),
+  useList: () => listState,
 }));
 
 vi.mock("@src/context/useAuth", () => ({
@@ -50,6 +54,11 @@ vi.mock("@src/context/ApiAwakeContext", () => ({
   useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
 }));
 
+vi.mock("@src/features/shopping-list/services/AutosaveService", () => ({
+  loadLocalDraft: () => loadLocalDraftMock(),
+  saveLocalDraft: (...args: unknown[]) => saveLocalDraftMock(...args),
+}));
+
 const fetchWithAuthMock = vi.fn();
 
 vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
@@ -60,8 +69,8 @@ vi.mock("@src/app-shell/useAppShellNavigation", () => ({
   useAppShellNavigation: (args: unknown) => useAppShellNavigationMock(args),
 }));
 
-vi.mock("@src/features/shopping-list/ShoppingList", () => ({
-  default: ({
+vi.mock("@src/features/shopping-list", () => ({
+  ShoppingList: ({
     isOpen,
     mutationsEnabled,
     onAddMoreProducts,
@@ -78,6 +87,8 @@ vi.mock("@src/features/shopping-list/ShoppingList", () => ({
       </button>
     </div>
   ),
+  adaptListToShoppingListState: vi.fn(),
+  adaptListStatusToShoppingListStatus: vi.fn(),
 }));
 
 vi.mock("@src/app-shell/components/AppHeader", () => ({
@@ -124,6 +135,54 @@ describe("app-shell/AppShell", () => {
       mainContent: <div>auth-login-screen</div>,
     };
     useAppShellNavigationMock.mockImplementation(() => navigationState);
+    window.localStorage.clear();
+    loadLocalDraftMock.mockReset();
+    loadLocalDraftMock.mockReturnValue(null);
+    saveLocalDraftMock.mockReset();
+    listState.linesCount = 3;
+    listState.setItems.mockReset();
+    listState.resetDraft.mockReset();
+  });
+
+  it("persists the selected provider for an anonymous empty draft from Home", async () => {
+    listState.linesCount = 0;
+    render(<AppShell />);
+
+    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
+      homeDraftProviderId: string | null;
+      onSelectHomeProvider: (providerId: string) => void;
+    };
+
+    await act(async () => {
+      lastCallArgs.onSelectHomeProvider("bonpreuesclat");
+    });
+
+    expect(listState.resetDraft).toHaveBeenCalledWith("bonpreuesclat");
+    expect(navigationState.navigate).toHaveBeenCalledWith("/bonpreuesclat/catalog");
+    expect(saveLocalDraftMock).toHaveBeenCalledWith({
+      title: "",
+      providerId: "bonpreuesclat",
+      items: [],
+    });
+  });
+
+  it("passes anonymous draft guidance context only when a local draft exists", () => {
+    loadLocalDraftMock.mockReturnValue({
+      title: "",
+      providerId: "bonpreuesclat",
+      items: [],
+      updatedAt: "2026-06-06T15:00:00.000Z",
+    });
+
+    render(<AppShell />);
+
+    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
+      homeDraftProviderId: string | null;
+      showAnonymousDraftGuidance: boolean;
+    };
+
+    expect(lastCallArgs.homeDraftProviderId).toBe("bonpreuesclat");
+    expect(lastCallArgs.showAnonymousDraftGuidance).toBe(true);
   });
 
   it("renderiza contenido auth canónico", () => {

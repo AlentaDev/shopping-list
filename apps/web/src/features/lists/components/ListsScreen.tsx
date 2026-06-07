@@ -119,6 +119,11 @@ const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps
             ? list.activatedAt ?? list.updatedAt
             : list.updatedAt}
         </p>
+        {list.provider?.displayName ? (
+          <p className="text-sm text-slate-500">
+            {UI_TEXT.LISTS.CARD.PROVIDER_LABEL} {list.provider.displayName}
+          </p>
+        ) : null}
       </div>
       <div className="flex flex-wrap gap-2">
         {cardActions.map((action) => {
@@ -241,7 +246,7 @@ const ListsScreen = ({
   const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
   const [pendingDraftLoss, setPendingDraftLoss] = useState<{
     list: ListSummary;
-    action: "edit" | "reuse";
+    action: "edit";
   } | null>(null);
 
   const filteredLists = useMemo(
@@ -268,7 +273,7 @@ const ListsScreen = ({
       return;
     }
 
-    if ((action === "edit" || action === "reuse") && hasDraftItems) {
+    if (action === "edit" && hasDraftItems) {
       setPendingDraftLoss({ list, action });
       return;
     }

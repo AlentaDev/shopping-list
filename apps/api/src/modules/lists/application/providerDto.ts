@@ -7,6 +7,7 @@ export type ListProviderDto = {
 
 const PROVIDER_DISPLAY_NAME_BY_SLUG: Record<string, string> = {
   mercadona: "Mercadona",
+  bonpreuesclat: "Bonpreu Esclat",
 };
 
 export function toListProviderDto(

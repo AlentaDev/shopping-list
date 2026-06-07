@@ -3,6 +3,7 @@ import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
 import { activateList } from "./ListStatusService";
 import { LIST_STATUS } from "@src/shared/domain/listStatus";
 import { syncLocalDraftToRemoteList } from "./LocalDraftSyncService";
+import { DEFAULT_DRAFT_PROVIDER_ID } from "./types";
 
 vi.mock("./LocalDraftSyncService", () => ({
   syncLocalDraftToRemoteList: vi.fn(),
@@ -69,6 +70,7 @@ describe("ListStatusService", () => {
     expect(localStorage.getItem("lists.localDraft")).toBe(
       JSON.stringify({
         title: "",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [],
         updatedAt: "2024-02-01T10:00:00.000Z",
       }),
@@ -178,6 +180,7 @@ describe("ListStatusService", () => {
       "lists.localDraft",
       JSON.stringify({
         title: "Persistir",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [],
         updatedAt: "2024-01-01T00:00:00.000Z",
       }),
@@ -193,6 +196,7 @@ describe("ListStatusService", () => {
     expect(localStorage.getItem("lists.localDraft")).toBe(
       JSON.stringify({
         title: "Persistir",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
         items: [],
         updatedAt: "2024-01-01T00:00:00.000Z",
       }),
