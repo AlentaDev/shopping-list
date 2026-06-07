@@ -45,7 +45,7 @@ export const AppShell = () => {
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
-  const { linesCount, setItems, resetDraft } = useList();
+  const { linesCount, setItems, resetDraft, setDraftProviderId } = useList();
   const { showToast } = useToast();
   const { apiAwake } = useApiAwake();
   const {
@@ -114,6 +114,10 @@ export const AppShell = () => {
   };
 
   const handleOpenList = (list: ListDetail) => {
+    if (list.provider?.slug) {
+      setDraftProviderId(list.provider.slug);
+    }
+
     const shoppingListState = adaptListToShoppingListState(list);
 
     setItems(shoppingListState.items);
@@ -126,6 +130,10 @@ export const AppShell = () => {
   };
 
   const handleStartOpenList = (list: ListSummary) => {
+    if (list.provider?.slug) {
+      setDraftProviderId(list.provider.slug);
+    }
+
     setCurrentListId(list.id);
     setCurrentListStatus(adaptListStatusToShoppingListStatus(list.status));
     setCurrentListTitle(list.title);

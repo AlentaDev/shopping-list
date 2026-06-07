@@ -8,6 +8,11 @@ export type ListSummary = {
   isEditing: boolean;
   updatedAt: string;
   status: ListStatus;
+  providerId?: string;
+  provider?: {
+    slug: string;
+    displayName: string;
+  };
 };
 
 export type ListItem = {
@@ -38,6 +43,11 @@ export type ListDetail = {
   items: ListItem[];
   updatedAt: string;
   status?: ListStatus;
+  providerId?: string;
+  provider?: {
+    slug: string;
+    displayName: string;
+  };
 };
 
 export type ListStatusSummary = {
