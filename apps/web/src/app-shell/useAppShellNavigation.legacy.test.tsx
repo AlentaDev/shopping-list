@@ -21,6 +21,9 @@ const baseArgs = {
   onRegister: vi.fn(),
   onOpenList: vi.fn(),
   onStartOpenList: vi.fn(),
+  homeDraftProviderId: null,
+  showAnonymousDraftGuidance: false,
+  onSelectHomeProvider: vi.fn(),
 };
 
 describe("useAppShellNavigation", () => {

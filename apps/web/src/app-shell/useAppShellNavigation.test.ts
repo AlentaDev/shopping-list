@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
+import { Children, Fragment } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import Catalog from "@src/features/catalog/Catalog";
@@ -21,6 +22,9 @@ const baseArgs = {
   onRegister: vi.fn(),
   onOpenList: vi.fn(),
   onStartOpenList: vi.fn(),
+  homeDraftProviderId: null,
+  showAnonymousDraftGuidance: false,
+  onSelectHomeProvider: vi.fn(),
 };
 
 describe("useAppShellNavigation (canonical path)", () => {
@@ -81,15 +85,15 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(window.location.pathname).toBe("/mercadona/catalog/child-2");
   });
 
-  it("redirige /catalog a /mercadona/catalog cuando no hay lastProvider", () => {
+  it("redirige /catalog a / cuando no hay lastProvider", () => {
     window.localStorage.removeItem("lastProvider");
     window.history.pushState({}, "", "/catalog");
 
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
 
-    expect(result.current.currentPath).toBe("/mercadona/catalog");
-    expect(window.location.pathname).toBe("/mercadona/catalog");
-    expect(result.current.mainContent.type).toBe(Catalog);
+    expect(result.current.currentPath).toBe("/");
+    expect(window.location.pathname).toBe("/");
+    expect(result.current.mainContent.type).toBe(CatalogHome);
   });
 
   it("redirige /catalog al lastProvider guardado", () => {
@@ -124,6 +128,14 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(window.location.pathname).toBe("/carrefour/catalog/car-child");
   });
 
+  it("persiste lastProvider al resolver una ruta canónica de catálogo", () => {
+    window.history.pushState({}, "", "/bonpreuesclat/catalog");
+
+    renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(window.localStorage.getItem("lastProvider")).toBe("bonpreuesclat");
+  });
+
   it("renderiza listas en /lists con usuario", () => {
     window.history.pushState({}, "", "/lists");
     const { result } = renderHook(() =>
@@ -138,6 +150,28 @@ describe("useAppShellNavigation (canonical path)", () => {
       }),
     );
     expect(result.current.mainContent.type).toBe(ListsContainer);
+  });
+
+  it("composes authenticated Home with provider entry and mixed-provider lists", () => {
+    const { result } = renderHook(() =>
+      useAppShellNavigation({
+        ...baseArgs,
+        authUser: {
+          id: "user-1",
+          name: "Ada",
+          email: "ada@example.com",
+          postalCode: "28001",
+        },
+      }),
+    );
+
+    expect(result.current.mainContent.type).toBe(Fragment);
+
+    const children = Children.toArray(result.current.mainContent.props.children);
+
+    expect(children).toHaveLength(2);
+    expect(children[0]).toMatchObject({ type: CatalogHome });
+    expect(children[1]).toMatchObject({ type: ListsContainer });
   });
 
   it("renderiza descarga en /app", () => {

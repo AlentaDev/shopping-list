@@ -22,6 +22,21 @@ export const UI_TEXT = {
       "Estamos preparando tu lista para que puedas seguir comprando.",
     HANDSHAKE_READY_TOAST: "Tu lista ya está lista para continuar.",
   },
+  HOME: {
+    TITLE: "Tu lista de compras",
+    SUBTITLE: "Elige un catálogo para empezar a crear tu lista.",
+    PROVIDER_ENTRY_LABEL: "Entrar en {provider}",
+    ANONYMOUS_DRAFT_GUIDANCE:
+      "Tienes un borrador asociado a {provider}. Puedes seguir ahí o elegir otro catálogo antes de añadir productos.",
+  },
+  PROVIDERS: {
+    MERCADONA: {
+      DISPLAY_NAME: "Mercadona",
+    },
+    BONPREUESCLAT: {
+      DISPLAY_NAME: "Bonpreu Esclat",
+    },
+  },
   APP_DOWNLOAD: {
     BADGE_LABEL: "Beta",
     TITLE: "Shopping List para Android",

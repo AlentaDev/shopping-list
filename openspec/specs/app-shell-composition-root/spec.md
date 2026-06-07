@@ -42,6 +42,22 @@ Feature isolation and composition permissions MUST follow explicit boundaries. `
 - THEN compliance validation fails
 - AND the change is blocked until dependency direction is corrected
 
+### Requirement: Provider-Aware Home Context by Auth State
+
+The app-shell composition layer MUST show draft-provider guidance only for anonymous Home flows and MUST allow authenticated Home views to present list visibility across multiple providers.
+
+#### Scenario: Anonymous Home shows draft-aware provider context
+
+- GIVEN an anonymous user opens Home with a provider-owned draft context
+- WHEN Home is rendered
+- THEN the shell shows provider-aware draft guidance for continuing or changing entry
+
+#### Scenario: Authenticated Home shows mixed-provider lists
+
+- GIVEN an authenticated user owns lists from `mercadona` and `bonpreuesclat`
+- WHEN Home is rendered
+- THEN the shell presents both lists without filtering Home to a single provider
+
 ### Requirement: Data Transformation Placement
 
 Data transformation from external DTOs MUST live in `features/*/services/adapters` (or feature services when orchestration-specific). Composition UI components in `app-shell/*` MUST NOT implement DTO normalization or feature business transformation logic.
@@ -74,13 +90,13 @@ Migration MUST preserve behavior while removing ambiguity. Reviews MUST verify b
 
 ### Requirement: Provider-aware Shell Routing Composition
 
-The app-shell composition layer MUST resolve `/`, `/catalog`, `/:provider/catalog`, and `/:provider/catalog/:category` without embedding feature business rules.
+The app-shell composition layer MUST resolve `/`, `/catalog`, `/:provider/catalog`, and `/:provider/catalog/:category` without embedding feature business rules. The shell MUST treat `/` as the canonical provider-entry Home.
 
 #### Scenario: App shell composes provider-aware routes
 
 - GIVEN the web runtime initializes routing
 - WHEN app-shell resolves route composition
-- THEN `/` renders home, `/catalog` resolves alias redirect, and provider-aware catalog routes are mounted
+- THEN `/` renders canonical Home, `/catalog` resolves alias redirect, and provider-aware catalog routes are mounted
 - AND no provider business invariant is implemented inside app-shell components
 
 ### Requirement: Catalog Return Navigation Memory

@@ -4,6 +4,10 @@ import {
   adaptListStatusToShoppingListStatus,
   adaptListToShoppingListState,
 } from "@src/features/shopping-list";
+import {
+  loadLocalDraft,
+  saveLocalDraft,
+} from "@src/features/shopping-list/services/AutosaveService";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";
@@ -57,6 +61,9 @@ export const AppShell = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
   const hasShownReadyToastRef = useRef(false);
+  const localDraft = loadLocalDraft();
+  const homeDraftProviderId = !authUser ? (localDraft?.providerId ?? null) : null;
+  const showAnonymousDraftGuidance = !authUser && Boolean(localDraft?.providerId);
 
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
@@ -127,6 +134,18 @@ export const AppShell = () => {
     setIsCartOpen(true);
   };
 
+  const handleSelectHomeProvider = (providerId: string) => {
+    if (!authUser && linesCount === 0) {
+      saveLocalDraft({
+        title: "",
+        providerId,
+        items: [],
+      });
+    }
+
+    navigate(`/${providerId}/catalog`);
+  };
+
   const { currentPath, navigate, mainContent } = useAppShellNavigation({
     authUser,
     authRedirectPending,
@@ -139,6 +158,9 @@ export const AppShell = () => {
     onRegister: handleRegister,
     onOpenList: handleOpenList,
     onStartOpenList: handleStartOpenList,
+    homeDraftProviderId,
+    showAnonymousDraftGuidance,
+    onSelectHomeProvider: handleSelectHomeProvider,
   });
 
   useEffect(() => {

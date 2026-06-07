@@ -1,4 +1,4 @@
-import { createElement, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, createElement, useCallback, useEffect, useMemo, useState } from "react";
 import Catalog from "@src/features/catalog/Catalog";
 import { ListsContainer, type ListDetail, type ListSummary } from "@src/features/lists";
 import {
@@ -16,7 +16,6 @@ const REGISTER_PATH = "/auth/register";
 const LISTS_PATH = "/lists";
 const APP_DOWNLOAD_PATH = "/app";
 const CATALOG_ALIAS_PATH = "/catalog";
-const DEFAULT_PROVIDER = "mercadona";
 const LAST_PROVIDER_STORAGE_KEY = "lastProvider";
 
 type UseAppShellNavigationArgs = {
@@ -31,6 +30,9 @@ type UseAppShellNavigationArgs = {
   onRegister: (values: RegisterFormValues) => Promise<void>;
   onOpenList: (list: ListDetail) => void;
   onStartOpenList: (list: ListSummary) => void;
+  homeDraftProviderId?: string | null;
+  showAnonymousDraftGuidance?: boolean;
+  onSelectHomeProvider: (providerId: string) => void;
 };
 
 type MainContentParams = {
@@ -46,10 +48,12 @@ type MainContentParams = {
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
   onNavigateHome: () => void;
-  onNavigateCatalog: () => void;
   onNavigateCatalogCategory: (providerId: string, categoryId: string) => void;
   onOpenList: (list: ListDetail) => void;
   onStartOpenList: (list: ListSummary) => void;
+  homeDraftProviderId?: string | null;
+  showAnonymousDraftGuidance?: boolean;
+  onSelectHomeProvider: (providerId: string) => void;
 };
 
 export const useAppShellNavigation = ({
@@ -64,6 +68,9 @@ export const useAppShellNavigation = ({
   onRegister,
   onOpenList,
   onStartOpenList,
+  homeDraftProviderId,
+  showAnonymousDraftGuidance,
+  onSelectHomeProvider,
 }: UseAppShellNavigationArgs) => {
   const initialPath = resolveCatalogAlias(window.location.pathname);
   const [currentPath, setCurrentPath] = useState(() => initialPath);
@@ -72,6 +79,8 @@ export const useAppShellNavigation = ({
   );
 
   useEffect(() => {
+    persistLastProvider(initialPath);
+
     if (window.location.pathname !== initialPath) {
       window.history.replaceState({}, "", initialPath);
     }
@@ -83,6 +92,7 @@ export const useAppShellNavigation = ({
       return;
     }
 
+    persistLastProvider(nextPath);
     window.history.pushState({}, "", nextPath);
     setCurrentPath(nextPath);
     setAuthMode(resolveAuthMode(nextPath));
@@ -91,6 +101,7 @@ export const useAppShellNavigation = ({
   useEffect(() => {
     const handlePopState = () => {
       const path = resolveCatalogAlias(window.location.pathname);
+      persistLastProvider(path);
       setCurrentPath(path);
       setAuthMode(resolveAuthMode(path));
     };
@@ -116,11 +127,13 @@ export const useAppShellNavigation = ({
         onLogin,
         onRegister,
         onNavigateHome: () => navigate("/"),
-        onNavigateCatalog: () => navigate(CATALOG_ALIAS_PATH),
         onNavigateCatalogCategory: (providerId: string, categoryId: string) =>
           navigate(`/${providerId}/catalog/${categoryId}`),
         onOpenList,
         onStartOpenList,
+        homeDraftProviderId,
+        showAnonymousDraftGuidance,
+        onSelectHomeProvider,
       }),
     [
       authMode,
@@ -137,6 +150,9 @@ export const useAppShellNavigation = ({
       navigate,
       onOpenList,
       onStartOpenList,
+      homeDraftProviderId,
+      showAnonymousDraftGuidance,
+      onSelectHomeProvider,
     ],
   );
 
@@ -168,10 +184,12 @@ function resolveMainContent({
   onLogin,
   onRegister,
   onNavigateHome,
-  onNavigateCatalog,
   onNavigateCatalogCategory,
   onOpenList,
   onStartOpenList,
+  homeDraftProviderId,
+  showAnonymousDraftGuidance,
+  onSelectHomeProvider,
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
@@ -215,8 +233,27 @@ function resolveMainContent({
   }
 
   if (currentPath === "/") {
+    if (authUser) {
+      return createElement(
+        Fragment,
+        null,
+        createElement(CatalogHome, {
+          draftProviderId: homeDraftProviderId,
+          showAnonymousDraftGuidance,
+          onSelectProvider: onSelectHomeProvider,
+        }),
+        createElement(ListsContainer, {
+          onOpenList,
+          onStartOpenList,
+          hasDraftItems: linesCount > 0,
+        }),
+      );
+    }
+
     return createElement(CatalogHome, {
-      onGoToCatalog: onNavigateCatalog,
+      draftProviderId: homeDraftProviderId,
+      showAnonymousDraftGuidance,
+      onSelectProvider: onSelectHomeProvider,
     });
   }
 
@@ -234,10 +271,10 @@ function resolveMainContent({
     });
   }
 
-  return createElement(Catalog, {
-    providerId: DEFAULT_PROVIDER,
-    isCategoriesOpen,
-    openMobileCategoriesRequestKey,
+  return createElement(CatalogHome, {
+    draftProviderId: homeDraftProviderId,
+    showAnonymousDraftGuidance,
+    onSelectProvider: onSelectHomeProvider,
   });
 }
 
@@ -259,6 +296,15 @@ function resolveCatalogAlias(pathname: string): string {
   }
 
   const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
-  const provider = lastProvider || DEFAULT_PROVIDER;
-  return `/${provider}/catalog`;
+  return lastProvider ? `/${lastProvider}/catalog` : "/";
+}
+
+function persistLastProvider(pathname: string): void {
+  const providerId = parseCatalogPath(pathname)?.providerId;
+
+  if (!providerId) {
+    return;
+  }
+
+  window.localStorage.setItem(LAST_PROVIDER_STORAGE_KEY, providerId);
 }
