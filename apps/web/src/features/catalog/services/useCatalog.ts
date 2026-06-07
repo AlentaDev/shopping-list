@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CatalogCategoryDetail, CatalogCategoryNode } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
@@ -28,6 +28,7 @@ type UseCatalogResult = CatalogState & {
 
 const CATEGORIES_ERROR_MESSAGE = "No se pudieron cargar las categorías.";
 const DETAIL_ERROR_MESSAGE = "No se pudieron cargar los productos.";
+const EMPTY_CATEGORY_DETAIL = { categoryName: "", sections: [] };
 
 const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
   const parents = categories
@@ -72,6 +73,30 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
   const [detailError, setDetailError] = useState<string | null>(null);
   const [categoryDetail, setCategoryDetail] =
     useState<CatalogCategoryDetail | null>(null);
+
+  const rememberedCategoryId = useMemo(
+    () =>
+      !initialCategoryId && userId ? getLastCategory(userId, providerId) : null,
+    [initialCategoryId, providerId, userId],
+  );
+
+  const fallbackSelectedCategoryId = useMemo(() => {
+    if (categoriesStatus !== FETCH_STATUS.SUCCESS) {
+      return null;
+    }
+
+    if (initialCategoryId) {
+      return initialCategoryId;
+    }
+
+    if (rememberedCategoryId) {
+      return rememberedCategoryId;
+    }
+
+    return getDefaultCategory(categories)?.id ?? null;
+  }, [categories, categoriesStatus, initialCategoryId, rememberedCategoryId]);
+
+  const activeCategoryId = selectedCategoryId ?? fallbackSelectedCategoryId;
 
   const loadCategories = useCallback(async () => {
     setCategoriesStatus(FETCH_STATUS.LOADING);
@@ -128,47 +153,29 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
   }, [loadCategories]);
 
   useEffect(() => {
-    if (categoriesStatus !== FETCH_STATUS.SUCCESS || selectedCategoryId) {
+    if (!activeCategoryId) {
       return;
     }
 
-    if (initialCategoryId) {
-      setSelectedCategoryId(initialCategoryId);
-      return;
-    }
+    const category = categories.find((cat) => cat.id === activeCategoryId);
+    const timeoutId = window.setTimeout(() => {
+      void loadDetail(activeCategoryId, category?.name);
+    }, 0);
 
-    const rememberedCategory =
-      !initialCategoryId && userId
-        ? getLastCategory(userId, providerId)
-        : null;
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeCategoryId, categories, loadDetail]);
 
-    if (rememberedCategory) {
-      setSelectedCategoryId(rememberedCategory);
-      return;
-    }
+  const resolvedDetailStatus =
+    categoriesStatus === FETCH_STATUS.SUCCESS && !activeCategoryId
+      ? FETCH_STATUS.SUCCESS
+      : detailStatus;
 
-    const defaultCategory = getDefaultCategory(categories);
-
-    if (!defaultCategory) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSelectedCategoryId(null);
-      setCategoryDetail({ categoryName: "", sections: [] });
-      setDetailStatus(FETCH_STATUS.SUCCESS);
-      return;
-    }
-
-    setSelectedCategoryId(defaultCategory.id);
-  }, [categories, categoriesStatus, selectedCategoryId, initialCategoryId, providerId, userId]);
-
-  useEffect(() => {
-    if (!selectedCategoryId) {
-      return;
-    }
-
-    const category = categories.find((cat) => cat.id === selectedCategoryId);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadDetail(selectedCategoryId, category?.name);
-  }, [loadDetail, selectedCategoryId, categories]);
+  const resolvedCategoryDetail =
+    categoriesStatus === FETCH_STATUS.SUCCESS && !activeCategoryId
+      ? EMPTY_CATEGORY_DETAIL
+      : categoryDetail;
 
   const selectCategory = (id: string) => {
     setSelectedCategoryId(id);
@@ -182,21 +189,21 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
   };
 
   const reloadDetail = () => {
-    if (!selectedCategoryId) {
+    if (!activeCategoryId) {
       return;
     }
 
-    void loadDetail(selectedCategoryId);
+    void loadDetail(activeCategoryId);
   };
 
   return {
     categoriesStatus,
     categoriesError,
     categories,
-    detailStatus,
+    detailStatus: resolvedDetailStatus,
     detailError,
-    categoryDetail,
-    selectedCategoryId,
+    categoryDetail: resolvedCategoryDetail,
+    selectedCategoryId: activeCategoryId,
     selectCategory,
     reloadCategories,
     reloadDetail,
