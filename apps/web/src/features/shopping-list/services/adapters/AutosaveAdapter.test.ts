@@ -125,4 +125,36 @@ describe("AutosaveAdapter", () => {
     );
   });
 
+  it("preserva providerId y source bonpreu en autosave remoto", () => {
+    expect(
+      adaptAutosaveResponse({
+        id: "autosave-bonpreu-1",
+        title: "Lista Bonpreu",
+        providerId: "bonpreuesclat",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+        items: [
+          {
+            id: "sku-1",
+            kind: "catalog",
+            name: "Iogurt",
+            qty: 1,
+            checked: false,
+            source: "bonpreuesclat",
+            sourceProductId: "sku-1",
+          },
+        ],
+      }),
+    ).toEqual(
+      expect.objectContaining({
+        providerId: "bonpreuesclat",
+        items: [
+          expect.objectContaining({
+            source: "bonpreuesclat",
+            sourceProductId: "sku-1",
+          }),
+        ],
+      }),
+    );
+  });
+
 });

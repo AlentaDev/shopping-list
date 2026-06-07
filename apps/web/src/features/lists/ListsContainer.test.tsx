@@ -436,6 +436,27 @@ describe("ListsContainer", () => {
         };
       }
 
+      if (url === "/api/lists/completed-bonpreu") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "completed-bonpreu",
+            title: "Bonpreu reuse",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 2,
+            isEditing: false,
+            status: LIST_STATUS.COMPLETED,
+            providerId: "provider-bonpreuesclat",
+            provider: {
+              slug: "bonpreuesclat",
+              displayName: "Bonpreu Esclat",
+            },
+            items: [],
+          }),
+        };
+      }
+
       return { ok: false, json: async () => ({}) };
     });
 
@@ -496,10 +517,33 @@ describe("ListsContainer", () => {
         };
       }
 
+      if (url === "/api/lists/completed-bonpreu") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "completed-bonpreu",
+            title: "Bonpreu reuse",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 2,
+            isEditing: false,
+            status: LIST_STATUS.COMPLETED,
+            providerId: "provider-bonpreuesclat",
+            provider: {
+              slug: "bonpreuesclat",
+              displayName: "Bonpreu Esclat",
+            },
+            items: [],
+          }),
+        };
+      }
+
       return { ok: false, json: async () => ({}) };
     });
 
     vi.stubGlobal("fetch", fetchMock);
+    draftProviderIdState.value = "mercadona";
+    itemsState.value = [{ id: "draft-item-1" }];
     localStorage.setItem(
       "lists.localDraft",
       JSON.stringify({
@@ -565,6 +609,27 @@ describe("ListsContainer", () => {
                 },
               },
             ],
+          }),
+        };
+      }
+
+      if (url === "/api/lists/completed-mercadona") {
+        return {
+          ok: true,
+          json: async () => ({
+            id: "completed-mercadona",
+            title: "Mercadona reuse",
+            updatedAt: "2024-02-02T10:00:00.000Z",
+            activatedAt: null,
+            itemCount: 2,
+            isEditing: false,
+            status: LIST_STATUS.COMPLETED,
+            providerId: "provider-mercadona",
+            provider: {
+              slug: "mercadona",
+              displayName: "Mercadona",
+            },
+            items: [],
           }),
         };
       }

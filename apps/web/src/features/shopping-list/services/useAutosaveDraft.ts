@@ -44,13 +44,16 @@ const normalizeSourceProductId = (item: ListItem): string => {
   return sourceProductId;
 };
 
-const mapListItemToAutosave = (item: ListItem): AutosaveCatalogItemInput => ({
+const mapListItemToAutosave = (
+  item: ListItem,
+  providerId: string,
+): AutosaveCatalogItemInput => ({
   id: item.id,
   kind: "catalog",
   name: item.name,
   qty: item.quantity,
   checked: false,
-  source: "mercadona",
+  source: item.source ?? (providerId === "bonpreuesclat" ? "bonpreuesclat" : "mercadona"),
   sourceProductId: normalizeSourceProductId(item),
   categorySnapshot: item.categorySnapshot ?? item.category ?? null,
   subcategorySnapshot: item.subcategorySnapshot ?? null,
@@ -65,7 +68,7 @@ const buildAutosaveDraft = (
 ): AutosaveDraftInput => {
   const deduped = new Map<string, AutosaveCatalogItemInput>();
 
-  for (const item of items.map(mapListItemToAutosave)) {
+  for (const item of items.map((entry) => mapListItemToAutosave(entry, providerId))) {
     const key = item.sourceProductId.trim();
     const existing = deduped.get(key);
 

@@ -1,9 +1,11 @@
 import type { ListRepository } from "./ports.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
+import { resolveListProviderSlug } from "../domain/list.js";
 
 type AutosaveDraft = {
   id: string;
   title: string;
+  providerId: string;
   isEditing: boolean;
   items: ListItemDto[];
   updatedAt: string;
@@ -28,6 +30,7 @@ export class GetAutosaveDraft {
     return {
       id: latestAutosave.id,
       title: latestAutosave.title,
+      providerId: resolveListProviderSlug(latestAutosave.providerId),
       isEditing: latestAutosave.isEditing,
       items: latestAutosave.items.map((item) => toListItemDto(item)),
       updatedAt: latestAutosave.updatedAt.toISOString(),

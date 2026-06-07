@@ -2,6 +2,7 @@ import { createContext } from "react";
 
 export type ListItem = {
   id: string;
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
   serverItemId?: string | null;
   checked?: boolean;

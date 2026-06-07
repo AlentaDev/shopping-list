@@ -10,6 +10,8 @@ type ListActionOptions = {
 type ReuseListItemPayload = {
   id?: string;
   kind?: "catalog";
+  source?: "mercadona" | "bonpreuesclat";
+  sourceProductId?: string;
   name?: string;
   qty?: number;
   checked?: boolean;

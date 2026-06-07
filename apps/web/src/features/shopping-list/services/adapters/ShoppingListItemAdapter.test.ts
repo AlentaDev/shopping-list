@@ -8,6 +8,7 @@ describe("ShoppingListItemAdapter", () => {
         id: "item-1",
         name: "Pan",
         qty: 2,
+        source: "bonpreuesclat",
         sourceProductId: "4706",
         categorySnapshot: "Panadería",
         thumbnail: "https://example.com/pan.png",
@@ -26,6 +27,7 @@ describe("ShoppingListItemAdapter", () => {
       {
         id: "4706",
         serverItemId: "item-1",
+        source: "bonpreuesclat",
         name: "Pan",
         category: "Panadería",
         categorySnapshot: "Panadería",
@@ -37,6 +39,7 @@ describe("ShoppingListItemAdapter", () => {
       },
       {
         id: "item-2",
+        source: "mercadona",
         serverItemId: "item-2",
         name: "Leche",
         category: "Sin categoría",
@@ -49,6 +52,7 @@ describe("ShoppingListItemAdapter", () => {
       },
       {
         id: "",
+        source: "mercadona",
         serverItemId: null,
         name: "",
         category: "Sin categoría",
@@ -66,11 +70,13 @@ describe("ShoppingListItemAdapter", () => {
     const items = adaptShoppingListItems([
       {
         id: "active-1:4706",
+        source: "bonpreuesclat",
         sourceProductId: "active-1:4706:4706",
       },
     ]);
 
     expect(items[0]?.sourceProductId).toBe("4706");
+    expect(items[0]?.source).toBe("bonpreuesclat");
   });
 
   it("separa sourceProductId canónico de serverItemId técnico en identidad legacy mixta", () => {
@@ -93,6 +99,7 @@ describe("ShoppingListItemAdapter", () => {
       {
         id: "4706",
         serverItemId: "active-1:4706",
+        source: "mercadona",
         sourceProductId: "4706",
         name: "Manzanas",
         category: "Sin categoría",
@@ -105,6 +112,7 @@ describe("ShoppingListItemAdapter", () => {
       {
         id: "4706",
         serverItemId: "active-1:4706",
+        source: "mercadona",
         sourceProductId: "4706",
         name: "Manzanas",
         category: "Sin categoría",

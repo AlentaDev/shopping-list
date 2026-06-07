@@ -8,7 +8,7 @@ export type AutosaveCatalogItemInput = {
   name: string;
   qty: number;
   checked: boolean;
-  source: "mercadona";
+  source: "mercadona" | "bonpreuesclat";
   sourceProductId: string;
   thumbnail?: string | null;
   price?: number | null;

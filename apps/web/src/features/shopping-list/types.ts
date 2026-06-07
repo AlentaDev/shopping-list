@@ -1,5 +1,6 @@
 export type ShoppingListItem = {
   id: string;
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
   serverItemId?: string | null;
   checked?: boolean;

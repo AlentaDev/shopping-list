@@ -171,6 +171,7 @@ const Catalog = ({
 
       addItem({
         id: product.id,
+        source: providerId,
         sourceProductId: product.id,
         serverItemId: null,
         name: product.name,

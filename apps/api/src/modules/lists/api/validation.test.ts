@@ -33,6 +33,7 @@ describe("list title validation", () => {
     expect(() =>
       upsertAutosaveSchema.parse({
         title: "Autosave",
+        providerId: "bonpreuesclat",
         baseUpdatedAt: new Date().toISOString(),
         items: [
           {
@@ -41,7 +42,7 @@ describe("list title validation", () => {
             name: "Leche",
             qty: 1,
             checked: false,
-            source: "mercadona",
+            source: "bonpreuesclat",
             sourceProductId: "4706",
             categorySnapshot: "Lácteos",
             subcategorySnapshot: null,
@@ -49,6 +50,16 @@ describe("list title validation", () => {
         ],
       }),
     ).not.toThrow();
+  });
+
+  it("requires providerId in autosave payload", () => {
+    expect(() =>
+      upsertAutosaveSchema.parse({
+        title: "Autosave",
+        baseUpdatedAt: new Date().toISOString(),
+        items: [],
+      }),
+    ).toThrow();
   });
 });
 

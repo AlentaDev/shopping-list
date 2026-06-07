@@ -13,6 +13,7 @@ import { useAutosaveDraft } from "./useAutosaveDraft";
 
 const sampleItem: ListItem = {
   id: "item-1",
+  source: "mercadona",
   sourceProductId: "4706",
   name: "Leche",
   category: "Bebidas",
@@ -31,12 +32,16 @@ type FetchResponse = {
 type HarnessProps = {
   enabled?: boolean;
   onRehydrate?: (draft: AutosaveDraftInput) => void;
+  providerId?: string;
+  item?: ListItem;
   title?: string;
 };
 
 const Harness = ({
   enabled = true,
   onRehydrate,
+  providerId = DEFAULT_DRAFT_PROVIDER_ID,
+  item = sampleItem,
   title = "Lista semanal",
 }: HarnessProps) => {
   const [items, setItems] = useState<ListItem[]>([]);
@@ -45,16 +50,21 @@ const Harness = ({
     {
       title,
       items,
-      providerId: DEFAULT_DRAFT_PROVIDER_ID,
+      providerId,
     },
     { enabled, onRehydrate }
   );
 
   return (
-    <button type="button" onClick={() => setItems([sampleItem])}>
+    <button type="button" onClick={() => setItems([item])}>
       Add item
     </button>
   );
+};
+
+const bonpreuItem: ListItem = {
+  ...sampleItem,
+  source: "bonpreuesclat",
 };
 
 const TabSyncHarness = () => {
@@ -426,6 +436,7 @@ describe("useAutosaveDraft", () => {
 
     expect(onRehydrate).toHaveBeenCalledWith({
       title: "Lista recuperada",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [
         {
           id: "item-1",
@@ -467,6 +478,39 @@ describe("useAutosaveDraft", () => {
 
     expect(typeof body).toBe("string");
     expect(body).toContain('"sourceProductId":"4706"');
+  });
+
+  it("envía providerId y source reales en autosave cross-provider", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn<(input: RequestInfo, init?: RequestInit) =>
+      Promise<FetchResponse>
+    >(async () => ({
+      ok: true,
+      json: async () => ({
+        id: "autosave-bonpreu-1",
+        title: "Lista semanal",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<Harness providerId="bonpreuesclat" item={bonpreuItem} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add item" }));
+
+    await vi.advanceTimersByTimeAsync(1500);
+
+    const putCall = fetchMock.mock.calls.find((call) => call[1]?.method === "PUT");
+    const payload = JSON.parse(String(putCall?.[1]?.body)) as {
+      providerId: string;
+      items: Array<{ source: string; sourceProductId: string }>;
+    };
+
+    expect(payload).toMatchObject({
+      providerId: "bonpreuesclat",
+      items: [{ source: "bonpreuesclat", sourceProductId: "4706" }],
+    });
   });
 
   it("serializa un solo item canónico cuando entran ids legacy mezclados", async () => {

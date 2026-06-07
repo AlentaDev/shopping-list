@@ -52,6 +52,7 @@ export class ReuseList {
       id: newListId,
       ownerUserId: list.ownerUserId,
       title: list.title,
+      providerId: list.providerId,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: reusedItems,

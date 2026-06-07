@@ -189,7 +189,7 @@ function mapItemRow(row: Record<string, unknown>): ListItem {
     id: String(row.id),
     listId: String(row.list_id),
     kind: "catalog",
-    source: "mercadona",
+    source: row.source === "bonpreuesclat" ? "bonpreuesclat" : "mercadona",
     sourceProductId: String(row.source_product_id),
     nameSnapshot: String(row.name_snapshot),
     thumbnailSnapshot: row.thumbnail_snapshot

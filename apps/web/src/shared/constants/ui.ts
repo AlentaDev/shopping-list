@@ -252,6 +252,7 @@ export const UI_TEXT = {
       ITEM_COUNT_LABEL: "Productos:",
       ACTIVATED_AT_LABEL: "Activada:",
       UPDATED_AT_LABEL: "Actualizada:",
+      PROVIDER_LABEL: "Proveedor:",
     },
     EMPTY_STATE: {
       ACTIVE_TITLE: "No hay listas activas",

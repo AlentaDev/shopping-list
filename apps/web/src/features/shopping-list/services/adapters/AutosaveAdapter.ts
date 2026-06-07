@@ -20,7 +20,7 @@ type AutosaveItemPayload = {
   isApproxSize?: boolean;
   categorySnapshot?: string | null;
   subcategorySnapshot?: string | null;
-  source?: "mercadona";
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
 };
 
