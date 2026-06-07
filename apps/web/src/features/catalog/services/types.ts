@@ -20,6 +20,7 @@ export type CatalogProductSummary = {
 };
 
 export type CatalogCategorySection = {
+  subcategoryId: string;
   subcategoryName: string;
   products: CatalogProductSummary[];
 };

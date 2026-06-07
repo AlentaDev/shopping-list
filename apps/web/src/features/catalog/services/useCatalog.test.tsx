@@ -482,6 +482,57 @@ describe("useCatalog", () => {
     expect(await screen.findByText("A-child")).toBeInTheDocument();
   });
 
+  it("falls back to a root leaf when the first root category has no level-1 child", async () => {
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+    const bonpreuDetailUrl = (id: string) => `/api/catalog/bonpreuesclat/categories/${id}`;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === bonpreuRootUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-leaf", name: "Ofertas", order: 1, level: 0 },
+                { id: "root-nested", name: "Frescos", order: 2, level: 0 },
+                {
+                  id: "child-1",
+                  name: "Fruta",
+                  order: 1,
+                  level: 1,
+                  parentId: "root-nested",
+                },
+              ],
+            }),
+          };
+        }
+
+        if (input === bonpreuDetailUrl("root-leaf")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "root-leaf", name: "Ofertas", subcategories: [] }),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const RootLeafHarness = () => {
+      const { categoryDetail } = useCatalog({ providerId: "bonpreuesclat", userId: "user-1" });
+      return <span>{categoryDetail?.categoryName ?? ""}</span>;
+    };
+
+    render(<RootLeafHarness />);
+
+    expect(await screen.findByText("Ofertas")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      bonpreuDetailUrl("root-leaf"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("aísla historial por user+provider y no filtra mercadona hacia carrefour", async () => {
     window.localStorage.setItem(
       "catalog.lastCategoryByUserProvider",

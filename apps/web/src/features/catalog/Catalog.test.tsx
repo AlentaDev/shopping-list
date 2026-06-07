@@ -458,6 +458,39 @@ describe("Catalog", () => {
     expect(document.body.scrollTop).toBe(0);
   });
 
+  it("renders Bonpreu deeper navigation buttons from detail ids", async () => {
+    const user = userEvent.setup();
+    categoryDetailMock = {
+      categoryName: "Frescos",
+      sections: [
+        {
+          subcategoryId: "leaf-1",
+          subcategoryName: "Fruta",
+          products: [],
+        },
+        {
+          subcategoryId: "leaf-2",
+          subcategoryName: "Verdura",
+          products: [],
+        },
+      ],
+    };
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Fruta" }));
+
+    expect(selectCategoryMock).toHaveBeenCalledWith("leaf-1");
+    expect(screen.queryByText("No hay productos disponibles")).not.toBeInTheDocument();
+  });
+
   it("keeps current products visible while loading a new category detail", () => {
     const { rerender } = render(
       <ToastProvider>
@@ -576,6 +609,7 @@ describe("Catalog", () => {
       categoryName: "Bollería",
       sections: [
         {
+          subcategoryId: "sub-1",
           subcategoryName: "Dulces",
           products: [
             {
@@ -592,6 +626,7 @@ describe("Catalog", () => {
           ],
         },
         {
+          subcategoryId: "sub-2",
           subcategoryName: "Salados",
           products: [
             {

@@ -77,6 +77,23 @@ describe("CategoriesPanel", () => {
     expect(onSelectCategory).toHaveBeenCalledWith("child-2");
   });
 
+  it("selects a root leaf directly on desktop when it has no children", async () => {
+    const onSelectCategory = vi.fn();
+
+    render(
+      <CategoriesPanel
+        open
+        categories={[{ id: "root-leaf", name: "Ofertas", order: 1, level: 0 }]}
+        selectedCategoryId={null}
+        onSelectCategory={onSelectCategory}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Ofertas" }));
+
+    expect(onSelectCategory).toHaveBeenCalledWith("root-leaf");
+  });
+
   it("on mobile, parent click does not select category and reveals children", async () => {
     const onSelectCategory = vi.fn();
 
@@ -94,6 +111,24 @@ describe("CategoriesPanel", () => {
 
     expect(onSelectCategory).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Hojas" })).toBeInTheDocument();
+  });
+
+  it("on mobile, parent click selects a root leaf when no children exist", async () => {
+    const onSelectCategory = vi.fn();
+
+    render(
+      <CategoriesPanel
+        open
+        isMobile
+        categories={[{ id: "root-leaf", name: "Ofertas", order: 1, level: 0 }]}
+        selectedCategoryId={null}
+        onSelectCategory={onSelectCategory}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Ofertas" }));
+
+    expect(onSelectCategory).toHaveBeenCalledWith("root-leaf");
   });
 
   it("renders categories skeleton while loading and hides loading copy", () => {

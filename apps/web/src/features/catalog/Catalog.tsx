@@ -118,6 +118,10 @@ const Catalog = ({
     0,
   );
   const hasItems = totalProducts > 0;
+  const hasBonpreuNavigationSections =
+    providerId === "bonpreuesclat" &&
+    !hasItems &&
+    sections.some((section) => section.subcategoryId);
   const skeletonCount = 8;
   const isMobileCategoriesOpen =
     isCategoriesOpen && openMobileCategoriesRequestKey > dismissedMobileRequestKey;
@@ -151,7 +155,10 @@ const Catalog = ({
   const categoriesEmpty =
     categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
   const itemsEmpty =
-    detailStatus === FETCH_STATUS.SUCCESS && !hasItems && !categoriesEmpty;
+    detailStatus === FETCH_STATUS.SUCCESS &&
+    !hasItems &&
+    !categoriesEmpty &&
+    !hasBonpreuNavigationSections;
   const isInitialProductsLoading = detailStatus === FETCH_STATUS.LOADING && !hasItems;
 
   const handleAddProduct = useCallback(
@@ -289,7 +296,7 @@ const Catalog = ({
                 ) : null}
                 {sections.map((section) => (
                   <ProductsCategory
-                    key={section.subcategoryName}
+                    key={section.subcategoryId || section.subcategoryName}
                     subcategoryName={section.subcategoryName}
                     products={section.products}
                     gridClassName={getGridClasses(
@@ -302,6 +309,21 @@ const Catalog = ({
                   />
                 ))}
               </div>
+            </div>
+          ) : null}
+          {hasBonpreuNavigationSections ? (
+            <div className="space-y-3">
+              {sections.map((section) => (
+                <button
+                  key={section.subcategoryId || section.subcategoryName}
+                  type="button"
+                  onClick={() => handleSelectCategory(section.subcategoryId)}
+                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <span>{section.subcategoryName}</span>
+                  <span aria-hidden="true">›</span>
+                </button>
+              ))}
             </div>
           ) : null}
           {itemsEmpty ? (

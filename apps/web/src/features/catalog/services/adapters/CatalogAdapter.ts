@@ -12,6 +12,7 @@ export type RootCategoriesPayload = {
 type CategoryDetailPayload = {
   name?: string;
   subcategories?: Array<{
+    id?: string;
     name?: string;
     products?: CatalogProductSummary[];
   }>;
@@ -34,6 +35,7 @@ export const adaptCategoryDetailResponse = (
     categoryName: data.name ?? "",
     sections: Array.isArray(data.subcategories)
       ? data.subcategories.map((subcategory) => ({
+          subcategoryId: subcategory.id ?? "",
           subcategoryName: subcategory.name ?? "",
           products: Array.isArray(subcategory.products)
             ? subcategory.products

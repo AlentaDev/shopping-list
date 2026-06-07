@@ -49,7 +49,7 @@ const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
     )
     .sort((a, b) => a.order - b.order);
 
-  return children[0] ?? null;
+  return children[0] ?? parent;
 };
 
 type UseCatalogArgs = {
