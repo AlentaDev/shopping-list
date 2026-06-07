@@ -89,7 +89,7 @@ const Catalog = ({
   onItemsCountChange,
   onRequestActiveEditConflict,
 }: CatalogProps) => {
-  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [dismissedMobileRequestKey, setDismissedMobileRequestKey] = useState(0);
   const isMobileInteractionMode = isMobileCatalogInteractionMode();
   const { addItem } = useList();
   const { confirmAndReset } = useDraftProviderConflict({
@@ -119,6 +119,8 @@ const Catalog = ({
   );
   const hasItems = totalProducts > 0;
   const skeletonCount = 8;
+  const isMobileCategoriesOpen =
+    isCategoriesOpen && openMobileCategoriesRequestKey > dismissedMobileRequestKey;
 
   useLayoutEffect(() => {
     if (!selectedCategoryId) {
@@ -140,19 +142,11 @@ const Catalog = ({
     onCategoryRouteChange?.(selectedCategoryId);
   }, [onCategoryRouteChange, selectedCategoryId]);
 
-  useEffect(() => {
-    if (!isCategoriesOpen || openMobileCategoriesRequestKey === 0) {
-      return;
-    }
-
-    setIsMobileCategoriesOpen(true);
-  }, [isCategoriesOpen, openMobileCategoriesRequestKey]);
-
   const handleSelectCategory = useCallback((id: string) => {
     selectCategory(id);
     scrollToCatalogStart();
-    setIsMobileCategoriesOpen(false);
-  }, [selectCategory]);
+    setDismissedMobileRequestKey(openMobileCategoriesRequestKey);
+  }, [openMobileCategoriesRequestKey, selectCategory]);
 
   const categoriesEmpty =
     categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
@@ -230,7 +224,7 @@ const Catalog = ({
                   type="button"
                   aria-label="Close categories panel"
                   className="absolute inset-0 bg-slate-900/30"
-                  onClick={() => setIsMobileCategoriesOpen(false)}
+                  onClick={() => setDismissedMobileRequestKey(openMobileCategoriesRequestKey)}
                 />
                 <div className="absolute inset-x-0 top-24 bottom-0 overflow-y-auto rounded-t-2xl bg-white p-4">
                   <CategoriesPanel
