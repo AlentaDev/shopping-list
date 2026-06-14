@@ -7,12 +7,12 @@ export type CatalogProviderMetadata = {
 };
 
 export type MercadonaRootCategory = {
-  id: number;
+  id: string | number;
   name: string;
   order: number;
   is_extended: boolean;
   categories: Array<{
-    id: number;
+    id: string | number;
     name: string;
     order: number;
     layout: string;
@@ -43,10 +43,10 @@ export type MercadonaCategoryProduct = {
 };
 
 export type MercadonaCategoryDetailResponse = {
-  id: number;
+  id: string | number;
   name: string;
   categories: Array<{
-    id: number;
+    id: string | number;
     name: string;
     products: MercadonaCategoryProduct[];
   }>;

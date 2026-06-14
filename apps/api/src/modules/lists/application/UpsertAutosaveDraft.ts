@@ -3,7 +3,7 @@ import {
   buildDraftItemId,
   normalizeSourceProductId,
 } from "./itemIdNormalization.js";
-import { DEFAULT_PROVIDER_ID } from "../domain/list.js";
+import { DEFAULT_PROVIDER_ID, resolveListProviderId } from "../domain/list.js";
 import type { List, ListItem } from "../domain/list.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 
@@ -36,6 +36,7 @@ type AutosaveItemInput =
 type UpsertAutosaveDraftInput = {
   userId: string;
   title: string;
+  providerId: string;
   baseUpdatedAt: string;
   items: AutosaveItemInput[];
 };
@@ -83,7 +84,7 @@ export class UpsertAutosaveDraft {
       id: listId,
       ownerUserId: input.userId,
       title: input.title,
-      providerId: targetAutosave?.providerId ?? DEFAULT_PROVIDER_ID,
+      providerId: resolveListProviderId(input.providerId ?? targetAutosave?.providerId ?? DEFAULT_PROVIDER_ID),
       isAutosaveDraft: true,
       status: "DRAFT",
       items: input.items.map((item) => toListItem(item, listId, now)),

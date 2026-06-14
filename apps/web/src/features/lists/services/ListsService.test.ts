@@ -45,6 +45,11 @@ describe("ListsService", () => {
             itemCount: 3,
             isEditing: false,
             status: LIST_STATUS.ACTIVE,
+            providerId: "provider-mercadona",
+            provider: {
+              slug: "mercadona",
+              displayName: "Mercadona",
+            },
           },
         ],
       }),
@@ -62,6 +67,11 @@ describe("ListsService", () => {
           itemCount: 3,
           isEditing: false,
           status: LIST_STATUS.ACTIVE,
+          providerId: "provider-mercadona",
+          provider: {
+            slug: "mercadona",
+            displayName: "Mercadona",
+          },
         },
       ],
     });
@@ -128,6 +138,11 @@ describe("ListsService", () => {
         isEditing: false,
         items: [],
         status: LIST_STATUS.DRAFT,
+        providerId: "provider-bonpreuesclat",
+        provider: {
+          slug: "bonpreuesclat",
+          displayName: "Bonpreu Esclat",
+        },
       }),
     }));
 
@@ -142,6 +157,11 @@ describe("ListsService", () => {
       isEditing: false,
       items: [],
       status: LIST_STATUS.DRAFT,
+      providerId: "provider-bonpreuesclat",
+      provider: {
+        slug: "bonpreuesclat",
+        displayName: "Bonpreu Esclat",
+      },
     });
 
     expect(fetchWithAuthMock).toHaveBeenCalledWith(

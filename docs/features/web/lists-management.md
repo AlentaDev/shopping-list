@@ -35,6 +35,32 @@ Este documento solo define comportamiento UI de gestión de listas y debe perman
 
 ## Reglas importantes
 
+### Provider-aware draft ownership
+
+- Each account has exactly one draft across providers.
+- The draft owns an explicit `providerId` even when it is empty.
+- Browsing another provider catalog is allowed; blocking happens only when the user tries to mutate the current draft.
+- Generic draft conflicts use a single confirm-and-reset dialog labeled with the current and requested provider names; the conflict check runs only when both a non-empty draft and a different requested provider are present.
+- `DRAFT -> ACTIVE` is a separate transition from `finish-edit` and `reuse`.
+- Reusing a completed list or starting a new provider mutation must respect the current single-draft rule.
+
+### Provider-aware reuse and editing
+
+- Reusing a completed list into the current draft is allowed without confirmation when the requested provider matches the current draft provider.
+- Reusing into a different provider with a non-empty draft requires explicit reset confirmation before the reuse call.
+- When the current draft is empty, reuse proceeds silently without prompting (silent provider switch).
+- If the current draft belongs to an active edit session, reuse/new-provider mutation must not use the generic reset path; the active-edit conflict dialog is the only allowed UX.
+- Cancelling an active edit and starting a new list clears the editing draft, keeps the single-draft invariant, and moves the user to the requested provider catalog.
+
+### Active-edit conflict dialog (UX)
+
+- Triggered when a cross-provider mutation is requested while a list is in `isEditing=true`.
+- The dialog offers only two actions:
+  - `Return to original provider catalog`: dismiss the dialog and keep the active edit session intact.
+  - `Cancel editing and start a new list`: cancel the active edit, clear the editing draft, and navigate to the requested provider.
+- The generic reset-confirm path is bypassed for this flow; the dialog must never fall back to a generic provider-confirm.
+- Dialog copy lives in `UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT` (title, message, return/confirm labels).
+
 ### Matriz canónica de acciones UI (listas)
 
 Esta matriz define una sola fuente de verdad para las acciones visibles y separa explícitamente:

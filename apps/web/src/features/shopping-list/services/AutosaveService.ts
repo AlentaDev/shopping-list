@@ -1,8 +1,9 @@
-import type {
-  AutosaveDraft,
-  AutosaveDraftInput,
-  AutosaveSummary,
-  LocalDraft,
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraft,
+  type AutosaveDraftInput,
+  type AutosaveSummary,
+  type LocalDraft,
 } from "./types";
 import {
   adaptAutosaveResponse,
@@ -123,6 +124,7 @@ export const saveAlignedEmptyLocalDraft = (updatedAt: string): void => {
   saveLocalDraftWithUpdatedAt(
     {
       title: "",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
       items: [],
     },
     updatedAt,
@@ -138,11 +140,15 @@ export const loadLocalDraft = (): LocalDraft | null => {
 
     const parsed = JSON.parse(stored) as LocalDraft;
     if (typeof parsed.updatedAt === "string") {
-      return parsed;
+      return {
+        ...parsed,
+        providerId: parsed.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
+      };
     }
 
     return {
       ...parsed,
+      providerId: parsed.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
       updatedAt: new Date().toISOString(),
     };
   } catch (error) {

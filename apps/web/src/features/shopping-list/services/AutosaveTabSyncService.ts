@@ -1,5 +1,8 @@
 import { loadLocalDraft } from "./AutosaveService";
-import type { AutosaveDraftInput } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+} from "./types";
 
 export const DRAFT_STORAGE_KEY = "lists.localDraft";
 export const DRAFT_SYNC_STORAGE_KEY = "lists.localDraftSync";
@@ -46,7 +49,15 @@ export const createAutosaveTabSyncService = ({
       const draft = loadLocalDraft();
 
       draftChangedCallbacks.forEach((callback) => {
-        callback(draft ? { title: draft.title, items: draft.items } : null);
+        callback(
+          draft
+            ? {
+                title: draft.title,
+                providerId: draft.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
+                items: draft.items,
+              }
+            : null,
+        );
       });
       return;
     }

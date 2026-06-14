@@ -2,7 +2,10 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { errorMiddleware } from "@src/app/errors/errorMiddleware.js";
-import { ListEditingLockedError } from "../application/errors.js";
+import {
+  DraftProviderConflictError,
+  ListEditingLockedError,
+} from "../application/errors.js";
 import { createListsRouter } from "./router.js";
 
 describe("lists router - complete list", () => {
@@ -123,5 +126,85 @@ describe("lists router - complete list", () => {
 
     expect(response.status).toBe(400);
     expect(addCatalogItemExecute).not.toHaveBeenCalled();
+  });
+
+  it("returns stable 409 conflict payload for draft provider mismatch", async () => {
+    const addCatalogItemExecute = vi.fn().mockRejectedValue(
+      new DraftProviderConflictError({
+        draftProvider: {
+          id: "provider-mercadona",
+          slug: "mercadona",
+          displayName: "Mercadona",
+        },
+        requestedProvider: {
+          id: "provider-bonpreuesclat",
+          slug: "bonpreuesclat",
+          displayName: "BonpreuEsclat",
+        },
+        draftSummary: {
+          itemCount: 1,
+          updatedAt: "2024-01-01T10:00:00.000Z",
+        },
+      }),
+    );
+    const app = express();
+    app.use(express.json());
+    app.use(
+      "/api/lists",
+      createListsRouter({
+        createList: { execute: vi.fn() } as never,
+        listLists: { execute: vi.fn() } as never,
+        getList: { execute: vi.fn() } as never,
+        deleteList: { execute: vi.fn() } as never,
+        addCatalogItem: { execute: addCatalogItemExecute } as never,
+        updateItem: { execute: vi.fn() } as never,
+        removeItem: { execute: vi.fn() } as never,
+        updateListStatus: { execute: vi.fn() } as never,
+        completeList: { execute: vi.fn() } as never,
+        reuseList: { execute: vi.fn() } as never,
+        startListEditing: { execute: vi.fn() } as never,
+        finishListEdit: { execute: vi.fn() } as never,
+        getAutosaveDraft: { execute: vi.fn() } as never,
+        resetAutosaveDraft: { execute: vi.fn() } as never,
+        upsertAutosaveDraft: { execute: vi.fn() } as never,
+        requireAuth: (req, _res, next) => {
+          (req as { userId?: string }).userId = "user-1";
+          next();
+        },
+      }),
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app)
+      .post("/api/lists/list-1/items/from-catalog")
+      .send({ provider: "bonpreuesclat", productId: "4706" });
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      error: "draft_provider_conflict",
+      errorCode: "draft_provider_conflict",
+      draftProvider: {
+        id: "provider-mercadona",
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
+      requestedProvider: {
+        id: "provider-bonpreuesclat",
+        slug: "bonpreuesclat",
+        displayName: "BonpreuEsclat",
+      },
+      allowedActions: ["switch_and_clear", "keep_draft_provider"],
+      draftSummary: {
+        itemCount: 1,
+        updatedAt: "2024-01-01T10:00:00.000Z",
+      },
+    });
+    expect(addCatalogItemExecute).toHaveBeenCalledWith({
+      userId: "user-1",
+      listId: "list-1",
+      provider: "bonpreuesclat",
+      productId: "4706",
+      qty: undefined,
+    });
   });
 });

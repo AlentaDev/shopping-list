@@ -68,20 +68,24 @@ android {
         create("local") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
+            buildConfigField("boolean", "IS_PRODUCTION_API_TARGET", "false")
             manifestPlaceholders["usesCleartextTraffic"] = "true"
         }
 
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"https://api-shopping-list.onrender.com\"")
+            buildConfigField("boolean", "IS_PRODUCTION_API_TARGET", "true")
             manifestPlaceholders["usesCleartextTraffic"] = "false"
         }
     }
 
     buildTypes {
         debug {
+            buildConfigField("boolean", "IS_RELEASE_CAPABLE", "false")
         }
         release {
+            buildConfigField("boolean", "IS_RELEASE_CAPABLE", "true")
             isMinifyEnabled = false
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")

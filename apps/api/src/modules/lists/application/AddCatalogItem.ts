@@ -1,9 +1,10 @@
 import type {
-  CatalogProvider,
+  CatalogProviderResolver,
   MercadonaProductDetail,
 } from "@src/modules/catalog/public.js";
+import { AppError } from "@src/shared/errors/appError.js";
 import type { ListItem } from "../domain/list.js";
-import { resolveListProviderSlug } from "../domain/list.js";
+import { resolvePersistedListProviderSlug } from "../domain/list.js";
 import { toListItemDto, type ListItemDto } from "./listItemDto.js";
 import type { IdGenerator, ListRepository } from "./ports.js";
 import {
@@ -126,7 +127,7 @@ export class AddCatalogItem {
   constructor(
     private readonly listRepository: ListRepository,
     private readonly idGenerator: IdGenerator,
-    private readonly catalogProvider: CatalogProvider,
+    private readonly catalogProviderResolver: CatalogProviderResolver,
   ) {}
 
   async execute(input: AddCatalogItemInput): Promise<ListItemDto> {
@@ -143,20 +144,32 @@ export class AddCatalogItem {
       throw new ListStatusTransitionError();
     }
 
-    const listProviderSlug = resolveListProviderSlug(list.providerId);
-    const catalogProviderMetadata = this.catalogProvider.metadata ?? {
-      id: "provider-mercadona",
-      slug: "mercadona" as const,
-      displayName: "Mercadona",
+    const listProviderSlug = resolvePersistedListProviderSlug(list.providerId);
+    if (!listProviderSlug) {
+      throw new AppError(404, "provider_not_found", "Provider not found", {
+        provider: "missing_list_provider",
+      });
+    }
+
+    const draftProvider = this.catalogProviderResolver.resolve(listProviderSlug);
+    const catalogProvider = this.catalogProviderResolver.resolve(input.provider);
+    const catalogProviderMetadata = catalogProvider.metadata ?? {
+      id: `provider-${input.provider}`,
+      slug: input.provider,
+      displayName: input.provider,
     };
-    const draftProviderId = list.providerId ?? "provider-mercadona";
+    const draftProviderMetadata = draftProvider.metadata ?? {
+      id: list.providerId ?? `provider-${listProviderSlug}`,
+      slug: listProviderSlug,
+      displayName: listProviderSlug,
+    };
 
     if (listProviderSlug !== input.provider) {
       throw new DraftProviderConflictError({
         draftProvider: {
-          id: draftProviderId,
+          id: draftProviderMetadata.id,
           slug: listProviderSlug,
-          displayName: listProviderSlug,
+          displayName: draftProviderMetadata.displayName ?? listProviderSlug,
         },
         requestedProvider: {
           id: catalogProviderMetadata.id,
@@ -172,7 +185,7 @@ export class AddCatalogItem {
 
     let product: MercadonaProductDetail;
     try {
-      product = await this.catalogProvider.getProduct(input.productId);
+      product = await draftProvider.getProduct(input.productId);
     } catch (_error) {
       throw new CatalogProviderError();
     }

@@ -1,7 +1,9 @@
+import { FALLBACK_CATEGORY } from "@src/shared/utils/groupItemsByCategory";
 import type { ShoppingListItem } from "../../types";
 
 type ShoppingListItemPayload = {
   id?: string;
+  source?: "mercadona" | "bonpreuesclat";
   sourceProductId?: string;
   name?: string;
   qty?: number;
@@ -52,13 +54,14 @@ export const adaptShoppingListItems = (
       id: item.id ?? "",
       sourceProductId: item.sourceProductId,
     }),
+    source: item.source ?? "mercadona",
     sourceProductId: normalizeSourceProductId({
       id: item.id ?? "",
       sourceProductId: item.sourceProductId,
     }),
     serverItemId: item.id ?? null,
     name: item.name ?? "",
-    category: item.categorySnapshot?.trim() || "Sin categoría",
+    category: item.categorySnapshot?.trim() || FALLBACK_CATEGORY,
     categorySnapshot: item.categorySnapshot ?? null,
     subcategorySnapshot: item.subcategorySnapshot ?? null,
     thumbnail: item.thumbnail ?? null,

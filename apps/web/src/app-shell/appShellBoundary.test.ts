@@ -3,6 +3,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { AppShell as canonicalAppShell } from "@src/app-shell/AppShell";
 import { AppShell as compatibilityAppShell } from "../features/app-shell";
+import {
+  collectModuleDependencySpecifiers,
+  resolveImportTarget,
+  violatesAppShellFeatureBoundary,
+  violatesCrossFeatureInternalBoundary,
+} from "./appShellImportBoundary";
 
 const WEB_SRC_ROOT = join(__dirname, "..");
 const ALLOWED_FALLBACK_FILE = "features/app-shell/index.ts";
@@ -21,6 +27,11 @@ const CANONICAL_TEST_FILES = [
   "app-shell/AppShell.legacy.test.tsx",
   "app-shell/useAppShellNavigation.test.ts",
   "app-shell/useAppShellNavigation.legacy.test.tsx",
+] as const;
+
+const SELF_ALLOWED_BOUNDARY_FILES = [
+  "app-shell/appShellBoundary.test.ts",
+  "app-shell/appShellImportBoundary.test.ts",
 ] as const;
 
 const listSourceFiles = (dir: string): string[] => {
@@ -49,8 +60,6 @@ describe("app shell compatibility entrypoint", () => {
   });
 
   it("blocks new ambiguous imports to features/app-shell outside fallback index", () => {
-    const forbiddenImportPattern = /from\s+["']@src\/features\/app-shell(\/[^"']*)?["']/;
-
     const offenders = listSourceFiles(WEB_SRC_ROOT)
       .map((filePath) => ({
         filePath,
@@ -62,7 +71,15 @@ describe("app shell compatibility entrypoint", () => {
           return false;
         }
 
-        return forbiddenImportPattern.test(content);
+        if (SELF_ALLOWED_BOUNDARY_FILES.includes(relativePath as (typeof SELF_ALLOWED_BOUNDARY_FILES)[number])) {
+          return false;
+        }
+
+        return collectModuleDependencySpecifiers(content).some((specifier) => {
+          const resolvedTarget = resolveImportTarget(relativePath, specifier);
+
+          return resolvedTarget === "features/app-shell" || resolvedTarget.startsWith("features/app-shell/");
+        });
       })
       .map(({ relativePath }) => relativePath);
 
@@ -95,8 +112,6 @@ describe("app shell compatibility entrypoint", () => {
 
   it("blocks app-shell imports from feature service internals", () => {
     const APP_SHELL_DIR = join(WEB_SRC_ROOT, "app-shell");
-    const forbiddenImportPattern =
-      /from\s+["']@src\/features\/[^/]+\/services(?:\/[^"']*)?["']/;
 
     const offenders = listSourceFiles(APP_SHELL_DIR)
       .map((filePath) => ({
@@ -104,15 +119,54 @@ describe("app shell compatibility entrypoint", () => {
         content: readFileSync(filePath, "utf-8"),
       }))
       .filter(({ relativePath, content }) => {
-        const isTestFile = relativePath.endsWith(".test.ts") || relativePath.endsWith(".test.tsx");
-
-        if (isTestFile) {
+        if (SELF_ALLOWED_BOUNDARY_FILES.includes(relativePath as (typeof SELF_ALLOWED_BOUNDARY_FILES)[number])) {
           return false;
         }
 
-        return forbiddenImportPattern.test(content);
+        const importSpecifiers = collectModuleDependencySpecifiers(content);
+
+        return importSpecifiers.some((specifier) =>
+          violatesAppShellFeatureBoundary(
+            relativePath,
+            resolveImportTarget(relativePath, specifier),
+          ),
+        );
       })
       .map(({ relativePath }) => relativePath);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("blocks cross-feature internal imports from the features tree", () => {
+    const FEATURES_DIR = join(WEB_SRC_ROOT, "features");
+
+    const offenders = listSourceFiles(FEATURES_DIR)
+      .map((filePath) => {
+        const relativePath = relative(WEB_SRC_ROOT, filePath).replaceAll("\\", "/");
+
+        if (relativePath === ALLOWED_FALLBACK_FILE) {
+          return null;
+        }
+
+        return {
+          relativePath,
+          content: readFileSync(filePath, "utf-8"),
+        };
+      })
+      .filter((entry): entry is { relativePath: string; content: string } => entry !== null)
+      .flatMap(({ relativePath, content }) => {
+        const importSpecifiers = collectModuleDependencySpecifiers(content);
+
+        return importSpecifiers.some((specifier) =>
+          violatesCrossFeatureInternalBoundary(
+            relativePath,
+            resolveImportTarget(relativePath, specifier),
+          ),
+        )
+          ? [relativePath]
+          : [];
+      })
+      .sort();
 
     expect(offenders).toEqual([]);
   });

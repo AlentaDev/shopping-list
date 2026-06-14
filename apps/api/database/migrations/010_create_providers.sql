@@ -7,5 +7,6 @@ CREATE TABLE providers (
 );
 
 INSERT INTO providers (id, slug, display_name)
-VALUES ('provider-mercadona', 'mercadona', 'Mercadona')
+VALUES
+  ('provider-mercadona', 'mercadona', 'Mercadona')
 ON CONFLICT (slug) DO NOTHING;

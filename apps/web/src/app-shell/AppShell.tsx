@@ -3,6 +3,10 @@ import {
   ShoppingList,
   adaptListStatusToShoppingListStatus,
   adaptListToShoppingListState,
+  cancelListEditing,
+  deleteAutosave,
+  loadLocalDraft,
+  saveLocalDraft,
 } from "@src/features/shopping-list";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
@@ -23,9 +27,41 @@ import {
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
 import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
+import { getProviderDisplayName } from "@src/shared/constants/providers";
 
 const CATALOG_PATH = "/catalog";
+const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
 type HandshakeStatus = "WAITING" | "READY";
+
+type ActiveEditConflictState = {
+  currentProviderId: string;
+  requestedProviderId: string;
+};
+
+const loadEditSessionListId = (): string | null => {
+  try {
+    const stored = localStorage.getItem(EDIT_SESSION_STORAGE_KEY);
+
+    if (!stored) {
+      return null;
+    }
+
+    const parsed = JSON.parse(stored) as {
+      listId?: unknown;
+      isEditing?: unknown;
+    };
+
+    return parsed.isEditing === true && typeof parsed.listId === "string"
+      ? parsed.listId
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearEditSessionMarker = (): void => {
+  localStorage.removeItem(EDIT_SESSION_STORAGE_KEY);
+};
 
 export const AppShell = () => {
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
@@ -41,7 +77,7 @@ export const AppShell = () => {
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
-  const { linesCount, setItems } = useList();
+  const { linesCount, setItems, resetDraft, setDraftProviderId } = useList();
   const { showToast } = useToast();
   const { apiAwake } = useApiAwake();
   const {
@@ -56,7 +92,12 @@ export const AppShell = () => {
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
   const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
+  const [activeEditConflict, setActiveEditConflict] =
+    useState<ActiveEditConflictState | null>(null);
   const hasShownReadyToastRef = useRef(false);
+  const localDraft = loadLocalDraft();
+  const homeDraftProviderId = !authUser ? (localDraft?.providerId ?? null) : null;
+  const showAnonymousDraftGuidance = !authUser && Boolean(localDraft?.providerId);
 
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
@@ -107,6 +148,10 @@ export const AppShell = () => {
   };
 
   const handleOpenList = (list: ListDetail) => {
+    if (list.provider?.slug) {
+      setDraftProviderId(list.provider.slug);
+    }
+
     const shoppingListState = adaptListToShoppingListState(list);
 
     setItems(shoppingListState.items);
@@ -119,12 +164,86 @@ export const AppShell = () => {
   };
 
   const handleStartOpenList = (list: ListSummary) => {
+    if (list.provider?.slug) {
+      setDraftProviderId(list.provider.slug);
+    }
+
     setCurrentListId(list.id);
     setCurrentListStatus(adaptListStatusToShoppingListStatus(list.status));
     setCurrentListTitle(list.title);
     setIsListLoading(true);
     setCurrentListIsEditing(list.isEditing);
     setIsCartOpen(true);
+  };
+
+  const handleSelectHomeProvider = (providerId: string) => {
+    if (linesCount === 0) {
+      resetDraft(providerId);
+      saveLocalDraft({
+        title: "",
+        providerId,
+        items: [],
+      });
+    }
+
+    navigate(`/${providerId}/catalog`);
+  };
+
+  const handleRequestActiveEditConflict = ({
+    currentProviderId,
+    requestedProviderId,
+  }: ActiveEditConflictState) => {
+    setActiveEditConflict({ currentProviderId, requestedProviderId });
+  };
+
+  const handleDismissActiveEditConflict = () => {
+    if (!activeEditConflict) {
+      return;
+    }
+
+    navigate(`/${activeEditConflict.currentProviderId}/catalog`);
+    setActiveEditConflict(null);
+  };
+
+  const handleCancelEditingAndStartNewList = async () => {
+    if (!activeEditConflict) {
+      return;
+    }
+
+    const editingListId = loadEditSessionListId();
+
+    try {
+      if (editingListId) {
+        await cancelListEditing(editingListId);
+      }
+
+      await deleteAutosave();
+      clearEditSessionMarker();
+      resetDraft(activeEditConflict.requestedProviderId);
+      setDraftProviderId(activeEditConflict.requestedProviderId);
+      setItems([]);
+      setCurrentListId(null);
+      setCurrentListStatus(LIST_STATUS.LOCAL_DRAFT);
+      setCurrentListTitle(UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE);
+      setCurrentListIsEditing(false);
+      setIsListLoading(false);
+      setIsCartOpen(false);
+      saveLocalDraft({
+        title: "",
+        providerId: activeEditConflict.requestedProviderId,
+        items: [],
+      });
+      navigate(`/${activeEditConflict.requestedProviderId}/catalog`);
+      setActiveEditConflict(null);
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.CANCEL_ERROR,
+        productName: "",
+      });
+    }
   };
 
   const { currentPath, navigate, mainContent } = useAppShellNavigation({
@@ -139,6 +258,10 @@ export const AppShell = () => {
     onRegister: handleRegister,
     onOpenList: handleOpenList,
     onStartOpenList: handleStartOpenList,
+    homeDraftProviderId,
+    showAnonymousDraftGuidance,
+    onSelectHomeProvider: handleSelectHomeProvider,
+    onRequestActiveEditConflict: handleRequestActiveEditConflict,
   });
 
   useEffect(() => {
@@ -202,6 +325,48 @@ export const AppShell = () => {
         <div className="page-transition" data-testid="page-transition">
           {mainContent}
         </div>
+        {activeEditConflict ? (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 p-4">
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            >
+              <h2 className="text-lg font-semibold text-slate-900">
+                {UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.TITLE}
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                {UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.MESSAGE
+                  .replace(
+                    "{currentProvider}",
+                    getProviderDisplayName(activeEditConflict.currentProviderId),
+                  )
+                  .replace(
+                    "{requestedProvider}",
+                    getProviderDisplayName(activeEditConflict.requestedProviderId),
+                  )}
+              </p>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleDismissActiveEditConflict}
+                  className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  {UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.RETURN_LABEL}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleCancelEditingAndStartNewList();
+                  }}
+                  className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                >
+                  {UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.CONFIRM_LABEL}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </main>
       <ShoppingList
         key={`${currentListId ?? "local"}-${currentListTitle}`}

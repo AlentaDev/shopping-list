@@ -9,9 +9,13 @@ import { ToastProvider } from "@src/context/ToastContext";
 import Toast from "@src/shared/components/toast/Toast";
 
 const addItemMock = vi.fn();
+const resetDraftMock = vi.fn();
+const setDraftProviderIdMock = vi.fn();
 const selectCategoryMock = vi.fn();
 const reloadCategoriesMock = vi.fn();
 const reloadDetailMock = vi.fn();
+let draftProviderIdMock = "mercadona";
+let listItemsMock: Array<{ id: string }> = [];
 
 type CategoryNode = {
   id: string;
@@ -84,6 +88,10 @@ let categoryDetailMock = {
 vi.mock("@src/context/useList", () => ({
   useList: () => ({
     addItem: addItemMock,
+    draftProviderId: draftProviderIdMock,
+    items: listItemsMock,
+    resetDraft: resetDraftMock,
+    setDraftProviderId: setDraftProviderIdMock,
   }),
 }));
 
@@ -180,6 +188,149 @@ describe("Catalog", () => {
       within(toastStack).getByText("Añadido a la lista"),
     ).toBeInTheDocument();
     expect(within(toastStack).getByText("Ensaimada")).toBeInTheDocument();
+  });
+
+  it("allows browsing another provider catalog without blocking rendering", () => {
+    draftProviderIdMock = "mercadona";
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Bollería", level: 1 }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the current draft provider when a cross-provider add is cancelled", async () => {
+    const user = userEvent.setup();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [{ id: "item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(confirmSpy).toHaveBeenCalled();
+    expect(addItemMock).not.toHaveBeenCalled();
+    expect(resetDraftMock).not.toHaveBeenCalled();
+  });
+
+  it("resets the draft only when a cross-provider mutation is confirmed", async () => {
+    const user = userEvent.setup();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [{ id: "item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Mercadona"),
+    );
+    expect(confirmSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Bonpreu Esclat"),
+    );
+    expect(resetDraftMock).toHaveBeenCalledWith("bonpreuesclat");
+    expect(addItemMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("switches an empty draft to the requested provider before the first mutation", async () => {
+    const user = userEvent.setup();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [];
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(setDraftProviderIdMock).toHaveBeenCalledWith("bonpreuesclat");
+    expect(addItemMock).toHaveBeenCalledTimes(1);
+    expect(resetDraftMock).not.toHaveBeenCalled();
+  });
+
+  it("adds the item without confirm when draft matches the requested provider and has items", async () => {
+    const user = userEvent.setup();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [{ id: "item-1" }];
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="mercadona" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(addItemMock).toHaveBeenCalledTimes(1);
+    expect(resetDraftMock).not.toHaveBeenCalled();
+    expect(setDraftProviderIdMock).not.toHaveBeenCalled();
+  });
+
+  it("delegates cross-provider mutation to the active-edit conflict flow when an edit session exists", async () => {
+    const user = userEvent.setup();
+    const onRequestActiveEditConflict = vi.fn();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [{ id: "item-1" }];
+    localStorage.setItem(
+      "lists.editSession",
+      JSON.stringify({ listId: "active-list-1", isEditing: true }),
+    );
+    const confirmSpy = vi.spyOn(window, "confirm");
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestActiveEditConflict={onRequestActiveEditConflict}
+          />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
+
+    expect(onRequestActiveEditConflict).toHaveBeenCalledWith({
+      currentProviderId: "mercadona",
+      requestedProviderId: "bonpreuesclat",
+    });
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(addItemMock).not.toHaveBeenCalled();
   });
 
   it("uses a 2-column mobile product grid while preserving md+ classes", () => {
@@ -307,6 +458,39 @@ describe("Catalog", () => {
     expect(document.body.scrollTop).toBe(0);
   });
 
+  it("renders Bonpreu deeper navigation buttons from detail ids", async () => {
+    const user = userEvent.setup();
+    categoryDetailMock = {
+      categoryName: "Frescos",
+      sections: [
+        {
+          subcategoryId: "leaf-1",
+          subcategoryName: "Fruta",
+          products: [],
+        },
+        {
+          subcategoryId: "leaf-2",
+          subcategoryName: "Verdura",
+          products: [],
+        },
+      ],
+    };
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog providerId="bonpreuesclat" />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Fruta" }));
+
+    expect(selectCategoryMock).toHaveBeenCalledWith("leaf-1");
+    expect(screen.queryByText("No hay productos disponibles")).not.toBeInTheDocument();
+  });
+
   it("keeps current products visible while loading a new category detail", () => {
     const { rerender } = render(
       <ToastProvider>
@@ -409,17 +593,23 @@ describe("Catalog", () => {
 
   afterEach(() => {
     addItemMock.mockReset();
+    resetDraftMock.mockReset();
+    setDraftProviderIdMock.mockReset();
     selectCategoryMock.mockReset();
     reloadCategoriesMock.mockReset();
     reloadDetailMock.mockReset();
+    draftProviderIdMock = "mercadona";
+    listItemsMock = [];
     selectedCategoryIdMock = "child-1";
     isMobileCatalogInteractionModeMock = false;
     categoriesStatusMock = "success";
     detailStatusMock = "success";
+    vi.restoreAllMocks();
     categoryDetailMock = {
       categoryName: "Bollería",
       sections: [
         {
+          subcategoryId: "sub-1",
           subcategoryName: "Dulces",
           products: [
             {
@@ -436,6 +626,7 @@ describe("Catalog", () => {
           ],
         },
         {
+          subcategoryId: "sub-2",
           subcategoryName: "Salados",
           products: [
             {

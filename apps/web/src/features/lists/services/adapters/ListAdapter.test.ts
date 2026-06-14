@@ -19,6 +19,11 @@ describe("ListAdapter", () => {
           itemCount: 3,
           isEditing: false,
           status: LIST_STATUS.ACTIVE,
+          providerId: "provider-mercadona",
+          provider: {
+            slug: "mercadona",
+            displayName: "Mercadona",
+          },
         },
       ],
     };
@@ -33,6 +38,11 @@ describe("ListAdapter", () => {
           itemCount: 3,
           isEditing: false,
           status: LIST_STATUS.ACTIVE,
+          providerId: "provider-mercadona",
+          provider: {
+            slug: "mercadona",
+            displayName: "Mercadona",
+          },
         },
       ],
     });
@@ -77,6 +87,11 @@ describe("ListAdapter", () => {
       itemCount: 4,
       isEditing: false,
       status: LIST_STATUS.ACTIVE,
+      providerId: "provider-bonpreuesclat",
+      provider: {
+        slug: "bonpreuesclat",
+        displayName: "Bonpreu Esclat",
+      },
     };
 
     expect(adaptListSummaryResponse(payload)).toEqual({
@@ -87,6 +102,11 @@ describe("ListAdapter", () => {
       itemCount: 4,
       isEditing: false,
       status: LIST_STATUS.ACTIVE,
+      providerId: "provider-bonpreuesclat",
+      provider: {
+        slug: "bonpreuesclat",
+        displayName: "Bonpreu Esclat",
+      },
     });
   });
 
@@ -113,6 +133,11 @@ describe("ListAdapter", () => {
       itemCount: 1,
       isEditing: true,
       status: LIST_STATUS.COMPLETED,
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
       items: [
         {
           id: "item-1",
@@ -135,6 +160,11 @@ describe("ListAdapter", () => {
       itemCount: 1,
       isEditing: true,
       status: LIST_STATUS.COMPLETED,
+      providerId: "provider-mercadona",
+      provider: {
+        slug: "mercadona",
+        displayName: "Mercadona",
+      },
       items: [
         {
           id: "item-1",
@@ -168,6 +198,21 @@ describe("ListAdapter", () => {
       isEditing: false,
       items: [],
       status: undefined,
+    });
+  });
+
+  it("derives provider display data from providerId when provider payload is missing", () => {
+    expect(
+      adaptListSummaryResponse({
+        id: "list-9",
+        providerId: "provider-bonpreuesclat",
+      }),
+    ).toMatchObject({
+      providerId: "provider-bonpreuesclat",
+      provider: {
+        slug: "bonpreuesclat",
+        displayName: "Bonpreu Esclat",
+      },
     });
   });
 });

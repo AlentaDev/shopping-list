@@ -79,6 +79,15 @@ const CategoriesPanel = ({
     return null;
   }
 
+  const selectParentCategory = (parentId: string, hasChildren: boolean) => {
+    if (hasChildren) {
+      return false;
+    }
+
+    onSelectCategory(parentId);
+    return true;
+  };
+
   return (
     <aside className="w-full">
       <div className="flex h-[calc(100vh-144px)] max-h-[calc(100vh-144px)] flex-col rounded-2xl border border-slate-200 bg-white">
@@ -119,6 +128,7 @@ const CategoriesPanel = ({
             <div className="space-y-3">
               {parents.map((parent) => {
                   const children = childrenByParent.get(parent.id) ?? [];
+                  const hasChildren = children.length > 0;
                   const isExpanded = expandedParentId === parent.id;
 
                   return (
@@ -130,6 +140,10 @@ const CategoriesPanel = ({
                         type="button"
                         onClick={() => {
                           if (isMobile) {
+                            if (selectParentCategory(parent.id, hasChildren)) {
+                              return;
+                            }
+
                             setMobileExpandedParentId((currentParentId) =>
                               currentParentId === parent.id ? null : parent.id,
                             );
@@ -139,7 +153,10 @@ const CategoriesPanel = ({
                           const firstChild = children[0];
                           if (firstChild) {
                             onSelectCategory(firstChild.id);
+                            return;
                           }
+
+                          onSelectCategory(parent.id);
                         }}
                         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold text-slate-900"
                       >
@@ -147,6 +164,8 @@ const CategoriesPanel = ({
                           aria-hidden="true"
                           viewBox="0 0 24 24"
                           className={`h-4 w-4 text-slate-500 transition-transform ${
+                            hasChildren ? "opacity-100" : "opacity-0"
+                          } ${
                             isExpanded ? "rotate-90" : "rotate-0"
                           }`}
                           fill="none"

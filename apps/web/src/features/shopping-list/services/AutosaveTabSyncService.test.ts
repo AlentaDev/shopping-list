@@ -5,6 +5,7 @@ import {
   DRAFT_STORAGE_KEY,
   DRAFT_SYNC_STORAGE_KEY,
 } from "./AutosaveTabSyncService";
+import { DEFAULT_DRAFT_PROVIDER_ID } from "./types";
 
 describe("AutosaveTabSyncService", () => {
   beforeEach(() => {
@@ -21,18 +22,33 @@ describe("AutosaveTabSyncService", () => {
 
     service.onDraftChanged(onDraftChanged);
 
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        title: "Lista nueva",
+        providerId: DEFAULT_DRAFT_PROVIDER_ID,
+        items: [],
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      }),
+    );
+
     window.dispatchEvent(
       new StorageEvent("storage", {
         key: DRAFT_STORAGE_KEY,
         newValue: JSON.stringify({
           title: "Lista nueva",
+          providerId: DEFAULT_DRAFT_PROVIDER_ID,
           items: [],
           updatedAt: "2024-01-01T00:00:00.000Z",
         }),
       }),
     );
 
-    expect(onDraftChanged).toHaveBeenCalledOnce();
+    expect(onDraftChanged).toHaveBeenCalledWith({
+      title: "Lista nueva",
+      providerId: DEFAULT_DRAFT_PROVIDER_ID,
+      items: [],
+    });
 
     service.dispose();
   });

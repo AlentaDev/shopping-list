@@ -41,7 +41,7 @@ const catalogItemTwo = {
   id: "item-2",
   listId: "list-2",
   kind: "catalog",
-  source: "mercadona",
+  source: "bonpreuesclat",
   sourceProductId: "sku-999",
   nameSnapshot: "Bread",
   thumbnailSnapshot: null,
@@ -74,6 +74,7 @@ describe("PostgresListRepository", () => {
               id: baseList.id,
               owner_user_id: baseList.ownerUserId,
               title: baseList.title,
+              provider_id: baseList.providerId,
               status: baseList.status,
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
@@ -115,6 +116,63 @@ describe("PostgresListRepository", () => {
     await expect(repository.findById(baseList.id)).resolves.toEqual(list);
   });
 
+  it("reads item source from postgres rows instead of hardcoding mercadona", async () => {
+    const pool = {
+      query: vi
+        .fn()
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: baseList.id,
+              owner_user_id: baseList.ownerUserId,
+              title: baseList.title,
+              provider_id: "provider-bonpreuesclat",
+              status: baseList.status,
+              is_autosave_draft: baseList.isAutosaveDraft,
+              activated_at: baseList.activatedAt,
+              is_editing: baseList.isEditing,
+              editing_target_list_id: baseList.editingTargetListId,
+              created_at: baseList.createdAt,
+              updated_at: baseList.updatedAt,
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: catalogItem.id,
+              list_id: catalogItem.listId,
+              source: "bonpreuesclat",
+              source_product_id: catalogItem.sourceProductId,
+              name_snapshot: catalogItem.nameSnapshot,
+              thumbnail_snapshot: catalogItem.thumbnailSnapshot,
+              price_snapshot: catalogItem.priceSnapshot,
+              unit_size_snapshot: catalogItem.unitSizeSnapshot,
+              unit_format_snapshot: catalogItem.unitFormatSnapshot,
+              unit_price_per_unit_snapshot:
+                catalogItem.unitPricePerUnitSnapshot,
+              is_approx_size_snapshot: catalogItem.isApproxSizeSnapshot,
+              category_snapshot: catalogItem.categorySnapshot,
+              subcategory_snapshot: catalogItem.subcategorySnapshot,
+              qty: catalogItem.qty,
+              checked: catalogItem.checked,
+              created_at: catalogItem.createdAt,
+              updated_at: catalogItem.updatedAt,
+            },
+          ],
+        }),
+    };
+
+    const repository = new PostgresListRepository(pool);
+
+    const persisted = await repository.findById(baseList.id);
+
+    expect(persisted?.providerId).toBe("provider-bonpreuesclat");
+    expect(persisted?.items[0]).toEqual(
+      expect.objectContaining({ source: "bonpreuesclat" }),
+    );
+  });
+
 
   it("preserves milliseconds when postgres rows return Date objects", async () => {
     const updatedAt = new Date("2026-02-14T23:18:18.034Z");
@@ -127,6 +185,7 @@ describe("PostgresListRepository", () => {
               id: baseList.id,
               owner_user_id: baseList.ownerUserId,
               title: baseList.title,
+              provider_id: baseList.providerId,
               status: baseList.status,
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
@@ -166,6 +225,7 @@ describe("PostgresListRepository", () => {
               id: "list-1",
               owner_user_id: "user-1",
               title: "Weekly groceries",
+              provider_id: "provider-mercadona",
               status: "DRAFT",
               is_autosave_draft: false,
               activated_at: baseList.activatedAt,
@@ -178,6 +238,7 @@ describe("PostgresListRepository", () => {
               id: "list-2",
               owner_user_id: "user-1",
               title: "Party",
+              provider_id: "provider-mercadona",
               status: "ACTIVE",
               is_autosave_draft: false,
               activated_at: null,
@@ -411,7 +472,7 @@ describe("PostgresListRepository", () => {
     expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
   });
 
-  it("backfills missing provider ids", async () => {
+  it("backfills only missing, blank, and legacy mercadona provider ids", async () => {
     const pool = {
       query: vi.fn().mockResolvedValue({ rows: [{ id: "1" }, { id: "2" }] }),
     };
@@ -420,7 +481,7 @@ describe("PostgresListRepository", () => {
 
     await expect(repository.backfillMissingProvider("mercadona")).resolves.toBe(2);
     expect(pool.query).toHaveBeenCalledWith(
-      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR provider_id = 'mercadona' RETURNING id",
+      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR btrim(provider_id) = 'mercadona' RETURNING id",
       ["provider-mercadona"],
     );
   });

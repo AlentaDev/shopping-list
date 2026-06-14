@@ -6,14 +6,17 @@ import com.alentadev.shopping.core.network.ApiService
 import com.alentadev.shopping.core.network.AuthRetryPolicy
 import com.alentadev.shopping.core.network.ConnectivityGate
 import com.alentadev.shopping.core.network.CookieClearingSessionInvalidationNotifier
+import com.alentadev.shopping.core.network.DebugLogMode
 import com.alentadev.shopping.core.network.DebugInterceptor
 import com.alentadev.shopping.core.network.DefaultAuthRetryPolicy
 import com.alentadev.shopping.core.network.NetworkMonitor
+import com.alentadev.shopping.core.network.NetworkLoggingPolicy
 import com.alentadev.shopping.core.network.PersistentCookieJar
 import com.alentadev.shopping.core.network.RefreshCoordinator
 import com.alentadev.shopping.core.network.RetryInterceptor
 import com.alentadev.shopping.core.network.SessionInvalidationNotifier
 import com.alentadev.shopping.core.network.TokenAuthenticator
+import com.alentadev.shopping.core.network.resolveNetworkLoggingPolicy as resolveLoggingPolicy
 import com.alentadev.shopping.feature.auth.data.local.AuthLocalDataSource
 import com.alentadev.shopping.feature.auth.data.remote.AuthApi
 import com.alentadev.shopping.feature.sync.application.SyncCoordinator
@@ -36,6 +39,18 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    internal fun resolveNetworkLoggingPolicy(
+        apiBaseUrl: String,
+        isDebugBuild: Boolean,
+        isReleaseCapable: Boolean,
+        isProductionApiTarget: Boolean
+    ): NetworkLoggingPolicy = resolveLoggingPolicy(
+        apiBaseUrl = apiBaseUrl,
+        isDebugBuild = isDebugBuild,
+        isReleaseCapable = isReleaseCapable,
+        isProductionApiTarget = isProductionApiTarget
+    )
+
     @Singleton
     @Provides
     fun provideJson(): Json = Json {
@@ -52,17 +67,28 @@ object NetworkModule {
 
     @Singleton
     @Provides
-    fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
+    fun provideNetworkLoggingPolicy(): NetworkLoggingPolicy = resolveNetworkLoggingPolicy(
+        apiBaseUrl = BuildConfig.API_BASE_URL,
+        isDebugBuild = BuildConfig.DEBUG,
+        isReleaseCapable = BuildConfig.IS_RELEASE_CAPABLE,
+        isProductionApiTarget = BuildConfig.IS_PRODUCTION_API_TARGET
+    )
+
+    @Singleton
+    @Provides
+    fun provideHttpLoggingInterceptor(policy: NetworkLoggingPolicy): HttpLoggingInterceptor {
         return HttpLoggingInterceptor { message ->
             android.util.Log.d("RetrofitClient", message)
         }.apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = policy.httpLoggingLevel
         }
     }
 
     @Singleton
     @Provides
-    fun provideDebugInterceptor(): DebugInterceptor = DebugInterceptor()
+    fun provideDebugInterceptor(policy: NetworkLoggingPolicy): DebugInterceptor = DebugInterceptor(
+        mode = policy.debugLogMode
+    )
 
     @Singleton
     @Provides

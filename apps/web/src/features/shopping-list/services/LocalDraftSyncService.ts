@@ -3,7 +3,11 @@ import {
   loadLocalDraft,
   putAutosave,
 } from "./AutosaveService";
-import type { AutosaveDraftInput, LocalDraft } from "./types";
+import {
+  DEFAULT_DRAFT_PROVIDER_ID,
+  type AutosaveDraftInput,
+  type LocalDraft,
+} from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 type SyncResult = {
@@ -16,6 +20,7 @@ const normalizeDraftTitle = (draft: AutosaveDraftInput) =>
 
 const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => ({
   title: draft.title,
+  providerId: draft.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
   items: draft.items,
 });
 

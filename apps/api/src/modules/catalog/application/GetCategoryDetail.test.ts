@@ -4,14 +4,14 @@ import { InMemoryCatalogCache } from "../infrastructure/InMemoryCatalogCache.js"
 import type { CatalogProvider } from "../domain/catalogProvider.js";
 
 describe("GetCategoryDetail", () => {
-  it("uses maxProductsToDecorate=productCount for leaf categories (via provider contract)", async () => {
+  it("round-trips canonical Bonpreu ids for deepest categories", async () => {
     const getCategoryDetailMock = vi.fn<CatalogProvider["getCategoryDetail"]>();
     getCategoryDetailMock.mockResolvedValue({
-      id: 500,
+      id: "08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123",
       name: "Congelados",
       categories: [
         {
-          id: 501,
+          id: "08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123",
           name: "Helados",
           products: [
             {
@@ -41,7 +41,9 @@ describe("GetCategoryDetail", () => {
     const response = await useCase.execute("leaf-500");
 
     expect(getCategoryDetailMock).toHaveBeenCalledWith("leaf-500");
+    expect(response.id).toBe("08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123");
     expect(response.subcategories).toHaveLength(1);
+    expect(response.subcategories[0]?.id).toBe("08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123");
     expect(response.subcategories[0]?.products).toHaveLength(1);
     expect(response.subcategories[0]?.products[0]?.id).toBe("bp-123");
   });
@@ -51,11 +53,11 @@ describe("GetCategoryDetail", () => {
       metadata: { id: "provider-bonpreuesclat", slug: "bonpreuesclat" },
       getRootCategories: vi.fn(),
       getCategoryDetail: vi.fn().mockResolvedValue({
-        id: 200,
+        id: "fresh-root",
         name: "Frescos",
         categories: [
           {
-            id: 201,
+            id: "fruit-child",
             name: "Fruta",
             products: [],
           },
@@ -67,9 +69,9 @@ describe("GetCategoryDetail", () => {
     const useCase = new GetCategoryDetail(provider, new InMemoryCatalogCache());
     const response = await useCase.execute("intermediate-200");
 
-    expect(response.id).toBe("200");
+    expect(response.id).toBe("fresh-root");
     expect(response.subcategories).toHaveLength(1);
-    expect(response.subcategories[0]?.id).toBe("201");
+    expect(response.subcategories[0]?.id).toBe("fruit-child");
     expect(response.subcategories[0]?.products).toEqual([]);
   });
 });

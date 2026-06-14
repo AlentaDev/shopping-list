@@ -95,4 +95,29 @@ describe("catalog router", () => {
     expect(response.status).toBe(200);
     expect(getCategoryDetailExecute).toHaveBeenCalledWith("mercadona", "123");
   });
+
+  it("accepts canonical Bonpreu string ids in category detail routes", async () => {
+    const getCategoryDetailExecute = vi
+      .fn()
+      .mockResolvedValue({ id: "leaf.uuid-1", name: "test", subcategories: [] });
+    const app = express();
+    app.use(
+      "/api/catalog",
+      createCatalogRouter({
+        getRootCategories: { execute: vi.fn() } as never,
+        getCategoryDetail: { execute: getCategoryDetailExecute } as never,
+      }),
+    );
+    app.use(errorMiddleware);
+
+    const response = await request(app).get(
+      "/api/catalog/bonpreuesclat/categories/08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123.leaf",
+    );
+
+    expect(response.status).toBe(200);
+    expect(getCategoryDetailExecute).toHaveBeenCalledWith(
+      "bonpreuesclat",
+      "08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123.leaf",
+    );
+  });
 });

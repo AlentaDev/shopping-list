@@ -72,6 +72,7 @@ describe("GetAutosaveDraft", () => {
     await expect(useCase.execute("user-1")).resolves.toEqual({
       id: "list-2",
       title: "Autosave latest",
+      providerId: "mercadona",
       isEditing: false,
       items: [],
       updatedAt: "2024-01-01T11:10:00.000Z",
@@ -100,6 +101,7 @@ describe("GetAutosaveDraft", () => {
     await expect(useCase.execute("user-1")).resolves.toEqual({
       id: "list-1",
       title: "",
+      providerId: "mercadona",
       isEditing: false,
       items: [],
       updatedAt: "2024-01-01T10:01:00.000Z",
@@ -129,8 +131,39 @@ describe("GetAutosaveDraft", () => {
     await expect(useCase.execute("user-1")).resolves.toEqual({
       id: "list-1",
       title: "Autosave editing",
+      providerId: "mercadona",
       isEditing: true,
       editingTargetListId: "active-1",
+      items: [],
+      updatedAt: "2024-01-01T10:01:00.000Z",
+    });
+  });
+
+  it("returns bonpreu providerId as external slug", async () => {
+    const listRepository = new InMemoryListRepository();
+    const useCase = new GetAutosaveDraft(listRepository);
+    const bonpreuAutosave: List = {
+      id: "list-bonpreu",
+      ownerUserId: "user-1",
+      title: "Autosave bonpreu",
+      providerId: "provider-bonpreuesclat",
+      isAutosaveDraft: true,
+      status: "DRAFT",
+      activatedAt: undefined,
+      isEditing: false,
+      items: [],
+      createdAt: new Date("2024-01-01T10:00:00.000Z"),
+      updatedAt: new Date("2024-01-01T10:01:00.000Z"),
+    };
+
+    await listRepository.save(bonpreuAutosave);
+
+    await expect(useCase.execute("user-1")).resolves.toEqual({
+      id: "list-bonpreu",
+      title: "Autosave bonpreu",
+      providerId: "bonpreuesclat",
+      isEditing: false,
+      editingTargetListId: null,
       items: [],
       updatedAt: "2024-01-01T10:01:00.000Z",
     });

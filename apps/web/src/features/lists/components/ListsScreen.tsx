@@ -1,14 +1,12 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
-import ListModal from "@src/features/shopping-list/components/ListModal";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
-import { formatPrice } from "@src/shared/utils/formatPrice";
 import {
   getListActions,
   type ListActionKey,
 } from "../services/listActions";
 import type { ListDetail, ListSummary } from "../services/types";
-import { adaptListDetailItemsToCategoryGroups } from "../services/adapters/ListDetailGroupingAdapter";
+import { ListDetailModal } from "./ListDetailModal";
 
 type TabKey = "ACTIVE" | "COMPLETED";
 
@@ -119,6 +117,11 @@ const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps
             ? list.activatedAt ?? list.updatedAt
             : list.updatedAt}
         </p>
+        {list.provider?.displayName ? (
+          <p className="text-sm text-slate-500">
+            {UI_TEXT.LISTS.CARD.PROVIDER_LABEL} {list.provider.displayName}
+          </p>
+        ) : null}
       </div>
       <div className="flex flex-wrap gap-2">
         {cardActions.map((action) => {
@@ -159,58 +162,6 @@ const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
   ACTIVE: UI_TEXT.LISTS.EMPTY_STATE.ACTIVE_TITLE,
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
-
-
-
-type ReadOnlyDetailItemsProps = {
-  items: ListDetail["items"];
-};
-
-const ReadOnlyDetailItems = ({ items }: ReadOnlyDetailItemsProps) => (
-  <div className="max-h-[55vh] overflow-auto pr-1">
-    <div className="space-y-5">
-      {adaptListDetailItemsToCategoryGroups(items).map((group) => (
-        <section key={group.category} aria-label={group.category}>
-          <h3 className="mb-2 text-sm font-semibold text-slate-700">{group.category}</h3>
-          <ul className="space-y-4">
-            {group.items.map((item) => (
-              <li
-                key={item.id}
-                data-testid={`list-detail-item-${item.id}`}
-                className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-3"
-              >
-                {item.thumbnail ? (
-                  <img
-                    src={item.thumbnail}
-                    alt={item.name}
-                    className="h-12 w-12 rounded-xl object-cover"
-                  />
-                ) : (
-                  <div
-                    className="h-12 w-12 rounded-xl bg-slate-100"
-                    aria-hidden="true"
-                  />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-slate-900">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {item.quantity}
-                  </p>
-                </div>
-                <span className="text-sm font-semibold text-slate-700">
-                  {formatPrice((item.price ?? 0) * item.quantity)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
-    </div>
-  </div>
-);
-
 const ACTION_LABELS: Record<ListActionKey, string> = {
   edit: UI_TEXT.LISTS.ACTIONS.EDIT,
   activate: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
@@ -241,7 +192,7 @@ const ListsScreen = ({
   const [pendingDelete, setPendingDelete] = useState<ListSummary | null>(null);
   const [pendingDraftLoss, setPendingDraftLoss] = useState<{
     list: ListSummary;
-    action: "edit" | "reuse";
+    action: "edit";
   } | null>(null);
 
   const filteredLists = useMemo(
@@ -257,18 +208,13 @@ const ListsScreen = ({
         ? (["edit", "delete"] satisfies ListActionKey[])
         : [];
 
-  const detailTotal = (selectedListDetail?.items ?? []).reduce(
-    (total, item) => total + (item.price ?? 0) * item.qty,
-    0,
-  );
-
   const handleAction = (list: ListSummary, action: ListActionKey) => {
     if (action === "delete") {
       setPendingDelete(list);
       return;
     }
 
-    if ((action === "edit" || action === "reuse") && hasDraftItems) {
+    if (action === "edit" && hasDraftItems) {
       setPendingDraftLoss({ list, action });
       return;
     }
@@ -376,48 +322,14 @@ const ListsScreen = ({
 
       {renderListsContent()}
       {selectedList && selectedListDetail ? (
-        <ListModal
-          isOpen
+        <ListDetailModal
+          actionLoading={actionLoading}
+          detailActions={detailActions}
+          onAction={handleAction}
           onClose={onCloseDetail}
-          title={selectedListDetail.title}
-          footerContent={
-            <>
-              {detailActions.map((action) => {
-                const isLoadingAction =
-                  actionLoading?.listId === selectedList.id &&
-                  actionLoading.action === action;
-
-                return (
-                  <ListActionButton
-                    key={action}
-                    action={action}
-                    label={
-                      isLoadingAction
-                        ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
-                        : ACTION_LABELS[action]
-                    }
-                    isDisabled={actionLoading?.listId === selectedList.id}
-                    onClick={() => handleAction(selectedList, action)}
-                  />
-                );
-              })}
-              <button
-                type="button"
-                onClick={onCloseDetail}
-                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
-              >
-                {UI_TEXT.LISTS.DETAIL_MODAL.CLOSE_LABEL}
-              </button>
-            </>
-          }
-        >
-          <ReadOnlyDetailItems items={selectedListDetail.items} />
-          <div className="mt-4 border-t border-slate-200 pt-4">
-            <p className="text-right text-2xl font-semibold text-slate-900">
-              {UI_TEXT.TOTAL.TOTAL_LABEL}: {formatPrice(detailTotal)}
-            </p>
-          </div>
-        </ListModal>
+          selectedList={selectedList}
+          selectedListDetail={selectedListDetail}
+        />
       ) : null}
       {pendingDelete ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/30 p-4">

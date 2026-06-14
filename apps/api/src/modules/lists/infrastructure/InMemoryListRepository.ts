@@ -13,19 +13,13 @@ export class InMemoryListRepository implements ListRepository {
       return null;
     }
 
-    return {
-      ...list,
-      providerId: resolveListProviderId(list.providerId),
-    };
+    return { ...list };
   }
 
   async listByOwner(ownerUserId: string): Promise<List[]> {
     return Array.from(this.lists.values())
       .filter((list) => list.ownerUserId === ownerUserId)
-      .map((list) => ({
-        ...list,
-        providerId: resolveListProviderId(list.providerId),
-      }));
+      .map((list) => ({ ...list }));
   }
 
   async save(list: List): Promise<void> {

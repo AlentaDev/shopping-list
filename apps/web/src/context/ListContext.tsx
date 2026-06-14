@@ -11,6 +11,18 @@ type ListAction =
   | { type: "UPDATE_QUANTITY"; itemId: string; quantity: number }
   | { type: "REMOVE_ITEM"; itemId: string };
 
+type DraftState = {
+  items: ListItem[];
+  draftProviderId: string;
+};
+
+type DraftAction =
+  | ListAction
+  | { type: "SET_DRAFT_PROVIDER"; providerId: string }
+  | { type: "RESET_DRAFT"; providerId?: string };
+
+const DEFAULT_DRAFT_PROVIDER_ID = "mercadona";
+
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 99;
 
@@ -79,43 +91,68 @@ const matchesIdentity = (item: ListItem, itemId: string): boolean =>
   item.serverItemId === itemId ||
   item.sourceProductId === itemId;
 
-const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
+const listReducer = (state: DraftState, action: DraftAction): DraftState => {
   switch (action.type) {
     case "ADD_ITEM": {
       const normalizedIncoming = dedupeByCanonicalId([action.item])[0] as ListItem;
-      const existingItem = state.find(
+      const existingItem = state.items.find(
         (item) => canonicalKey(item) === canonicalKey(normalizedIncoming)
       );
 
       if (existingItem) {
-        return state.map((item) =>
-          canonicalKey(item) === canonicalKey(normalizedIncoming)
-            ? {
-                ...item,
-                quantity: Math.min(MAX_QUANTITY, item.quantity + 1),
-              }
-            : item
-        );
+        return {
+          ...state,
+          items: state.items.map((item) =>
+            canonicalKey(item) === canonicalKey(normalizedIncoming)
+              ? {
+                  ...item,
+                  quantity: Math.min(MAX_QUANTITY, item.quantity + 1),
+                }
+              : item,
+          ),
+        };
       }
 
-      return [...state, { ...normalizedIncoming, quantity: 1 }];
+      return {
+        ...state,
+        items: [...state.items, { ...normalizedIncoming, quantity: 1 }],
+      };
     }
     case "SET_ITEMS":
-      return dedupeByCanonicalId(action.items);
+      return {
+        ...state,
+        items: dedupeByCanonicalId(action.items),
+      };
     case "UPDATE_QUANTITY":
-      return state.map((item) =>
-        matchesIdentity(item, action.itemId)
-          ? {
-              ...item,
-              quantity: Math.min(
-                MAX_QUANTITY,
-                Math.max(MIN_QUANTITY, action.quantity),
-              ),
-            }
-          : item
-      );
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          matchesIdentity(item, action.itemId)
+            ? {
+                ...item,
+                quantity: Math.min(
+                  MAX_QUANTITY,
+                  Math.max(MIN_QUANTITY, action.quantity),
+                ),
+              }
+            : item,
+        ),
+      };
     case "REMOVE_ITEM":
-      return state.filter((item) => !matchesIdentity(item, action.itemId));
+      return {
+        ...state,
+        items: state.items.filter((item) => !matchesIdentity(item, action.itemId)),
+      };
+    case "SET_DRAFT_PROVIDER":
+      return {
+        ...state,
+        draftProviderId: action.providerId,
+      };
+    case "RESET_DRAFT":
+      return {
+        items: [],
+        draftProviderId: action.providerId ?? state.draftProviderId,
+      };
     default:
       return state;
   }
@@ -124,10 +161,18 @@ const listReducer = (state: ListItem[], action: ListAction): ListItem[] => {
 type ListProviderProps = {
   children: ReactNode;
   initialItems?: ListItem[];
+  initialDraftProviderId?: string;
 };
 
-export function ListProvider({ children, initialItems }: ListProviderProps) {
-  const [items, dispatch] = useReducer(listReducer, initialItems ?? []);
+export function ListProvider({
+  children,
+  initialItems,
+  initialDraftProviderId = DEFAULT_DRAFT_PROVIDER_ID,
+}: ListProviderProps) {
+  const [state, dispatch] = useReducer(listReducer, {
+    items: initialItems ?? [],
+    draftProviderId: initialDraftProviderId,
+  });
 
   const addItem = useCallback((item: ListItem) => {
     dispatch({ type: "ADD_ITEM", item });
@@ -145,24 +190,35 @@ export function ListProvider({ children, initialItems }: ListProviderProps) {
     dispatch({ type: "REMOVE_ITEM", itemId });
   }, []);
 
-  const linesCount = items.length;
+  const setDraftProviderId = useCallback((providerId: string) => {
+    dispatch({ type: "SET_DRAFT_PROVIDER", providerId });
+  }, []);
+
+  const resetDraft = useCallback((providerId?: string) => {
+    dispatch({ type: "RESET_DRAFT", providerId });
+  }, []);
+
+  const linesCount = state.items.length;
   const total = useMemo(
     () =>
-      items.reduce(
+      state.items.reduce(
         (sum, item) => sum + (item.price ?? 0) * item.quantity,
         0
       ),
-    [items]
+    [state.items]
   );
 
   const value: ListContextType = {
-    items,
+    items: state.items,
     linesCount,
     total,
+    draftProviderId: state.draftProviderId,
     addItem,
     setItems,
     updateQuantity,
     removeItem,
+    setDraftProviderId,
+    resetDraft,
   };
 
   return <ListContext.Provider value={value}>{children}</ListContext.Provider>;

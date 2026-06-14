@@ -84,6 +84,7 @@ export class StartListEditing {
 
     latestAutosave.isEditing = true;
     latestAutosave.editingTargetListId = list.id;
+    latestAutosave.providerId = list.providerId;
     latestAutosave.updatedAt = now;
     latestAutosave.title = list.title;
     latestAutosave.items = list.items.map((item) =>
@@ -116,6 +117,7 @@ export class StartListEditing {
       id: crypto.randomUUID(),
       ownerUserId: activeList.ownerUserId,
       title: activeList.title,
+      providerId: activeList.providerId,
       isAutosaveDraft: true,
       status: "DRAFT",
       items: [],

@@ -1,5 +1,5 @@
 import type { ListItem } from "../types";
-import { groupItemsByCategory } from "@src/features/shopping-list/services/groupItemsByCategory";
+import { groupItemsByCategory } from "@src/shared/utils/groupItemsByCategory";
 
 export const adaptListDetailItemsToCategoryGroups = (items: ListItem[]) =>
   groupItemsByCategory(
@@ -7,7 +7,7 @@ export const adaptListDetailItemsToCategoryGroups = (items: ListItem[]) =>
       id: item.id,
       name: item.name,
       quantity: item.qty,
-      category: item.categorySnapshot?.trim() || "Sin categoría",
+      category: "",
       categorySnapshot: item.categorySnapshot ?? null,
       subcategorySnapshot: item.subcategorySnapshot ?? null,
       price: item.price ?? null,

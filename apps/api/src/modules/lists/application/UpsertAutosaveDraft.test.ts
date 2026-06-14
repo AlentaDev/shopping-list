@@ -13,6 +13,7 @@ describe("UpsertAutosaveDraft", () => {
     const response = await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      providerId: "bonpreuesclat",
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
@@ -38,6 +39,7 @@ describe("UpsertAutosaveDraft", () => {
         id: "list-1",
         ownerUserId: "user-1",
         title: "Autosave",
+        providerId: "provider-bonpreuesclat",
         isAutosaveDraft: true,
         status: "DRAFT",
         items: [
@@ -56,6 +58,24 @@ describe("UpsertAutosaveDraft", () => {
         updatedAt: expect.any(Date),
       }),
     );
+  });
+
+  it("stores bonpreu autosave provider as canonical FK id", async () => {
+    const listRepository = new InMemoryListRepository();
+    const idGenerator = { generate: () => "list-bonpreu" };
+    const useCase = new UpsertAutosaveDraft(listRepository, idGenerator);
+
+    await useCase.execute({
+      userId: "user-1",
+      title: "Autosave Bonpreu",
+      providerId: "bonpreuesclat",
+      baseUpdatedAt: "2024-01-01T09:00:00.000Z",
+      items: [],
+    });
+
+    const savedList = await listRepository.findById("list-bonpreu");
+
+    expect(savedList?.providerId).toBe("provider-bonpreuesclat");
   });
 
   it("updates the latest autosave draft for the user", async () => {
@@ -94,6 +114,7 @@ describe("UpsertAutosaveDraft", () => {
     const response = await useCase.execute({
       userId: "user-1",
       title: "Updated autosave",
+      providerId: "bonpreuesclat",
       baseUpdatedAt: "2024-01-01T11:10:00.000Z",
       items: [
         {
@@ -117,6 +138,7 @@ describe("UpsertAutosaveDraft", () => {
       expect.objectContaining({
         id: "list-2",
         title: "Updated autosave",
+        providerId: "provider-bonpreuesclat",
         isAutosaveDraft: true,
         status: "DRAFT",
         updatedAt: expect.any(Date),
@@ -174,6 +196,7 @@ describe("UpsertAutosaveDraft", () => {
     const response = await useCase.execute({
       userId: "user-1",
       title: "Updated autosave",
+      providerId: "bonpreuesclat",
       baseUpdatedAt: "2024-01-01T10:01:00.000Z",
       items: [
         {
@@ -226,6 +249,7 @@ describe("UpsertAutosaveDraft", () => {
     await useCase.execute({
       userId: "user-1",
       title: "Autosave editing updated",
+      providerId: "mercadona",
       baseUpdatedAt: "2024-01-01T11:10:00.000Z",
       items: [
         {
@@ -271,6 +295,7 @@ describe("UpsertAutosaveDraft", () => {
       useCase.execute({
         userId: "user-1",
         title: "Updated autosave",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T11:09:59.000Z",
         items: [],
       }),
@@ -292,6 +317,7 @@ describe("UpsertAutosaveDraft", () => {
     await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      providerId: "mercadona",
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
@@ -323,6 +349,7 @@ describe("UpsertAutosaveDraft", () => {
     await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      providerId: "mercadona",
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
@@ -354,6 +381,7 @@ describe("UpsertAutosaveDraft", () => {
     await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      providerId: "mercadona",
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
@@ -385,6 +413,7 @@ describe("UpsertAutosaveDraft", () => {
     await useCase.execute({
       userId: "user-1",
       title: "Autosave",
+      providerId: "mercadona",
       baseUpdatedAt: "2024-01-01T09:00:00.000Z",
       items: [
         {
@@ -434,6 +463,7 @@ describe("UpsertAutosaveDraft", () => {
       useCase.execute({
         userId: "user-1",
         title: "Autosave",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T11:10:00.000Z",
         items: [],
       }),

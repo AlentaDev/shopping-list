@@ -10,6 +10,7 @@ import type {
   AutosaveDraftInput,
   LocalDraft,
 } from "./types";
+import { DEFAULT_DRAFT_PROVIDER_ID } from "./types";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { saveAutosaveSyncMetadata } from "./AutosaveSyncMetadataService";
 
@@ -96,6 +97,7 @@ const mapAutosaveToDraftInput = (draft: AutosaveDraft): AutosaveDraftInput => {
 
   return {
     title: draft.title,
+    providerId: draft.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
     ...metadata,
     items: draft.items.map((item) => ({
     id: item.id,
@@ -128,6 +130,7 @@ const mapLocalDraftToInput = (draft: LocalDraft): AutosaveDraftInput => {
 
   return {
     title: draft.title,
+    providerId: draft.providerId ?? DEFAULT_DRAFT_PROVIDER_ID,
     items: draft.items,
     ...metadata,
   };
@@ -138,6 +141,7 @@ const normalizeDraftTitle = (draft: AutosaveDraftInput) =>
 
 const normalizeDraftForComparison = (draft: AutosaveDraftInput) => ({
   title: normalizeDraftTitle(draft),
+  providerId: draft.providerId,
   isEditing: draft.isEditing === true,
   editingTargetListId:
     typeof draft.editingTargetListId === "string" ? draft.editingTargetListId : null,
@@ -195,6 +199,7 @@ const mergeDraftWithPendingLocalItems = (
 
   return {
     title: localDraft.title,
+    providerId: localDraft.providerId,
     isEditing: localDraft.isEditing,
     editingTargetListId: localDraft.editingTargetListId ?? null,
     items: [...remoteDraft.items, ...pendingLocalItems],

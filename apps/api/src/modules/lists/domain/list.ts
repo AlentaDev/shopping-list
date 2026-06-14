@@ -52,6 +52,10 @@ export type List = {
 
 export const DEFAULT_PROVIDER_ID = "provider-mercadona";
 export const DEFAULT_PROVIDER_SLUG = "mercadona";
+const SUPPORTED_PROVIDER_ID_BY_SLUG = {
+  mercadona: "provider-mercadona",
+  bonpreuesclat: "provider-bonpreuesclat",
+} as const;
 
 export class ListProviderInvariantError extends Error {
   constructor(message: string) {
@@ -74,6 +78,11 @@ export function resolveListProviderId(providerId: string | null | undefined): st
     return DEFAULT_PROVIDER_ID;
   }
 
+  const normalizedSlug = normalized.toLowerCase() as keyof typeof SUPPORTED_PROVIDER_ID_BY_SLUG;
+  if (normalizedSlug in SUPPORTED_PROVIDER_ID_BY_SLUG) {
+    return SUPPORTED_PROVIDER_ID_BY_SLUG[normalizedSlug];
+  }
+
   return normalized;
 }
 
@@ -89,6 +98,34 @@ export function resolveListProviderSlug(providerId: string | null | undefined): 
   }
 
   return normalizedId;
+}
+
+export function resolvePersistedListProviderSlug(
+  providerId: string | null | undefined,
+): string | null {
+  if (typeof providerId !== "string") {
+    return null;
+  }
+
+  const normalized = providerId.trim();
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  if (normalized === DEFAULT_PROVIDER_SLUG) {
+    return DEFAULT_PROVIDER_SLUG;
+  }
+
+  const normalizedSlug = normalized.toLowerCase() as keyof typeof SUPPORTED_PROVIDER_ID_BY_SLUG;
+  if (normalizedSlug in SUPPORTED_PROVIDER_ID_BY_SLUG) {
+    return normalizedSlug;
+  }
+
+  if (normalized.startsWith("provider-")) {
+    return normalized.slice("provider-".length);
+  }
+
+  return normalized;
 }
 
 export function ensureProviderCanChange(input: {

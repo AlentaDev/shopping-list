@@ -26,7 +26,7 @@ The system MUST treat `apps/web/src/app-shell/*` as the canonical composition la
 
 ### Requirement: Dependency Boundaries Enforcement
 
-Feature isolation and composition permissions MUST follow explicit boundaries. `app-shell/*` MAY compose `features/*`, `context/*`, and `shared/*`. `features/*` MUST NOT import internals from other features and MUST NOT import `app-shell/*`.
+Feature isolation and composition permissions MUST follow explicit boundaries. `app-shell/*` MAY compose `features/*`, `context/*`, `providers/*`, and `shared/*` only through stable public entrypoints or documented facades. `app-shell/*` MUST NOT import feature service or component internals directly. `features/*` MUST NOT import internals from other features and MUST NOT import `app-shell/*`.
 
 #### Scenario: Allowed composition dependency
 
@@ -41,6 +41,39 @@ Feature isolation and composition permissions MUST follow explicit boundaries. `
 - WHEN it imports `features/<b>/*` internals or any `app-shell/*`
 - THEN compliance validation fails
 - AND the change is blocked until dependency direction is corrected
+
+### Requirement: Provider Composition Evidence
+
+The web composition root MUST make provider ownership and ordering explicit. It SHALL keep a provider only when a shell or descendant consumer dependency is proven by automated tests.
+
+#### Scenario: Proven dependency keeps provider in stack
+
+- GIVEN a provider is consumed by shell behavior or a descendant context
+- WHEN provider-composition tests run
+- THEN the provider remains in `AppProviders`
+- AND its required order is asserted explicitly
+
+#### Scenario: Unproven dependency cannot stay implicitly
+
+- GIVEN a provider has no proven consumer dependency
+- WHEN provider composition is reviewed for this capability
+- THEN the provider is removed or justified with a failing-then-passing test
+
+### Requirement: Provider-Aware Home Context by Auth State
+
+The app-shell composition layer MUST show draft-provider guidance only for anonymous Home flows and MUST allow authenticated Home views to present list visibility across multiple providers.
+
+#### Scenario: Anonymous Home shows draft-aware provider context
+
+- GIVEN an anonymous user opens Home with a provider-owned draft context
+- WHEN Home is rendered
+- THEN the shell shows provider-aware draft guidance for continuing or changing entry
+
+#### Scenario: Authenticated Home shows mixed-provider lists
+
+- GIVEN an authenticated user owns lists from `mercadona` and `bonpreuesclat`
+- WHEN Home is rendered
+- THEN the shell presents both lists without filtering Home to a single provider
 
 ### Requirement: Data Transformation Placement
 
@@ -74,13 +107,13 @@ Migration MUST preserve behavior while removing ambiguity. Reviews MUST verify b
 
 ### Requirement: Provider-aware Shell Routing Composition
 
-The app-shell composition layer MUST resolve `/`, `/catalog`, `/:provider/catalog`, and `/:provider/catalog/:category` without embedding feature business rules.
+The app-shell composition layer MUST resolve `/`, `/catalog`, `/:provider/catalog`, and `/:provider/catalog/:category` without embedding feature business rules. The shell MUST treat `/` as the canonical provider-entry Home.
 
 #### Scenario: App shell composes provider-aware routes
 
 - GIVEN the web runtime initializes routing
 - WHEN app-shell resolves route composition
-- THEN `/` renders home, `/catalog` resolves alias redirect, and provider-aware catalog routes are mounted
+- THEN `/` renders canonical Home, `/catalog` resolves alias redirect, and provider-aware catalog routes are mounted
 - AND no provider business invariant is implemented inside app-shell components
 
 ### Requirement: Catalog Return Navigation Memory

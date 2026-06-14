@@ -730,6 +730,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly editing",
+        providerId: "mercadona",
         baseUpdatedAt: startEditingResponse.body.autosaveUpdatedAt,
         items: [
           {
@@ -805,6 +806,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly editing",
+        providerId: "mercadona",
         baseUpdatedAt: autosaveSeed.body.updatedAt,
         items: [
           {
@@ -883,6 +885,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly updated",
+        providerId: "mercadona",
         baseUpdatedAt: autosaveSeed.body.updatedAt,
         items: [
           {
@@ -932,6 +935,7 @@ describe("lists endpoints", () => {
     expect(autosaveResponse.body).toEqual({
       id: expect.any(String),
       title: "",
+      providerId: "mercadona",
       isEditing: false,
       editingTargetListId: null,
       items: [],
@@ -979,6 +983,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T00:00:00.000Z",
         items: [],
       });
@@ -990,6 +995,7 @@ describe("lists endpoints", () => {
       .set("Cookie", cookie)
       .send({
         title: "Weekly changed",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T00:00:00.000Z",
         items: [],
       });
@@ -1009,7 +1015,53 @@ describe("lists endpoints", () => {
       expect.objectContaining({
         id: firstResponse.body.id,
         title: "Weekly",
+        providerId: "mercadona",
         updatedAt: firstResponse.body.updatedAt,
+      }),
+    );
+  });
+
+  it("PUT/GET /api/lists/autosave round-trips bonpreu provider slug while preserving item source identity", async () => {
+    const app = createApp();
+    const cookie = await loginUser(app, defaultUser);
+
+    const putResponse = await request(app)
+      .put("/api/lists/autosave")
+      .set("Cookie", cookie)
+      .send({
+        title: "Bonpreu draft",
+        providerId: "bonpreuesclat",
+        baseUpdatedAt: "2024-01-01T00:00:00.000Z",
+        items: [
+          {
+            id: "4706",
+            kind: "catalog",
+            name: "Iogurt",
+            qty: 2,
+            checked: false,
+            source: "bonpreuesclat",
+            sourceProductId: "4706",
+          },
+        ],
+      });
+
+    expect(putResponse.status).toBe(200);
+
+    const getResponse = await request(app)
+      .get("/api/lists/autosave")
+      .set("Cookie", cookie);
+
+    expect(getResponse.status).toBe(200);
+    expect(getResponse.body).toEqual(
+      expect.objectContaining({
+        title: "Bonpreu draft",
+        providerId: "bonpreuesclat",
+        items: [
+          expect.objectContaining({
+            source: "bonpreuesclat",
+            sourceProductId: "4706",
+          }),
+        ],
       }),
     );
   });
@@ -1030,6 +1082,7 @@ describe("lists endpoints", () => {
       .set("Cookie", aliceCookie)
       .send({
         title: "Alice draft",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T00:00:00.000Z",
         items: [
           {
@@ -1051,6 +1104,7 @@ describe("lists endpoints", () => {
       .set("Cookie", bobCookie)
       .send({
         title: "Bob draft",
+        providerId: "mercadona",
         baseUpdatedAt: "2024-01-01T00:00:00.000Z",
         items: [
           {

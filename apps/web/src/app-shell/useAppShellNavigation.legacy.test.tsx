@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import Catalog from "@src/features/catalog/Catalog";
+import { Catalog } from "@src/features/catalog";
 import { ListsContainer } from "@src/features/lists";
 import { AuthLoggedInNotice, AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
@@ -21,6 +21,9 @@ const baseArgs = {
   onRegister: vi.fn(),
   onOpenList: vi.fn(),
   onStartOpenList: vi.fn(),
+  homeDraftProviderId: null,
+  showAnonymousDraftGuidance: false,
+  onSelectHomeProvider: vi.fn(),
 };
 
 describe("useAppShellNavigation", () => {

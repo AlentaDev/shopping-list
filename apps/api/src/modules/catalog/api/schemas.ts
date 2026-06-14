@@ -16,5 +16,5 @@ export const providerParamsSchema = z.object({
 
 export const categoryDetailParamsSchema = z.object({
   provider: providerSlugSchema,
-  id: z.string().trim().min(1).regex(/^[a-zA-Z0-9_-]+$/),
+  id: z.string().trim().min(1).regex(/^[^/\s]+$/),
 });

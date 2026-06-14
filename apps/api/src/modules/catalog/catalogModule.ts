@@ -55,6 +55,7 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   return {
     router,
     provider: injectedProvider ?? mercadonaProvider,
+    providerResolver: resolver,
     providers,
   };
 }

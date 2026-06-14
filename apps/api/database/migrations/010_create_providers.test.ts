@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 describe("010_create_providers.sql", () => {
-  it("creates providers with unique slug and mercadona seed", async () => {
+  it("creates providers with unique slug and supported provider seeds", async () => {
     const migrationPath = join(
       dirname(fileURLToPath(import.meta.url)),
       "010_create_providers.sql",
@@ -18,5 +18,6 @@ describe("010_create_providers.sql", () => {
     expect(sql).toContain("INSERT INTO providers (id, slug, display_name)");
     expect(sql).toContain("'mercadona'");
     expect(sql).toContain("'Mercadona'");
+    expect(sql).not.toContain("'provider-bonpreuesclat'");
   });
 });

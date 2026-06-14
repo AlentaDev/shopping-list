@@ -106,6 +106,7 @@ export function createListsRouter(deps: ListsRouterDependencies): Router {
       const response = await deps.upsertAutosaveDraft.execute({
         userId,
         title: input.title,
+        providerId: input.providerId,
         baseUpdatedAt: input.baseUpdatedAt,
         items: input.items,
       });
