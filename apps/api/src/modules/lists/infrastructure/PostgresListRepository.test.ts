@@ -74,6 +74,7 @@ describe("PostgresListRepository", () => {
               id: baseList.id,
               owner_user_id: baseList.ownerUserId,
               title: baseList.title,
+              provider_id: baseList.providerId,
               status: baseList.status,
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
@@ -184,6 +185,7 @@ describe("PostgresListRepository", () => {
               id: baseList.id,
               owner_user_id: baseList.ownerUserId,
               title: baseList.title,
+              provider_id: baseList.providerId,
               status: baseList.status,
               is_autosave_draft: baseList.isAutosaveDraft,
               activated_at: baseList.activatedAt,
@@ -223,6 +225,7 @@ describe("PostgresListRepository", () => {
               id: "list-1",
               owner_user_id: "user-1",
               title: "Weekly groceries",
+              provider_id: "provider-mercadona",
               status: "DRAFT",
               is_autosave_draft: false,
               activated_at: baseList.activatedAt,
@@ -235,6 +238,7 @@ describe("PostgresListRepository", () => {
               id: "list-2",
               owner_user_id: "user-1",
               title: "Party",
+              provider_id: "provider-mercadona",
               status: "ACTIVE",
               is_autosave_draft: false,
               activated_at: null,
@@ -468,7 +472,7 @@ describe("PostgresListRepository", () => {
     expect(pool.query).toHaveBeenLastCalledWith("COMMIT");
   });
 
-  it("backfills missing provider ids", async () => {
+  it("backfills only missing, blank, and legacy mercadona provider ids", async () => {
     const pool = {
       query: vi.fn().mockResolvedValue({ rows: [{ id: "1" }, { id: "2" }] }),
     };
@@ -477,7 +481,7 @@ describe("PostgresListRepository", () => {
 
     await expect(repository.backfillMissingProvider("mercadona")).resolves.toBe(2);
     expect(pool.query).toHaveBeenCalledWith(
-      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR provider_id = 'mercadona' RETURNING id",
+      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR btrim(provider_id) = 'mercadona' RETURNING id",
       ["provider-mercadona"],
     );
   });

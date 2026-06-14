@@ -228,6 +228,7 @@ export const UI_TEXT = {
   },
   LISTS: {
     TITLE: "Mis listas",
+    CATEGORY_FALLBACK: "Sin categoría",
     TABS: {
       ACTIVE: "Activas",
       COMPLETED: "Historial",

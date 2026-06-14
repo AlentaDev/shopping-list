@@ -7,9 +7,16 @@ import { AppShell } from "@src/app-shell/AppShell";
 import { AppProviders } from "@src/providers/AppProviders";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
-vi.mock("@src/features/shopping-list/services/LocalDraftSyncService", () => ({
-  syncLocalDraftToRemoteList: vi.fn().mockResolvedValue(null),
-}));
+vi.mock("@src/features/shopping-list", async () => {
+  const actual = await vi.importActual<typeof import("@src/features/shopping-list")>(
+    "@src/features/shopping-list",
+  );
+
+  return {
+    ...actual,
+    ShoppingList: () => null,
+  };
+});
 
 type FetchResponse = {
   ok: boolean;
@@ -18,6 +25,7 @@ type FetchResponse = {
 };
 
 const rootCategoriesUrl = "/api/catalog/mercadona/categories";
+const HEALTH_URL = "/health";
 const CURRENT_USER_URL = "/api/users/me";
 const AUTH_LOGIN_URL = "/api/auth/login";
 const AUTH_LOGOUT_URL = "/api/auth/logout";
@@ -68,6 +76,13 @@ describe("AppShell", () => {
   it("loads default category products on mount", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async (input) => {
+        if (input === HEALTH_URL) {
+          return {
+            ok: true,
+            json: async () => ({ ok: true }),
+          };
+        }
+
         if (input === rootCategoriesUrl) {
           return {
             ok: true,
@@ -549,6 +564,13 @@ describe("AppShell", () => {
   it("closes user menu when clicking outside of it", async () => {
     const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
       async (input) => {
+        if (input === HEALTH_URL) {
+          return {
+            ok: true,
+            json: async () => ({ ok: true }),
+          };
+        }
+
         if (input === rootCategoriesUrl) {
           return {
             ok: true,

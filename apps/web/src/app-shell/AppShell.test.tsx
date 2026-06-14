@@ -54,11 +54,6 @@ vi.mock("@src/context/ApiAwakeContext", () => ({
   useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
 }));
 
-vi.mock("@src/features/shopping-list/services/AutosaveService", () => ({
-  loadLocalDraft: () => loadLocalDraftMock(),
-  saveLocalDraft: (...args: unknown[]) => saveLocalDraftMock(...args),
-}));
-
 const fetchWithAuthMock = vi.fn();
 
 vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
@@ -89,6 +84,10 @@ vi.mock("@src/features/shopping-list", () => ({
   ),
   adaptListToShoppingListState: vi.fn(),
   adaptListStatusToShoppingListStatus: vi.fn(),
+  loadLocalDraft: () => loadLocalDraftMock(),
+  saveLocalDraft: (...args: unknown[]) => saveLocalDraftMock(...args),
+  deleteAutosave: vi.fn(),
+  cancelListEditing: vi.fn(),
 }));
 
 vi.mock("@src/app-shell/components/AppHeader", () => ({

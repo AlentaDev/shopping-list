@@ -1,3 +1,4 @@
+import { FALLBACK_CATEGORY } from "@src/shared/utils/groupItemsByCategory";
 import type { ShoppingListItem } from "../../types";
 
 type ShoppingListItemPayload = {
@@ -60,7 +61,7 @@ export const adaptShoppingListItems = (
     }),
     serverItemId: item.id ?? null,
     name: item.name ?? "",
-    category: item.categorySnapshot?.trim() || "Sin categoría",
+    category: item.categorySnapshot?.trim() || FALLBACK_CATEGORY,
     categorySnapshot: item.categorySnapshot ?? null,
     subcategorySnapshot: item.subcategorySnapshot ?? null,
     thumbnail: item.thumbnail ?? null,

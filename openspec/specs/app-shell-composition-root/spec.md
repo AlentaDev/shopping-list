@@ -26,7 +26,7 @@ The system MUST treat `apps/web/src/app-shell/*` as the canonical composition la
 
 ### Requirement: Dependency Boundaries Enforcement
 
-Feature isolation and composition permissions MUST follow explicit boundaries. `app-shell/*` MAY compose `features/*`, `context/*`, and `shared/*`. `features/*` MUST NOT import internals from other features and MUST NOT import `app-shell/*`.
+Feature isolation and composition permissions MUST follow explicit boundaries. `app-shell/*` MAY compose `features/*`, `context/*`, `providers/*`, and `shared/*` only through stable public entrypoints or documented facades. `app-shell/*` MUST NOT import feature service or component internals directly. `features/*` MUST NOT import internals from other features and MUST NOT import `app-shell/*`.
 
 #### Scenario: Allowed composition dependency
 
@@ -41,6 +41,23 @@ Feature isolation and composition permissions MUST follow explicit boundaries. `
 - WHEN it imports `features/<b>/*` internals or any `app-shell/*`
 - THEN compliance validation fails
 - AND the change is blocked until dependency direction is corrected
+
+### Requirement: Provider Composition Evidence
+
+The web composition root MUST make provider ownership and ordering explicit. It SHALL keep a provider only when a shell or descendant consumer dependency is proven by automated tests.
+
+#### Scenario: Proven dependency keeps provider in stack
+
+- GIVEN a provider is consumed by shell behavior or a descendant context
+- WHEN provider-composition tests run
+- THEN the provider remains in `AppProviders`
+- AND its required order is asserted explicitly
+
+#### Scenario: Unproven dependency cannot stay implicitly
+
+- GIVEN a provider has no proven consumer dependency
+- WHEN provider composition is reviewed for this capability
+- THEN the provider is removed or justified with a failing-then-passing test
 
 ### Requirement: Provider-Aware Home Context by Auth State
 

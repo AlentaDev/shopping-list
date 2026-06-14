@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { Children, Fragment } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import Catalog from "@src/features/catalog/Catalog";
+import { Catalog } from "@src/features/catalog";
 import { ListsContainer } from "@src/features/lists";
 import { AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";

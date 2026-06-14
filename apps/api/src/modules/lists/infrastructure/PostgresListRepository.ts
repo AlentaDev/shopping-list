@@ -122,7 +122,7 @@ export class PostgresListRepository implements ListRepository {
     const normalizedProviderId = resolveListProviderId(providerId);
 
     const result = await this.pool.query(
-      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR provider_id = 'mercadona' RETURNING id",
+      "UPDATE lists SET provider_id = $1 WHERE provider_id IS NULL OR btrim(provider_id) = '' OR btrim(provider_id) = 'mercadona' RETURNING id",
       [normalizedProviderId],
     );
 
@@ -153,9 +153,10 @@ function mapListWithItems(
     id: String(listRow.id),
     ownerUserId: String(listRow.owner_user_id),
     title: String(listRow.title),
-    providerId: resolveListProviderId(
-      (listRow.provider_id as string | null | undefined) ?? null,
-    ),
+    providerId:
+      listRow.provider_id === null || listRow.provider_id === undefined
+        ? undefined
+        : String(listRow.provider_id),
     isAutosaveDraft: Boolean(listRow.is_autosave_draft),
     status,
     activatedAt: listRow.activated_at

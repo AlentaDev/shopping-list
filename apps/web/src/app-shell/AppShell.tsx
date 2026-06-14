@@ -3,13 +3,11 @@ import {
   ShoppingList,
   adaptListStatusToShoppingListStatus,
   adaptListToShoppingListState,
-} from "@src/features/shopping-list";
-import {
+  cancelListEditing,
+  deleteAutosave,
   loadLocalDraft,
   saveLocalDraft,
-  deleteAutosave,
-} from "@src/features/shopping-list/services/AutosaveService";
-import { cancelListEditing } from "@src/features/shopping-list/services/ListDetailActionsService";
+} from "@src/features/shopping-list";
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";

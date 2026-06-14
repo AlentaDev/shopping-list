@@ -14,14 +14,14 @@ import { ReuseList } from "./application/ReuseList.js";
 import { StartListEditing } from "./application/StartListEditing.js";
 import { UpsertAutosaveDraft } from "./application/UpsertAutosaveDraft.js";
 import { FinishListEdit } from "./application/FinishListEdit.js";
-import type { CatalogProvider } from "@src/modules/catalog/public.js";
+import type { CatalogProviderResolver } from "@src/modules/catalog/public.js";
 import type { IdGenerator, ListRepository } from "./application/ports.js";
 import { InMemoryListRepository } from "./infrastructure/InMemoryListRepository.js";
 import { RandomIdGenerator } from "./infrastructure/idGenerator.js";
 import { createListsRouter } from "./api/router.js";
 
 type ListsModuleDependencies = {
-  catalogProvider: CatalogProvider;
+  catalogProviderResolver: CatalogProviderResolver;
   listRepository?: ListRepository;
   idGenerator?: IdGenerator;
 };
@@ -37,7 +37,7 @@ export function createListsModule(deps: ListsModuleDependencies) {
   const addCatalogItem = new AddCatalogItem(
     listRepository,
     idGenerator,
-    deps.catalogProvider,
+    deps.catalogProviderResolver,
   );
   const updateItem = new UpdateItem(listRepository);
   const removeItem = new RemoveItem(listRepository);

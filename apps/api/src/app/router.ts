@@ -39,7 +39,7 @@ export function buildRouter(deps: RouterDependencies = {}) {
   const listsModule =
     deps.listsModule ??
     createListsModule({
-      catalogProvider: catalogModule.provider,
+      catalogProviderResolver: catalogModule.providerResolver,
       listRepository: persistence?.listRepository,
     });
   router.use("/lists", listsModule.router);

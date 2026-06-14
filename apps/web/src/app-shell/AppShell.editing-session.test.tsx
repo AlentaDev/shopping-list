@@ -17,6 +17,8 @@ const shoppingListSpy = vi.fn();
 const navigateMock = vi.fn();
 const cancelListEditingMock = vi.fn(async () => undefined);
 const deleteAutosaveMock = vi.fn(async () => undefined);
+const loadLocalDraftMock = vi.fn(() => null);
+const saveLocalDraftMock = vi.fn();
 
 const adapterMocks = vi.hoisted(() => ({
   adaptListToShoppingListStateMock: vi.fn((list) => ({
@@ -33,6 +35,10 @@ vi.mock("@src/features/shopping-list", () => ({
   adaptListToShoppingListState: adapterMocks.adaptListToShoppingListStateMock,
   adaptListStatusToShoppingListStatus:
     adapterMocks.adaptListStatusToShoppingListStatusMock,
+  loadLocalDraft: () => loadLocalDraftMock(),
+  saveLocalDraft: (...args: unknown[]) => saveLocalDraftMock(...args),
+  deleteAutosave: () => deleteAutosaveMock(),
+  cancelListEditing: (listId: string) => cancelListEditingMock(listId),
   ShoppingList: (props: ShoppingListMockProps) => {
     shoppingListSpy(props);
 
@@ -50,21 +56,6 @@ vi.mock("@src/features/shopping-list", () => ({
   },
 }));
 
-vi.mock("@src/features/shopping-list/services/AutosaveService", async () => {
-  const actual = await vi.importActual<
-    typeof import("@src/features/shopping-list/services/AutosaveService")
-  >("@src/features/shopping-list/services/AutosaveService");
-
-  return {
-    ...actual,
-    deleteAutosave: () => deleteAutosaveMock(),
-  };
-});
-
-vi.mock("@src/features/shopping-list/services/ListDetailActionsService", () => ({
-  cancelListEditing: (listId: string) => cancelListEditingMock(listId),
-}));
-
 vi.mock("@src/shared/components/toast/Toast", () => ({
   default: () => <div data-testid="toast-placeholder" />,
 }));
@@ -75,7 +66,7 @@ vi.mock("@src/context/useToast", () => ({
   }),
 }));
 
-vi.mock("@src/context/useApiAwake", () => ({
+vi.mock("@src/context/ApiAwakeContext", () => ({
   useApiAwake: () => ({ apiAwake: true }),
 }));
 
@@ -174,6 +165,9 @@ describe("AppShell editing session persistence", () => {
     navigateMock.mockReset();
     cancelListEditingMock.mockClear();
     deleteAutosaveMock.mockClear();
+    loadLocalDraftMock.mockReset();
+    loadLocalDraftMock.mockReturnValue(null);
+    saveLocalDraftMock.mockReset();
     window.history.pushState({}, "", "/");
     localStorage.clear();
     adapterMocks.adaptListToShoppingListStateMock.mockReset();

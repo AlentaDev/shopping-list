@@ -1,5 +1,5 @@
 import { Fragment, createElement, useCallback, useEffect, useMemo, useState } from "react";
-import Catalog from "@src/features/catalog/Catalog";
+import { Catalog } from "@src/features/catalog";
 import { ListsContainer, type ListDetail, type ListSummary } from "@src/features/lists";
 import {
   AuthLoggedInNotice,
