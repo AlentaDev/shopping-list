@@ -24,6 +24,48 @@ import com.alentadev.shopping.R
 import com.alentadev.shopping.feature.listdetail.ui.components.ItemCard
 import com.alentadev.shopping.feature.listdetail.ui.components.TotalBar
 
+internal fun buildDetailTitle(title: String, providerName: String): String {
+    val normalizedProviderName = providerName.trim()
+    return if (normalizedProviderName.isEmpty()) title else "$title · $normalizedProviderName"
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun ListDetailTopBar(
+    title: String,
+    providerName: String,
+    syncStatus: SyncStatus,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val syncInProgressDesc = stringResource(R.string.detail_sync_in_progress)
+    TopAppBar(
+        modifier = modifier,
+        title = {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                Text(buildDetailTitle(title, providerName))
+                if (syncStatus == SyncStatus.SYNCING) {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .align(Alignment.CenterEnd)
+                            .semantics { contentDescription = syncInProgressDesc },
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+        },
+        navigationIcon = {
+            IconButton(onClick = onBackClick) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.detail_back_button)
+                )
+            }
+        }
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListDetailScreen(
@@ -70,30 +112,11 @@ fun ListDetailScreen(
         topBar = {
             when (val state = uiState) {
                 is ListDetailUiState.Success -> {
-                    val syncInProgressDesc = stringResource(R.string.detail_sync_in_progress)
-                    TopAppBar(
-                        title = {
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                Text(state.listDetail.title)
-                                if (state.syncStatus == SyncStatus.SYNCING) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .align(Alignment.CenterEnd)
-                                            .semantics { contentDescription = syncInProgressDesc },
-                                        strokeWidth = 2.dp
-                                    )
-                                }
-                            }
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = onBackClick) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.detail_back_button)
-                                )
-                            }
-                        }
+                    ListDetailTopBar(
+                        title = state.listDetail.title,
+                        providerName = state.listDetail.providerName,
+                        syncStatus = state.syncStatus,
+                        onBackClick = onBackClick
                     )
                 }
                 else -> {

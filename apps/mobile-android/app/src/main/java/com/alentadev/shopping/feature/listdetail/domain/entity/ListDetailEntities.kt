@@ -64,6 +64,7 @@ data class CatalogItem(
 data class ListDetail(
     val id: String,
     val title: String,
+    val providerName: String = "",
     val items: List<ListItem>,
     val updatedAt: String
 ) {
@@ -78,4 +79,3 @@ data class ListDetail(
             .sum()
     }
 }
-

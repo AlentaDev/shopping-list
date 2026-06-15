@@ -83,7 +83,8 @@ class ListsLocalDataSource @Inject constructor(
                 else -> ListStatus.ACTIVE
             },
             updatedAt = updatedAt.toLongOrNull() ?: 0L,
-            itemCount = itemCount
+            itemCount = itemCount,
+            providerName = providerName
         )
     }
 
@@ -91,6 +92,7 @@ class ListsLocalDataSource @Inject constructor(
         return ListEntity(
             id = id,
             title = title,
+            providerName = providerName,
             status = status.name,
             updatedAt = updatedAt.toString(),
             itemCount = itemCount,

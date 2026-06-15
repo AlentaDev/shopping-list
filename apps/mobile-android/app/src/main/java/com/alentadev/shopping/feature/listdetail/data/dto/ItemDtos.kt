@@ -2,6 +2,12 @@ package com.alentadev.shopping.feature.listdetail.data.dto
 
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class ListProviderDto(
+    val slug: String,
+    val displayName: String
+)
+
 /**
  * DTO base para items de una lista
  * Contiene campos comunes y campos opcionales específicos de catálogo
@@ -40,6 +46,7 @@ data class ListDetailDto(
     val isEditing: Boolean = false,
     val activatedAt: String? = null,
     val itemCount: Int = 0,
+    val provider: ListProviderDto? = null,
     val items: List<ListItemDto> = emptyList(),
     val updatedAt: String
 )

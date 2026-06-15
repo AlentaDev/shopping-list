@@ -1,6 +1,7 @@
 package com.alentadev.shopping.feature.lists.data.remote
 
 import com.alentadev.shopping.feature.lists.domain.entity.ListStatus
+import com.alentadev.shopping.feature.lists.data.dto.ListProviderDto
 import com.alentadev.shopping.feature.lists.data.dto.ListsResponseDto
 import com.alentadev.shopping.feature.lists.data.dto.ListSummaryDto
 import io.mockk.coEvery
@@ -30,14 +31,16 @@ class ListsRemoteDataSourceTest {
                 title = "Supermercado",
                 status = "ACTIVE",
                 updatedAt = "2026-01-10T11:00:00.000Z",
-                itemCount = 5
+                itemCount = 5,
+                provider = ListProviderDto(slug = "mercadona", displayName = "Mercadona")
             ),
             ListSummaryDto(
                 id = "list-2",
                 title = "Farmacia",
                 status = "ACTIVE",
                 updatedAt = "2026-01-10T12:00:00.000Z",
-                itemCount = 3
+                itemCount = 3,
+                provider = ListProviderDto(slug = "bonpreuesclat", displayName = "Bonpreu")
             )
         ))
 
@@ -49,6 +52,7 @@ class ListsRemoteDataSourceTest {
         // Assert
         assertEquals(2, result.size)
         assertEquals("Supermercado", result[0].title)
+        assertEquals("Mercadona", result[0].providerName)
         assertEquals(ListStatus.ACTIVE, result[0].status)
         assertEquals(5, result[0].itemCount)
     }
@@ -73,7 +77,8 @@ class ListsRemoteDataSourceTest {
             title = "Mi lista",
             status = "ACTIVE",
             updatedAt = "2026-01-10T11:00:00.000Z",
-            itemCount = 10
+            itemCount = 10,
+            provider = ListProviderDto(slug = "mercadona", displayName = "Mercadona")
         )
 
         coEvery { listsApi.getListDetail("list-123") } returns dto
@@ -84,6 +89,7 @@ class ListsRemoteDataSourceTest {
         // Assert
         assertEquals("list-123", result.id)
         assertEquals("Mi lista", result.title)
+        assertEquals("Mercadona", result.providerName)
         assertEquals(10, result.itemCount)
     }
 
@@ -119,7 +125,8 @@ class ListsRemoteDataSourceTest {
                     title = "Supermercado",
                     status = "ACTIVE",
                     updatedAt = "2026-01-10T11:00:00.000Z",
-                    itemCount = 5
+                    itemCount = 5,
+                    provider = ListProviderDto(slug = "mercadona", displayName = "Mercadona")
                 )
             )
         )

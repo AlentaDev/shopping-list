@@ -31,7 +31,8 @@ class ListsLocalDataSourceTest {
                 title = "Super",
                 status = ListStatus.ACTIVE,
                 updatedAt = 1000L,
-                itemCount = 7
+                itemCount = 7,
+                providerName = "Mercadona"
             )
         )
         val captured = slot<List<ListEntity>>()
@@ -41,13 +42,14 @@ class ListsLocalDataSourceTest {
 
         coVerify(exactly = 1) { listDao.replaceByStatus("ACTIVE", any()) }
         assertEquals(7, captured.captured.first().itemCount)
+        assertEquals("Mercadona", captured.captured.first().providerName)
     }
 
     @Test
     fun `saveLists replaces ACTIVE snapshot with only active remote entities`() = runTest {
         val lists = listOf(
-            ShoppingList("active-1", "Activa", ListStatus.ACTIVE, 1000L, 1),
-            ShoppingList("completed-1", "Completada", ListStatus.COMPLETED, 1001L, 2)
+            ShoppingList("active-1", "Activa", ListStatus.ACTIVE, 1000L, 1, providerName = "Mercadona"),
+            ShoppingList("completed-1", "Completada", ListStatus.COMPLETED, 1001L, 2, providerName = "Mercadona")
         )
         val captured = slot<List<ListEntity>>()
         coEvery { listDao.replaceByStatus("ACTIVE", capture(captured)) } returns Unit
@@ -68,7 +70,8 @@ class ListsLocalDataSourceTest {
                 title = "Super",
                 status = "ACTIVE",
                 updatedAt = "1000",
-                itemCount = 4
+                itemCount = 4,
+                providerName = "Bonpreu"
             )
         )
 
@@ -76,5 +79,6 @@ class ListsLocalDataSourceTest {
 
         assertEquals(1, result.size)
         assertEquals(4, result.first().itemCount)
+        assertEquals("Bonpreu", result.first().providerName)
     }
 }

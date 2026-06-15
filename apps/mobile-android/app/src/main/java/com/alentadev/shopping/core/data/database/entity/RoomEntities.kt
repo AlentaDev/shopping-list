@@ -27,6 +27,7 @@ data class ListEntity(
     @PrimaryKey
     val id: String,
     val title: String,
+    val providerName: String = "",
     val status: String, // ACTIVE, COMPLETED, DRAFT
     val updatedAt: String,
     val itemCount: Int = 0,

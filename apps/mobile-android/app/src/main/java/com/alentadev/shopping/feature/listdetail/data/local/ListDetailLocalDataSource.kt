@@ -49,6 +49,7 @@ class ListDetailLocalDataSource @Inject constructor(
         val listEntity = ListEntity(
             id = listDetail.id,
             title = listDetail.title,
+            providerName = listDetail.providerName,
             status = "ACTIVE",
             updatedAt = listDetail.updatedAt,
             itemCount = listDetail.items.size,
@@ -131,6 +132,7 @@ class ListDetailLocalDataSource @Inject constructor(
         return ListDetail(
             id = id,
             title = title,
+            providerName = providerName,
             items = items.map { it.toDomain() },
             updatedAt = updatedAt
         )

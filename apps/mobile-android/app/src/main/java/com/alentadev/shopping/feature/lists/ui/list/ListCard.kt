@@ -34,6 +34,11 @@ internal fun formatListUpdatedAt(updatedAt: Long): String {
         .format(LIST_UPDATED_AT_FORMATTER)
 }
 
+internal fun buildListTitle(title: String, providerName: String): String {
+    val normalizedProviderName = providerName.trim()
+    return if (normalizedProviderName.isEmpty()) title else "$title · $normalizedProviderName"
+}
+
 @Composable
 fun ListCard(
     list: ShoppingList,
@@ -52,7 +57,7 @@ fun ListCard(
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
             Text(
-                text = list.title,
+                text = buildListTitle(list.title, list.providerName),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

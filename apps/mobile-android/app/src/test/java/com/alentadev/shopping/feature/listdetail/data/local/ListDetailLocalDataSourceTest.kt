@@ -40,6 +40,7 @@ class ListDetailLocalDataSourceTest {
         val listEntity = ListEntity(
             id = listId,
             title = "Supermercado",
+            providerName = "Mercadona",
             status = "ACTIVE",
             updatedAt = "2026-02-25T10:00:00Z"
         )
@@ -68,6 +69,7 @@ class ListDetailLocalDataSourceTest {
 
         assertNotNull(result)
         assertEquals("Supermercado", result?.title)
+        assertEquals("Mercadona", result?.providerName)
         assertEquals(1, result?.items?.size)
     }
 
@@ -99,6 +101,7 @@ class ListDetailLocalDataSourceTest {
         assertEquals(1, insertedItems.captured.size)
         assertTrue(insertedItems.captured.first().checked)
         coVerify(exactly = 1) { pendingSyncDao.getPendingCheckedState("list-1", "item-1") }
+        coVerify(exactly = 1) { listDao.insert(match { it.providerName.isEmpty() }) }
     }
 
     @Test
@@ -136,6 +139,7 @@ class ListDetailLocalDataSourceTest {
         val listDetail = ListDetail(
             id = "list-1",
             title = "Compra",
+            providerName = "Bonpreu",
             updatedAt = "2026-03-01T10:00:00Z",
             items = listOf(
                 CatalogItem(
@@ -161,6 +165,7 @@ class ListDetailLocalDataSourceTest {
         assertTrue(insertedItems.isCaptured)
         assertEquals("Lácteos", insertedItems.captured.first().categorySnapshot)
         assertEquals("Leches", insertedItems.captured.first().subcategorySnapshot)
+        coVerify(exactly = 1) { listDao.insert(match { it.providerName == "Bonpreu" }) }
     }
 
     @Test

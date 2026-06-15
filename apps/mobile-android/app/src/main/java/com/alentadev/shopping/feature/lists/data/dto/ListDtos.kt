@@ -7,12 +7,19 @@ import kotlinx.serialization.Serializable
  * Representa el resumen de una lista sin detalles de items
  */
 @Serializable
+data class ListProviderDto(
+    val slug: String,
+    val displayName: String
+)
+
+@Serializable
 data class ListSummaryDto(
     val id: String,
     val title: String,
     val status: String,  // "ACTIVE", "DRAFT", "COMPLETED"
     val updatedAt: String,
-    val itemCount: Int = 0
+    val itemCount: Int = 0,
+    val provider: ListProviderDto? = null
 )
 
 /**

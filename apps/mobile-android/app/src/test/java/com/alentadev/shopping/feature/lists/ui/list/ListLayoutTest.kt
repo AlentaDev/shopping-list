@@ -36,4 +36,14 @@ class ListLayoutTest {
     fun `formatListUpdatedAt returns placeholder for invalid epoch`() {
         assertEquals("—", formatListUpdatedAt(0L))
     }
+
+    @Test
+    fun `buildListTitle returns title with provider when available`() {
+        assertEquals("Compra semanal · Mercadona", buildListTitle("Compra semanal", "Mercadona"))
+    }
+
+    @Test
+    fun `buildListTitle returns only title when provider is blank`() {
+        assertEquals("Compra semanal", buildListTitle("Compra semanal", "  "))
+    }
 }

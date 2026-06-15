@@ -44,4 +44,15 @@ class AppDatabaseMigrationTest {
             database.execSQL("ALTER TABLE items ADD COLUMN subcategorySnapshot TEXT")
         }
     }
+
+    @Test
+    fun `migration 6 to 7 adds provider name column to lists`() {
+        val database = mockk<SupportSQLiteDatabase>(relaxed = true)
+
+        MIGRATION_6_7.migrate(database)
+
+        verify {
+            database.execSQL("ALTER TABLE lists ADD COLUMN providerName TEXT NOT NULL DEFAULT ''")
+        }
+    }
 }

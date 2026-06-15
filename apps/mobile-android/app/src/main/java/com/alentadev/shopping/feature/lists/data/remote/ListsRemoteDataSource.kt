@@ -49,7 +49,8 @@ class ListsRemoteDataSource @Inject constructor(
                 else -> ListStatus.ACTIVE
             },
             updatedAt = updatedAt.toEpochMillisOrZero(),
-            itemCount = itemCount
+            itemCount = itemCount,
+            providerName = provider?.displayName.orEmpty()
         )
     }
 

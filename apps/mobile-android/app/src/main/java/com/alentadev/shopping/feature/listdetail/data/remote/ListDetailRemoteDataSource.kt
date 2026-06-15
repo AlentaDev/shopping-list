@@ -58,6 +58,7 @@ class ListDetailRemoteDataSource @Inject constructor(
         return ListDetail(
             id = id,
             title = title,
+            providerName = provider?.displayName.orEmpty(),
             items = items.map { it.toDomain() },
             updatedAt = updatedAt
         )
@@ -98,4 +99,3 @@ class ListDetailRemoteDataSource @Inject constructor(
         }
     }
 }
-

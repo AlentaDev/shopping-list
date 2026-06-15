@@ -22,7 +22,8 @@ data class ShoppingList(
     val title: String,
     val status: ListStatus,
     val updatedAt: Long,  // timestamp en milisegundos
-    val itemCount: Int = 0  // cantidad de items
+    val itemCount: Int = 0,  // cantidad de items
+    val providerName: String = ""
 ) {
     /**
      * Verifica si la lista está activa

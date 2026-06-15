@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.listdetail.data.remote
 
 import com.alentadev.shopping.feature.listdetail.data.dto.ListDetailDto
 import com.alentadev.shopping.feature.listdetail.data.dto.ListItemDto
+import com.alentadev.shopping.feature.listdetail.data.dto.ListProviderDto
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -36,6 +37,7 @@ class ListDetailRemoteDataSourceTest {
             isEditing = false,
             activatedAt = "2026-01-01T00:00:00.000Z",
             itemCount = 1,
+            provider = ListProviderDto(slug = "mercadona", displayName = "Mercadona"),
             items = listOf(
                 ListItemDto(
                     id = "item-1",
@@ -65,6 +67,7 @@ class ListDetailRemoteDataSourceTest {
         // Assert
         assertEquals(listId, result.id)
         assertEquals("Supermercado", result.title)
+        assertEquals("Mercadona", result.providerName)
         assertEquals(1, result.items.size)
         assertEquals("Leche", result.items[0].name)
     }
@@ -78,6 +81,7 @@ class ListDetailRemoteDataSourceTest {
             title = "Compra",
             status = "ACTIVE",
             itemCount = 1,
+            provider = ListProviderDto(slug = "bonpreuesclat", displayName = "Bonpreu"),
             items = listOf(
                 ListItemDto(
                     id = "item-1",
@@ -127,6 +131,7 @@ class ListDetailRemoteDataSourceTest {
             title = "Compra",
             status = "ACTIVE",
             itemCount = 1,
+            provider = ListProviderDto(slug = "mercadona", displayName = "Mercadona"),
             items = listOf(
                 ListItemDto(
                     id = "item-1",
