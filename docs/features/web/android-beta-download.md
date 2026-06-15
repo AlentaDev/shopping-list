@@ -15,6 +15,7 @@ Permitir que usuarios web descarguen la APK beta de Android desde un punto únic
 - La descarga NO se dispara directa desde el navbar; siempre pasa por `/app`.
 - El contenido de la beta (versión, fecha y enlace APK) se centraliza en `UI_TEXT.APP_DOWNLOAD`.
 - El enlace APK apunta al artefacto de GitHub Releases.
+- La beta publicada actualmente desde `/app` es Android `v0.10.3`.
 
 ## Notas de implementación
 

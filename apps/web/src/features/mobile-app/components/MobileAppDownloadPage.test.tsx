@@ -17,6 +17,7 @@ describe("MobileAppDownloadPage", () => {
         name: UI_TEXT.APP_DOWNLOAD.DOWNLOAD_BUTTON_LABEL,
       }),
     ).toHaveAttribute("href", UI_TEXT.APP_DOWNLOAD.RELEASE.APK_URL);
+    expect(screen.getByText(/v0\.10\.3/)).toBeInTheDocument();
     expect(
       screen.getByText(UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.TITLE),
     ).toBeInTheDocument();
