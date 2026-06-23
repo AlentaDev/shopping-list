@@ -21,8 +21,10 @@ const saveLocalDraftMock = vi.fn();
 const loadLocalDraftMock = vi.fn(() => null);
 const listState = {
   linesCount: 3,
+  draftProviderId: "mercadona",
   setItems: vi.fn(),
   resetDraft: vi.fn(),
+  setDraftProviderId: vi.fn(),
 };
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
@@ -156,8 +158,10 @@ describe("app-shell/AppShell", () => {
     loadLocalDraftMock.mockReturnValue(null);
     saveLocalDraftMock.mockReset();
     listState.linesCount = 3;
+    listState.draftProviderId = "mercadona";
     listState.setItems.mockReset();
     listState.resetDraft.mockReset();
+    listState.setDraftProviderId.mockReset();
   });
 
   it("persists the selected provider for an anonymous empty draft from Home", async () => {
@@ -369,9 +373,30 @@ describe("app-shell/AppShell", () => {
     expect(screen.queryByTestId("catalog-content-footer-layout")).not.toBeInTheDocument();
   });
 
-  it("navega a /catalog al añadir más productos desde la lista", async () => {
+  it("navigates to the current draft provider catalog when adding more products", async () => {
     const user = userEvent.setup();
     const navigateMock = vi.fn();
+    listState.draftProviderId = "bonpreuesclat";
+
+    useAppShellNavigationMock.mockImplementation(() => ({
+      authMode: null,
+      currentPath: "/lists",
+      navigate: navigateMock,
+      mainContent: <div>lists-screen</div>,
+    }));
+
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "add-more-products" }));
+
+    expect(navigateMock).toHaveBeenCalledWith("/bonpreuesclat/catalog");
+  });
+
+  it("falls back to the catalog alias when the draft provider is missing", async () => {
+    const user = userEvent.setup();
+    const navigateMock = vi.fn();
+    listState.draftProviderId = "";
+
     useAppShellNavigationMock.mockImplementation(() => ({
       authMode: null,
       currentPath: "/lists",

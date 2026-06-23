@@ -74,7 +74,8 @@ export const AppShell = () => {
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
-  const { linesCount, setItems, resetDraft, setDraftProviderId } = useList();
+  const { linesCount, draftProviderId, setItems, resetDraft, setDraftProviderId } =
+    useList();
   const { showToast } = useToast();
   const { apiAwake } = useApiAwake();
   const {
@@ -369,7 +370,13 @@ export const AppShell = () => {
           setIsListLoading(false);
         }}
         onAddMoreProducts={() => {
-          if (currentPath !== CATALOG_PATH) navigate(CATALOG_PATH);
+          const catalogPath = draftProviderId
+            ? `/${draftProviderId}/catalog`
+            : CATALOG_PATH;
+
+          if (currentPath !== catalogPath) {
+            navigate(catalogPath);
+          }
         }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}

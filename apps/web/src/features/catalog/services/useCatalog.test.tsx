@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useCatalog } from "./useCatalog";
 
 type FetchResponse = {
   ok: boolean;
   json: () => Promise<unknown>;
+};
+
+type DeferredPromise<T> = {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
 };
 
 const rootCategoriesUrl = "/api/catalog/mercadona/categories";
@@ -36,6 +42,18 @@ const productFixtures = {
     unitPrice: null,
     isApproxSize: false,
   },
+};
+
+const createDeferredPromise = <T,>() => {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+
+  const promise = new Promise<T>((innerResolve, innerReject) => {
+    resolve = innerResolve;
+    reject = innerReject;
+  });
+
+  return { promise, resolve, reject } satisfies DeferredPromise<T>;
 };
 
 const CatalogHarness = () => {
@@ -587,4 +605,482 @@ describe("useCatalog", () => {
       expect.anything(),
     );
   });
+
+  it("clears the in-memory category selection when provider changes", async () => {
+    window.localStorage.setItem(
+      "catalog.lastCategoryByUserProvider",
+      JSON.stringify({ "user-1:bonpreuesclat": "bon-child-1" }),
+    );
+
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+    const bonpreuDetailUrl = (id: string) => `/api/catalog/bonpreuesclat/categories/${id}`;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                { id: "root-2", name: "Lácteos", order: 2, level: 0 },
+                { id: "child-1", name: "Bollería", order: 1, level: 1, parentId: "root-1" },
+                { id: "child-2", name: "Yogures", order: 1, level: 1, parentId: "root-2" },
+              ],
+            }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-1")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-1", name: "Bollería", subcategories: [] }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-2")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-2", name: "Yogures", subcategories: [] }),
+          };
+        }
+
+        if (input === bonpreuRootUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+                { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+              ],
+            }),
+          };
+        }
+
+        if (input === bonpreuDetailUrl("bon-child-1")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "bon-child-1", name: "Fruta", subcategories: [] }),
+          };
+        }
+
+        if (input === bonpreuDetailUrl("child-2")) {
+          return {
+            ok: false,
+            json: async () => ({}),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) =>
+        useCatalog({ providerId, userId: "user-1" }),
+      {
+        initialProps: { providerId: "mercadona" },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Bollería");
+    });
+
+    await act(async () => {
+      result.current.selectCategory("child-2");
+    });
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Yogures");
+    });
+
+    rerender({ providerId: "bonpreuesclat" });
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Fruta");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      bonpreuDetailUrl("bon-child-1"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      bonpreuDetailUrl("child-1"),
+      expect.anything(),
+    );
+  });
+
+  it("does not use stale previous-provider categories as fallback while the new provider categories are still loading", async () => {
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+    const bonpreuDetailUrl = (id: string) => `/api/catalog/bonpreuesclat/categories/${id}`;
+
+    let resolveBonpreuCategories: ((value: FetchResponse) => void) | null = null;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                { id: "root-2", name: "Lácteos", order: 2, level: 0 },
+                { id: "child-1", name: "Bollería", order: 1, level: 1, parentId: "root-1" },
+                { id: "child-2", name: "Yogures", order: 1, level: 1, parentId: "root-2" },
+              ],
+            }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-1")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-1", name: "Bollería", subcategories: [] }),
+          };
+        }
+
+        if (input === categoryDetailUrl("child-2")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "child-2", name: "Yogures", subcategories: [] }),
+          };
+        }
+
+        if (input === bonpreuRootUrl) {
+          return new Promise<FetchResponse>((resolve) => {
+            resolveBonpreuCategories = resolve;
+          });
+        }
+
+        if (input === bonpreuDetailUrl("bon-child-1")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "bon-child-1", name: "Fruta", subcategories: [] }),
+          };
+        }
+
+        throw new Error(`Unexpected request: ${String(input)}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useCatalog({ providerId, userId: "user-1" }),
+      {
+        initialProps: { providerId: "mercadona" },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Bollería");
+    });
+
+    await act(async () => {
+      result.current.selectCategory("child-2");
+    });
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Yogures");
+    });
+
+    rerender({ providerId: "bonpreuesclat" });
+
+    expect(result.current.selectedCategoryId).toBeNull();
+    expect(result.current.categories).toEqual([]);
+    expect(result.current.categoryDetail).toBeNull();
+    expect(result.current.detailStatus).toBe("idle");
+
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      bonpreuDetailUrl("child-1"),
+      expect.anything(),
+    );
+
+    expect(resolveBonpreuCategories).not.toBeNull();
+
+    await act(async () => {
+      resolveBonpreuCategories?.({
+        ok: true,
+        json: async () => ({
+          categories: [
+            { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+            { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+          ],
+        }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.categoryDetail?.categoryName).toBe("Fruta");
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      bonpreuDetailUrl("bon-child-1"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("keeps the new provider categories state loading when the previous provider resolves late", async () => {
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+
+    let resolveMercadonaCategories: ((value: FetchResponse) => void) | null = null;
+    let resolveBonpreuCategories: ((value: FetchResponse) => void) | null = null;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return new Promise<FetchResponse>((resolve) => {
+            resolveMercadonaCategories = resolve;
+          });
+        }
+
+        if (input === bonpreuRootUrl) {
+          return new Promise<FetchResponse>((resolve) => {
+            resolveBonpreuCategories = resolve;
+          });
+        }
+
+        throw new Error(`Unexpected request: ${String(input)}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useCatalog({ providerId }),
+      {
+        initialProps: { providerId: "mercadona" },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("loading");
+    });
+
+    rerender({ providerId: "bonpreuesclat" });
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("loading");
+    });
+
+    await act(async () => {
+      resolveMercadonaCategories?.({
+        ok: true,
+        json: async () => ({
+          categories: [
+            { id: "root-1", name: "Panadería", order: 1, level: 0 },
+            { id: "child-1", name: "Bollería", order: 1, level: 1, parentId: "root-1" },
+          ],
+        }),
+      });
+    });
+
+    expect(result.current.categoriesStatus).toBe("loading");
+    expect(result.current.categoriesError).toBeNull();
+    expect(result.current.categories).toEqual([]);
+
+    await act(async () => {
+      resolveBonpreuCategories?.({
+        ok: true,
+        json: async () => ({
+          categories: [
+            { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+            { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+          ],
+        }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("success");
+      expect(result.current.categoriesError).toBeNull();
+      expect(result.current.categories).toEqual([
+        { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+        { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+      ]);
+    });
+  });
+
+  it("keeps the new provider categories state loading when the previous provider fails late", async () => {
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+
+    let rejectMercadonaCategories: ((reason?: unknown) => void) | null = null;
+    let resolveBonpreuCategories: ((value: FetchResponse) => void) | null = null;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === rootCategoriesUrl) {
+          return new Promise<FetchResponse>((_, reject) => {
+            rejectMercadonaCategories = reject;
+          });
+        }
+
+        if (input === bonpreuRootUrl) {
+          return new Promise<FetchResponse>((resolve) => {
+            resolveBonpreuCategories = resolve;
+          });
+        }
+
+        throw new Error(`Unexpected request: ${String(input)}`);
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result, rerender } = renderHook(
+      ({ providerId }: { providerId: string }) => useCatalog({ providerId }),
+      {
+        initialProps: { providerId: "mercadona" },
+      },
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("loading");
+    });
+
+    rerender({ providerId: "bonpreuesclat" });
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("loading");
+    });
+
+    await act(async () => {
+      rejectMercadonaCategories?.(new Error("No se pudieron cargar las categorías."));
+    });
+
+    expect(result.current.categoriesStatus).toBe("loading");
+    expect(result.current.categoriesError).toBeNull();
+    expect(result.current.categories).toEqual([]);
+
+    await act(async () => {
+      resolveBonpreuCategories?.({
+        ok: true,
+        json: async () => ({
+          categories: [
+            { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+            { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+          ],
+        }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.categoriesStatus).toBe("success");
+      expect(result.current.categoriesError).toBeNull();
+      expect(result.current.categories).toEqual([
+        { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+        { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+      ]);
+    });
+  });
+
+  it.each(["resolve", "reject"] as const)(
+    "keeps the new provider detail visible when the previous provider detail %s late after a provider switch",
+    async (lateOutcome) => {
+      const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+      const bonpreuDetailUrl = (id: string) => `/api/catalog/bonpreuesclat/categories/${id}`;
+
+      const mercadonaDetailDeferred = createDeferredPromise<FetchResponse>();
+      const bonpreuDetailDeferred = createDeferredPromise<FetchResponse>();
+
+      const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+        async (input) => {
+          if (input === rootCategoriesUrl) {
+            return {
+              ok: true,
+              json: async () => ({
+                categories: [
+                  { id: "root-1", name: "Panadería", order: 1, level: 0 },
+                  { id: "child-1", name: "Bollería", order: 1, level: 1, parentId: "root-1" },
+                ],
+              }),
+            };
+          }
+
+          if (input === categoryDetailUrl("child-1")) {
+            return mercadonaDetailDeferred.promise;
+          }
+
+          if (input === bonpreuRootUrl) {
+            return {
+              ok: true,
+              json: async () => ({
+                categories: [
+                  { id: "bon-root", name: "Frescos", order: 1, level: 0 },
+                  { id: "bon-child-1", name: "Fruta", order: 1, level: 1, parentId: "bon-root" },
+                ],
+              }),
+            };
+          }
+
+          if (input === bonpreuDetailUrl("bon-child-1")) {
+            return bonpreuDetailDeferred.promise;
+          }
+
+          throw new Error(`Unexpected request: ${String(input)}`);
+        },
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      const { result, rerender } = renderHook(
+        ({ providerId }: { providerId: string }) => useCatalog({ providerId }),
+        {
+          initialProps: { providerId: "mercadona" },
+        },
+      );
+
+      await waitFor(() => {
+        expect(result.current.categoriesStatus).toBe("success");
+        expect(result.current.selectedCategoryId).toBe("child-1");
+        expect(result.current.detailStatus).toBe("loading");
+      });
+
+      rerender({ providerId: "bonpreuesclat" });
+
+      await waitFor(() => {
+        expect(result.current.categoriesStatus).toBe("success");
+        expect(result.current.selectedCategoryId).toBe("bon-child-1");
+        expect(result.current.detailStatus).toBe("loading");
+      });
+
+      await act(async () => {
+        bonpreuDetailDeferred.resolve({
+          ok: true,
+          json: async () => ({
+            id: "bon-child-1",
+            name: "Fruta",
+            subcategories: [],
+          }),
+        });
+      });
+
+      await waitFor(() => {
+        expect(result.current.detailStatus).toBe("success");
+        expect(result.current.detailError).toBeNull();
+        expect(result.current.categoryDetail?.categoryName).toBe("Fruta");
+      });
+
+      await act(async () => {
+        if (lateOutcome === "resolve") {
+          mercadonaDetailDeferred.resolve({
+            ok: true,
+            json: async () => ({
+              id: "child-1",
+              name: "Bollería",
+              subcategories: [],
+            }),
+          });
+
+          return;
+        }
+
+        mercadonaDetailDeferred.reject(new Error("No se pudieron cargar los productos."));
+      });
+
+      await waitFor(() => {
+        expect(result.current.detailStatus).toBe("success");
+        expect(result.current.detailError).toBeNull();
+        expect(result.current.categoryDetail?.categoryName).toBe("Fruta");
+      });
+    },
+  );
 });

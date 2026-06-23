@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CatalogCategoryDetail, CatalogCategoryNode } from "./types";
 import { getCategoryDetail, getRootCategories } from "./CatalogService";
 import { FETCH_STATUS } from "@src/shared/constants/appState";
@@ -18,6 +18,25 @@ type CatalogState = {
   detailError: string | null;
   categoryDetail: CatalogCategoryDetail | null;
   selectedCategoryId: string | null;
+};
+
+type SelectedCategoryState = {
+  providerId: string;
+  categoryId: string | null;
+};
+
+type CategoriesState = {
+  providerId: string;
+  status: FetchStatus;
+  error: string | null;
+  items: CatalogCategoryNode[];
+};
+
+type DetailState = {
+  providerId: string;
+  status: FetchStatus;
+  error: string | null;
+  data: CatalogCategoryDetail | null;
 };
 
 type UseCatalogResult = CatalogState & {
@@ -59,26 +78,43 @@ type UseCatalogArgs = {
 };
 
 export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalogArgs): UseCatalogResult => {
-  const [categoriesStatus, setCategoriesStatus] = useState<FetchStatus>(
-    FETCH_STATUS.IDLE,
+  const categoriesRequestIdRef = useRef(0);
+  const detailRequestIdRef = useRef(0);
+  const [categoriesState, setCategoriesState] = useState<CategoriesState>({
+    providerId,
+    status: FETCH_STATUS.IDLE,
+    error: null,
+    items: [],
+  });
+  const [selectedCategory, setSelectedCategory] = useState<SelectedCategoryState>(
+    {
+      providerId,
+      categoryId: null,
+    },
   );
-  const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<CatalogCategoryNode[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
-  const [detailStatus, setDetailStatus] = useState<FetchStatus>(
-    FETCH_STATUS.IDLE,
-  );
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const [categoryDetail, setCategoryDetail] =
-    useState<CatalogCategoryDetail | null>(null);
+  const [detailState, setDetailState] = useState<DetailState>({
+    providerId,
+    status: FETCH_STATUS.IDLE,
+    error: null,
+    data: null,
+  });
 
   const rememberedCategoryId = useMemo(
     () =>
       !initialCategoryId && userId ? getLastCategory(userId, providerId) : null,
     [initialCategoryId, providerId, userId],
   );
+
+  const categories =
+    categoriesState.providerId === providerId ? categoriesState.items : [];
+
+  const categoriesStatus =
+    categoriesState.providerId === providerId
+      ? categoriesState.status
+      : FETCH_STATUS.IDLE;
+
+  const categoriesError =
+    categoriesState.providerId === providerId ? categoriesState.error : null;
 
   const fallbackSelectedCategoryId = useMemo(() => {
     if (categoriesStatus !== FETCH_STATUS.SUCCESS) {
@@ -96,11 +132,23 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
     return getDefaultCategory(categories)?.id ?? null;
   }, [categories, categoriesStatus, initialCategoryId, rememberedCategoryId]);
 
+  const selectedCategoryId =
+    selectedCategory.providerId === providerId
+      ? selectedCategory.categoryId
+      : null;
+
   const activeCategoryId = selectedCategoryId ?? fallbackSelectedCategoryId;
 
   const loadCategories = useCallback(async () => {
-    setCategoriesStatus(FETCH_STATUS.LOADING);
-    setCategoriesError(null);
+    const requestId = categoriesRequestIdRef.current + 1;
+    categoriesRequestIdRef.current = requestId;
+
+    setCategoriesState({
+      providerId,
+      status: FETCH_STATUS.LOADING,
+      error: null,
+      items: [],
+    });
 
     try {
       const data = await getRootCategories(providerId, {
@@ -110,24 +158,49 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
         ? data.categories
         : [];
 
-      setCategories(nextCategories);
-      setCategoriesStatus(FETCH_STATUS.SUCCESS);
+      if (categoriesRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setCategoriesState({
+        providerId,
+        status: FETCH_STATUS.SUCCESS,
+        error: null,
+        items: nextCategories,
+      });
     } catch (error) {
+      if (categoriesRequestIdRef.current !== requestId) {
+        return;
+      }
+
       const message =
         error instanceof Error ? error.message : CATEGORIES_ERROR_MESSAGE;
-      setCategoriesError(message);
-      setCategoriesStatus(FETCH_STATUS.ERROR);
+      setCategoriesState({
+        providerId,
+        status: FETCH_STATUS.ERROR,
+        error: message,
+        items: [],
+      });
     }
   }, [providerId]);
 
   const loadDetail = useCallback(
     async (categoryId: string, categoryName?: string) => {
-      setDetailStatus(FETCH_STATUS.LOADING);
-      setDetailError(null);
-      // Preservar el categoryName durante la recarga, usando el prevDetail o el nombre pasado
-      setCategoryDetail((prevDetail) => {
-        const name = prevDetail?.categoryName || categoryName || "";
-        return { categoryName: name, sections: [] };
+      const requestId = detailRequestIdRef.current + 1;
+      detailRequestIdRef.current = requestId;
+
+      setDetailState((prevDetailState) => {
+        const name =
+          prevDetailState.providerId === providerId
+            ? prevDetailState.data?.categoryName || categoryName || ""
+            : categoryName || "";
+
+        return {
+          providerId,
+          status: FETCH_STATUS.LOADING,
+          error: null,
+          data: { categoryName: name, sections: [] },
+        };
       });
 
       try {
@@ -135,13 +208,30 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
           errorMessage: DETAIL_ERROR_MESSAGE,
         });
 
-        setCategoryDetail(data);
-        setDetailStatus(FETCH_STATUS.SUCCESS);
+        if (detailRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setDetailState({
+          providerId,
+          status: FETCH_STATUS.SUCCESS,
+          error: null,
+          data,
+        });
       } catch (error) {
+        if (detailRequestIdRef.current !== requestId) {
+          return;
+        }
+
         const message =
           error instanceof Error ? error.message : DETAIL_ERROR_MESSAGE;
-        setDetailError(message);
-        setDetailStatus(FETCH_STATUS.ERROR);
+        setDetailState((prevDetailState) => ({
+          providerId,
+          status: FETCH_STATUS.ERROR,
+          error: message,
+          data:
+            prevDetailState.providerId === providerId ? prevDetailState.data : null,
+        }));
       }
     },
     [providerId],
@@ -167,18 +257,27 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
     };
   }, [activeCategoryId, categories, loadDetail]);
 
+  const visibleDetailStatus =
+    detailState.providerId === providerId ? detailState.status : FETCH_STATUS.IDLE;
+
+  const visibleDetailError =
+    detailState.providerId === providerId ? detailState.error : null;
+
+  const visibleCategoryDetail =
+    detailState.providerId === providerId ? detailState.data : null;
+
   const resolvedDetailStatus =
     categoriesStatus === FETCH_STATUS.SUCCESS && !activeCategoryId
       ? FETCH_STATUS.SUCCESS
-      : detailStatus;
+      : visibleDetailStatus;
 
   const resolvedCategoryDetail =
     categoriesStatus === FETCH_STATUS.SUCCESS && !activeCategoryId
       ? EMPTY_CATEGORY_DETAIL
-      : categoryDetail;
+      : visibleCategoryDetail;
 
   const selectCategory = (id: string) => {
-    setSelectedCategoryId(id);
+    setSelectedCategory({ providerId, categoryId: id });
     if (userId) {
       saveLastCategory(userId, providerId, id);
     }
@@ -201,7 +300,7 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
     categoriesError,
     categories,
     detailStatus: resolvedDetailStatus,
-    detailError,
+    detailError: visibleDetailError,
     categoryDetail: resolvedCategoryDetail,
     selectedCategoryId: activeCategoryId,
     selectCategory,
