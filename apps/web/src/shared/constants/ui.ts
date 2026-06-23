@@ -283,8 +283,7 @@ export const UI_TEXT = {
     CARD: {
       ITEM_COUNT_LABEL: "Productos:",
       ACTIVATED_AT_LABEL: "Activada:",
-      UPDATED_AT_LABEL: "Actualizada:",
-      PROVIDER_LABEL: "Proveedor:",
+      COMPLETED_AT_LABEL: "Completada:",      
     },
     EMPTY_STATE: {
       ACTIVE_TITLE: "No hay listas activas",

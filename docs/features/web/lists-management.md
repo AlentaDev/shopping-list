@@ -100,7 +100,7 @@ Esta matriz define una sola fuente de verdad para las acciones visibles y separa
 
 ### Activas (listado)
 
-- Cada tarjeta muestra: nombre, nº de productos, fecha de activación y botón de borrar.
+- Cada tarjeta muestra: logo del proveedor, nombre, nº de productos, fecha de activación y botón de borrar alineado a la derecha.
 - Click en la tarjeta abre un modal de detalle en **solo lectura** (items + total, sin edición inline).
 - Borrar abre un **modal** de confirmación (“no se puede recuperar”).
 - Si falla el backend al borrar: toast de error y no se elimina en UI.
@@ -152,7 +152,7 @@ Esta combinación representa una sesión de edición activa (no un flujo de borr
 
 ### Historial (listado)
 
-- Cada tarjeta muestra: nombre, nº de productos e icono de borrar.
+- Cada tarjeta muestra: logo del proveedor, nombre, nº de productos, fecha de completado y botón de borrar alineado a la derecha.
 - Click en la tarjeta abre un modal de detalle en **solo lectura** (items + total, sin edición inline).
 - Borrar abre modal de confirmación.
 

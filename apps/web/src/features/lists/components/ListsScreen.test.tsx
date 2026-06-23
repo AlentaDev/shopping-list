@@ -39,6 +39,10 @@ const sampleLists: ListSummary[] = [
     itemCount: 5,
     isEditing: false,
     status: LIST_STATUS.COMPLETED,
+    provider: {
+      slug: "mercadona",
+      displayName: "Mercadona",
+    },
   },
 ];
 
@@ -105,7 +109,7 @@ describe("ListsScreen", () => {
     expect(screen.getByText(UI_TEXT.LISTS.EMPTY_STATE.ACTIVE_TITLE)).toBeInTheDocument();
   });
 
-  it("en listas activas mantiene borrar en tarjeta y abre detalle al hacer click", async () => {
+  it("renderiza tarjetas activas con logo, cantidad, fecha formateada e icono de borrado", async () => {
     const onOpenDetail = vi.fn();
 
     render(
@@ -120,17 +124,31 @@ describe("ListsScreen", () => {
     );
 
     const activeCard = screen.getByTestId("list-card-active-1");
-    const draftCard = screen.getByTestId("list-card-draft-1");
 
     expect(activeCard).toHaveClass("cursor-pointer");
-    expect(draftCard).not.toHaveClass("cursor-pointer");
+    expect(screen.queryByTestId("list-card-draft-1")).not.toBeInTheDocument();
 
     expect(
       within(activeCard as HTMLElement).getByRole("button", {
         name: UI_TEXT.LISTS.ACTIONS.DELETE,
       }),
     ).toBeInTheDocument();
-    expect(activeCard).toHaveTextContent("Proveedor: Bonpreu Esclat");
+    expect(
+      within(activeCard as HTMLElement).getByRole("img", {
+        name: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.LOGO_ALT,
+      }),
+    ).toBeInTheDocument();
+    expect(activeCard).not.toHaveTextContent("Bonpreu Esclat");
+    expect(activeCard).toHaveTextContent(`${UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} 3`);
+    expect(activeCard).toHaveTextContent(`${UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL} 8 enero, 2024`);
+
+    const deleteButton = within(activeCard as HTMLElement).getByRole("button", {
+      name: UI_TEXT.LISTS.ACTIONS.DELETE,
+    });
+
+    expect(deleteButton.querySelector("svg")).not.toBeNull();
+    expect(deleteButton).toHaveClass("rounded-full", "border-red-600", "text-red-600");
+    expect(deleteButton).not.toHaveClass("bg-red-600", "text-white");
 
     expect(
       within(activeCard as HTMLElement).queryByRole("button", {
@@ -141,6 +159,36 @@ describe("ListsScreen", () => {
     await userEvent.click(activeCard);
 
     expect(onOpenDetail).toHaveBeenCalledWith(sampleLists[0]);
+  });
+
+  it("muestra en historial la fecha completada formateada y el logo del proveedor", async () => {
+    render(
+      <ListsScreen
+        lists={sampleLists}
+        onAction={vi.fn()}
+        selectedList={null}
+        selectedListDetail={null}
+        onOpenDetail={vi.fn()}
+        onCloseDetail={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }),
+    );
+
+    const completedCard = screen.getByTestId("list-card-completed-1");
+
+    expect(completedCard).toHaveTextContent(
+      `${UI_TEXT.LISTS.CARD.COMPLETED_AT_LABEL} 1 enero, 2024`,
+    );
+    expect(completedCard).toHaveTextContent(`${UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} 5`);
+    expect(completedCard).not.toHaveTextContent("Mercadona");
+    expect(
+      within(completedCard as HTMLElement).getByRole("img", {
+        name: UI_TEXT.HOME.PROVIDERS.MERCADONA.LOGO_ALT,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("muestra modal read-only con acciones para lista activa", async () => {

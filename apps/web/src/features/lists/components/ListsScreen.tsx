@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { LIST_STATUS, type ListStatus } from "@src/shared/domain/listStatus";
-import {
-  getListActions,
-  type ListActionKey,
-} from "../services/listActions";
+import { type ListActionKey } from "../services/listActions";
 import type { ListDetail, ListSummary } from "../services/types";
 import { ListDetailModal } from "./ListDetailModal";
+import { ListCard } from "./ListCard";
 
 type TabKey = "ACTIVE" | "COMPLETED";
 
@@ -22,136 +20,6 @@ type ListsScreenProps = {
   actionLoading?: { listId: string; action: ListActionKey } | null;
 };
 
-type ListActionButtonProps = {
-  action: ListActionKey;
-  label: string;
-  isDisabled: boolean;
-  onClick: () => void;
-  stopPropagation?: boolean;
-};
-
-const ListActionButton = ({
-  action,
-  label,
-  isDisabled,
-  onClick,
-  stopPropagation = false,
-}: ListActionButtonProps) => {
-  let buttonStyle =
-    "border-slate-300 text-slate-700 hover:border-slate-400 hover:text-slate-900";
-
-  if (isDisabled) {
-    buttonStyle = "cursor-not-allowed border-slate-200 text-slate-300";
-  } else if (action === "delete") {
-    buttonStyle =
-      "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50";
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        if (stopPropagation) {
-          event.stopPropagation();
-        }
-
-        onClick();
-      }}
-      disabled={isDisabled}
-      className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${buttonStyle}`}
-    >
-      {label}
-    </button>
-  );
-};
-
-type ListCardProps = {
-  list: ListSummary;
-  actionLoading: { listId: string; action: ListActionKey } | null;
-  onAction: (list: ListSummary, action: ListActionKey) => void;
-  onOpenDetail: (list: ListSummary) => void;
-};
-
-const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCardProps) => {
-  const isListActionLoading = actionLoading?.listId === list.id;
-  const cardActions =
-    list.status === LIST_STATUS.ACTIVE || list.status === LIST_STATUS.COMPLETED
-      ? (["delete"] satisfies ListActionKey[])
-      : getListActions(list.status);
-
-  const canOpenDetail =
-    list.status === LIST_STATUS.ACTIVE || list.status === LIST_STATUS.COMPLETED;
-
-  const handleCardClick = () => {
-    if (!canOpenDetail) {
-      return;
-    }
-
-    onOpenDetail(list);
-  };
-
-  return (
-    <div
-      data-testid={`list-card-${list.id}`}
-      className={`flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between ${canOpenDetail ? "cursor-pointer" : ""}`}
-      role={canOpenDetail ? "button" : undefined}
-      tabIndex={canOpenDetail ? 0 : undefined}
-      onClick={handleCardClick}
-      onKeyDown={(event) => {
-        if (canOpenDetail && (event.key === "Enter" || event.key === " ")) {
-          event.preventDefault();
-          handleCardClick();
-        }
-      }}
-    >
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-slate-900">{list.title}</h2>
-        <p className="text-sm text-slate-500">
-          {UI_TEXT.LISTS.CARD.ITEM_COUNT_LABEL} {list.itemCount}
-        </p>
-        <p className="text-sm text-slate-500">
-          {list.status === LIST_STATUS.ACTIVE
-            ? UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL
-            : UI_TEXT.LISTS.CARD.UPDATED_AT_LABEL}{" "}
-          {list.status === LIST_STATUS.ACTIVE
-            ? list.activatedAt ?? list.updatedAt
-            : list.updatedAt}
-        </p>
-        {list.provider?.displayName ? (
-          <p className="text-sm text-slate-500">
-            {UI_TEXT.LISTS.CARD.PROVIDER_LABEL} {list.provider.displayName}
-          </p>
-        ) : null}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {cardActions.map((action) => {
-          const isLoadingAction =
-            isListActionLoading && actionLoading?.action === action;
-          const label = isLoadingAction
-            ? UI_TEXT.LISTS.ACTIONS_LOADING[action]
-            : ACTION_LABELS[action];
-          const isDisabled = isListActionLoading;
-
-          return (
-            <ListActionButton
-              key={action}
-              action={action}
-              label={label}
-              isDisabled={isDisabled}
-              onClick={() => onAction(list, action)}
-              stopPropagation={canOpenDetail}
-            />
-          );
-        })}
-      </div>
-      {list.status === LIST_STATUS.DRAFT && list.itemCount === 0 ? (
-        <p className="text-xs text-slate-400">
-          {UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE}
-        </p>
-      ) : null}
-    </div>
-  );
-};
 
 const TAB_LABELS: Record<TabKey, string> = {
   ACTIVE: UI_TEXT.LISTS.TABS.ACTIVE,
@@ -162,17 +30,7 @@ const EMPTY_STATE_BY_TAB: Record<TabKey, string> = {
   ACTIVE: UI_TEXT.LISTS.EMPTY_STATE.ACTIVE_TITLE,
   COMPLETED: UI_TEXT.LISTS.EMPTY_STATE.COMPLETED_TITLE,
 };
-const ACTION_LABELS: Record<ListActionKey, string> = {
-  edit: UI_TEXT.LISTS.ACTIONS.EDIT,
-  activate: UI_TEXT.LISTS.ACTIONS.ACTIVATE,
-  complete: UI_TEXT.LISTS.ACTIONS.COMPLETE,
-  reuse: UI_TEXT.LISTS.ACTIONS.REUSE,
-  delete: UI_TEXT.LISTS.ACTIONS.DELETE,
-  view: UI_TEXT.LISTS.ACTIONS.VIEW,
-};
-
 const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
-  [LIST_STATUS.DRAFT]: "ACTIVE",
   [LIST_STATUS.ACTIVE]: "ACTIVE",
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
