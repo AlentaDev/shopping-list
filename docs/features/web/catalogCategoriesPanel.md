@@ -2,7 +2,7 @@
 
 ## Resumen
 
-Panel lateral en la UI que permite mostrar/ocultar categorías del catálogo y resaltarlas de forma local.
+Panel lateral en la UI que muestra categorías del catálogo y resalta la selección activa local.
 
 La experiencia de catálogo muestra el detalle de la categoría seleccionada y reinicia el scroll al cambiar para que el contenido aparezca desde arriba.
 
@@ -61,7 +61,9 @@ GET /api/catalog/categories/:id
 
 ## Notas de implementación
 
-- El panel se abre/cierra desde la cabecera y solo solicita datos la primera vez que se abre.
+- En desktop el panel permanece siempre visible dentro del layout del catálogo; ya no existe botón flotante ni trigger en la cabecera.
+- La grilla de productos conserva su desplazamiento lateral para convivir con el panel fijo de desktop.
+- En mobile el acceso sigue siendo mediante un trigger inline que abre un overlay/modal y la selección de categoría lo cierra automáticamente.
 - Estados manejados: `idle`, `loading`, `error`, `success`.
 - Solo se muestran categorías de nivel 0 y 1.
 - Los clics en una tarjeta actualizan el `activeCategoryId` local para resaltar la selección.

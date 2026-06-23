@@ -7,8 +7,8 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 import { useToast } from "@src/context/useToast";
 import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
 import { useList } from "@src/context/useList";
-import { FETCH_STATUS } from "@src/shared/constants/appState";
-import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
+import { APP_EVENTS, FETCH_STATUS } from "@src/shared/constants/appState";
+import { useMobileCatalogInteractionMode } from "@src/shared/hooks/useMobileCatalogInteractionMode";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 const SWITCHING_PRODUCTS_MESSAGE = UI_TEXT.CATALOG.SWITCHING_PRODUCTS_MESSAGE;
@@ -36,8 +36,6 @@ type CatalogProps = {
   providerId?: string;
   initialCategoryId?: string;
   onCategoryRouteChange?: (categoryId: string) => void;
-  isCategoriesOpen?: boolean;
-  openMobileCategoriesRequestKey?: number;
   onItemsCountChange?: (count: number) => void;
   onRequestActiveEditConflict?: (input: {
     currentProviderId: string;
@@ -84,13 +82,11 @@ const Catalog = ({
   providerId = "mercadona",
   initialCategoryId,
   onCategoryRouteChange,
-  isCategoriesOpen = false,
-  openMobileCategoriesRequestKey = 0,
   onItemsCountChange,
   onRequestActiveEditConflict,
 }: CatalogProps) => {
-  const [dismissedMobileRequestKey, setDismissedMobileRequestKey] = useState(0);
-  const isMobileInteractionMode = isMobileCatalogInteractionMode();
+  const isMobileInteractionMode = useMobileCatalogInteractionMode();
+  const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
   const { addItem } = useList();
   const { confirmAndReset } = useDraftProviderConflict({
     onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
@@ -123,8 +119,7 @@ const Catalog = ({
     !hasItems &&
     sections.some((section) => section.subcategoryId);
   const skeletonCount = 8;
-  const isMobileCategoriesOpen =
-    isCategoriesOpen && openMobileCategoriesRequestKey > dismissedMobileRequestKey;
+  const isDesktopPanelOpen = !isMobileInteractionMode;
 
   useLayoutEffect(() => {
     if (!selectedCategoryId) {
@@ -139,6 +134,28 @@ const Catalog = ({
   }, [onItemsCountChange, totalProducts]);
 
   useEffect(() => {
+    if (!isMobileInteractionMode) {
+      setIsMobileCategoriesOpen(false);
+    }
+  }, [isMobileInteractionMode]);
+
+  useEffect(() => {
+    if (!isMobileInteractionMode) {
+      return undefined;
+    }
+
+    const handleToggleMobileCategories = () => {
+      setIsMobileCategoriesOpen((currentValue) => !currentValue);
+    };
+
+    window.addEventListener(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES, handleToggleMobileCategories);
+
+    return () => {
+      window.removeEventListener(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES, handleToggleMobileCategories);
+    };
+  }, [isMobileInteractionMode]);
+
+  useEffect(() => {
     if (!selectedCategoryId) {
       return;
     }
@@ -149,8 +166,8 @@ const Catalog = ({
   const handleSelectCategory = useCallback((id: string) => {
     selectCategory(id);
     scrollToCatalogStart();
-    setDismissedMobileRequestKey(openMobileCategoriesRequestKey);
-  }, [openMobileCategoriesRequestKey, selectCategory]);
+    setIsMobileCategoriesOpen(false);
+  }, [selectCategory]);
 
   const categoriesEmpty =
     categoriesStatus === FETCH_STATUS.SUCCESS && categories.length === 0;
@@ -199,16 +216,17 @@ const Catalog = ({
 
   return (
     <>
-      {isCategoriesOpen ? (
-        <div
-          className="pointer-events-none fixed top-24 z-30 hidden w-80 md:block"
-          style={{
-            left: "max(1rem, calc((100vw - 80rem) / 2 + 1rem))",
-          }}
-        >
-          <div className="pointer-events-auto">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:overflow-visible">
+        {isDesktopPanelOpen ? (
+          <div className="hidden w-80 shrink-0 md:block" aria-hidden="true" />
+        ) : null}
+        {isDesktopPanelOpen ? (
+          <aside
+            data-testid="catalog-desktop-categories-panel"
+            className="hidden md:fixed md:top-24 md:block md:w-80"
+          >
             <CategoriesPanel
-              open={isCategoriesOpen}
+              open
               categories={categories}
               selectedCategoryId={selectedCategoryId}
               onSelectCategory={handleSelectCategory}
@@ -216,40 +234,33 @@ const Catalog = ({
               errorCategories={categoriesError}
               onRetryLoadCategories={reloadCategories}
             />
+          </aside>
+        ) : null}
+        {isMobileInteractionMode && isMobileCategoriesOpen ? (
+          <div className="fixed inset-0 z-50" data-testid="mobile-categories-overlay">
+            <button
+              type="button"
+              aria-label={UI_TEXT.CATEGORIES_PANEL.CLOSE_BUTTON_LABEL}
+              className="absolute inset-0 bg-slate-900/30"
+              onClick={() => setIsMobileCategoriesOpen(false)}
+            />
+            <div
+              data-testid="mobile-categories-panel"
+              className="absolute right-4 top-32 w-[min(20rem,calc(100vw-2rem))] max-w-full"
+            >
+              <CategoriesPanel
+                open
+                isMobile
+                onClose={() => setIsMobileCategoriesOpen(false)}
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={handleSelectCategory}
+                loadingCategories={categoriesStatus === FETCH_STATUS.LOADING}
+                errorCategories={categoriesError}
+                onRetryLoadCategories={reloadCategories}
+              />
+            </div>
           </div>
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-6 md:flex-row md:items-start md:overflow-visible">
-        {isCategoriesOpen ? (
-          <>
-            {isMobileCategoriesOpen ? (
-              <div
-                className="fixed inset-0 z-50 md:hidden"
-                data-testid="mobile-categories-overlay"
-              >
-                <button
-                  type="button"
-                  aria-label="Close categories panel"
-                  className="absolute inset-0 bg-slate-900/30"
-                  onClick={() => setDismissedMobileRequestKey(openMobileCategoriesRequestKey)}
-                />
-                <div className="absolute inset-x-0 top-24 bottom-0 overflow-y-auto rounded-t-2xl bg-white p-4">
-                  <CategoriesPanel
-                    open={isCategoriesOpen}
-                    isMobile
-                    categories={categories}
-                    selectedCategoryId={selectedCategoryId}
-                    onSelectCategory={handleSelectCategory}
-                    loadingCategories={categoriesStatus === FETCH_STATUS.LOADING}
-                    errorCategories={categoriesError}
-                    onRetryLoadCategories={reloadCategories}
-                  />
-                </div>
-              </div>
-            ) : null}
-            <div className="hidden w-80 shrink-0 md:block" />
-          </>
         ) : null}
         <section className="flex-1 space-y-6">
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
@@ -262,11 +273,11 @@ const Catalog = ({
               </h2>
               <div className="flex justify-center">
                 <div className="w-full">
-                  <ProductSkeletonGrid
-                    count={skeletonCount}
-                    isCategoriesOpen={isCategoriesOpen}
-                    isMobileInteractionMode={isMobileInteractionMode}
-                  />
+                    <ProductSkeletonGrid
+                      count={skeletonCount}
+                      isCategoriesOpen={isDesktopPanelOpen}
+                      isMobileInteractionMode={isMobileInteractionMode}
+                    />
                 </div>
               </div>
             </div>
@@ -301,7 +312,7 @@ const Catalog = ({
                     subcategoryName={section.subcategoryName}
                     products={section.products}
                     gridClassName={getGridClasses(
-                      isCategoriesOpen,
+                      isDesktopPanelOpen,
                       isMobileInteractionMode,
                     )}
                     onAddProduct={(product) => {

@@ -13,21 +13,46 @@ const DRAFT_LOSS_MESSAGE =
 export const UI_TEXT = {
   APP: {
     TITLE: "Shopping List",
+    HOME_LABEL: "Inicio",
     CART_BUTTON_LABEL: "Abrir carrito",
+    MY_LISTS_LABEL: "Mis Listas",
     CATEGORIES_LABEL: "Categorías",
     DOWNLOAD_APP_LABEL: "Descargar app",
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
+    MOBILE_MENU_BUTTON_LABEL: "Abrir menú de navegación",
+    MOBILE_MENU_TITLE: "Menú de navegación",
     HANDSHAKE_WAITING_BANNER:
       "Estamos preparando tu lista para que puedas seguir comprando.",
     HANDSHAKE_READY_TOAST: "Tu lista ya está lista para continuar.",
   },
   HOME: {
-    TITLE: "Tu lista de compras",
-    SUBTITLE: "Elige un catálogo para empezar a crear tu lista.",
-    PROVIDER_ENTRY_LABEL: "Entrar en {provider}",
+    HERO_TITLE: "Organiza tu compra antes de salir de casa.",
+    HERO_SUBTITLE:
+      "Prepara tu lista, entra en el catálogo de tu súper y llega al pasillo con todo claro.",
+    PRIMARY_CTA_LABEL: "Ver supermercados disponibles",
+    DOWNLOAD_APP_CTA_LABEL: "Descargar app Android",
+    HERO_IMAGE_ALT: "Productos frescos preparados para tu compra semanal",
+    PROVIDERS_SECTION_TITLE: "Supermercados disponibles",
+    PROVIDERS_SECTION_SUBTITLE:
+      "Empieza con tu proveedor habitual y crea una lista lista para usar desde tu móvil.",
     ANONYMOUS_DRAFT_GUIDANCE:
       "Tienes un borrador asociado a {provider}. Puedes seguir ahí o elegir otro catálogo antes de añadir productos.",
+    PROVIDERS: {
+      MERCADONA: {
+        LOGO_ALT: "Logo de Mercadona",
+        CTA_LABEL: "Cátalogo Mercadona",
+      },
+      BONPREUESCLAT: {
+        LOGO_ALT: "Logo de Bonpreu Esclat",
+        CTA_LABEL: "Cátalogo Bonpreu Esclat",
+      },
+    },
+  },
+  FOOTER: {
+    TAGLINE: "Shopping List te ayuda a preparar la compra con menos improvisación.",
+    SUPPORTING_COPY: "Elige tu súper, prepara la lista y úsala después desde la app móvil.",
+    COPYRIGHT: "© Shopping List - AlentaDev 2026. Todos los derechos reservados.",
   },
   PROVIDERS: {
     MERCADONA: {
@@ -113,6 +138,8 @@ export const UI_TEXT = {
       PASSWORD_LABEL: "Contraseña",
       PASSWORD_PLACEHOLDER: "Tu contraseña",
       SUBMIT_LABEL: "Entrar",
+      SECONDARY_PROMPT: "¿No tienes cuenta? Crea una pinchando",
+      SECONDARY_ACTION: "aquí",
     },
     REGISTER: {
       TITLE: "Crear cuenta",
@@ -127,6 +154,8 @@ export const UI_TEXT = {
       POSTAL_CODE_LABEL: "Código postal (opcional)",
       POSTAL_CODE_PLACEHOLDER: "Ej. 28001",
       SUBMIT_LABEL: "Registrarme",
+      SECONDARY_PROMPT: "¿Ya estás registrado? Logueate pinchando",
+      SECONDARY_ACTION: "aquí",
     },
   },
   CATALOG: {
@@ -145,6 +174,8 @@ export const UI_TEXT = {
   },
   CATEGORIES_PANEL: {
     TITLE: "Categorías",
+    OPEN_BUTTON_LABEL: "Abrir categorías",
+    CLOSE_BUTTON_LABEL: "Cerrar categorías",
     LOAD_CATEGORIES_ERROR_MESSAGE: "No se pudieron cargar las categorías.",
     LOADING_CATEGORIES_MESSAGE: "Cargando categorías...",
     RETRY_BUTTON_LABEL: "Reintentar",

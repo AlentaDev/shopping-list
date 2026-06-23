@@ -1,4 +1,4 @@
-import { Fragment, createElement, useCallback, useEffect, useMemo, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useState } from "react";
 import { Catalog } from "@src/features/catalog";
 import { ListsContainer, type ListDetail, type ListSummary } from "@src/features/lists";
 import {
@@ -6,10 +6,10 @@ import {
   AuthScreen,
   type AuthMode,
 } from "@src/features/auth";
+import { CatalogHome } from "@src/features/home";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
-import { CatalogHome } from "./components/CatalogHome";
 
 const LOGIN_PATH = "/auth/login";
 const REGISTER_PATH = "/auth/register";
@@ -23,8 +23,6 @@ type UseAppShellNavigationArgs = {
   authRedirectPending: boolean;
   isAuthSubmitting: boolean;
   authError: string | null;
-  isCategoriesOpen: boolean;
-  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
@@ -46,12 +44,12 @@ type MainContentParams = {
   currentPath: string;
   isAuthSubmitting: boolean;
   authError: string | null;
-  isCategoriesOpen: boolean;
-  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
   onNavigateHome: () => void;
+  onNavigateLogin: () => void;
+  onNavigateRegister: () => void;
   onNavigateCatalogCategory: (providerId: string, categoryId: string) => void;
   onOpenList: (list: ListDetail) => void;
   onStartOpenList: (list: ListSummary) => void;
@@ -69,8 +67,6 @@ export const useAppShellNavigation = ({
   authRedirectPending,
   isAuthSubmitting,
   authError,
-  isCategoriesOpen,
-  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
@@ -130,12 +126,12 @@ export const useAppShellNavigation = ({
         currentPath,
         isAuthSubmitting,
         authError,
-        isCategoriesOpen,
-        openMobileCategoriesRequestKey,
         linesCount,
         onLogin,
         onRegister,
         onNavigateHome: () => navigate("/"),
+        onNavigateLogin: () => navigate(LOGIN_PATH),
+        onNavigateRegister: () => navigate(REGISTER_PATH),
         onNavigateCatalogCategory: (providerId: string, categoryId: string) =>
           navigate(`/${providerId}/catalog/${categoryId}`),
         onOpenList,
@@ -152,8 +148,6 @@ export const useAppShellNavigation = ({
       currentPath,
       isAuthSubmitting,
       authError,
-      isCategoriesOpen,
-      openMobileCategoriesRequestKey,
       linesCount,
       onLogin,
       onRegister,
@@ -189,12 +183,12 @@ function resolveMainContent({
   currentPath,
   isAuthSubmitting,
   authError,
-  isCategoriesOpen,
-  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
   onNavigateHome,
+  onNavigateLogin,
+  onNavigateRegister,
   onNavigateCatalogCategory,
   onOpenList,
   onStartOpenList,
@@ -205,10 +199,7 @@ function resolveMainContent({
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
-      return createElement(Catalog, {
-        isCategoriesOpen,
-        openMobileCategoriesRequestKey,
-      });
+      return createElement(Catalog);
     }
 
     return authUser
@@ -220,6 +211,8 @@ function resolveMainContent({
           onLogin,
           onRegister,
           onBack: onNavigateHome,
+          onNavigateToLogin: onNavigateLogin,
+          onNavigateToRegister: onNavigateRegister,
         });
   }
 
@@ -238,6 +231,8 @@ function resolveMainContent({
           onLogin,
           onRegister,
           onBack: onNavigateHome,
+          onNavigateToLogin: onNavigateLogin,
+          onNavigateToRegister: onNavigateRegister,
         });
   }
 
@@ -246,24 +241,6 @@ function resolveMainContent({
   }
 
   if (currentPath === "/") {
-    if (authUser) {
-      return createElement(
-        Fragment,
-        null,
-        createElement(CatalogHome, {
-          draftProviderId: homeDraftProviderId,
-          showAnonymousDraftGuidance,
-          onSelectProvider: onSelectHomeProvider,
-        }),
-        createElement(ListsContainer, {
-          onOpenList,
-          onStartOpenList,
-          hasDraftItems: linesCount > 0,
-          onRequestActiveEditConflict,
-        }),
-      );
-    }
-
     return createElement(CatalogHome, {
       draftProviderId: homeDraftProviderId,
       showAnonymousDraftGuidance,
@@ -280,8 +257,6 @@ function resolveMainContent({
       onCategoryRouteChange: (categoryId: string) => {
         onNavigateCatalogCategory(catalogPath.providerId, categoryId);
       },
-      isCategoriesOpen,
-      openMobileCategoriesRequestKey,
       onRequestActiveEditConflict,
     });
   }

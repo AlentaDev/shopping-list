@@ -1,22 +1,19 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { Children, Fragment } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Catalog } from "@src/features/catalog";
 import { ListsContainer } from "@src/features/lists";
 import { AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
+import { CatalogHome } from "@src/features/home";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
-import { CatalogHome } from "@src/app-shell/components/CatalogHome";
 
 const baseArgs = {
   authUser: null,
   authRedirectPending: false,
   isAuthSubmitting: false,
   authError: null,
-  isCategoriesOpen: false,
-  openMobileCategoriesRequestKey: 0,
   linesCount: 0,
   onLogin: vi.fn(),
   onRegister: vi.fn(),
@@ -153,7 +150,7 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(result.current.mainContent.type).toBe(ListsContainer);
   });
 
-  it("composes authenticated Home with provider entry and mixed-provider lists", () => {
+  it("renders authenticated Home without embedding lists", () => {
     const { result } = renderHook(() =>
       useAppShellNavigation({
         ...baseArgs,
@@ -166,13 +163,7 @@ describe("useAppShellNavigation (canonical path)", () => {
       }),
     );
 
-    expect(result.current.mainContent.type).toBe(Fragment);
-
-    const children = Children.toArray(result.current.mainContent.props.children);
-
-    expect(children).toHaveLength(2);
-    expect(children[0]).toMatchObject({ type: CatalogHome });
-    expect(children[1]).toMatchObject({ type: ListsContainer });
+    expect(result.current.mainContent.type).toBe(CatalogHome);
   });
 
   it("renderiza descarga en /app", () => {

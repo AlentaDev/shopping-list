@@ -16,6 +16,7 @@ import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
 import { AppHeader } from "@src/app-shell/components/AppHeader";
+import { AppFooter } from "@src/app-shell/components/AppFooter";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
@@ -26,7 +27,6 @@ import {
   LIST_STATUS,
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
-import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 import { getProviderDisplayName } from "@src/shared/constants/providers";
 
 const CATALOG_PATH = "/catalog";
@@ -64,9 +64,6 @@ const clearEditSessionMarker = (): void => {
 };
 
 export const AppShell = () => {
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [openMobileCategoriesRequestKey, setOpenMobileCategoriesRequestKey] =
-    useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
@@ -251,8 +248,6 @@ export const AppShell = () => {
     authRedirectPending,
     isAuthSubmitting,
     authError,
-    isCategoriesOpen,
-    openMobileCategoriesRequestKey,
     linesCount,
     onLogin: handleLogin,
     onRegister: handleRegister,
@@ -263,6 +258,10 @@ export const AppShell = () => {
     onSelectHomeProvider: handleSelectHomeProvider,
     onRequestActiveEditConflict: handleRequestActiveEditConflict,
   });
+  const isLandingPage = currentPath === "/";
+  const isCatalogRoute = /^\/[^/]+\/catalog(?:\/[^/]+)?$/.test(currentPath);
+  const catalogProviderId = currentPath.match(/^\/([^/]+)\/catalog(?:\/[^/]+)?$/)?.[1] ?? null;
+  const footerContentLayout = isCatalogRoute ? "catalog" : "default";
 
   useEffect(() => {
     if (!authUser) {
@@ -290,23 +289,16 @@ export const AppShell = () => {
   }, [authUser, handshakeStatus, showToast]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <AppHeader
         authUser={authUser}
         isUserMenuOpen={isUserMenuOpen}
-        isCategoriesOpen={isCategoriesOpen}
+        currentPath={currentPath}
+        isCatalogRoute={isCatalogRoute}
+        catalogProviderId={catalogProviderId}
         linesCount={linesCount}
         onNavigateHome={() => navigate("/")}
         onOpenCart={() => setIsCartOpen(true)}
-        onToggleCategories={() => {
-          if (isMobileCatalogInteractionMode()) {
-            setIsCategoriesOpen(true);
-            setOpenMobileCategoriesRequestKey((prev) => prev + 1);
-            return;
-          }
-
-          setIsCategoriesOpen((prev) => !prev);
-        }}
         onNavigateDownloadApp={() => navigate("/app")}
         onNavigateLogin={() => navigate("/auth/login")}
         onNavigateRegister={() => navigate("/auth/register")}
@@ -316,7 +308,7 @@ export const AppShell = () => {
         onLogout={handleLogout}
         userMenuRef={userMenuRef}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         {handshakeStatus === "WAITING" ? (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {UI_TEXT.APP.HANDSHAKE_WAITING_BANNER}
@@ -368,6 +360,7 @@ export const AppShell = () => {
           </div>
         ) : null}
       </main>
+      <AppFooter contentLayout={footerContentLayout} />
       <ShoppingList
         key={`${currentListId ?? "local"}-${currentListTitle}`}
         isOpen={isCartOpen}

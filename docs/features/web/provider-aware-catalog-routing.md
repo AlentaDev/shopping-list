@@ -27,11 +27,11 @@ Keep provider catalog routing explicit and predictable: Home chooses the provide
 ## Implementation notes
 
 - `useAppShellNavigation` resolves the `/catalog` alias and persists `lastProvider`.
-- `CatalogHome` handles explicit provider entry before catalog navigation.
+- `features/home/CatalogHome` handles explicit provider entry before catalog navigation.
 
 ## Verification focus
 
 - `useAppShellNavigation.test.ts`
-- `CatalogHome.test.tsx`
+- `features/home/components/CatalogHome.test.tsx`
 
 These tests verify canonical routing, alias fallback to Home, provider entry, and anonymous draft guidance.

@@ -243,7 +243,7 @@ describe("AppShell", () => {
 
     expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Categorías" }));
+    await userEvent.click(screen.getByRole("button", { name: "Abrir categorías" }));
     await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
     await userEvent.click(
       await screen.findByRole("button", { name: "Yogures" }),
@@ -367,8 +367,6 @@ describe("AppShell", () => {
       screen.getByRole("button", { name: UI_TEXT.AUTH.LOGIN.SUBMIT_LABEL }),
     );
 
-    const greetingLabel = `${UI_TEXT.AUTH.USER_MENU.GREETING_PREFIX} Ada`;
-
     const menuButton = await screen.findByRole("button", {
       name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
     });
@@ -377,7 +375,10 @@ describe("AppShell", () => {
     expect(
       screen.queryByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(greetingLabel)).toBeInTheDocument();
+    expect(menuButton).toHaveTextContent("AD");
+    expect(
+      screen.getByRole("button", { name: UI_TEXT.APP.MY_LISTS_LABEL }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: UI_TEXT.APP.LOGIN_LABEL }),
     ).not.toBeInTheDocument();
@@ -388,9 +389,6 @@ describe("AppShell", () => {
     await userEvent.click(menuButton);
     expect(
       screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.PROFILE }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LISTS }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LOGOUT }),
@@ -515,7 +513,7 @@ describe("AppShell", () => {
       const userMenuButton = screen.getByRole("button", {
         name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
       });
-      expect(userMenuButton).toHaveTextContent(/hola ana/i);
+      expect(userMenuButton).toHaveTextContent("AN");
     });
   });
 

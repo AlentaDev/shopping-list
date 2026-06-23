@@ -12,4 +12,5 @@ export const SHOPPING_LIST_VIEW = {
 
 export const APP_EVENTS = {
   OPEN_CART: "app:open-cart",
+  TOGGLE_CATALOG_CATEGORIES: "app:toggle-catalog-categories",
 } as const;

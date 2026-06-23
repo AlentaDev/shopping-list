@@ -93,19 +93,36 @@ vi.mock("@src/features/shopping-list", () => ({
 vi.mock("@src/app-shell/components/AppHeader", () => ({
   AppHeader: ({
     onOpenCart,
-    onToggleCategories,
+    currentPath,
+    isCatalogRoute,
+    catalogProviderId,
   }: {
     onOpenCart: () => void;
-    onToggleCategories: () => void;
+    currentPath: string;
+    isCatalogRoute: boolean;
+    catalogProviderId: string | null;
   }) => (
     <>
+      <div data-testid="header-current-path">{currentPath}</div>
+      <div data-testid="header-is-catalog-route">{String(isCatalogRoute)}</div>
+      <div data-testid="header-catalog-provider-id">{catalogProviderId ?? ""}</div>
       <button type="button" onClick={onOpenCart}>
         open-cart
       </button>
-      <button type="button" onClick={onToggleCategories}>
-        toggle-categories
-      </button>
     </>
+  ),
+}));
+
+vi.mock("@src/app-shell/components/AppFooter", () => ({
+  AppFooter: ({
+    contentLayout = "default",
+  }: {
+    contentLayout?: "default" | "catalog";
+  }) => (
+    <div
+      data-testid="app-footer-content"
+      data-content-layout={contentLayout}
+    />
   ),
 }));
 
@@ -189,7 +206,67 @@ describe("app-shell/AppShell", () => {
 
     expect(screen.getByText("auth-login-screen")).toBeInTheDocument();
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("false");
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
     expect(screen.queryByText("Tu lista ya está lista para continuar.")).not.toBeInTheDocument();
+  });
+
+  it("shows landing footer and landing header variant on home", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/",
+      navigate: vi.fn(),
+      mainContent: <div>home-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
+    expect(screen.getByTestId("app-footer-content")).toHaveAttribute(
+      "data-content-layout",
+      "default",
+    );
+  });
+
+  it("renders the catalog footer as a global footer aligned to the products column", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: vi.fn(),
+      mainContent: <div>catalog-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent("/mercadona/catalog");
+    expect(screen.getByTestId("header-is-catalog-route")).toHaveTextContent("true");
+    expect(screen.getByTestId("header-catalog-provider-id")).toHaveTextContent("mercadona");
+    const footer = screen.getByTestId("app-footer-content");
+    const main = screen.getByRole("main");
+
+    expect(footer).toBeInTheDocument();
+    expect(footer).toHaveAttribute("data-content-layout", "catalog");
+    expect(main).not.toContainElement(footer);
+    expect(main).toHaveClass("flex-1");
+  });
+
+  it("renders non-catalog pages with the default global content footer", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/lists",
+      navigate: vi.fn(),
+      mainContent: <div>lists-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    const footer = screen.getByTestId("app-footer-content");
+    const main = screen.getByRole("main");
+
+    expect(footer).toHaveAttribute("data-content-layout", "default");
+    expect(main).not.toContainElement(footer);
   });
 
   it("mantiene banner WAITING y bloquea mutaciones hasta handshake READY", async () => {
@@ -274,76 +351,22 @@ describe("app-shell/AppShell", () => {
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("true");
   });
 
-  it("en desktop mantiene toggle de categorías como antes", async () => {
-    const user = userEvent.setup();
+  it("passes non-catalog routes to the header as inactive catalog state", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/app",
+      navigate: vi.fn(),
+      mainContent: <div>download-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
     render(<AppShell />);
 
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-    };
-    expect(lastCallArgs.isCategoriesOpen).toBe(false);
-  });
-
-  it("en mobile fuerza categorías abiertas y dispara solicitud de overlay", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({ "(max-width: 767px)": true });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(true);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(1);
-  });
-
-  it("en mobile landscape mantiene comportamiento de overlay", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({
-      "(max-width: 767px)": false,
-      "(pointer: coarse)": true,
-      "(orientation: landscape)": true,
-      "(max-height: 500px)": true,
-    });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(true);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(1);
-  });
-
-  it("en desktop con pointer fine conserva toggle clásico", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({
-      "(max-width: 767px)": false,
-      "(pointer: coarse)": false,
-      "(orientation: landscape)": true,
-      "(max-height: 500px)": true,
-    });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(false);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(0);
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent("/app");
+    expect(screen.getByTestId("header-is-catalog-route")).toHaveTextContent("false");
+    expect(screen.getByTestId("header-catalog-provider-id")).toHaveTextContent("");
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("catalog-content-footer-layout")).not.toBeInTheDocument();
   });
 
   it("navega a /catalog al añadir más productos desde la lista", async () => {

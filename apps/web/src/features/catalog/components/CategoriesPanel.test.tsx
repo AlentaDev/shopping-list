@@ -145,4 +145,40 @@ describe("CategoriesPanel", () => {
     expect(screen.getAllByTestId("categories-loading-skeleton-item")).toHaveLength(14);
     expect(screen.queryByText("Cargando categorías...")).toBeNull();
   });
+
+  it("renders a close control in the panel header when onClose is provided", async () => {
+    const onClose = vi.fn();
+
+    render(
+      <CategoriesPanel
+        open
+        categories={categories}
+        selectedCategoryId={null}
+        onSelectCategory={vi.fn()}
+        onClose={onClose}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Cerrar categorías" }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the panel shell fixed-height while only the categories body scrolls", () => {
+    render(
+      <CategoriesPanel
+        open
+        categories={categories}
+        selectedCategoryId={null}
+        onSelectCategory={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("categories-panel-shell")).toHaveClass(
+      "h-[calc(100vh-144px)]",
+      "max-h-[calc(100vh-144px)]",
+      "overflow-hidden",
+    );
+    expect(screen.getByTestId("categories-panel-scroll")).toHaveClass("overflow-y-auto");
+  });
 });
