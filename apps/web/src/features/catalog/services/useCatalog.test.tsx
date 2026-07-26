@@ -81,10 +81,28 @@ const CatalogHarness = () => {
   );
 };
 
+const createMockStorage = (): Storage => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    length: 0,
+  } as Storage;
+};
+
 describe("useCatalog", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    window.localStorage.clear();
+    window.localStorage = createMockStorage();
   });
 
   afterEach(() => {
@@ -547,6 +565,53 @@ describe("useCatalog", () => {
     expect(await screen.findByText("Ofertas")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       bonpreuDetailUrl("root-leaf"),
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("falls back to the first deepest leaf in a four-level tree", async () => {
+    const bonpreuRootUrl = "/api/catalog/bonpreuesclat/categories";
+    const bonpreuDetailUrl = (id: string) => `/api/catalog/bonpreuesclat/categories/${id}`;
+
+    const fetchMock = vi.fn<(input: RequestInfo) => Promise<FetchResponse>>(
+      async (input) => {
+        if (input === bonpreuRootUrl) {
+          return {
+            ok: true,
+            json: async () => ({
+              categories: [
+                { id: "root-1", name: "Frescos", order: 1, level: 0 },
+                { id: "l1-a", name: "Frutas", order: 1, level: 1, parentId: "root-1" },
+                { id: "l2-a", name: "Cítricos", order: 1, level: 2, parentId: "l1-a" },
+                { id: "leaf-a", name: "Naranjas", order: 1, level: 3, parentId: "l2-a" },
+                { id: "leaf-b", name: "Mandarinas", order: 2, level: 3, parentId: "l2-a" },
+              ],
+            }),
+          };
+        }
+
+        if (input === bonpreuDetailUrl("leaf-a")) {
+          return {
+            ok: true,
+            json: async () => ({ id: "leaf-a", name: "Naranjas", subcategories: [] }),
+          };
+        }
+
+        throw new Error("Unexpected request");
+      },
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const DeepTreeHarness = () => {
+      const { categoryDetail } = useCatalog({ providerId: "bonpreuesclat", userId: "user-1" });
+      return <span>{categoryDetail?.categoryName ?? ""}</span>;
+    };
+
+    render(<DeepTreeHarness />);
+
+    expect(await screen.findByText("Naranjas")).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      bonpreuDetailUrl("leaf-a"),
       expect.objectContaining({ credentials: "include" }),
     );
   });

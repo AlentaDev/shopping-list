@@ -2,7 +2,7 @@ export type CatalogCategoryNode = {
   id: string;
   name: string;
   order: number;
-  level: 0 | 1 | 2;
+  level: number;
   parentId?: string;
   published?: boolean;
 };

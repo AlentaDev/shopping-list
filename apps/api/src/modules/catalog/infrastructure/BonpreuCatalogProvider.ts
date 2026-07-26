@@ -3,6 +3,7 @@ import type {
   MercadonaCategoryDetailResponse,
   MercadonaProductDetail,
   MercadonaRootCategoriesResponse,
+  MercadonaRootCategoryChild,
 } from "../domain/catalogProvider.js";
 import { BonpreuHttpClient } from "./BonpreuHttpClient.js";
 
@@ -64,14 +65,7 @@ export class BonpreuCatalogProvider implements CatalogProvider {
         name: root.name,
         order: index,
         is_extended: false,
-        categories: (root.childCategories ?? []).map((child, childIndex) => ({
-          id: child.categoryId,
-          name: child.name,
-          order: childIndex,
-          layout: "grid",
-          published: true,
-          is_extended: false,
-        })),
+        categories: mapBonpreuChildren(root.childCategories ?? []),
       })),
     };
   }
@@ -148,6 +142,22 @@ export class BonpreuCatalogProvider implements CatalogProvider {
       categories: [],
     };
   }
+}
+
+function mapBonpreuChildren(
+  children: BonpreuCategoryNode[],
+): MercadonaRootCategoryChild[] {
+  return children.map((child, childIndex) => ({
+    id: child.categoryId,
+    name: child.name,
+    order: childIndex,
+    layout: "grid",
+    published: true,
+    is_extended: false,
+    categories: child.childCategories?.length
+      ? mapBonpreuChildren(child.childCategories)
+      : undefined,
+  }));
 }
 
 function extractRootCategories(

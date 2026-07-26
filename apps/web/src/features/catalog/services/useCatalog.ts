@@ -50,25 +50,38 @@ const DETAIL_ERROR_MESSAGE = "No se pudieron cargar los productos.";
 const EMPTY_CATEGORY_DETAIL = { categoryName: "", sections: [] };
 
 const getDefaultCategory = (categories: CatalogCategoryNode[]) => {
-  const parents = categories
+  const childrenByParent = new Map<string, CatalogCategoryNode[]>();
+
+  for (const category of categories) {
+    if (category.parentId) {
+      const siblings = childrenByParent.get(category.parentId) ?? [];
+      siblings.push(category);
+      childrenByParent.set(category.parentId, siblings);
+    }
+  }
+
+  const roots = categories
     .filter((category) => category.level === 0)
     .sort((a, b) => a.order - b.order);
-  const parent = parents[0];
+  const firstRoot = roots[0];
 
-  if (!parent) {
+  if (!firstRoot) {
     return null;
   }
 
-  const children = categories
-    .filter(
-      (category) =>
-        category.level === 1 &&
-        category.parentId &&
-        category.parentId === parent.id,
-    )
-    .sort((a, b) => a.order - b.order);
+  const findFirstLeaf = (category: CatalogCategoryNode): CatalogCategoryNode => {
+    const children = (childrenByParent.get(category.id) ?? []).sort(
+      (a, b) => a.order - b.order,
+    );
 
-  return children[0] ?? parent;
+    if (children.length === 0) {
+      return category;
+    }
+
+    return findFirstLeaf(children[0]);
+  };
+
+  return findFirstLeaf(firstRoot);
 };
 
 type UseCatalogArgs = {

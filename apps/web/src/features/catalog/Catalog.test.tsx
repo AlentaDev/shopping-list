@@ -121,7 +121,28 @@ vi.mock("@src/shared/hooks/useMobileCatalogInteractionMode", () => ({
   useMobileCatalogInteractionMode: () => isMobileCatalogInteractionModeMock,
 }));
 
+const createMockStorage = (): Storage => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    length: 0,
+  } as Storage;
+};
+
 describe("Catalog", () => {
+  beforeEach(() => {
+    window.localStorage = createMockStorage();
+  });
   it("setea snapshots al agregar producto desde catálogo", async () => {
     const user = userEvent.setup();
 
@@ -502,7 +523,7 @@ describe("Catalog", () => {
     expect(document.body.scrollTop).toBe(0);
   });
 
-  it("renders Bonpreu deeper navigation buttons from detail ids", async () => {
+  it("renders deeper navigation buttons from detail subcategory ids", async () => {
     const user = userEvent.setup();
     categoryDetailMock = {
       categoryName: "Frescos",

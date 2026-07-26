@@ -6,19 +6,22 @@ export type CatalogProviderMetadata = {
   displayName?: string;
 };
 
+export type MercadonaRootCategoryChild = {
+  id: string | number;
+  name: string;
+  order: number;
+  layout: string;
+  published: boolean;
+  is_extended: boolean;
+  categories?: MercadonaRootCategoryChild[];
+};
+
 export type MercadonaRootCategory = {
   id: string | number;
   name: string;
   order: number;
   is_extended: boolean;
-  categories: Array<{
-    id: string | number;
-    name: string;
-    order: number;
-    layout: string;
-    published: boolean;
-    is_extended: boolean;
-  }>;
+  categories: MercadonaRootCategoryChild[];
 };
 
 export type MercadonaRootCategoriesResponse = {

@@ -114,10 +114,8 @@ const Catalog = ({
     0,
   );
   const hasItems = totalProducts > 0;
-  const hasBonpreuNavigationSections =
-    providerId === "bonpreuesclat" &&
-    !hasItems &&
-    sections.some((section) => section.subcategoryId);
+  const hasNavigationSections =
+    !hasItems && sections.some((section) => section.subcategoryId);
   const skeletonCount = 8;
   const isDesktopPanelOpen = !isMobileInteractionMode;
 
@@ -175,7 +173,7 @@ const Catalog = ({
     detailStatus === FETCH_STATUS.SUCCESS &&
     !hasItems &&
     !categoriesEmpty &&
-    !hasBonpreuNavigationSections;
+    !hasNavigationSections;
   const isInitialProductsLoading = detailStatus === FETCH_STATUS.LOADING && !hasItems;
 
   const handleAddProduct = useCallback(
@@ -323,7 +321,7 @@ const Catalog = ({
               </div>
             </div>
           ) : null}
-          {hasBonpreuNavigationSections ? (
+          {hasNavigationSections ? (
             <div className="space-y-3">
               {sections.map((section) => (
                 <button

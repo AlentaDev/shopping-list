@@ -8,26 +8,32 @@ Esta compatibilidad ajusta el catálogo web para soportar ambos patrones sin alt
 
 ## Comportamiento visible
 
-### Selección directa de hoja en raíz (`CategoriesPanel`)
+### Selección directa de hoja más profunda (`CategoriesPanel`)
 
-- Si una categoría raíz no tiene hijos, hacer click la selecciona directamente (desktop y mobile).
-- El chevron de expansión se oculta cuando la categoría raíz no tiene hijos.
-- Las categorías con hijos siguen comportándose igual: en desktop seleccionan el primer hijo; en mobile expanden la lista de hijos.
+- En desktop, el click en cualquier categoría padre selecciona automáticamente la primera hoja más profunda de esa rama y carga sus productos.
+- En mobile, el click en un padre expande/contrae sus hijos; el usuario navega nivel a nivel hasta seleccionar una hoja.
+- El panel renderiza árboles de forma recursiva, por lo que soporta jerarquías de 4 niveles (raíz + 3 niveles) sin condicionales por provider.
+- Solo la rama activa está expandida; las demás permanecen colapsadas para mantener la legibilidad.
+- La hoja seleccionada se resalta con el estilo verde existente y sus hermanas permanecen clicables.
 
 ### Navegación de nivel profundo en el detalle (`Catalog`)
 
-- Cuando el provider es `bonpreuesclat`, el detalle de categoría no tiene productos y sus secciones traen `subcategoryId`, las secciones se renderizan como botones de navegación.
+- Cuando el detalle de una categoría no tiene productos y sus secciones traen `subcategoryId`, las secciones se renderizan como botones de navegación.
 - Al hacer click en uno de esos botones se carga el detalle de la subcategoría usando `selectCategory(subcategoryId)`.
 - El mensaje "no hay productos disponibles" se omite en ese caso porque la pantalla actúa como índice navegable, no como listado vacío.
+- Esta detección es agnóstica al provider: solo requiere que haya al menos una sección con `subcategoryId` y sin productos.
 
 ### Fallback de categoría inicial
 
-- Si la primera categoría raíz ordenada no tiene hijos, `useCatalog` la usa a ella misma como categoría inicial en lugar de devolver `null`.
-- Esto evita pantallas en blanco al entrar al catálogo de Bonpreu cuando "Ofertas" (u otra hoja) es la primera categoría disponible.
+- `useCatalog` elige como categoría inicial la primera hoja más profunda bajo la primera raíz ordenada.
+- Si la primera raíz es ella misma una hoja, se selecciona directamente.
+- Esto evita pantallas en blanco tanto en Mercadona (2 niveles) como en Bonpreu/Esclat (hasta 4 niveles).
 
 ## Notas de implementación
 
 - El campo `subcategoryId` se agrega a `CatalogCategorySection` y se extrae en `CatalogAdapter` desde `subcategory.id`. Mantiene `""` cuando no viene del backend (Mercadona) para no romper el contrato.
-- La detección de "modo navegación" en `Catalog.tsx` requiere `providerId === "bonpreuesclat"`, ausencia de productos y al menos un `subcategoryId` no vacío. Es una condición conservadora y específica del provider.
+- `CategoriesPanel` construye un árbol recursivo desde el array plano de `CatalogCategoryNode`, que ahora usa `level: number` para soportar profundidades arbitrarias.
+- El backend (`BonpreuCatalogProvider` y `GetRootCategories`) aplana recursivamente la jerarquía de categorías y expone todos los niveles disponibles.
+- La detección de "modo navegación" en `Catalog.tsx` ya no depende del provider; usa solo la presencia de `subcategoryId` y ausencia de productos.
 - El `key` de `ProductsCategory` prefiere `subcategoryId` cuando existe, con fallback a `subcategoryName` para preservar estabilidad en Mercadona.
-- `getDefaultCategory` cambia su fallback de `null` a `parent`, lo que solo afecta el caso de raíz sin hijos. Mercadona no entra en este caso porque sus raíces siempre tienen nivel 1.
+- `getDefaultCategory` devuelve la primera hoja más profunda siguiendo recursivamente el primer hijo de cada nivel.
