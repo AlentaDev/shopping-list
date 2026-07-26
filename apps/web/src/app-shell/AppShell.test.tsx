@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "./AppShell";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 let navigationState = {
   authMode: "login" as "login" | "register" | null,
@@ -425,5 +426,196 @@ describe("app-shell/AppShell", () => {
 
     expect(screen.getByTestId("page-transition")).toBe(firstContainer);
     expect(screen.getByText("catalog-screen")).toBeInTheDocument();
+  });
+
+  it("renders the draft provider conflict modal and confirms reset + navigation", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+    } | null = null;
+
+    const navigateMock = vi.fn();
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: navigateMock,
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    if (!capturedArgs?.onRequestDraftProviderConflict) {
+      throw new Error("AppShell did not expose the draft provider conflict callback");
+    }
+
+    let resultPromise!: Promise<boolean>;
+
+    act(() => {
+      resultPromise = capturedArgs.onRequestDraftProviderConflict!({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    expect(
+      await screen.findByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.CONFIRM_LABEL,
+      }),
+    );
+
+    expect(listState.resetDraft).toHaveBeenCalledWith("bonpreuesclat");
+    expect(navigateMock).toHaveBeenCalledWith("/bonpreuesclat/catalog");
+    await expect(resultPromise).resolves.toBe(true);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves the draft unchanged when the draft provider conflict is dismissed", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+    } | null = null;
+
+    const navigateMock = vi.fn();
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: navigateMock,
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    let resultPromise!: Promise<boolean>;
+
+    act(() => {
+      if (!capturedArgs?.onRequestDraftProviderConflict) {
+        throw new Error("AppShell did not expose the draft provider conflict callback");
+      }
+
+      resultPromise = capturedArgs.onRequestDraftProviderConflict({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.DISMISS_LABEL,
+      }),
+    );
+
+    expect(listState.resetDraft).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalledWith("/bonpreuesclat/catalog");
+    await expect(resultPromise).resolves.toBe(false);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent(
+      "/mercadona/catalog",
+    );
+    expect(navigateMock).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render the draft provider conflict modal when active-edit conflict is active", async () => {
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+      onRequestActiveEditConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+      }) => void;
+    } | null = null;
+
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: vi.fn(),
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    act(() => {
+      capturedArgs?.onRequestActiveEditConflict?.({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+      });
+    });
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+
+    act(() => {
+      capturedArgs?.onRequestDraftProviderConflict?.({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
   });
 });

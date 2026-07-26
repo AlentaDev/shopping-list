@@ -8,6 +8,7 @@ import { useToast } from "@src/context/useToast";
 import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
 import { useList } from "@src/context/useList";
 import { APP_EVENTS, FETCH_STATUS } from "@src/shared/constants/appState";
+import type { SupportedProviderId } from "@src/shared/constants/providers";
 import { useMobileCatalogInteractionMode } from "@src/shared/hooks/useMobileCatalogInteractionMode";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
@@ -41,6 +42,12 @@ type CatalogProps = {
     currentProviderId: string;
     requestedProviderId: string;
   }) => void;
+  onRequestDraftProviderConflict?: (input: {
+    currentProviderId: string;
+    requestedProviderId: string;
+    requestedProviderName?: string;
+    message: string;
+  }) => Promise<boolean>;
 };
 
 const ProductSkeletonGrid = ({
@@ -84,6 +91,7 @@ const Catalog = ({
   onCategoryRouteChange,
   onItemsCountChange,
   onRequestActiveEditConflict,
+  onRequestDraftProviderConflict,
 }: CatalogProps) => {
   const isMobileInteractionMode = useMobileCatalogInteractionMode();
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
@@ -92,6 +100,7 @@ const Catalog = ({
     onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
       onRequestActiveEditConflict?.({ currentProviderId, requestedProviderId });
     },
+    onDraftProviderConflict: onRequestDraftProviderConflict,
   });
   const { authUser } = useAuth();
   const { showToast } = useToast();
@@ -186,7 +195,7 @@ const Catalog = ({
 
       addItem({
         id: product.id,
-        source: providerId,
+        source: providerId as SupportedProviderId,
         sourceProductId: product.id,
         serverItemId: null,
         name: product.name,

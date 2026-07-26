@@ -6,6 +6,7 @@ import { waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "@src/app-shell/AppShell";
 import type { ListDetail } from "@src/features/lists";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 type ShoppingListMockProps = {
   isOpen: boolean;
@@ -252,7 +253,7 @@ describe("AppShell editing session persistence", () => {
     );
 
     expect(
-      screen.getByText("Ya estás editando otra lista"),
+      screen.getByText(UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.TITLE),
     ).toBeInTheDocument();
     expect(screen.getByText(/Mercadona/)).toBeInTheDocument();
     expect(screen.getByText(/Bonpreu Esclat/)).toBeInTheDocument();
@@ -261,8 +262,8 @@ describe("AppShell editing session persistence", () => {
     const buttons = within(dialog).getAllByRole("button");
 
     expect(buttons).toHaveLength(2);
-    expect(dialog).toHaveTextContent("Volver al catálogo original");
-    expect(dialog).toHaveTextContent("Cancelar edición y empezar una lista nueva");
+    expect(dialog).toHaveTextContent(UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.RETURN_LABEL);
+    expect(dialog).toHaveTextContent(UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.CONFIRM_LABEL);
   });
 
   it("cancels editing and redirects to the requested provider when the user confirms", async () => {
@@ -279,7 +280,7 @@ describe("AppShell editing session persistence", () => {
     );
     await user.click(
       screen.getByRole("button", {
-        name: "Cancelar edición y empezar una lista nueva",
+        name: UI_TEXT.LISTS.ACTIVE_EDIT_CONFLICT.CONFIRM_LABEL,
       }),
     );
 

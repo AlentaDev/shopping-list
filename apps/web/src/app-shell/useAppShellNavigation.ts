@@ -10,6 +10,7 @@ import { CatalogHome } from "@src/features/home";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
+import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
 
 const LOGIN_PATH = "/auth/login";
 const REGISTER_PATH = "/auth/register";
@@ -35,6 +36,9 @@ type UseAppShellNavigationArgs = {
     currentProviderId: string;
     requestedProviderId: string;
   }) => void;
+  onRequestDraftProviderConflict?: (
+    input: DraftProviderConflictInput,
+  ) => Promise<boolean>;
 };
 
 type MainContentParams = {
@@ -60,6 +64,9 @@ type MainContentParams = {
     currentProviderId: string;
     requestedProviderId: string;
   }) => void;
+  onRequestDraftProviderConflict?: (
+    input: DraftProviderConflictInput,
+  ) => Promise<boolean>;
 };
 
 export const useAppShellNavigation = ({
@@ -76,6 +83,7 @@ export const useAppShellNavigation = ({
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
   onRequestActiveEditConflict,
+  onRequestDraftProviderConflict,
 }: UseAppShellNavigationArgs) => {
   const initialPath = resolveCatalogAlias(window.location.pathname);
   const [currentPath, setCurrentPath] = useState(() => initialPath);
@@ -140,6 +148,7 @@ export const useAppShellNavigation = ({
         showAnonymousDraftGuidance,
         onSelectHomeProvider,
         onRequestActiveEditConflict,
+        onRequestDraftProviderConflict,
       }),
     [
       authMode,
@@ -158,6 +167,7 @@ export const useAppShellNavigation = ({
       showAnonymousDraftGuidance,
       onSelectHomeProvider,
       onRequestActiveEditConflict,
+      onRequestDraftProviderConflict,
     ],
   );
 
@@ -196,6 +206,7 @@ function resolveMainContent({
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
   onRequestActiveEditConflict,
+  onRequestDraftProviderConflict,
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
@@ -223,6 +234,7 @@ function resolveMainContent({
           onStartOpenList,
           hasDraftItems: linesCount > 0,
           onRequestActiveEditConflict,
+          onRequestDraftProviderConflict,
         })
       : createElement(AuthScreen, {
           mode: "login",
@@ -258,6 +270,7 @@ function resolveMainContent({
         onNavigateCatalogCategory(catalogPath.providerId, categoryId);
       },
       onRequestActiveEditConflict,
+      onRequestDraftProviderConflict,
     });
   }
 

@@ -3,9 +3,16 @@ import { useList } from "@src/context/useList";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { getProviderDisplayName } from "@src/shared/constants/providers";
 
-type ActiveEditConflictInput = {
+export type ActiveEditConflictInput = {
   currentProviderId: string;
   requestedProviderId: string;
+};
+
+export type DraftProviderConflictInput = {
+  currentProviderId: string;
+  requestedProviderId: string;
+  requestedProviderName?: string;
+  message: string;
 };
 
 type ConfirmAndResetOptions = {
@@ -16,6 +23,7 @@ type ConfirmAndResetOptions = {
 
 type UseDraftProviderConflictOptions = {
   onActiveEditConflict?: (input: ActiveEditConflictInput) => void;
+  onDraftProviderConflict?: (input: DraftProviderConflictInput) => Promise<boolean>;
 };
 
 type UseDraftProviderConflictResult = {
@@ -43,7 +51,7 @@ const hasActiveEditSession = (): boolean => {
   }
 };
 
-const buildConflictMessage = (
+export const buildConflictMessage = (
   currentProviderName: string,
   requestedProviderName: string,
 ): string =>
@@ -55,6 +63,10 @@ export const useDraftProviderConflict = (
   options: UseDraftProviderConflictOptions = {},
 ): UseDraftProviderConflictResult => {
   const { draftProviderId, items, resetDraft, setDraftProviderId } = useList();
+  const {
+    onActiveEditConflict: onActiveEditConflictOption,
+    onDraftProviderConflict: onDraftProviderConflictOption,
+  } = options;
   const shouldSilentSwitch = items.length === 0;
 
   const confirmAndReset = useCallback(
@@ -72,7 +84,8 @@ export const useDraftProviderConflict = (
         return true;
       }
 
-      const handleActiveEditConflict = onActiveEditConflict ?? options.onActiveEditConflict;
+      const handleActiveEditConflict =
+        onActiveEditConflict ?? onActiveEditConflictOption;
 
       if (handleActiveEditConflict && hasActiveEditSession()) {
         handleActiveEditConflict({
@@ -85,9 +98,17 @@ export const useDraftProviderConflict = (
       const resolvedRequestedName =
         requestedProviderName ?? getProviderDisplayName(requestedProviderId);
       const currentName = getProviderDisplayName(draftProviderId);
-      const accepted = window.confirm(
-        buildConflictMessage(currentName, resolvedRequestedName),
-      );
+
+      if (!onDraftProviderConflictOption) {
+        return false;
+      }
+
+      const accepted = await onDraftProviderConflictOption({
+        currentProviderId: draftProviderId,
+        requestedProviderId,
+        requestedProviderName: resolvedRequestedName,
+        message: buildConflictMessage(currentName, resolvedRequestedName),
+      });
 
       if (!accepted) {
         return false;
@@ -99,7 +120,8 @@ export const useDraftProviderConflict = (
     [
       draftProviderId,
       items.length,
-      options.onActiveEditConflict,
+      onActiveEditConflictOption,
+      onDraftProviderConflictOption,
       resetDraft,
       setDraftProviderId,
     ],

@@ -104,6 +104,8 @@ main() {
   run_optional_gga
 
   if [ "${HUSKY_FULL_CHECKS:-0}" != "1" ]; then
+    echo "🧪 Running mandatory web tests..."
+    run_cmd "pnpm --filter @app/web test:run"
     echo "ℹ️ Checks pesados omitidos. Usá HUSKY_FULL_CHECKS=1 para ejecutarlos localmente."
     return
   fi

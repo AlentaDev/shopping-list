@@ -20,10 +20,15 @@ const ITEM_FIXTURE: ListItem = {
 const renderConflictHook = (
   initialDraftProviderId: string,
   initialItems: ListItem[] = [],
+  onDraftProviderConflict?: () => Promise<boolean>,
+  onActiveEditConflict?: () => void,
 ) =>
   renderHook(
     () => ({
-      conflict: useDraftProviderConflict(),
+      conflict: useDraftProviderConflict({
+        onDraftProviderConflict,
+        onActiveEditConflict,
+      }),
       list: useList(),
     }),
     {
@@ -57,8 +62,12 @@ describe("useDraftProviderConflict", () => {
   });
 
   it("skips confirm when requested provider matches the current draft provider", async () => {
-    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(true);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [ITEM_FIXTURE],
+      onDraftProviderConflict,
+    );
 
     let proceed = false;
     await act(async () => {
@@ -68,14 +77,18 @@ describe("useDraftProviderConflict", () => {
     });
 
     expect(proceed).toBe(true);
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onDraftProviderConflict).not.toHaveBeenCalled();
     expect(result.current.list.items).toHaveLength(1);
     expect(result.current.list.draftProviderId).toBe("mercadona");
   });
 
   it("silently switches provider when the draft is empty", async () => {
-    const { result } = renderConflictHook("mercadona", []);
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(true);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [],
+      onDraftProviderConflict,
+    );
 
     let proceed = false;
     await act(async () => {
@@ -85,14 +98,18 @@ describe("useDraftProviderConflict", () => {
     });
 
     expect(proceed).toBe(true);
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onDraftProviderConflict).not.toHaveBeenCalled();
     expect(result.current.list.draftProviderId).toBe("bonpreuesclat");
     expect(result.current.list.items).toHaveLength(0);
   });
 
-  it("shows confirm with explicit provider labels on cross-provider mutation with items", async () => {
-    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("awaits onDraftProviderConflict and resets draft when confirmed", async () => {
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(true);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [ITEM_FIXTURE],
+      onDraftProviderConflict,
+    );
 
     let proceed = false;
     await act(async () => {
@@ -102,17 +119,30 @@ describe("useDraftProviderConflict", () => {
     });
 
     expect(proceed).toBe(true);
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining("Mercadona"));
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Bonpreu Esclat"),
+    expect(onDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message: expect.stringContaining("Mercadona") as unknown,
+      }),
+    );
+    expect(onDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("Bonpreu Esclat") as unknown,
+      }),
     );
     expect(result.current.list.draftProviderId).toBe("bonpreuesclat");
     expect(result.current.list.items).toHaveLength(0);
   });
 
-  it("keeps draft intact and returns false when confirm is cancelled", async () => {
-    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+  it("keeps draft intact when onDraftProviderConflict resolves false", async () => {
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(false);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [ITEM_FIXTURE],
+      onDraftProviderConflict,
+    );
 
     let proceed = true;
     await act(async () => {
@@ -122,14 +152,18 @@ describe("useDraftProviderConflict", () => {
     });
 
     expect(proceed).toBe(false);
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(onDraftProviderConflict).toHaveBeenCalled();
     expect(result.current.list.draftProviderId).toBe("mercadona");
     expect(result.current.list.items).toHaveLength(1);
   });
 
-  it("uses requestedProviderName override in the confirm message when provided", async () => {
-    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("uses requestedProviderName override in the conflict input", async () => {
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(true);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [ITEM_FIXTURE],
+      onDraftProviderConflict,
+    );
 
     await act(async () => {
       await result.current.conflict.confirmAndReset({
@@ -138,25 +172,32 @@ describe("useDraftProviderConflict", () => {
       });
     });
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Custom Provider"),
+    expect(onDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requestedProviderName: "Custom Provider",
+        message: expect.stringContaining("Custom Provider") as unknown,
+      }),
     );
   });
 
-  it("delegates to onActiveEditConflict and skips confirm when an edit session exists", async () => {
+  it("delegates to onActiveEditConflict and skips the draft provider callback when an edit session exists", async () => {
     localStorage.setItem(
       "lists.editSession",
       JSON.stringify({ listId: "active-list-1", isEditing: true }),
     );
-    const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
     const onActiveEditConflict = vi.fn();
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const onDraftProviderConflict = vi.fn().mockResolvedValue(true);
+    const { result } = renderConflictHook(
+      "mercadona",
+      [ITEM_FIXTURE],
+      onDraftProviderConflict,
+      onActiveEditConflict,
+    );
 
     let proceed = true;
     await act(async () => {
       proceed = await result.current.conflict.confirmAndReset({
         requestedProviderId: "bonpreuesclat",
-        onActiveEditConflict,
       });
     });
 
@@ -165,27 +206,23 @@ describe("useDraftProviderConflict", () => {
       currentProviderId: "mercadona",
       requestedProviderId: "bonpreuesclat",
     });
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onDraftProviderConflict).not.toHaveBeenCalled();
     expect(result.current.list.draftProviderId).toBe("mercadona");
     expect(result.current.list.items).toHaveLength(1);
   });
 
-  it("falls back to confirm when no edit session exists, even if onActiveEditConflict is set", async () => {
+  it("returns false and does not reset draft when no conflict callback is provided", async () => {
     const { result } = renderConflictHook("mercadona", [ITEM_FIXTURE]);
-    const onActiveEditConflict = vi.fn();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
-    let proceed = false;
+    let proceed = true;
     await act(async () => {
       proceed = await result.current.conflict.confirmAndReset({
         requestedProviderId: "bonpreuesclat",
-        onActiveEditConflict,
       });
     });
 
-    expect(proceed).toBe(true);
-    expect(onActiveEditConflict).not.toHaveBeenCalled();
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(result.current.list.draftProviderId).toBe("bonpreuesclat");
+    expect(proceed).toBe(false);
+    expect(result.current.list.draftProviderId).toBe("mercadona");
+    expect(result.current.list.items).toHaveLength(1);
   });
 });

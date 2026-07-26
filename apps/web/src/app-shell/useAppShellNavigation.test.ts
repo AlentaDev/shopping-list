@@ -23,6 +23,7 @@ const baseArgs = {
   showAnonymousDraftGuidance: false,
   onSelectHomeProvider: vi.fn(),
   onRequestActiveEditConflict: vi.fn(),
+  onRequestDraftProviderConflict: vi.fn(),
 };
 
 describe("useAppShellNavigation (canonical path)", () => {
@@ -148,6 +149,41 @@ describe("useAppShellNavigation (canonical path)", () => {
       }),
     );
     expect(result.current.mainContent.type).toBe(ListsContainer);
+  });
+
+  it("forwards the draft provider conflict callback to catalog and lists", () => {
+    const onRequestDraftProviderConflict = vi.fn();
+    const authUser = {
+      id: "user-1",
+      name: "Ada",
+      email: "ada@example.com",
+      postalCode: "28001",
+    };
+
+    window.history.pushState({}, "", "/lists");
+    const listsResult = renderHook(() =>
+      useAppShellNavigation({
+        ...baseArgs,
+        authUser,
+        onRequestDraftProviderConflict,
+      }),
+    );
+
+    expect(listsResult.result.current.mainContent.props.onRequestDraftProviderConflict).toBe(
+      onRequestDraftProviderConflict,
+    );
+
+    window.history.pushState({}, "", "/mercadona/catalog");
+    const catalogResult = renderHook(() =>
+      useAppShellNavigation({
+        ...baseArgs,
+        onRequestDraftProviderConflict,
+      }),
+    );
+
+    expect(
+      catalogResult.result.current.mainContent.props.onRequestDraftProviderConflict,
+    ).toBe(onRequestDraftProviderConflict);
   });
 
   it("renders authenticated Home without embedding lists", () => {

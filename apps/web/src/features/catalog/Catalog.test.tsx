@@ -233,12 +233,15 @@ describe("Catalog", () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(false);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -246,21 +249,30 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+      }),
+    );
     expect(addItemMock).not.toHaveBeenCalled();
     expect(resetDraftMock).not.toHaveBeenCalled();
   });
 
-  it("resets the draft only when a cross-provider mutation is confirmed", async () => {
+  it("resets the draft only when a cross-provider conflict is confirmed", async () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -268,11 +280,13 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Mercadona"),
-    );
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Bonpreu Esclat"),
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message: expect.stringContaining("Mercadona") as unknown,
+      }),
     );
     expect(resetDraftMock).toHaveBeenCalledWith("bonpreuesclat");
     expect(addItemMock).toHaveBeenCalledTimes(1);
@@ -282,11 +296,15 @@ describe("Catalog", () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [];
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -294,21 +312,25 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(setDraftProviderIdMock).toHaveBeenCalledWith("bonpreuesclat");
     expect(addItemMock).toHaveBeenCalledTimes(1);
     expect(resetDraftMock).not.toHaveBeenCalled();
   });
 
-  it("adds the item without confirm when draft matches the requested provider and has items", async () => {
+  it("adds the item without conflict callback when draft matches the requested provider and has items", async () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="mercadona" />
+          <Catalog
+            providerId="mercadona"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -316,7 +338,7 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(addItemMock).toHaveBeenCalledTimes(1);
     expect(resetDraftMock).not.toHaveBeenCalled();
     expect(setDraftProviderIdMock).not.toHaveBeenCalled();
@@ -325,13 +347,13 @@ describe("Catalog", () => {
   it("delegates cross-provider mutation to the active-edit conflict flow when an edit session exists", async () => {
     const user = userEvent.setup();
     const onRequestActiveEditConflict = vi.fn();
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
     localStorage.setItem(
       "lists.editSession",
       JSON.stringify({ listId: "active-list-1", isEditing: true }),
     );
-    const confirmSpy = vi.spyOn(window, "confirm");
 
     render(
       <ToastProvider>
@@ -339,6 +361,7 @@ describe("Catalog", () => {
           <Catalog
             providerId="bonpreuesclat"
             onRequestActiveEditConflict={onRequestActiveEditConflict}
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
           />
           <Toast />
         </ListProvider>
@@ -351,7 +374,7 @@ describe("Catalog", () => {
       currentProviderId: "mercadona",
       requestedProviderId: "bonpreuesclat",
     });
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(addItemMock).not.toHaveBeenCalled();
   });
 

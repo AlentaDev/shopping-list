@@ -28,6 +28,8 @@ import {
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
 import { getProviderDisplayName } from "@src/shared/constants/providers";
+import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
+import { DraftProviderConflictModal } from "@src/app-shell/components/DraftProviderConflictModal";
 
 const CATALOG_PATH = "/catalog";
 const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
@@ -36,6 +38,11 @@ type HandshakeStatus = "WAITING" | "READY";
 type ActiveEditConflictState = {
   currentProviderId: string;
   requestedProviderId: string;
+};
+
+type DraftProviderConflictState = {
+  input: DraftProviderConflictInput;
+  resolve: (accepted: boolean) => void;
 };
 
 const loadEditSessionListId = (): string | null => {
@@ -92,6 +99,8 @@ export const AppShell = () => {
   const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
   const [activeEditConflict, setActiveEditConflict] =
     useState<ActiveEditConflictState | null>(null);
+  const [draftProviderConflict, setDraftProviderConflict] =
+    useState<DraftProviderConflictState | null>(null);
   const hasShownReadyToastRef = useRef(false);
   const localDraft = loadLocalDraft();
   const homeDraftProviderId = !authUser ? (localDraft?.providerId ?? null) : null;
@@ -194,6 +203,38 @@ export const AppShell = () => {
     setActiveEditConflict({ currentProviderId, requestedProviderId });
   };
 
+  const handleRequestDraftProviderConflict = (
+    input: DraftProviderConflictInput,
+  ): Promise<boolean> => {
+    if (activeEditConflict) {
+      return Promise.resolve(false);
+    }
+
+    return new Promise((resolve) => {
+      setDraftProviderConflict({ input, resolve });
+    });
+  };
+
+  const handleConfirmDraftProviderConflict = () => {
+    if (!draftProviderConflict) {
+      return;
+    }
+
+    resetDraft(draftProviderConflict.input.requestedProviderId);
+    navigate(`/${draftProviderConflict.input.requestedProviderId}/catalog`);
+    draftProviderConflict.resolve(true);
+    setDraftProviderConflict(null);
+  };
+
+  const handleDismissDraftProviderConflict = () => {
+    if (!draftProviderConflict) {
+      return;
+    }
+
+    draftProviderConflict.resolve(false);
+    setDraftProviderConflict(null);
+  };
+
   const handleDismissActiveEditConflict = () => {
     if (!activeEditConflict) {
       return;
@@ -258,8 +299,8 @@ export const AppShell = () => {
     showAnonymousDraftGuidance,
     onSelectHomeProvider: handleSelectHomeProvider,
     onRequestActiveEditConflict: handleRequestActiveEditConflict,
+    onRequestDraftProviderConflict: handleRequestDraftProviderConflict,
   });
-  const isLandingPage = currentPath === "/";
   const isCatalogRoute = /^\/[^/]+\/catalog(?:\/[^/]+)?$/.test(currentPath);
   const catalogProviderId = currentPath.match(/^\/([^/]+)\/catalog(?:\/[^/]+)?$/)?.[1] ?? null;
   const footerContentLayout = isCatalogRoute ? "catalog" : "default";
@@ -319,7 +360,7 @@ export const AppShell = () => {
           {mainContent}
         </div>
         {activeEditConflict ? (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 p-4">
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-slate-900/30 p-4">
             <div
               role="dialog"
               aria-modal="true"
@@ -359,6 +400,20 @@ export const AppShell = () => {
               </div>
             </div>
           </div>
+        ) : null}
+        {draftProviderConflict ? (
+          <DraftProviderConflictModal
+            isOpen
+            message={draftProviderConflict.input.message}
+            currentProviderName={getProviderDisplayName(
+              draftProviderConflict.input.currentProviderId,
+            )}
+            requestedProviderName={getProviderDisplayName(
+              draftProviderConflict.input.requestedProviderId,
+            )}
+            onConfirm={handleConfirmDraftProviderConflict}
+            onDismiss={handleDismissDraftProviderConflict}
+          />
         ) : null}
       </main>
       <AppFooter contentLayout={footerContentLayout} />

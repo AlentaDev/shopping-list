@@ -5,6 +5,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "@src/app-shell/AppShell";
 import { AppProviders } from "@src/providers/AppProviders";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 vi.mock("@src/features/shopping-list", async () => {
@@ -235,21 +236,40 @@ describe("AppShell", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
-      <AppProviders>
-        <AppShell />
-      </AppProviders>,
-    );
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) =>
+      ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }) as MediaQueryList) as typeof window.matchMedia;
 
-    expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
+    try {
+      render(
+        <AppProviders>
+          <AppShell />
+        </AppProviders>,
+      );
 
-    await userEvent.click(screen.getByRole("button", { name: "Abrir categorías" }));
-    await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Yogures" }),
-    );
+      expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
-    expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
+      act(() => {
+        window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Yogures" }),
+      );
+
+      expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 
   it("shows the user menu and blocks auth screens when logged in", async () => {
