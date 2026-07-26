@@ -8,10 +8,14 @@ export const AppFooter = ({ contentLayout = "default" }: AppFooterProps) => {
   const isCatalogLayout = contentLayout === "catalog";
   const footerCopy = (
     <div
-      data-testid={isCatalogLayout ? "app-footer-catalog-layout" : undefined}
-      className={isCatalogLayout ? "md:flex md:items-start" : undefined}
+      data-testid="app-footer-copy"
+      className={
+        isCatalogLayout
+          ? "md:flex md:items-start md:justify-center"
+          : "flex justify-center"
+      }
     >
-      <div className={`space-y-1 ${isCatalogLayout ? "flex-1" : ""}`.trim()}>
+      <div data-testid="app-footer-copy-inner" className="space-y-1 text-left">
         <p className="font-medium text-slate-900">{UI_TEXT.FOOTER.TAGLINE}</p>
         <p className="pl-4">{UI_TEXT.FOOTER.SUPPORTING_COPY}</p>
         <p className="pl-4">{UI_TEXT.FOOTER.COPYRIGHT}</p>
@@ -20,7 +24,7 @@ export const AppFooter = ({ contentLayout = "default" }: AppFooterProps) => {
   );
 
   return (
-      <footer data-testid="app-footer" className="w-full">
+    <footer data-testid="app-footer" className="w-full">
       {isCatalogLayout ? (
         <div data-testid="app-footer-shell" className="mx-auto w-full max-w-7xl">
           <div data-testid="app-footer-region" className="md:ml-85">
@@ -30,7 +34,7 @@ export const AppFooter = ({ contentLayout = "default" }: AppFooterProps) => {
             >
               <div
                 data-testid="app-footer-content"
-                className="w-full px-4 py-8 text-left text-sm text-slate-600"
+                className="w-full px-4 py-8 text-sm text-slate-600"
               >
                 {footerCopy}
               </div>
@@ -41,7 +45,7 @@ export const AppFooter = ({ contentLayout = "default" }: AppFooterProps) => {
         <div data-testid="app-footer-region" className="border-t border-slate-200 bg-white">
           <div
             data-testid="app-footer-content"
-            className="mx-auto w-full max-w-7xl px-4 py-8 text-left text-sm text-slate-600"
+            className="mx-auto w-full max-w-7xl px-4 py-8 text-sm text-slate-600"
           >
             {footerCopy}
           </div>
