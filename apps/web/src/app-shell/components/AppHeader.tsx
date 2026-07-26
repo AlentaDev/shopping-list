@@ -283,9 +283,18 @@ export const AppHeader = ({
               <button
                 type="button"
                 onClick={onNavigateHome}
-                className="absolute left-1/2 -translate-x-1/2 text-center text-lg font-semibold tracking-tight text-slate-900 transition hover:text-emerald-700"
+                className="absolute left-1/2 -translate-x-1/2 text-center transition hover:opacity-80 inline-flex items-center gap-2 max-w-[calc(100vw-15rem)] overflow-hidden"
               >
-                {UI_TEXT.APP.TITLE}
+                <img
+                  src="/favicon.svg"
+                  alt=""
+                  className="h-8 w-auto flex-shrink-0 sm:h-9"
+                />
+                <img
+                  src="/images/title/shoppingListTitleTextOnly.png"
+                  alt={UI_TEXT.APP.TITLE_IMAGE_ALT}
+                  className="h-9 w-auto max-w-full object-contain min-w-0 sm:h-10"
+                />
               </button>
               <div className={`${MOBILE_HEADER_SIDE_SLOT_CLASS} ml-auto flex items-center justify-end gap-2`}>
                 {authActions ?? (
@@ -392,9 +401,18 @@ export const AppHeader = ({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="text-left text-xl font-semibold tracking-tight text-slate-900 transition hover:text-emerald-700 sm:text-2xl"
+              className="text-left transition hover:opacity-80 inline-flex items-center gap-2"
             >
-              {UI_TEXT.APP.TITLE}
+              <img
+                src="/favicon.svg"
+                alt=""
+                className="h-9 w-auto flex-shrink-0"
+              />
+              <img
+                src="/images/title/shoppingListTitleTextOnly.png"
+                alt={UI_TEXT.APP.TITLE_IMAGE_ALT}
+                className="h-10 w-auto max-w-full object-contain min-w-0"
+              />
             </button>
             {isCatalogRoute && catalogProviderLogo ? (
               <div className="flex flex-1 justify-center px-3">

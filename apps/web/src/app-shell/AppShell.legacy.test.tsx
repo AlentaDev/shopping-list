@@ -622,7 +622,7 @@ describe("AppShell", () => {
     ).toBeInTheDocument();
 
     // Hacer clic fuera del menú (por ejemplo, en el título de la app)
-    await userEvent.click(screen.getByText(UI_TEXT.APP.TITLE));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT }));
 
     // Verificar que el menú se cerró
     await waitFor(() => {

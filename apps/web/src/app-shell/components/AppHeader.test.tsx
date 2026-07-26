@@ -135,7 +135,7 @@ describe("app-shell/AppHeader", () => {
     setMatchMedia(false);
     render(<AppHeader {...baseProps} currentPath="/" />);
 
-    expect(screen.getByRole("button", { name: UI_TEXT.APP.TITLE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT })).toBeInTheDocument();
     expect(screen.getByText("Inicio")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Inicio" })).not.toBeInTheDocument();
     expect(
@@ -147,6 +147,73 @@ describe("app-shell/AppHeader", () => {
     expect(
       screen.getByRole("button", { name: UI_TEXT.APP.DOWNLOAD_APP_LABEL }),
     ).toBeInTheDocument();
+  });
+
+  it("renders the text-only title image as the home button with the correct src and alt on desktop", () => {
+    setMatchMedia(false);
+    render(<AppHeader {...baseProps} />);
+
+    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const titleImage = screen.getByRole("img", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const icon = titleImage.previousElementSibling;
+
+    expect(titleImage).toHaveAttribute("src", "/images/title/shoppingListTitleTextOnly.png");
+    expect(titleImage).toHaveAttribute("alt", UI_TEXT.APP.TITLE_IMAGE_ALT);
+    expect(titleImage).toHaveClass("h-10", "w-auto", "object-contain");
+    expect(titleButton).toContainElement(titleImage);
+    expect(icon).toBeInstanceOf(HTMLImageElement);
+    expect(icon).toHaveAttribute("src", "/favicon.svg");
+    expect(icon).toHaveAttribute("alt", "");
+    expect(icon).toHaveClass("h-9", "w-auto", "flex-shrink-0");
+  });
+
+  it("renders the text-only title image as the centered home button with the correct src and alt on mobile", () => {
+    setMatchMedia(true);
+    render(<AppHeader {...baseProps} />);
+
+    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const titleImage = screen.getByRole("img", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const icon = titleImage.previousElementSibling;
+
+    expect(titleImage).toHaveAttribute("src", "/images/title/shoppingListTitleTextOnly.png");
+    expect(titleImage).toHaveAttribute("alt", UI_TEXT.APP.TITLE_IMAGE_ALT);
+    expect(titleImage).toHaveClass("h-9", "w-auto", "object-contain", "sm:h-10");
+    expect(titleButton).toContainElement(titleImage);
+    expect(icon).toBeInstanceOf(HTMLImageElement);
+    expect(icon).toHaveAttribute("src", "/favicon.svg");
+    expect(icon).toHaveAttribute("alt", "");
+    expect(icon).toHaveClass("h-8", "w-auto", "flex-shrink-0", "sm:h-9");
+  });
+
+  it("constrains the mobile brand button width to avoid colliding with the header side controls", () => {
+    setMatchMedia(true);
+    render(<AppHeader {...baseProps} />);
+
+    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const titleImage = screen.getByRole("img", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+
+    expect(titleButton).toHaveClass("max-w-[calc(100vw-15rem)]");
+    expect(titleButton).toHaveClass("overflow-hidden");
+    expect(titleImage).toHaveClass("max-w-full", "min-w-0");
+  });
+
+  it("keeps the whole brand area clickable to navigate home", async () => {
+    setMatchMedia(false);
+    const onNavigateHome = vi.fn();
+
+    render(<AppHeader {...baseProps} onNavigateHome={onNavigateHome} />);
+
+    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
+    const icon = titleButton.querySelector('img[src="/favicon.svg"]');
+
+    await userEvent.click(titleButton);
+
+    expect(onNavigateHome).toHaveBeenCalledTimes(1);
+
+    if (icon) {
+      await userEvent.click(icon);
+      expect(onNavigateHome).toHaveBeenCalledTimes(2);
+    }
   });
 
   it("muestra login/registro cuando no hay usuario autenticado", () => {
@@ -305,7 +372,7 @@ describe("app-shell/AppHeader", () => {
       />,
     );
 
-    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE });
+    const titleButton = screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT });
     const providerLogo = screen.getByRole("img", {
       name: UI_TEXT.HOME.PROVIDERS.MERCADONA.LOGO_ALT,
     });
@@ -348,7 +415,7 @@ describe("app-shell/AppHeader", () => {
     const menuButton = screen.getByRole("button", {
       name: UI_TEXT.APP.MOBILE_MENU_BUTTON_LABEL,
     });
-    expect(screen.getByRole("button", { name: UI_TEXT.APP.TITLE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT })).toBeInTheDocument();
     const cartButton = screen.getByRole("button", { name: UI_TEXT.APP.CART_BUTTON_LABEL });
     const userBadgeButton = screen.getByRole("button", {
       name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,

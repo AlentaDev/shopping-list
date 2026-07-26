@@ -13,6 +13,7 @@ const DRAFT_LOSS_MESSAGE =
 export const UI_TEXT = {
   APP: {
     TITLE: "Shopping List",
+    TITLE_IMAGE_ALT: "Shopping List",
     HOME_LABEL: "Inicio",
     CART_BUTTON_LABEL: "Abrir carrito",
     MY_LISTS_LABEL: "Mis Listas",
