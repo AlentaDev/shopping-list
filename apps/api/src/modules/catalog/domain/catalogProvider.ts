@@ -39,7 +39,7 @@ export type MercadonaCategoryProduct = {
   price_instructions: {
     unit_price: number;
     unit_size?: number | null;
-    bulk_price: number;
+    bulk_price: number | null;
     approx_size?: boolean | null;
     size_format?: string | null;
   };
@@ -59,6 +59,7 @@ export type MercadonaProductDetail = {
   id: string | number;
   display_name: string;
   thumbnail?: string | null;
+  packaging?: string | null;
   photos?: Array<{
     thumbnail?: string | null;
   }>;

@@ -72,8 +72,12 @@ function mapProduct(
 ): CatalogProductSummary {
   const priceInstructions = product.price_instructions;
   const unitPrice = Number(priceInstructions.unit_price);
-  const bulkPrice = Number(priceInstructions.bulk_price);
-  const price = product.packaging === "Granel" ? bulkPrice : unitPrice;
+  const bulkPrice =
+    priceInstructions.bulk_price !== null
+      ? Number(priceInstructions.bulk_price)
+      : null;
+  const price =
+    product.packaging === "Granel" && bulkPrice !== null ? bulkPrice : unitPrice;
 
   return {
     id: String(product.id),

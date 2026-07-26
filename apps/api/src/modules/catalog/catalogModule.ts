@@ -4,6 +4,7 @@ import { ProviderStrategyResolver } from "./application/ProviderStrategyResolver
 import type { CatalogCache } from "./domain/catalogCache.js";
 import type { CatalogProvider } from "./domain/catalogProvider.js";
 import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache.js";
+import { BonpreuCatalogAdapter } from "./infrastructure/adapters/BonpreuCatalogAdapter.js";
 import { BonpreuCatalogProvider } from "./infrastructure/BonpreuCatalogProvider.js";
 import { BonpreuHttpClient } from "./infrastructure/BonpreuHttpClient.js";
 import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider.js";
@@ -27,6 +28,7 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   );
   const bonpreuProvider = new BonpreuCatalogProvider(
     new BonpreuHttpClient(BONPREU_BASE_URL, BONPREU_TIMEOUT_MS),
+    new BonpreuCatalogAdapter(),
   );
 
   const injectedProvider = deps.provider

@@ -6,6 +6,11 @@ import type {
   MercadonaRootCategoryChild,
 } from "../domain/catalogProvider.js";
 import { BonpreuHttpClient } from "./BonpreuHttpClient.js";
+import { BonpreuCatalogAdapter } from "./adapters/BonpreuCatalogAdapter.js";
+import type {
+  BonpreuCategoryProductsResponse,
+  BonpreuProductDetailResponse,
+} from "./adapters/BonpreuCatalogAdapter.js";
 
 type BonpreuCategoryNode = {
   categoryId: string;
@@ -21,25 +26,6 @@ type BonpreuCategoriesResponse =
       categories?: BonpreuCategoryNode[];
     };
 
-type BonpreuCategoryProductsResponse = {
-  categoryId: string;
-  name: string;
-  products?: BonpreuProduct[];
-  productGroups?: BonpreuProductGroup[];
-};
-
-type BonpreuProduct = {
-  retailerProductId: string;
-  name: string;
-  imagePaths?: string[] | null;
-  price?: { amount?: number | null } | null;
-};
-
-type BonpreuProductGroup = {
-  type: string;
-  decoratedProducts?: BonpreuProduct[];
-};
-
 const BONPREU_ID_COMPAT_DEBT =
   "TEMP_DEBT: de-mercadonization pending. Keep Mercadona-shaped provider contract bridge until canonical contract rollout is complete.";
 
@@ -50,7 +36,10 @@ export class BonpreuCatalogProvider implements CatalogProvider {
     displayName: "BonpreuEsclat",
   } as const;
 
-  constructor(private readonly httpClient: BonpreuHttpClient) {}
+  constructor(
+    private readonly httpClient: BonpreuHttpClient,
+    private readonly adapter: BonpreuCatalogAdapter = new BonpreuCatalogAdapter(),
+  ) {}
 
   async getRootCategories(): Promise<MercadonaRootCategoriesResponse> {
     const response = await this.httpClient.getCategories<BonpreuCategoriesResponse>();
@@ -99,6 +88,7 @@ export class BonpreuCatalogProvider implements CatalogProvider {
       matched.categoryId,
       matched.productCount,
     );
+    const products = this.adapter.toProviderCategoryProducts(productsResponse);
 
     return {
       id: matched.categoryId,
@@ -107,40 +97,16 @@ export class BonpreuCatalogProvider implements CatalogProvider {
         {
           id: matched.categoryId,
           name: matched.name,
-          products: extractProducts(productsResponse).map((product) => ({
-            id: product.retailerProductId,
-            display_name: product.name,
-            thumbnail: toBonpreuThumbnail(product.imagePaths),
-            packaging: null,
-            price_instructions: {
-              unit_price: Number(product.price?.amount ?? 0),
-              bulk_price: Number(product.price?.amount ?? 0),
-            },
-          })),
+          products,
         },
       ],
     };
   }
 
   async getProduct(id: string): Promise<MercadonaProductDetail> {
-    const response = await this.httpClient.getProductDetail<{
-      retailerProductId: string;
-      name: string;
-      imagePaths?: string[] | null;
-      price?: { amount?: number | null } | null;
-      categoryPath?: string[];
-    }>(id);
+    const response = await this.httpClient.getProductDetail<BonpreuProductDetailResponse>(id);
 
-    return {
-      id: response.retailerProductId,
-      display_name: response.name,
-      thumbnail: toBonpreuThumbnail(response.imagePaths),
-      price_instructions: {
-        unit_price: Number(response.price?.amount ?? 0),
-        bulk_price: Number(response.price?.amount ?? 0),
-      },
-      categories: [],
-    };
+    return this.adapter.toProviderProductDetail(response);
   }
 }
 
@@ -190,34 +156,6 @@ function matchesCategoryId(categoryId: string, targetId: string): boolean {
   }
 
   return toLegacyDeterministicNumericId(categoryId) === targetId;
-}
-
-function extractProducts(
-  response?: BonpreuCategoryProductsResponse | null,
-): BonpreuProduct[] {
-  if (!response) {
-    return [];
-  }
-
-  const groupedProducts = (response.productGroups ?? []).flatMap(
-    (group) => group.decoratedProducts ?? [],
-  );
-
-  if (groupedProducts.length > 0) {
-    return groupedProducts;
-  }
-
-  return response.products ?? [];
-}
-
-function toBonpreuThumbnail(imagePaths?: string[] | null): string | null {
-  const imagePath = imagePaths?.[0];
-
-  if (!imagePath) {
-    return null;
-  }
-
-  return `${imagePath}/300x300.webp`;
 }
 
 function toLegacyDeterministicNumericId(sourceId: string): string {
