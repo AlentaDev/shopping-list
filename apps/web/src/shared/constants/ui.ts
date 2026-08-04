@@ -44,10 +44,6 @@ export const UI_TEXT = {
         LOGO_ALT: "Logo de Mercadona",
         CTA_LABEL: "Cátalogo Mercadona",
       },
-      BONPREUESCLAT: {
-        LOGO_ALT: "Logo de Bonpreu Esclat",
-        CTA_LABEL: "Cátalogo Bonpreu Esclat",
-      },
     },
   },
   FOOTER: {

@@ -135,7 +135,7 @@ describe("ListsScreen", () => {
     ).toBeInTheDocument();
     expect(
       within(activeCard as HTMLElement).getByRole("img", {
-        name: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.LOGO_ALT,
+        name: UI_TEXT.PROVIDERS.BONPREUESCLAT.DISPLAY_NAME,
       }),
     ).toBeInTheDocument();
     expect(activeCard).not.toHaveTextContent("Bonpreu Esclat");

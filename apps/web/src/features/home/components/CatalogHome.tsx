@@ -11,9 +11,6 @@ const PROVIDER_CONTENT = {
   mercadona: {
     ctaLabel: UI_TEXT.HOME.PROVIDERS.MERCADONA.CTA_LABEL,
   },
-  bonpreuesclat: {
-    ctaLabel: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.CTA_LABEL,
-  },
 } as const;
 
 type CatalogHomeProps = {

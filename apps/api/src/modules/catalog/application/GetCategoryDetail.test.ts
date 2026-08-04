@@ -4,7 +4,7 @@ import { InMemoryCatalogCache } from "../infrastructure/InMemoryCatalogCache.js"
 import type { CatalogProvider } from "../domain/catalogProvider.js";
 
 describe("GetCategoryDetail", () => {
-  it("round-trips canonical Bonpreu ids for deepest categories", async () => {
+  it("round-trips string ids for deepest categories", async () => {
     const getCategoryDetailMock = vi.fn<CatalogProvider["getCategoryDetail"]>();
     getCategoryDetailMock.mockResolvedValue({
       id: "08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123",
@@ -30,7 +30,7 @@ describe("GetCategoryDetail", () => {
     });
 
     const provider: CatalogProvider = {
-      metadata: { id: "provider-bonpreuesclat", slug: "bonpreuesclat" },
+      metadata: { id: "provider-mercadona", slug: "mercadona" },
       getRootCategories: vi.fn(),
       getCategoryDetail: getCategoryDetailMock,
       getProduct: vi.fn(),
@@ -50,7 +50,7 @@ describe("GetCategoryDetail", () => {
 
   it("returns intermediate category without products", async () => {
     const provider: CatalogProvider = {
-      metadata: { id: "provider-bonpreuesclat", slug: "bonpreuesclat" },
+      metadata: { id: "provider-mercadona", slug: "mercadona" },
       getRootCategories: vi.fn(),
       getCategoryDetail: vi.fn().mockResolvedValue({
         id: "fresh-root",

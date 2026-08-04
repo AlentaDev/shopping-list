@@ -8,6 +8,7 @@ import {
 } from "@src/features/auth";
 import { CatalogHome } from "@src/features/home";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
+import { SUPPORTED_PROVIDERS } from "@src/shared/constants/providers";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
 import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
@@ -115,6 +116,9 @@ export const useAppShellNavigation = ({
     const handlePopState = () => {
       const path = resolveCatalogAlias(window.location.pathname);
       persistLastProvider(path);
+      if (window.location.pathname !== path) {
+        window.history.replaceState({}, "", path);
+      }
       setCurrentPath(path);
       setAuthMode(resolveAuthMode(path));
     };
@@ -294,12 +298,20 @@ function parseCatalogPath(pathname: string): { providerId: string; categoryId?: 
 }
 
 function resolveCatalogAlias(pathname: string): string {
-  if (pathname !== CATALOG_ALIAS_PATH) {
-    return pathname;
+  if (pathname === CATALOG_ALIAS_PATH) {
+    const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
+    return lastProvider ? resolveCatalogAlias(`/${lastProvider}/catalog`) : "/";
   }
 
-  const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
-  return lastProvider ? `/${lastProvider}/catalog` : "/";
+  const catalogPath = parseCatalogPath(pathname);
+  if (
+    catalogPath &&
+    !SUPPORTED_PROVIDERS.some((provider) => provider.id === catalogPath.providerId)
+  ) {
+    return "/mercadona/catalog";
+  }
+
+  return pathname;
 }
 
 function persistLastProvider(pathname: string): void {

@@ -128,25 +128,8 @@ describe("lists router - complete list", () => {
     expect(addCatalogItemExecute).not.toHaveBeenCalled();
   });
 
-  it("returns stable 409 conflict payload for draft provider mismatch", async () => {
-    const addCatalogItemExecute = vi.fn().mockRejectedValue(
-      new DraftProviderConflictError({
-        draftProvider: {
-          id: "provider-mercadona",
-          slug: "mercadona",
-          displayName: "Mercadona",
-        },
-        requestedProvider: {
-          id: "provider-bonpreuesclat",
-          slug: "bonpreuesclat",
-          displayName: "BonpreuEsclat",
-        },
-        draftSummary: {
-          itemCount: 1,
-          updatedAt: "2024-01-01T10:00:00.000Z",
-        },
-      }),
-    );
+  it("rejects Bonpreu catalogue mutations before invoking the use case", async () => {
+    const addCatalogItemExecute = vi.fn();
     const app = express();
     app.use(express.json());
     app.use(
@@ -179,32 +162,7 @@ describe("lists router - complete list", () => {
       .post("/api/lists/list-1/items/from-catalog")
       .send({ provider: "bonpreuesclat", productId: "4706" });
 
-    expect(response.status).toBe(409);
-    expect(response.body).toEqual({
-      error: "draft_provider_conflict",
-      errorCode: "draft_provider_conflict",
-      draftProvider: {
-        id: "provider-mercadona",
-        slug: "mercadona",
-        displayName: "Mercadona",
-      },
-      requestedProvider: {
-        id: "provider-bonpreuesclat",
-        slug: "bonpreuesclat",
-        displayName: "BonpreuEsclat",
-      },
-      allowedActions: ["switch_and_clear", "keep_draft_provider"],
-      draftSummary: {
-        itemCount: 1,
-        updatedAt: "2024-01-01T10:00:00.000Z",
-      },
-    });
-    expect(addCatalogItemExecute).toHaveBeenCalledWith({
-      userId: "user-1",
-      listId: "list-1",
-      provider: "bonpreuesclat",
-      productId: "4706",
-      qty: undefined,
-    });
+    expect(response.status).toBe(400);
+    expect(addCatalogItemExecute).not.toHaveBeenCalled();
   });
 });

@@ -28,6 +28,7 @@ const baseArgs = {
 
 describe("useAppShellNavigation (canonical path)", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     window.history.pushState({}, "", "/");
   });
 
@@ -71,6 +72,27 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(result.current.mainContent.props.providerId).toBe("mercadona");
   });
 
+  it("canonicaliza una ruta directa de catálogo de proveedor no soportado", () => {
+    window.history.pushState({}, "", "/bonpreuesclat/catalog");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.currentPath).toBe("/mercadona/catalog");
+    expect(window.location.pathname).toBe("/mercadona/catalog");
+    expect(result.current.mainContent.type).toBe(Catalog);
+    expect(result.current.mainContent.props.providerId).toBe("mercadona");
+  });
+
+  it("canonicaliza una ruta de catálogo no soportada y descarta su categoría", () => {
+    window.history.pushState({}, "", "/unknown/catalog/child-2");
+
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    expect(result.current.currentPath).toBe("/mercadona/catalog");
+    expect(window.location.pathname).toBe("/mercadona/catalog");
+    expect(result.current.mainContent.props.initialCategoryId).toBeUndefined();
+  });
+
   it("actualiza pathname con :category cuando se selecciona categoría", () => {
     window.history.pushState({}, "", "/mercadona/catalog");
 
@@ -95,18 +117,18 @@ describe("useAppShellNavigation (canonical path)", () => {
     expect(result.current.mainContent.type).toBe(CatalogHome);
   });
 
-  it("redirige /catalog al lastProvider guardado", () => {
-    window.localStorage.setItem("lastProvider", "carrefour");
+  it("redirige /catalog a Mercadona cuando lastProvider está obsoleto", () => {
+    window.localStorage.setItem("lastProvider", "bonpreuesclat");
     window.history.pushState({}, "", "/catalog");
 
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
 
-    expect(result.current.currentPath).toBe("/carrefour/catalog");
-    expect(window.location.pathname).toBe("/carrefour/catalog");
+    expect(result.current.currentPath).toBe("/mercadona/catalog");
+    expect(window.location.pathname).toBe("/mercadona/catalog");
     expect(result.current.mainContent.type).toBe(Catalog);
   });
 
-  it("respeta semántica de URL aislada al cambiar provider", () => {
+  it("conserva la categoría para rutas Mercadona válidas", () => {
     window.history.pushState({}, "", "/mercadona/catalog");
 
     const { result } = renderHook(() => useAppShellNavigation(baseArgs));
@@ -114,25 +136,30 @@ describe("useAppShellNavigation (canonical path)", () => {
     act(() => {
       result.current.mainContent.props.onCategoryRouteChange("merc-child");
     });
+
     expect(window.location.pathname).toBe("/mercadona/catalog/merc-child");
-
-    act(() => {
-      result.current.navigate("/carrefour/catalog");
-    });
-
-    act(() => {
-      result.current.mainContent.props.onCategoryRouteChange("car-child");
-    });
-
-    expect(window.location.pathname).toBe("/carrefour/catalog/car-child");
   });
 
-  it("persiste lastProvider al resolver una ruta canónica de catálogo", () => {
+  it("persiste Mercadona al canonicalizar una ruta de proveedor no soportado", () => {
     window.history.pushState({}, "", "/bonpreuesclat/catalog");
 
     renderHook(() => useAppShellNavigation(baseArgs));
 
-    expect(window.localStorage.getItem("lastProvider")).toBe("bonpreuesclat");
+    expect(window.localStorage.getItem("lastProvider")).toBe("mercadona");
+  });
+
+  it("canonicaliza una ruta no soportada al navegar con popstate", () => {
+    const { result } = renderHook(() => useAppShellNavigation(baseArgs));
+
+    act(() => {
+      window.history.pushState({}, "", "/bonpreuesclat/catalog/child-2");
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    expect(result.current.currentPath).toBe("/mercadona/catalog");
+    expect(window.location.pathname).toBe("/mercadona/catalog");
+    expect(result.current.mainContent.props.initialCategoryId).toBeUndefined();
+    expect(window.localStorage.getItem("lastProvider")).toBe("mercadona");
   });
 
   it("renderiza listas en /lists con usuario", () => {

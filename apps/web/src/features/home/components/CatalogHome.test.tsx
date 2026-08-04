@@ -20,8 +20,8 @@ describe("features/home/CatalogHome", () => {
       screen.getByRole("img", { name: UI_TEXT.HOME.PROVIDERS.MERCADONA.LOGO_ALT }),
     ).toHaveAttribute("src", "/images/providers/mercadona/card.png");
     expect(
-      screen.getByRole("img", { name: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.LOGO_ALT }),
-    ).toHaveAttribute("src", "/images/providers/bonpreuesclat/card.png");
+      screen.queryByRole("img", { name: /Bonpreu Esclat/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps explicit provider entry actions", async () => {
@@ -33,47 +33,38 @@ describe("features/home/CatalogHome", () => {
     const mercadonaCard = screen
       .getByRole("img", { name: UI_TEXT.HOME.PROVIDERS.MERCADONA.LOGO_ALT })
       .closest("article");
-    const bonpreuCard = screen
-      .getByRole("img", { name: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.LOGO_ALT })
-      .closest("article");
-
     await user.click(
       within(mercadonaCard as HTMLElement).getByRole("button", {
         name: UI_TEXT.HOME.PROVIDERS.MERCADONA.CTA_LABEL,
       }),
     );
 
-    expect(
-      within(bonpreuCard as HTMLElement).getByRole("button", {
-        name: UI_TEXT.HOME.PROVIDERS.BONPREUESCLAT.CTA_LABEL,
-      }),
-    ).toBeInTheDocument();
     expect(onSelectProvider).toHaveBeenCalledWith("mercadona");
   });
 
   it("shows anonymous draft guidance only when provider context exists", () => {
     const { rerender } = render(
       <CatalogHome
-        draftProviderId="bonpreuesclat"
+        draftProviderId="mercadona"
         showAnonymousDraftGuidance
         onSelectProvider={vi.fn()}
       />,
     );
 
     expect(
-      screen.getByText(/Tienes un borrador asociado a Bonpreu Esclat/i),
+      screen.getByText(/Tienes un borrador asociado a Mercadona/i),
     ).toBeInTheDocument();
 
     rerender(
       <CatalogHome
-        draftProviderId="bonpreuesclat"
+        draftProviderId="mercadona"
         showAnonymousDraftGuidance={false}
         onSelectProvider={vi.fn()}
       />,
     );
 
     expect(
-      screen.queryByText(/Tienes un borrador asociado a Bonpreu Esclat/i),
+      screen.queryByText(/Tienes un borrador asociado a Mercadona/i),
     ).not.toBeInTheDocument();
   });
 });

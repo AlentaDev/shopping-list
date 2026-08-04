@@ -95,7 +95,7 @@ function mapProduct(
 
 function toCatalogProviderRef(metadata: {
   id: string;
-  slug: "mercadona" | "bonpreuesclat";
+  slug: "mercadona";
   displayName?: string;
 } | undefined): CatalogProviderRef {
   if (!metadata) {

@@ -8,7 +8,7 @@ function createProvider(slug: CatalogProviderSlug): CatalogProvider {
     metadata: {
       id: `provider-${slug}`,
       slug,
-      displayName: slug === "mercadona" ? "Mercadona" : "BonpreuEsclat",
+      displayName: "Mercadona",
     },
     getRootCategories: async () => ({ count: 0, next: null, previous: null, results: [] }),
     getCategoryDetail: async () => ({ id: 1, name: "cat", categories: [] }),
@@ -19,11 +19,9 @@ function createProvider(slug: CatalogProviderSlug): CatalogProvider {
 describe("ProviderStrategyResolver", () => {
   it("resolves known provider strategy", () => {
     const mercadona = createProvider("mercadona");
-    const bonpreu = createProvider("bonpreuesclat");
-    const resolver = new ProviderStrategyResolver([mercadona, bonpreu]);
+    const resolver = new ProviderStrategyResolver([mercadona]);
 
     expect(resolver.resolve("mercadona")).toBe(mercadona);
-    expect(resolver.resolve("bonpreuesclat")).toBe(bonpreu);
   });
 
   it("throws stable provider_not_found for unknown provider", () => {

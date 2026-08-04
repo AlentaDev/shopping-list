@@ -29,7 +29,7 @@ describe("list title validation", () => {
     ).toThrow();
   });
 
-  it("accepts autosave catalog snapshots when present", () => {
+  it("accepts persisted Bonpreu snapshots for list compatibility", () => {
     expect(() =>
       upsertAutosaveSchema.parse({
         title: "Autosave",
@@ -75,6 +75,16 @@ describe("add catalog item validation", () => {
       addCatalogItemSchema.parse({
         source: "mercadona",
         provider: "otro-provider",
+        productId: "4706",
+      }),
+    ).toThrow();
+  });
+
+  it("rejects Bonpreu catalogue mutations", () => {
+    expect(() =>
+      addCatalogItemSchema.parse({
+        source: "bonpreuesclat",
+        provider: "bonpreuesclat",
         productId: "4706",
       }),
     ).toThrow();

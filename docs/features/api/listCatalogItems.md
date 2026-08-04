@@ -1,7 +1,7 @@
 # Añadir items a lista desde catálogo
 
 ## Resumen
-Permite a usuarios autenticados añadir items a una lista desde el catálogo del provider dueño del borrador (`mercadona` o `bonpreuesclat`) por `productId`, guardando un snapshot de precio y presentación.
+Permite a usuarios autenticados añadir items a una lista desde el catálogo Mercadona por `productId`, guardando un snapshot de precio y presentación.
 
 > **Deprecated:** manual items are being removed from the API, database, and web. All future changes must assume catalog-only items.
 
@@ -18,7 +18,7 @@ Añade un snapshot de item de catálogo a una lista del usuario autenticado.
 }
 ```
 
-- `source` acepta `mercadona` o `bonpreuesclat`.
+- `source` acepta `mercadona`.
 - El request declara el provider solicitado, pero la ejecución usa como fuente de verdad el provider del draft/lista resuelto por el backend.
 
 #### Respuesta (201)
@@ -60,9 +60,8 @@ Añade un snapshot de item de catálogo a una lista del usuario autenticado.
 
 ### Reglas importantes
 
-- `bonpreuesclat` usa exactamente el mismo flujo provider-aware que `mercadona`; no tiene wiring especial fuera del resolver.
+- BonpreuEsclat no es un catálogo disponible y sus requests se rechazan en validación.
 - No existe fallback en tiempo de mutación hacia Mercadona cuando falta o no se puede resolver el provider del draft/lista.
-- Un request Bonpreu contra un draft Mercadona devuelve conflicto explícito; no cambia el provider implícitamente.
 
 ## Rollout y compatibilidad
 
@@ -71,7 +70,7 @@ Antes de llevar esta validación estricta a producción, las listas legacy deben
 Orden requerido:
 
 1. Ejecutar el backfill sobre listas con `provider_id` `NULL`, vacío o legacy `mercadona`.
-2. Verificar que las listas Bonpreu existentes permanezcan intactas.
+2. Verificar que las listas Bonpreu existentes permanezcan intactas y legibles.
 3. Recién después desplegar el wiring estricto basado en resolver.
 
 Se rechaza el fallback en tiempo de mutación porque escondería defectos de datos/despliegue y permitiría mutaciones con ownership inconsistente.

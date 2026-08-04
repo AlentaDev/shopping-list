@@ -6,7 +6,7 @@ import type { CatalogProvider } from "../domain/catalogProvider.js";
 describe("GetRootCategories", () => {
   it("flattens a four-level tree into ordered nodes with parent ids", async () => {
     const provider: CatalogProvider = {
-      metadata: { id: "provider-bonpreuesclat", slug: "bonpreuesclat" },
+      metadata: { id: "provider-mercadona", slug: "mercadona" },
       getRootCategories: vi.fn().mockResolvedValue({
         count: 1,
         next: null,

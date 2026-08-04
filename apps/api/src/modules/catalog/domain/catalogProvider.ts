@@ -1,4 +1,4 @@
-export type CatalogProviderSlug = "mercadona" | "bonpreuesclat";
+export type CatalogProviderSlug = "mercadona";
 
 export type CatalogProviderMetadata = {
   id: string;

@@ -2,7 +2,7 @@
 
 ### Objetivo
 
-Garantizar ownership de provider por lista con integridad referencial real, wiring provider-aware en mutaciones de catálogo y contrato DTO consistente para web/mobile.
+Garantizar ownership de provider por lista con integridad referencial real, catálogo Mercadona para mutaciones y contrato DTO consistente para web/mobile.
 
 ### Contrato
 
@@ -29,7 +29,7 @@ Y expone en summary/detail:
   - `DRAFT` con items
   - `ACTIVE`
   - `COMPLETED`
-- Mutaciones desde catálogo validan que el provider pedido coincida con `draft.provider.slug` resuelto desde `provider_id` mediante el catalog provider registry/resolver.
+- Mutaciones desde catálogo solo admiten Mercadona y validan el ownership resuelto desde `provider_id`.
 - La capa de composición API no inyecta un singleton default de Mercadona para mutaciones.
 - Si el ownership persistido no se puede resolver, o el slug resultante no corresponde a un provider registrado/resoluble, la mutación falla con error explícito antes de tocar el provider externo.
 
@@ -49,7 +49,7 @@ Validación con Zod en capa web/API y enforcement de invariantes en application/
 3. El slug del draft/lista se resuelve a través del registry/resolver expuesto por catálogo.
 4. Si el provider solicitado no coincide, la API responde `409 draft_provider_conflict`.
 5. Si el ownership no se puede resolver o el slug/provider resultante no está registrado/resoluble, la API responde `404 provider_not_found`.
-6. Solo entonces se ejecuta la mutación contra el provider correcto (`mercadona` o `bonpreuesclat`).
+6. Solo entonces se ejecuta la mutación contra Mercadona.
 
 ### Contrato de conflicto
 
@@ -59,7 +59,7 @@ Cuando un draft activo pertenece a un provider y el cliente intenta mutar desde 
 - `errorCode`: `draft_provider_conflict`
 - `allowedActions`: `switch_and_clear`, `keep_draft_provider`
 
-Esto aplica también a requests `bonpreuesclat` contra drafts/listas Mercadona y viceversa.
+BonpreuEsclat no admite nuevos requests de catálogo; las listas existentes se conservan para lectura.
 
 ### Transición legacy
 
@@ -73,7 +73,7 @@ Para compatibilidad con datos previos:
 
 1. Ejecutar el backfill de `provider_id` en el modo de persistencia desplegado.
 2. Verificar que solo se actualicen filas `NULL`, vacías o legacy `mercadona`.
-3. Confirmar que listas Bonpreu queden intactas.
+3. Confirmar que listas Bonpreu queden intactas y legibles.
 4. Desplegar después el wiring estricto basado en resolver.
 
 Se rechaza el fallback en mutación porque oculta defectos de datos y vuelve inseguro el rollout: la producción parecería funcionar mientras mantiene ownership inconsistente.
