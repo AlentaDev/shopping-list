@@ -256,7 +256,7 @@ export const UI_TEXT = {
       BUTTON_LABEL: "Editar título",
       INPUT_LABEL: "Título de la lista",
       SUBMIT_LABEL: "Guardar título",
-      VALIDATION_ERROR: "El título debe tener entre 3 y 35 caracteres.",
+      VALIDATION_ERROR: "El título debe tener entre 3 y 25 caracteres.",
     },
   },
   LISTS: {

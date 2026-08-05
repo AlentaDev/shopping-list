@@ -5,7 +5,7 @@ import { providerIdSchema } from "@src/modules/catalog/api/schemas.js";
 const persistedProviderIdSchema = z.enum(["mercadona", "bonpreuesclat"]);
 
 export const createListSchema = z.object({
-  title: z.string().trim().min(3).max(35),
+  title: z.string().trim().min(3).max(25),
 });
 
 export const addCatalogItemSchema = z
@@ -64,7 +64,7 @@ const autosaveCatalogItemSchema = z.object({
 });
 
 export const upsertAutosaveSchema = z.object({
-  title: z.string().trim().min(3).max(35),
+  title: z.string().trim().min(3).max(25),
   providerId: persistedProviderIdSchema,
   baseUpdatedAt: z.iso.datetime(),
   items: z.array(autosaveCatalogItemSchema),
