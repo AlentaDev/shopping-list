@@ -3,13 +3,17 @@
 package com.alentadev.shopping.feature.lists.ui.list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -30,12 +34,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.BuildConfig
 import com.alentadev.shopping.R
+import com.alentadev.shopping.ui.components.AccountMenu
 
 @Composable
 fun ActiveListsScreen(
@@ -86,29 +93,37 @@ fun ActiveListsScreen(
             }
         },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(text = stringResource(R.string.lists_title))
-                        Text(
-                            text = userName?.let { stringResource(R.string.lists_user_label, it) }
-                                ?: stringResource(R.string.lists_subtitle),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                actions = {
-                    if (BuildConfig.FLAVOR == "local") {
-                        TextButton(onClick = onNavigateToHealthCheck) {
-                            Text(text = stringResource(R.string.debug_health_check_button))
+            Box {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(R.drawable.brand_logo),
+                                contentDescription = stringResource(R.string.brand_logo_description),
+                                modifier = Modifier.size(36.dp)
+                            )
+                            Image(
+                                painter = painterResource(R.drawable.brand_title),
+                                contentDescription = stringResource(R.string.brand_title_description),
+                                modifier = Modifier
+                                    .height(32.dp)
+                                    .padding(start = 8.dp)
+                            )
                         }
+                    },
+                    actions = {
+                        AccountMenu(userName = userName, onLogout = viewModel::logout)
                     }
-                    TextButton(onClick = { viewModel.logout() }) {
-                        Text(text = stringResource(R.string.logout_button))
+                )
+                if (BuildConfig.FLAVOR == "local") {
+                    TextButton(
+                        onClick = onNavigateToHealthCheck,
+                        modifier = Modifier.align(Alignment.Center)
+                    ) {
+                        Text(text = stringResource(R.string.debug_health_check_button))
                     }
                 }
-            )
+            }
         }
     ) { innerPadding ->
         when (val state = uiState) {
@@ -124,6 +139,15 @@ fun ActiveListsScreen(
 
             is ListsUiState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = stringResource(R.string.lists_your_lists),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = innerPadding.calculateTopPadding() + 4.dp)
+                    )
                     if (!isConnected) {
                         Text(
                             text = stringResource(R.string.lists_offline_banner),
@@ -220,7 +244,7 @@ fun ActiveListsScreen(
 
 internal fun buildListContentPadding(innerPadding: PaddingValues): PaddingValues {
     return PaddingValues(
-        top = innerPadding.calculateTopPadding() + 16.dp,
+        top = 20.dp,
         bottom = innerPadding.calculateBottomPadding() + 16.dp,
         start = 16.dp,
         end = 16.dp

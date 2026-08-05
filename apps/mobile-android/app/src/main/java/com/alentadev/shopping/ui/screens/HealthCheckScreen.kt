@@ -11,12 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alentadev.shopping.BuildConfig
+import com.alentadev.shopping.R
 import com.alentadev.shopping.core.network.ApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.sentry.Sentry
@@ -112,7 +114,8 @@ class HealthViewModel @Inject constructor(
 @Composable
 fun HealthCheckScreen(
     modifier: Modifier = Modifier,
-    viewModel: HealthViewModel = hiltViewModel()
+    viewModel: HealthViewModel = hiltViewModel(),
+    onBackToMain: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -124,6 +127,16 @@ fun HealthCheckScreen(
             .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        OutlinedButton(
+            onClick = onBackToMain,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text(stringResource(R.string.health_back_to_main))
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         // Header
         Text(
             text = "🏥 Health Check",

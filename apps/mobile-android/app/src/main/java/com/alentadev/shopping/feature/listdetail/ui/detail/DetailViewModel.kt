@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alentadev.shopping.core.network.NetworkMonitor
 import com.alentadev.shopping.core.network.resolveConnectivity
+import com.alentadev.shopping.feature.auth.domain.usecase.LogoutUseCase
+import com.alentadev.shopping.feature.auth.domain.usecase.ObserveSessionUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CalculateTotalUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CheckItemUseCase
 import com.alentadev.shopping.feature.listdetail.domain.usecase.CompleteListResult
@@ -25,6 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -39,7 +43,9 @@ class DetailViewModel @Inject constructor(
     private val refreshListDetailIfNeededUseCase: RefreshListDetailIfNeededUseCase,
     private val completeListUseCase: CompleteListUseCase,
     private val networkMonitor: NetworkMonitor,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val observeSessionUseCase: ObserveSessionUseCase? = null,
+    private val logoutUseCase: LogoutUseCase? = null
 ) : ViewModel() {
 
     private companion object {
@@ -62,12 +68,26 @@ class DetailViewModel @Inject constructor(
     private val _uiEvents = MutableSharedFlow<DetailUiEvent>(extraBufferCapacity = 1)
     val uiEvents: SharedFlow<DetailUiEvent> = _uiEvents.asSharedFlow()
 
+    private val _userName = MutableStateFlow<String?>(null)
+    val userName: StateFlow<String?> = _userName.asStateFlow()
+
     private var refreshJob: Job? = null
     private var hasEmittedCompletionNavigation = false
 
     init {
         loadListDetail()
         observeConnectivity()
+        observeSession()
+    }
+
+    private fun observeSession() {
+        val sessionUseCase = observeSessionUseCase ?: return
+        viewModelScope.launch {
+            sessionUseCase.execute()
+                .map { it?.user?.name }
+                .distinctUntilChanged()
+                .collect { name -> _userName.value = name }
+        }
     }
 
     private fun observeConnectivity() {
@@ -265,6 +285,13 @@ class DetailViewModel @Inject constructor(
 
     fun retry() {
         loadListDetail()
+    }
+
+    fun logout() {
+        val useCase = logoutUseCase ?: return
+        viewModelScope.launch {
+            useCase.execute()
+        }
     }
 }
 

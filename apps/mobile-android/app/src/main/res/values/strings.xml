@@ -12,6 +12,9 @@
     <string name="login_show_password">Mostrar</string>
     <string name="login_hide_password">Ocultar</string>
     <string name="login_reconnect_retrying">Conexión recuperada. Revalidando sesión…</string>
+    <string name="brand_logo_description">Logo de Shopping List</string>
+    <string name="brand_title_description">Shopping List</string>
+    <string name="brand_landing_description">Productos para tu lista de compra</string>
 
     <!-- Error messages -->
     <string name="error_email_empty">El email no puede estar vacío</string>
@@ -30,14 +33,18 @@
     <string name="lists_loading">Cargando listas…</string>
     <string name="lists_error">No se pudieron cargar las listas</string>
     <string name="lists_items_count">Items: %1$d</string>
-    <string name="lists_updated_at">Actualizado: %1$s</string>
+    <string name="lists_prepared_at">Preparada el %1$s</string>
     <string name="lists_user_label">Usuario: %1$s</string>
-    <string name="logout_button">Cerrar sesión</string>
+    <string name="logout_button">Logout</string>
     <string name="lists_offline_banner">Sin conexión. Mostrando datos guardados</string>
     <string name="lists_empty_offline">No hay listas disponibles sin conexión</string>
     <string name="lists_empty_offline_subtitle">Conéctate a internet y pulsa reintentar para cargarlas</string>
     <string name="lists_retry_button">Reintentar</string>
     <string name="debug_health_check_button">Health Check</string>
+    <string name="health_back_to_main">Volver a listas</string>
+    <string name="lists_your_lists">Listas</string>
+    <string name="lists_account_description">Menú de cuenta</string>
+    <string name="lists_account_initial_fallback">?</string>
 
     <!-- API Config -->
     <string name="api_config_title">⚙️ Configuración de API</string>
@@ -80,6 +87,7 @@
     <string name="background_sync_snackbar">Actualizando datos en segundo plano…</string>
     <string name="detail_sync_in_progress">Sincronización en progreso</string>
     <string name="detail_uncategorized">Sin categoría</string>
+    <string name="detail_progress_count">%1$d/%2$d</string>
 
     <!-- Item Card -->
     <string name="item_thumbnail_description">Imagen de %1$s</string>

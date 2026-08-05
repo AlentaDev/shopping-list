@@ -2,6 +2,7 @@ package com.alentadev.shopping.feature.auth.ui.login
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -10,12 +11,15 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.R
 
@@ -54,16 +58,23 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
-        Text(
-            text = "🛒 Shopping List",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 32.dp)
+        Image(
+            painter = painterResource(R.drawable.brand_logo),
+            contentDescription = stringResource(R.string.brand_logo_description),
+            modifier = Modifier.size(76.dp)
+        )
+        Image(
+            painter = painterResource(R.drawable.brand_title),
+            contentDescription = stringResource(R.string.brand_title_description),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth(0.72f)
+                .height(56.dp)
+                .padding(bottom = 20.dp)
         )
 
         Text(
-            text = "Iniciar Sesión",
+            text = stringResource(R.string.login_title),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 24.dp)
         )
@@ -84,31 +95,33 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { viewModel.onEmailChanged(it) },
-            label = { Text("Email") },
-            placeholder = { Text("usuario@ejemplo.com") },
-            leadingIcon = { Icon(Icons.Default.Email, contentDescription = "Email") },
+            label = { Text(stringResource(R.string.login_email_hint)) },
+            placeholder = { Text(stringResource(R.string.login_email_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = stringResource(R.string.login_email_hint)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             enabled = uiState !is LoginUiState.Loading,
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp)
         )
 
         // Password field
         OutlinedTextField(
             value = password,
             onValueChange = { viewModel.onPasswordChanged(it) },
-            label = { Text("Contraseña") },
-            placeholder = { Text("Ingresa tu contraseña") },
-            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = "Contraseña") },
+            label = { Text(stringResource(R.string.login_password_hint)) },
+            placeholder = { Text(stringResource(R.string.login_password_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = stringResource(R.string.login_password_hint)) },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             enabled = uiState !is LoginUiState.Loading,
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(16.dp)
         )
 
         // Error message
@@ -141,7 +154,7 @@ fun LoginScreen(
                 )
             } else {
                 Text(
-                    text = "Iniciar Sesión",
+                    text = stringResource(R.string.login_button),
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
@@ -150,7 +163,7 @@ fun LoginScreen(
         // Loading state info
         if (uiState is LoginUiState.Loading) {
             Text(
-                text = "Autenticando...",
+                text = stringResource(R.string.login_loading),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 modifier = Modifier.padding(top = 16.dp)

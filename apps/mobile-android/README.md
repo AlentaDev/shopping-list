@@ -104,6 +104,13 @@ Referencia operativa completa:
 
 - `apps/mobile-android/AGENTS.md`
 
+### Recursos de marca
+
+Los recursos de inicio, login y listas viven en `app/src/main/res/`: `brand_logo.xml`
+es la conversión manual a VectorDrawable de `apps/web/public/favicon.svg`, mientras
+que `brand_title.png` y `brand_landing_products.png` son copias PNG en
+`drawable-nodpi` de los recursos públicos web para preservar su proporción original.
+
 ---
 
 ## Casos de uso (resumen)
