@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@src/context/useToast";
 import { useDraftProviderConflict } from "@src/context/useDraftProviderConflict";
 import { UI_TEXT } from "@src/shared/constants/ui";
@@ -70,6 +70,89 @@ const clearLocalDraftForAllTabs = () => {
   );
 };
 
+type ListActionDependencies = {
+  sourceTabId: string;
+  confirmAndReset: (input: {
+    requestedProviderId: string;
+    requestedProviderName?: string;
+  }) => Promise<boolean>;
+  refreshLists: () => void;
+  onOpenList: (list: ListDetail) => void;
+  onStartOpenList?: (list: ListSummary) => void;
+  onCloseDetail: () => void;
+  onOpenDetail: (list: ListSummary) => Promise<void>;
+};
+
+const executeListAction = async (
+  list: ListSummary,
+  action: ListActionKey,
+  {
+    sourceTabId,
+    confirmAndReset,
+    refreshLists,
+    onOpenList,
+    onStartOpenList,
+    onCloseDetail,
+    onOpenDetail,
+  }: ListActionDependencies,
+) => {
+  switch (action) {
+    case "activate":
+      await activateList(list.id);
+      clearLocalDraftForAllTabs();
+      publishListTabSyncEvent({ type: "list-activated", sourceTabId });
+      refreshLists();
+      return;
+    case "complete": {
+      const listDetail = await getListDetail(list.id);
+      const checkedItemIds = mapCheckedItemsToTechnicalIds(listDetail.items);
+      await completeList(list.id, { checkedItemIds });
+      refreshLists();
+      return;
+    }
+    case "reuse": {
+      const requestedProviderId = list.provider?.slug;
+
+      if (requestedProviderId) {
+        const canProceed = await confirmAndReset({
+          requestedProviderId,
+          requestedProviderName: list.provider?.displayName,
+        });
+
+        if (!canProceed) {
+          return;
+        }
+      }
+
+      const reusedList = await reuseList(list.id);
+      publishListTabSyncEvent({ type: "list-reused", sourceTabId });
+      refreshLists();
+      onOpenList(reusedList);
+      onCloseDetail();
+      return;
+    }
+    case "delete":
+      await deleteList(list.id);
+      publishListTabSyncEvent({ type: "list-deleted", sourceTabId });
+      refreshLists();
+      onCloseDetail();
+      return;
+    case "view":
+      await onOpenDetail(list);
+      return;
+    case "edit": {
+      await startListEditing(list.id);
+      publishListTabSyncEvent({ type: "editing-started", sourceTabId });
+      refreshLists();
+      onStartOpenList?.(list);
+      const listDetail = await getListDetail(list.id);
+      onOpenList({ ...listDetail, status: LIST_STATUS.DRAFT, isEditing: true });
+      onCloseDetail();
+      return;
+    }
+  }
+};
+
 const ListsContainer = ({
   onOpenList,
   onStartOpenList,
@@ -95,9 +178,9 @@ const ListsContainer = ({
     null,
   );
 
-  const refreshLists = () => {
+  const refreshLists = useCallback(() => {
     setRefreshToken((prev) => prev + 1);
-  };
+  }, []);
 
   useEffect(() => {
     return subscribeToListTabSyncEvents({
@@ -109,7 +192,7 @@ const ListsContainer = ({
       onEditingFinished: refreshLists,
       onEditingCancelled: refreshLists,
     });
-  }, [sourceTabId]);
+  }, [refreshLists, sourceTabId]);
 
   useEffect(() => {
     const onStorage = (storageEvent: StorageEvent) => {
@@ -129,7 +212,7 @@ const ListsContainer = ({
     return () => {
       window.removeEventListener("storage", onStorage);
     };
-  }, []);
+  }, [refreshLists]);
 
   const handleCloseDetail = () => {
     setSelectedList(null);
@@ -160,83 +243,15 @@ const ListsContainer = ({
     setActionLoading({ listId: list.id, action });
 
     try {
-      if (action === "activate") {
-        await activateList(list.id);
-        clearLocalDraftForAllTabs();
-        publishListTabSyncEvent({
-          type: "list-activated",
-          sourceTabId,
-        });
-        refreshLists();
-        return;
-      }
-
-      if (action === "complete") {
-        const listDetail = await getListDetail(list.id);
-        const checkedItemIds = mapCheckedItemsToTechnicalIds(listDetail.items);
-        await completeList(list.id, { checkedItemIds });
-        refreshLists();
-        return;
-      }
-
-      if (action === "reuse") {
-        const requestedProviderId = list.provider?.slug;
-
-        if (requestedProviderId) {
-          const canProceed = await confirmAndReset({
-            requestedProviderId,
-            requestedProviderName: list.provider?.displayName,
-          });
-
-          if (!canProceed) {
-            return;
-          }
-        }
-
-        const reusedList = await reuseList(list.id);
-        publishListTabSyncEvent({
-          type: "list-reused",
-          sourceTabId,
-        });
-        refreshLists();
-        onOpenList(reusedList);
-        handleCloseDetail();
-        return;
-      }
-
-      if (action === "delete") {
-        await deleteList(list.id);
-        publishListTabSyncEvent({
-          type: "list-deleted",
-          sourceTabId,
-        });
-        refreshLists();
-        handleCloseDetail();
-        return;
-      }
-
-      if (action === "view") {
-        await handleOpenDetail(list);
-        return;
-      }
-
-      if (action === "edit") {
-        await startListEditing(list.id);
-        publishListTabSyncEvent({
-          type: "editing-started",
-          sourceTabId,
-        });
-        refreshLists();
-        onStartOpenList?.(list);
-        const listDetail = await getListDetail(list.id);
-        onOpenList({
-          ...listDetail,
-          status: LIST_STATUS.DRAFT,
-          isEditing: true,
-        });
-        handleCloseDetail();
-        return;
-      }
+      await executeListAction(list, action, {
+        sourceTabId,
+        confirmAndReset,
+        refreshLists,
+        onOpenList,
+        onStartOpenList,
+        onCloseDetail: handleCloseDetail,
+        onOpenDetail: handleOpenDetail,
+      });
     } catch (error) {
       showToast({
         message:

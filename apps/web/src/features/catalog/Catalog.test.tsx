@@ -467,6 +467,45 @@ describe("Catalog", () => {
     expect(screen.getByTestId("mobile-categories-panel")).toHaveClass("right-4", "top-32");
   });
 
+  it("retains the mobile categories panel state across a desktop interaction mode", () => {
+    isMobileCatalogInteractionModeMock = true;
+    const { rerender } = render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+    });
+    expect(screen.getByTestId("mobile-categories-overlay")).toBeInTheDocument();
+
+    isMobileCatalogInteractionModeMock = false;
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+    expect(screen.queryByTestId("mobile-categories-overlay")).not.toBeInTheDocument();
+
+    isMobileCatalogInteractionModeMock = true;
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+    expect(screen.getByTestId("mobile-categories-overlay")).toBeInTheDocument();
+  });
+
   it("uses 3 columns on mobile-landscape mode even with categories open", () => {
     isMobileCatalogInteractionModeMock = true;
 
@@ -610,7 +649,6 @@ describe("Catalog", () => {
   });
 
   it("preserves categories panel scroll position on category route updates", async () => {
-    const user = userEvent.setup();
     const { rerender } = render(
       <ToastProvider>
         <ListProvider>

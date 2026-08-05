@@ -1,23 +1,11 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-
-type ApiAwakeContextValue = {
-  apiAwake: boolean;
-};
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ApiAwakeContext } from "./useApiAwake";
 
 const API_AWAKE_MAX_ATTEMPTS = 5;
 const API_AWAKE_BASE_DELAY_MS = 400;
 const API_AWAKE_MAX_DELAY_MS = 2_000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const ApiAwakeContext = createContext<ApiAwakeContextValue | undefined>(undefined);
 
 type ApiAwakeProviderProps = {
   children: ReactNode;
@@ -66,9 +54,4 @@ export function ApiAwakeProvider({ children }: ApiAwakeProviderProps) {
   return (
     <ApiAwakeContext.Provider value={value}>{children}</ApiAwakeContext.Provider>
   );
-}
-
-export function useApiAwake() {
-  const context = useContext(ApiAwakeContext);
-  return context ?? { apiAwake: true };
 }

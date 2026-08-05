@@ -22,17 +22,14 @@ export const formatListCardDate = (value: string) => {
   }
 
   const normalizedDate = new Date(Date.UTC(year, month - 1, day));
-  const formattedDate = SPANISH_LONG_DATE_FORMATTER.format(normalizedDate).replace(
-    /\sde\s/gu,
-    " ",
-  );
-  const normalizedParts = formattedDate.match(/^(\d{1,2})\s+(.+?)\s+(\d{4})$/u);
+  const formattedParts = SPANISH_LONG_DATE_FORMATTER.formatToParts(normalizedDate);
+  const formattedDay = formattedParts.find(({ type }) => type === "day")?.value;
+  const formattedMonth = formattedParts.find(({ type }) => type === "month")?.value;
+  const formattedYear = formattedParts.find(({ type }) => type === "year")?.value;
 
-  if (!normalizedParts) {
-    return formattedDate;
+  if (!formattedDay || !formattedMonth || !formattedYear) {
+    return SPANISH_LONG_DATE_FORMATTER.format(normalizedDate);
   }
 
-  const [, formattedDay, formattedMonth, formattedYear] = normalizedParts;
-
-  return `${formattedDay} ${formattedMonth.trim()}, ${formattedYear}`;
+  return `${formattedDay} ${formattedMonth}, ${formattedYear}`;
 };

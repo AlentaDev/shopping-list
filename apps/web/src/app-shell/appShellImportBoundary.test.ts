@@ -18,9 +18,9 @@ describe("appShellImportBoundary", () => {
         syncLocalDraftToRemoteList: vi.fn(),
       }));
 
-      const fixture = `
+      const fixture = \`
         vi.mock("@src/features/catalog/services/ShouldStayInvisible", () => ({}));
-      `;
+      \`;
     `;
 
     expect(collectModuleDependencySpecifiers(content)).toEqual([

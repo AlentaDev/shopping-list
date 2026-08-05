@@ -11,7 +11,7 @@ import {
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";
-import { useApiAwake } from "@src/context/ApiAwakeContext";
+import { useApiAwake } from "@src/context/useApiAwake";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
@@ -96,7 +96,6 @@ export const AppShell = () => {
     logout,
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
   const [activeEditConflict, setActiveEditConflict] =
     useState<ActiveEditConflictState | null>(null);
   const [draftProviderConflict, setDraftProviderConflict] =
@@ -105,6 +104,7 @@ export const AppShell = () => {
   const localDraft = loadLocalDraft();
   const homeDraftProviderId = !authUser ? (localDraft?.providerId ?? null) : null;
   const showAnonymousDraftGuidance = !authUser && Boolean(localDraft?.providerId);
+  const handshakeStatus: HandshakeStatus = !authUser || apiAwake ? "READY" : "WAITING";
 
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
@@ -304,15 +304,6 @@ export const AppShell = () => {
   const isCatalogRoute = /^\/[^/]+\/catalog(?:\/[^/]+)?$/.test(currentPath);
   const catalogProviderId = currentPath.match(/^\/([^/]+)\/catalog(?:\/[^/]+)?$/)?.[1] ?? null;
   const footerContentLayout = isCatalogRoute ? "catalog" : "default";
-
-  useEffect(() => {
-    if (!authUser) {
-      setHandshakeStatus("READY");
-      return;
-    }
-
-    setHandshakeStatus(apiAwake ? "READY" : "WAITING");
-  }, [apiAwake, authUser]);
 
   useEffect(() => {
     if (handshakeStatus !== "READY" || !authUser) {

@@ -12,6 +12,7 @@ import { SUPPORTED_PROVIDERS } from "@src/shared/constants/providers";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
 import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 
 const LOGIN_PATH = "/auth/login";
 const REGISTER_PATH = "/auth/register";
@@ -108,6 +109,7 @@ export const useAppShellNavigation = ({
 
     persistLastProvider(nextPath);
     window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new Event(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU));
     setCurrentPath(nextPath);
     setAuthMode(resolveAuthMode(nextPath));
   }, []);
@@ -119,6 +121,7 @@ export const useAppShellNavigation = ({
       if (window.location.pathname !== path) {
         window.history.replaceState({}, "", path);
       }
+      window.dispatchEvent(new Event(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU));
       setCurrentPath(path);
       setAuthMode(resolveAuthMode(path));
     };

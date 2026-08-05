@@ -1,6 +1,7 @@
 import {
   type FormEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useId,
   useRef,
@@ -48,16 +49,16 @@ const ListModal = ({
   const [draftTitle, setDraftTitle] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
 
-  const resetTitleEditor = () => {
+  const resetTitleEditor = useCallback(() => {
     setIsEditingTitle(false);
     setTitleError(null);
     setDraftTitle(title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE);
-  };
+  }, [title]);
 
-  const handleDismissModal = () => {
+  const handleDismissModal = useCallback(() => {
     resetTitleEditor();
     onClose();
-  };
+  }, [onClose, resetTitleEditor]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -90,7 +91,7 @@ const ListModal = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, title]);
+  }, [handleDismissModal, isOpen]);
 
   if (!isOpen) {
     return null;

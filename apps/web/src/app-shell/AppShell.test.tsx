@@ -53,7 +53,7 @@ vi.mock("@src/context/useAuth", () => ({
   }),
 }));
 
-vi.mock("@src/context/ApiAwakeContext", () => ({
+vi.mock("@src/context/useApiAwake", () => ({
   useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
 }));
 
@@ -130,14 +130,6 @@ vi.mock("@src/app-shell/components/AppFooter", () => ({
 }));
 
 describe("app-shell/AppShell", () => {
-  const setMatchMedia = (queries: Record<string, boolean>) => {
-    vi.mocked(window.matchMedia).mockImplementation(
-      (query: string) => ({
-        matches: queries[query] ?? false,
-      }) as MediaQueryList,
-    );
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     authState.authUser = null;

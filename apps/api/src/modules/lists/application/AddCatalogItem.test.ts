@@ -5,7 +5,6 @@ import type { List } from "../domain/list.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
 import { AddCatalogItem } from "./AddCatalogItem.js";
 import {
-  DraftProviderConflictError,
   ListStatusTransitionError,
   ProviderPayloadContractError,
 } from "./errors.js";

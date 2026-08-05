@@ -10,7 +10,7 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 
 const apiAwakeState = { apiAwake: true };
 
-vi.mock("./ApiAwakeContext", () => ({
+vi.mock("./useApiAwake", () => ({
   useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
 }));
 

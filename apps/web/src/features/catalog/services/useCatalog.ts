@@ -118,8 +118,11 @@ export const useCatalog = ({ providerId, initialCategoryId, userId }: UseCatalog
     [initialCategoryId, providerId, userId],
   );
 
-  const categories =
-    categoriesState.providerId === providerId ? categoriesState.items : [];
+  const categories = useMemo(
+    () =>
+      categoriesState.providerId === providerId ? categoriesState.items : [],
+    [categoriesState, providerId],
+  );
 
   const categoriesStatus =
     categoriesState.providerId === providerId

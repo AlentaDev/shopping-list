@@ -2,7 +2,8 @@
 import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import { ApiAwakeProvider, useApiAwake } from "./ApiAwakeContext";
+import { ApiAwakeProvider } from "./ApiAwakeContext";
+import { useApiAwake } from "./useApiAwake";
 
 function ApiAwakeState() {
   const { apiAwake } = useApiAwake();

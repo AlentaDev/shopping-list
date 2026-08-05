@@ -10,6 +10,7 @@ import { useList } from "@src/context/useList";
 import { APP_EVENTS, FETCH_STATUS } from "@src/shared/constants/appState";
 import type { SupportedProviderId } from "@src/shared/constants/providers";
 import { useMobileCatalogInteractionMode } from "@src/shared/hooks/useMobileCatalogInteractionMode";
+import type { CatalogCategorySection, CatalogProductSummary } from "./services/types";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 const SWITCHING_PRODUCTS_MESSAGE = UI_TEXT.CATALOG.SWITCHING_PRODUCTS_MESSAGE;
@@ -85,6 +86,118 @@ const ProductSkeletonGrid = ({
   </div>
 );
 
+type CatalogContentProps = {
+  sections: CatalogCategorySection[];
+  detailStatus: (typeof FETCH_STATUS)[keyof typeof FETCH_STATUS];
+  detailError: string | null;
+  hasItems: boolean;
+  hasNavigationSections: boolean;
+  itemsEmpty: boolean;
+  categoriesEmpty: boolean;
+  isInitialProductsLoading: boolean;
+  isDesktopPanelOpen: boolean;
+  isMobileInteractionMode: boolean;
+  onRetryLoadDetail: () => void;
+  onSelectCategory: (id: string) => void;
+  onAddProduct: (product: CatalogProductSummary, subcategoryName: string) => void;
+};
+
+const CatalogContent = ({
+  sections,
+  detailStatus,
+  detailError,
+  hasItems,
+  hasNavigationSections,
+  itemsEmpty,
+  categoriesEmpty,
+  isInitialProductsLoading,
+  isDesktopPanelOpen,
+  isMobileInteractionMode,
+  onRetryLoadDetail,
+  onSelectCategory,
+  onAddProduct,
+}: CatalogContentProps) => (
+  <>
+    {isInitialProductsLoading ? (
+      <div className="space-y-4" aria-live="polite" aria-busy="true">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {UI_TEXT.CATALOG.LOADING_PRODUCTS_MESSAGE}
+        </h2>
+        <div className="flex justify-center">
+          <div className="w-full">
+            <ProductSkeletonGrid
+              count={8}
+              isCategoriesOpen={isDesktopPanelOpen}
+              isMobileInteractionMode={isMobileInteractionMode}
+            />
+          </div>
+        </div>
+      </div>
+    ) : null}
+    {detailStatus === FETCH_STATUS.ERROR ? (
+      <div className="space-y-3">
+        <p className="text-sm text-slate-500">{detailError ?? ITEMS_ERROR_MESSAGE}</p>
+        <button
+          type="button"
+          onClick={onRetryLoadDetail}
+          className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
+        >
+          {UI_TEXT.CATALOG.RETRY_BUTTON_LABEL}
+        </button>
+      </div>
+    ) : null}
+    {hasItems ? (
+      <div
+        className={`flex justify-center transition-opacity duration-200 ${
+          detailStatus === FETCH_STATUS.LOADING ? "opacity-60" : "opacity-100"
+        }`}
+      >
+        <div className="flex w-full flex-col gap-8">
+          {detailStatus === FETCH_STATUS.LOADING ? (
+            <p className="text-sm text-slate-500">{SWITCHING_PRODUCTS_MESSAGE}</p>
+          ) : null}
+          {sections.map((section) => (
+            <ProductsCategory
+              key={section.subcategoryId || section.subcategoryName}
+              subcategoryName={section.subcategoryName}
+              products={section.products}
+              gridClassName={getGridClasses(isDesktopPanelOpen, isMobileInteractionMode)}
+              onAddProduct={(product) => onAddProduct(product, section.subcategoryName)}
+            />
+          ))}
+        </div>
+      </div>
+    ) : null}
+    {hasNavigationSections ? (
+      <div className="space-y-3">
+        {sections.map((section) => (
+          <button
+            key={section.subcategoryId || section.subcategoryName}
+            type="button"
+            onClick={() => onSelectCategory(section.subcategoryId)}
+            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            <span>{section.subcategoryName}</span>
+            <span aria-hidden="true">›</span>
+          </button>
+        ))}
+      </div>
+    ) : null}
+    {itemsEmpty ? (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <p className="text-lg font-semibold text-slate-800">{UI_TEXT.CATALOG.EMPTY_PRODUCTS_TITLE}</p>
+        <p className="mt-2 text-sm text-slate-500">{UI_TEXT.CATALOG.EMPTY_PRODUCTS_SUBTITLE}</p>
+      </div>
+    ) : null}
+    {categoriesEmpty ? (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <p className="text-lg font-semibold text-slate-800">{UI_TEXT.CATALOG.EMPTY_CATEGORIES_TITLE}</p>
+        <p className="mt-2 text-sm text-slate-500">{UI_TEXT.CATALOG.EMPTY_CATEGORIES_SUBTITLE}</p>
+      </div>
+    ) : null}
+  </>
+);
+
 const Catalog = ({
   providerId = "mercadona",
   initialCategoryId,
@@ -125,8 +238,9 @@ const Catalog = ({
   const hasItems = totalProducts > 0;
   const hasNavigationSections =
     !hasItems && sections.some((section) => section.subcategoryId);
-  const skeletonCount = 8;
   const isDesktopPanelOpen = !isMobileInteractionMode;
+  const isCategoriesPanelVisible =
+    !isMobileInteractionMode || isMobileCategoriesOpen;
 
   useLayoutEffect(() => {
     if (!selectedCategoryId) {
@@ -139,12 +253,6 @@ const Catalog = ({
   useEffect(() => {
     onItemsCountChange?.(totalProducts);
   }, [onItemsCountChange, totalProducts]);
-
-  useEffect(() => {
-    if (!isMobileInteractionMode) {
-      setIsMobileCategoriesOpen(false);
-    }
-  }, [isMobileInteractionMode]);
 
   useEffect(() => {
     if (!isMobileInteractionMode) {
@@ -243,7 +351,7 @@ const Catalog = ({
             />
           </aside>
         ) : null}
-        {isMobileInteractionMode && isMobileCategoriesOpen ? (
+        {isMobileInteractionMode && isCategoriesPanelVisible ? (
           <div className="fixed inset-0 z-50" data-testid="mobile-categories-overlay">
             <button
               type="button"
@@ -273,98 +381,21 @@ const Catalog = ({
           <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
             {categoryDetail?.categoryName || UI_TEXT.CATALOG.TITLE}
           </h1>
-          {isInitialProductsLoading ? (
-            <div className="space-y-4" aria-live="polite" aria-busy="true">
-              <h2 className="text-lg font-semibold text-slate-900">
-                {UI_TEXT.CATALOG.LOADING_PRODUCTS_MESSAGE}
-              </h2>
-              <div className="flex justify-center">
-                <div className="w-full">
-                    <ProductSkeletonGrid
-                      count={skeletonCount}
-                      isCategoriesOpen={isDesktopPanelOpen}
-                      isMobileInteractionMode={isMobileInteractionMode}
-                    />
-                </div>
-              </div>
-            </div>
-          ) : null}
-          {detailStatus === FETCH_STATUS.ERROR ? (
-            <div className="space-y-3">
-              <p className="text-sm text-slate-500">
-                {detailError ?? ITEMS_ERROR_MESSAGE}
-              </p>
-              <button
-                type="button"
-                onClick={reloadDetail}
-                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400"
-              >
-                {UI_TEXT.CATALOG.RETRY_BUTTON_LABEL}
-              </button>
-            </div>
-          ) : null}
-          {hasItems ? (
-            <div
-              className={`flex justify-center transition-opacity duration-200 ${
-                detailStatus === FETCH_STATUS.LOADING ? "opacity-60" : "opacity-100"
-              }`}
-            >
-              <div className="flex w-full flex-col gap-8">
-                {detailStatus === FETCH_STATUS.LOADING ? (
-                  <p className="text-sm text-slate-500">{SWITCHING_PRODUCTS_MESSAGE}</p>
-                ) : null}
-                {sections.map((section) => (
-                  <ProductsCategory
-                    key={section.subcategoryId || section.subcategoryName}
-                    subcategoryName={section.subcategoryName}
-                    products={section.products}
-                    gridClassName={getGridClasses(
-                      isDesktopPanelOpen,
-                      isMobileInteractionMode,
-                    )}
-                    onAddProduct={(product) => {
-                      handleAddProduct(product, section.subcategoryName);
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {hasNavigationSections ? (
-            <div className="space-y-3">
-              {sections.map((section) => (
-                <button
-                  key={section.subcategoryId || section.subcategoryName}
-                  type="button"
-                  onClick={() => handleSelectCategory(section.subcategoryId)}
-                  className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  <span>{section.subcategoryName}</span>
-                  <span aria-hidden="true">›</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {itemsEmpty ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-lg font-semibold text-slate-800">
-                {UI_TEXT.CATALOG.EMPTY_PRODUCTS_TITLE}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                {UI_TEXT.CATALOG.EMPTY_PRODUCTS_SUBTITLE}
-              </p>
-            </div>
-          ) : null}
-          {categoriesEmpty ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <p className="text-lg font-semibold text-slate-800">
-                {UI_TEXT.CATALOG.EMPTY_CATEGORIES_TITLE}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                {UI_TEXT.CATALOG.EMPTY_CATEGORIES_SUBTITLE}
-              </p>
-            </div>
-          ) : null}
+          <CatalogContent
+            sections={sections}
+            detailStatus={detailStatus}
+            detailError={detailError}
+            hasItems={hasItems}
+            hasNavigationSections={hasNavigationSections}
+            itemsEmpty={itemsEmpty}
+            categoriesEmpty={categoriesEmpty}
+            isInitialProductsLoading={isInitialProductsLoading}
+            isDesktopPanelOpen={isDesktopPanelOpen}
+            isMobileInteractionMode={isMobileInteractionMode}
+            onRetryLoadDetail={reloadDetail}
+            onSelectCategory={handleSelectCategory}
+            onAddProduct={handleAddProduct}
+          />
         </section>
       </div>
     </>

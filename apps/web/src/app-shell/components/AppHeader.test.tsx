@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
 import { createRef } from "react";
 import { UI_TEXT } from "@src/shared/constants/ui";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import { AppHeader } from "./AppHeader";
 
 const baseProps = {
@@ -24,6 +25,15 @@ const baseProps = {
   onCloseUserMenu: vi.fn(),
   onLogout: vi.fn(),
   userMenuRef: createRef<HTMLDivElement>(),
+};
+
+const notifyMediaQueryListeners = (
+  queryListeners: Set<(event: { matches: boolean; media: string }) => void>,
+  query: string,
+  matches: boolean,
+) => {
+  const event = { matches, media: query };
+  queryListeners.forEach((listener) => listener(event));
 };
 
 describe("app-shell/AppHeader", () => {
@@ -81,6 +91,12 @@ describe("app-shell/AppHeader", () => {
       return width <= Number(maxWidthMatch[1]);
     };
 
+    const notifyListeners = () => {
+      listeners.forEach((queryListeners, query) => {
+        notifyMediaQueryListeners(queryListeners, query, evaluateQuery(query));
+      });
+    };
+
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation((query: string) => ({
@@ -102,10 +118,7 @@ describe("app-shell/AppHeader", () => {
     return {
       setWidth(nextWidth: number) {
         width = nextWidth;
-        listeners.forEach((queryListeners, query) => {
-          const event = { matches: evaluateQuery(query), media: query };
-          queryListeners.forEach((listener) => listener(event));
-        });
+        notifyListeners();
       },
     };
   };
@@ -471,6 +484,22 @@ describe("app-shell/AppHeader", () => {
     expect(screen.getByRole("dialog", { name: UI_TEXT.APP.MOBILE_MENU_TITLE })).toBeInTheDocument();
 
     await user.click(document.body);
+
+    expect(screen.queryByRole("dialog", { name: UI_TEXT.APP.MOBILE_MENU_TITLE })).not.toBeInTheDocument();
+  });
+
+  it("closes the mobile menu when navigation crosses the app-shell boundary", async () => {
+    setMatchMedia(true);
+    const user = userEvent.setup();
+
+    render(<AppHeader {...baseProps} />);
+
+    await user.click(screen.getByRole("button", { name: UI_TEXT.APP.MOBILE_MENU_BUTTON_LABEL }));
+    expect(screen.getByRole("dialog", { name: UI_TEXT.APP.MOBILE_MENU_TITLE })).toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new Event(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU));
+    });
 
     expect(screen.queryByRole("dialog", { name: UI_TEXT.APP.MOBILE_MENU_TITLE })).not.toBeInTheDocument();
   });

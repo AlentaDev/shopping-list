@@ -441,12 +441,12 @@ const ShoppingList = ({
     checkEditSessionOnBootstrap: isOpen,
   });
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setPendingRemoval(null);
     setPendingListDeletion(false);
     restoreGlobalScroll();
     onClose();
-  };
+  }, [onClose]);
 
   const handleAddMore = () => {
     if (!mutationsEnabled) {

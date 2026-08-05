@@ -2,10 +2,7 @@ import express from "express";
 import request from "supertest";
 import { describe, expect, it, vi } from "vitest";
 import { errorMiddleware } from "@src/app/errors/errorMiddleware.js";
-import {
-  DraftProviderConflictError,
-  ListEditingLockedError,
-} from "../application/errors.js";
+import { ListEditingLockedError } from "../application/errors.js";
 import { createListsRouter } from "./router.js";
 
 describe("lists router - complete list", () => {

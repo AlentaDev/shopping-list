@@ -3,6 +3,18 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { AUTH_401_RETRY_PRESETS, fetchWithAuth } from "./fetchWithAuth";
 
+const getRequestUrl = (input: RequestInfo | URL) => {
+  if (typeof input === "string") {
+    return input;
+  }
+
+  if (input instanceof URL) {
+    return input.pathname;
+  }
+
+  return input.url;
+};
+
 describe("fetchWithAuth", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -167,12 +179,7 @@ describe("fetchWithAuth", () => {
     });
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const requestUrl =
-        typeof input === "string"
-          ? input
-          : input instanceof URL
-            ? input.pathname
-            : input.url;
+      const requestUrl = getRequestUrl(input);
 
       if (requestUrl === "/api/auth/refresh") {
         return refreshPromise;
@@ -221,12 +228,7 @@ describe("fetchWithAuth", () => {
     let refreshCallCount = 0;
 
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const requestUrl =
-        typeof input === "string"
-          ? input
-          : input instanceof URL
-            ? input.pathname
-            : input.url;
+      const requestUrl = getRequestUrl(input);
 
       if (requestUrl === "/api/auth/refresh") {
         refreshCallCount += 1;

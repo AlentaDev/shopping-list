@@ -67,7 +67,7 @@ vi.mock("@src/context/useToast", () => ({
   }),
 }));
 
-vi.mock("@src/context/ApiAwakeContext", () => ({
+vi.mock("@src/context/useApiAwake", () => ({
   useApiAwake: () => ({ apiAwake: true }),
 }));
 

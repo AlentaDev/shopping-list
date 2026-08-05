@@ -163,8 +163,9 @@ test("auth happy path permite registrar con auto-login y cerrar sesión", async 
 
   const authPage = new AuthPage(page);
 
-  await authPage.gotoRegister();
+  await page.goto("/");
   await clearLocalStorage(page);
+  await authPage.gotoRegister();
 
   await expect(
     authPage.title,
@@ -190,8 +191,7 @@ test("auth happy path permite registrar con auto-login y cerrar sesión", async 
     "El menú de usuario debe mostrarse tras el registro",
   ).toBeVisible({ timeout: 10000 });
 
-  // Verificar que el texto del botón contiene el nombre del usuario
-  await expect(userMenuButton).toContainText(USER.name);
+  await expect(userMenuButton).toContainText("AN");
 
   await userMenuButton.click();
   await page.getByRole("menuitem", { name: "Logout" }).click();
@@ -210,8 +210,10 @@ test("catálogo permite abrir panel, seleccionar categoría y reintentar carga",
 
   const catalogPage = new ProductCatalogPage(page);
 
-  await catalogPage.goto();
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto("/");
   await clearLocalStorage(page);
+  await catalogPage.goto();
 
   const categoriesButton = page.getByRole("button", { name: "Categorías" });
   await categoriesButton.click();
@@ -243,8 +245,9 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
 
   const catalogPage = new ProductCatalogPage(page);
 
-  await catalogPage.goto();
+  await page.goto("/");
   await clearLocalStorage(page);
+  await catalogPage.goto();
 
   await expect(
     catalogPage.getProduct(PRODUCT.name),
@@ -270,7 +273,7 @@ test("carrito añade producto y muestra badge y toast", async ({ page }) => {
 
   const cartButton = page.getByRole("button", { name: "Abrir carrito" });
   await expect(
-    cartButton.locator("span"),
+    cartButton.locator("span").locator("span"),
     "El badge del carrito debe reflejar las líneas únicas",
   ).toHaveText("1");
 });
@@ -287,6 +290,7 @@ test("/catalog redirige, espera handshake y luego permite añadir producto", asy
   await page.getByLabel("Contraseña").fill("Password123!");
   await page.getByRole("button", { name: "Entrar" }).click();
 
+  await page.evaluate(() => localStorage.setItem("lastProvider", "mercadona"));
   await page.goto("/catalog");
 
   await expect(page).toHaveURL(/\/mercadona\/catalog$/);
@@ -303,7 +307,9 @@ test("/catalog redirige, espera handshake y luego permite añadir producto", asy
   await expect(addButton).toBeEnabled();
   await addButton.click();
 
-  await expect(page.getByRole("button", { name: "Abrir carrito" }).locator("span")).toHaveText("1");
+  await expect(
+    page.getByRole("button", { name: "Abrir carrito" }).locator("span").locator("span"),
+  ).toHaveText("1");
 });
 
 test("modal permite ajustar cantidades, eliminar items, estado vacío y volver al catálogo", async ({

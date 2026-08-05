@@ -35,6 +35,18 @@ const STATUS_TO_TAB: Partial<Record<ListStatus, TabKey>> = {
   [LIST_STATUS.COMPLETED]: "COMPLETED",
 };
 
+const getDetailActions = (status: ListStatus | undefined): ListActionKey[] => {
+  if (status === LIST_STATUS.COMPLETED) {
+    return ["reuse", "delete"];
+  }
+
+  if (status === LIST_STATUS.ACTIVE) {
+    return ["edit", "delete"];
+  }
+
+  return [];
+};
+
 const ListsScreen = ({
   lists,
   onAction,
@@ -59,12 +71,7 @@ const ListsScreen = ({
   );
 
   const selectedListStatus = selectedList?.status;
-  const detailActions =
-    selectedListStatus === LIST_STATUS.COMPLETED
-      ? (["reuse", "delete"] satisfies ListActionKey[])
-      : selectedListStatus === LIST_STATUS.ACTIVE
-        ? (["edit", "delete"] satisfies ListActionKey[])
-        : [];
+  const detailActions = getDetailActions(selectedListStatus);
 
   const handleAction = (list: ListSummary, action: ListActionKey) => {
     if (action === "delete") {

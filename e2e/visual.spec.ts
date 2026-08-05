@@ -50,7 +50,7 @@ const mockAuthRoutes = async (page: Page) => {
 };
 
 const mockCatalogRoutes = async (page: Page) => {
-  await page.route("**/api/catalog/categories", async (route) => {
+  await page.route("**/api/catalog/*/categories", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -58,7 +58,7 @@ const mockCatalogRoutes = async (page: Page) => {
     });
   });
 
-  await page.route("**/api/catalog/categories/*", async (route) => {
+  await page.route("**/api/catalog/*/categories/*", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -73,9 +73,9 @@ test("visual: homepage con catálogo", async ({ page }) => {
 
   const catalogPage = new ProductCatalogPage(page);
 
-  await catalogPage.goto();
+  await page.goto("/");
   await clearLocalStorage(page);
-  await page.reload();
+  await catalogPage.goto();
 
   await expect(
     page,
@@ -89,9 +89,9 @@ test("visual: lista con items", async ({ page }) => {
 
   const catalogPage = new ProductCatalogPage(page);
 
-  await catalogPage.goto();
+  await page.goto("/");
   await clearLocalStorage(page);
-  await page.reload();
+  await catalogPage.goto();
 
   await catalogPage.addToCart(PRODUCT.name);
   await page.getByRole("button", { name: "Abrir carrito" }).click();
@@ -107,9 +107,9 @@ test("visual: lista con items", async ({ page }) => {
 test("visual: homepage con login", async ({ page }) => {
   await mockAuthRoutes(page);
 
-  await page.goto("/auth/login");
+  await page.goto("/");
   await clearLocalStorage(page);
-  await page.reload();
+  await page.goto("/auth/login");
 
   await expect(
     page,
@@ -120,9 +120,9 @@ test("visual: homepage con login", async ({ page }) => {
 test("visual: homepage con registro", async ({ page }) => {
   await mockAuthRoutes(page);
 
-  await page.goto("/auth/register");
+  await page.goto("/");
   await clearLocalStorage(page);
-  await page.reload();
+  await page.goto("/auth/register");
 
   await expect(
     page,

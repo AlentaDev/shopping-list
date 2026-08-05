@@ -32,6 +32,18 @@ const ACTION_LABELS: Record<ListActionKey, string> = {
   view: UI_TEXT.LISTS.ACTIONS.VIEW,
 };
 
+const getStatusDateLabel = (status: ListSummary["status"]) => {
+  if (status === LIST_STATUS.ACTIVE) {
+    return UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL;
+  }
+
+  if (status === LIST_STATUS.COMPLETED) {
+    return UI_TEXT.LISTS.CARD.COMPLETED_AT_LABEL;
+  }
+
+  return UI_TEXT.LISTS.UPDATED_AT_LABEL;
+};
+
 const TrashIcon = () => (
   <svg
     aria-hidden="true"
@@ -137,12 +149,7 @@ export const ListCard = ({ list, actionLoading, onAction, onOpenDetail }: ListCa
     onOpenDetail(list);
   };
 
-  const statusDateLabel =
-    list.status === LIST_STATUS.ACTIVE
-      ? UI_TEXT.LISTS.CARD.ACTIVATED_AT_LABEL
-      : list.status === LIST_STATUS.COMPLETED
-        ? UI_TEXT.LISTS.CARD.COMPLETED_AT_LABEL
-        : UI_TEXT.LISTS.UPDATED_AT_LABEL;
+  const statusDateLabel = getStatusDateLabel(list.status);
 
   const statusDateValue =
     list.status === LIST_STATUS.ACTIVE ? list.activatedAt ?? list.updatedAt : list.updatedAt;

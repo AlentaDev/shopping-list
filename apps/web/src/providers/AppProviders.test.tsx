@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useApiAwake } from "@src/context/ApiAwakeContext";
+import { useApiAwake } from "@src/context/useApiAwake";
 import { useAuth } from "@src/context/useAuth";
 import { useList } from "@src/context/useList";
 import { getCurrentUser } from "@src/features/auth/services/AuthService";

@@ -67,6 +67,227 @@ type AppHeaderProps = {
   userMenuRef: RefObject<HTMLDivElement | null>;
 };
 
+type NavigationItem = {
+  key: string;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  show: boolean;
+};
+
+const NavigationItems = ({
+  items,
+  menuKind,
+  onCloseMobileMenu,
+}: {
+  items: NavigationItem[];
+  menuKind: "desktop" | "mobile";
+  onCloseMobileMenu: () => void;
+}) =>
+  items.map((item) => {
+    if (item.isActive) {
+      return (
+        <span
+          key={`${menuKind}-${item.key}`}
+          aria-current="page"
+          className={menuKind === "mobile" ? MOBILE_ACTIVE_NAV_ITEM_CLASS : ACTIVE_NAV_ITEM_CLASS}
+        >
+          {item.label}
+        </span>
+      );
+    }
+
+    return (
+      <button
+        key={`${menuKind}-${item.key}`}
+        type="button"
+        onClick={() => {
+          onCloseMobileMenu();
+          item.onClick();
+        }}
+        className={menuKind === "mobile" ? MOBILE_MENU_ITEM_CLASS : HEADER_ACTION_BUTTON_CLASS}
+      >
+        {item.label}
+      </button>
+    );
+  });
+
+const CartButton = ({
+  className,
+  linesCount,
+  onOpenCart,
+}: {
+  className: string;
+  linesCount: number;
+  onOpenCart: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onOpenCart}
+    aria-label={UI_TEXT.APP.CART_BUTTON_LABEL}
+    className={className}
+  >
+    <span className="relative inline-flex">
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="h-[1.45rem] w-[1.45rem]"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 .95-.68L21 8H6" />
+        <circle cx="10" cy="20" r="1.5" />
+        <circle cx="18" cy="20" r="1.5" />
+      </svg>
+      {linesCount > 0 ? (
+        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-semibold leading-none tabular-nums text-white">
+          {linesCount}
+        </span>
+      ) : null}
+    </span>
+  </button>
+);
+
+const UserActions = ({
+  authUser,
+  isUserMenuOpen,
+  onToggleUserMenu,
+  onCloseUserMenu,
+  onLogout,
+  userMenuRef,
+}: Pick<
+  AppHeaderProps,
+  "authUser" | "isUserMenuOpen" | "onToggleUserMenu" | "onCloseUserMenu" | "onLogout" | "userMenuRef"
+>) => {
+  if (!authUser) {
+    return null;
+  }
+
+  return (
+    <div className="relative" ref={userMenuRef}>
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isUserMenuOpen}
+        aria-label={UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL}
+        onClick={onToggleUserMenu}
+        className={USER_BADGE_BUTTON_CLASS}
+      >
+        {getUserInitials(authUser.name)}
+      </button>
+      {isUserMenuOpen ? (
+        <div role="menu" className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-lg">
+          <button type="button" role="menuitem" onClick={onCloseUserMenu} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-slate-50">
+            {UI_TEXT.AUTH.USER_MENU.PROFILE}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onCloseUserMenu();
+              onLogout();
+            }}
+            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-red-600 hover:bg-red-50"
+          >
+            {UI_TEXT.AUTH.USER_MENU.LOGOUT}
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+const MobileMenu = ({
+  authUser,
+  isOpen,
+  items,
+  linesCount,
+  onClose,
+  onNavigateLogin,
+  onNavigateRegister,
+  onOpenCart,
+}: Pick<AppHeaderProps, "authUser" | "linesCount" | "onNavigateLogin" | "onNavigateRegister" | "onOpenCart"> & {
+  isOpen: boolean;
+  items: NavigationItem[];
+  onClose: () => void;
+}) => {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-label={UI_TEXT.APP.MOBILE_MENU_TITLE}
+      className="absolute left-0 top-full z-20 mt-4 min-w-52 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
+    >
+      <div className="flex flex-col items-stretch gap-2">
+        <NavigationItems items={items} menuKind="mobile" onCloseMobileMenu={onClose} />
+        <button
+          type="button"
+          onClick={() => {
+            onClose();
+            onOpenCart();
+          }}
+          className={MOBILE_MENU_ITEM_CLASS}
+        >
+          {linesCount > 0
+            ? `${UI_TEXT.APP.CART_BUTTON_LABEL} (${linesCount})`
+            : UI_TEXT.APP.CART_BUTTON_LABEL}
+        </button>
+        {!authUser ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onNavigateLogin();
+              }}
+              className={MOBILE_MENU_ITEM_CLASS}
+            >
+              {UI_TEXT.APP.LOGIN_LABEL}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onNavigateRegister();
+              }}
+              className="w-full rounded-full bg-emerald-500 px-4 py-2 text-left text-sm font-medium text-white transition hover:bg-emerald-600"
+            >
+              {UI_TEXT.APP.REGISTER_LABEL}
+            </button>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
+const useCloseMobileMenuOnOutsidePointer = (
+  isMobileMenuOpen: boolean,
+  mobileMenuContainerRef: RefObject<HTMLDivElement | null>,
+  onCloseMobileMenu: () => void,
+) => {
+  useEffect(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !mobileMenuContainerRef.current?.contains(event.target)) {
+        onCloseMobileMenu();
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [isMobileMenuOpen, mobileMenuContainerRef, onCloseMobileMenu]);
+};
+
 export const AppHeader = ({
   authUser,
   isUserMenuOpen,
@@ -85,7 +306,6 @@ export const AppHeader = ({
   onLogout,
   userMenuRef,
 }: AppHeaderProps) => {
-  const userInitials = authUser ? getUserInitials(authUser.name) : null;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuContainerRef = useRef<HTMLDivElement | null>(null);
   const isMobileHeaderLayout = useMediaQuery(MOBILE_HEADER_QUERY);
@@ -94,32 +314,17 @@ export const AppHeader = ({
   const catalogProviderLogo = getProviderLogoInfo(catalogProviderId);
 
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [currentPath]);
+    const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return;
-    }
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const eventTarget = event.target;
-
-      if (!(eventTarget instanceof Node)) {
-        return;
-      }
-
-      if (!mobileMenuContainerRef.current?.contains(eventTarget)) {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU, closeMobileMenu);
 
     return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU, closeMobileMenu);
     };
-  }, [isMobileMenuOpen]);
+  }, []);
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  useCloseMobileMenuOnOutsidePointer(isMobileMenuOpen, mobileMenuContainerRef, closeMobileMenu);
 
   const navigationItems = useMemo(
     () => [
@@ -148,106 +353,9 @@ export const AppHeader = ({
     [authUser, currentPath, onNavigateDownloadApp, onNavigateHome, onNavigateLists],
   );
 
-  const renderNavItems = (menuKind: "desktop" | "mobile") =>
-    navigationItems.map((item) => {
-      if (item.isActive) {
-        return (
-          <span
-            key={`${menuKind}-${item.key}`}
-            aria-current="page"
-            className={menuKind === "mobile" ? MOBILE_ACTIVE_NAV_ITEM_CLASS : ACTIVE_NAV_ITEM_CLASS}
-          >
-            {item.label}
-          </span>
-        );
-      }
-
-      return (
-        <button
-          key={`${menuKind}-${item.key}`}
-          type="button"
-          onClick={() => {
-            setIsMobileMenuOpen(false);
-            item.onClick();
-          }}
-          className={menuKind === "mobile" ? MOBILE_MENU_ITEM_CLASS : HEADER_ACTION_BUTTON_CLASS}
-        >
-          {item.label}
-        </button>
-      );
-    });
-
-  const renderCartButton = (className: string) => (
-    <button
-      type="button"
-      onClick={onOpenCart}
-      aria-label={UI_TEXT.APP.CART_BUTTON_LABEL}
-      className={className}
-    >
-      <span className="relative inline-flex">
-        <svg
-          aria-hidden="true"
-          viewBox="0 0 24 24"
-          className="h-[1.45rem] w-[1.45rem]"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M3 4h2l2.4 11.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 .95-.68L21 8H6" />
-          <circle cx="10" cy="20" r="1.5" />
-          <circle cx="18" cy="20" r="1.5" />
-        </svg>
-        {linesCount > 0 ? (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-semibold leading-none tabular-nums text-white">
-            {linesCount}
-          </span>
-        ) : null}
-      </span>
-    </button>
-  );
-
-  const authActions = authUser ? (
-    <div className="relative" ref={userMenuRef}>
-      <button
-        type="button"
-        aria-haspopup="menu"
-        aria-expanded={isUserMenuOpen}
-        aria-label={UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL}
-        onClick={onToggleUserMenu}
-        className={USER_BADGE_BUTTON_CLASS}
-      >
-        {userInitials}
-      </button>
-      {isUserMenuOpen ? (
-        <div
-          role="menu"
-          className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-200 bg-white p-2 text-sm shadow-lg"
-        >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={onCloseUserMenu}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-slate-700 hover:bg-slate-50"
-          >
-            {UI_TEXT.AUTH.USER_MENU.PROFILE}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onCloseUserMenu();
-              onLogout();
-            }}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-red-600 hover:bg-red-50"
-          >
-            {UI_TEXT.AUTH.USER_MENU.LOGOUT}
-          </button>
-        </div>
-      ) : null}
-    </div>
-  ) : null;
+  const authActions = authUser
+    ? <UserActions {...{ authUser, isUserMenuOpen, onToggleUserMenu, onCloseUserMenu, onLogout, userMenuRef }} />
+    : null;
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -278,7 +386,7 @@ export const AppHeader = ({
                     <path d="M4 17h16" />
                   </svg>
                 </button>
-                {renderCartButton(MOBILE_ICON_BUTTON_CLASS)}
+                <CartButton className={MOBILE_ICON_BUTTON_CLASS} linesCount={linesCount} onOpenCart={onOpenCart} />
               </div>
               <button
                 type="button"
@@ -348,53 +456,16 @@ export const AppHeader = ({
               </div>
             ) : null}
 
-            {isMobileMenuOpen ? (
-              <div
-                role="dialog"
-                aria-label={UI_TEXT.APP.MOBILE_MENU_TITLE}
-                className="absolute left-0 top-full z-20 mt-4 min-w-52 max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
-              >
-                <div className="flex flex-col items-stretch gap-2">
-                  {renderNavItems("mobile")}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      onOpenCart();
-                    }}
-                    className={MOBILE_MENU_ITEM_CLASS}
-                  >
-                    {linesCount > 0
-                      ? `${UI_TEXT.APP.CART_BUTTON_LABEL} (${linesCount})`
-                      : UI_TEXT.APP.CART_BUTTON_LABEL}
-                  </button>
-                  {!authUser ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          onNavigateLogin();
-                        }}
-                        className={MOBILE_MENU_ITEM_CLASS}
-                      >
-                        {UI_TEXT.APP.LOGIN_LABEL}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          onNavigateRegister();
-                        }}
-                        className="w-full rounded-full bg-emerald-500 px-4 py-2 text-left text-sm font-medium text-white transition hover:bg-emerald-600"
-                      >
-                        {UI_TEXT.APP.REGISTER_LABEL}
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
+            <MobileMenu
+              authUser={authUser}
+              isOpen={isMobileMenuOpen}
+              items={navigationItems}
+              linesCount={linesCount}
+              onClose={closeMobileMenu}
+              onNavigateLogin={onNavigateLogin}
+              onNavigateRegister={onNavigateRegister}
+              onOpenCart={onOpenCart}
+            />
           </div>
         ) : (
           <div className="flex items-center justify-between gap-4">
@@ -424,8 +495,12 @@ export const AppHeader = ({
               </div>
             ) : null}
             <div className="flex flex-1 items-center justify-end gap-2">
-              {renderNavItems("desktop")}
-              {renderCartButton(`${HEADER_ICON_BUTTON_CLASS} ${authUser ? "mr-2" : ""}`.trim())}
+              <NavigationItems items={navigationItems} menuKind="desktop" onCloseMobileMenu={closeMobileMenu} />
+              <CartButton
+                className={`${HEADER_ICON_BUTTON_CLASS} ${authUser ? "mr-2" : ""}`.trim()}
+                linesCount={linesCount}
+                onOpenCart={onOpenCart}
+              />
               {authActions ?? (
                 <>
                   <button
