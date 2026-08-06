@@ -18,16 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alentadev.shopping.R
 import com.alentadev.shopping.feature.listdetail.ui.components.ItemCard
+import com.alentadev.shopping.feature.listdetail.ui.components.calculateListProgress
 import com.alentadev.shopping.feature.listdetail.ui.components.TotalBar
-
-internal fun buildDetailTitle(title: String, providerName: String): String {
-    val normalizedProviderName = providerName.trim()
-    return if (normalizedProviderName.isEmpty()) title else "$title · $normalizedProviderName"
-}
+import com.alentadev.shopping.ui.components.AccountMenu
+import com.alentadev.shopping.ui.components.ProviderLogo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,34 +37,70 @@ internal fun ListDetailTopBar(
     providerName: String,
     syncStatus: SyncStatus,
     onBackClick: () -> Unit,
+    userName: String?,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val syncInProgressDesc = stringResource(R.string.detail_sync_in_progress)
-    TopAppBar(
-        modifier = modifier,
-        title = {
-            Box(modifier = Modifier.fillMaxWidth()) {
-                Text(buildDetailTitle(title, providerName))
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .height(56.dp)
+            ) {
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.detail_back_button)
+                    )
+                }
+                ProviderLogo(
+                    providerName = providerName,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .width(72.dp)
+                        .height(28.dp)
+                )
                 if (syncStatus == SyncStatus.SYNCING) {
                     CircularProgressIndicator(
                         modifier = Modifier
-                            .size(20.dp)
                             .align(Alignment.CenterEnd)
+                            .padding(end = 64.dp)
+                            .size(16.dp)
                             .semantics { contentDescription = syncInProgressDesc },
                         strokeWidth = 2.dp
                     )
                 }
-            }
-        },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.detail_back_button)
+                AccountMenu(
+                    userName = userName,
+                    onLogout = onLogout,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 4.dp)
                 )
             }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("list-detail-title")
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
+            )
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,6 +112,7 @@ fun ListDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isConnected by viewModel.isConnected.collectAsState()
+    val userName by viewModel.userName.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     val syncMessage = stringResource(R.string.background_sync_snackbar)
@@ -116,7 +154,9 @@ fun ListDetailScreen(
                         title = state.listDetail.title,
                         providerName = state.listDetail.providerName,
                         syncStatus = state.syncStatus,
-                        onBackClick = onBackClick
+                        onBackClick = onBackClick,
+                        userName = userName,
+                        onLogout = viewModel::logout
                     )
                 }
                 else -> {
@@ -211,7 +251,7 @@ private fun SuccessState(
 
             LazyColumn(
                 modifier = Modifier.fillMaxWidth().weight(1f),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 groupedItems.forEach { group ->
@@ -233,6 +273,7 @@ private fun SuccessState(
 
             TotalBar(
                 total = state.total,
+                progress = calculateListProgress(state.listDetail.items),
                 onCompleteList = onCompleteListClick,
                 isCompleteEnabled = !state.showCompleteConfirmation && !state.isCompleting
             )

@@ -64,17 +64,30 @@ function mapRootCategories(
       level: 0,
     });
 
-    for (const child of root.categories) {
-      nodes.push({
-        id: String(child.id),
-        name: child.name,
-        order: child.order,
-        level: 1,
-        parentId: String(root.id),
-        published: child.published,
-      });
-    }
+    flattenChildren(root.categories, String(root.id), 1, nodes);
   }
 
   return nodes;
+}
+
+function flattenChildren(
+  children: MercadonaRootCategory["categories"],
+  parentId: string,
+  level: number,
+  nodes: CatalogCategoryNode[],
+): void {
+  for (const child of children) {
+    nodes.push({
+      id: String(child.id),
+      name: child.name,
+      order: child.order,
+      level,
+      parentId,
+      published: child.published,
+    });
+
+    if (child.categories && child.categories.length > 0) {
+      flattenChildren(child.categories, String(child.id), level + 1, nodes);
+    }
+  }
 }

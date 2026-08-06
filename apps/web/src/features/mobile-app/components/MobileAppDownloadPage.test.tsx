@@ -6,7 +6,7 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 import { MobileAppDownloadPage } from "@src/features/mobile-app/components/MobileAppDownloadPage";
 
 describe("MobileAppDownloadPage", () => {
-  it("renderiza CTA de descarga e información de release", () => {
+  it("presenta Android 1.0 estable, su recorrido y los límites reales", () => {
     render(<MobileAppDownloadPage />);
 
     expect(
@@ -17,9 +17,21 @@ describe("MobileAppDownloadPage", () => {
         name: UI_TEXT.APP_DOWNLOAD.DOWNLOAD_BUTTON_LABEL,
       }),
     ).toHaveAttribute("href", UI_TEXT.APP_DOWNLOAD.RELEASE.APK_URL);
-    expect(screen.getByText(/v0\.10\.3/)).toBeInTheDocument();
+    expect(screen.getByText(/v1\.0\.0/)).toBeInTheDocument();
     expect(
       screen.getByText(UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.TITLE),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.TITLE,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(UI_TEXT.APP_DOWNLOAD.CONNECTION.TITLE),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(UI_TEXT.APP_DOWNLOAD.SCOPE_LIMITS.TITLE),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/beta/i)).not.toBeInTheDocument();
   });
 });

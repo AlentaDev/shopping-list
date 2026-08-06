@@ -2,8 +2,10 @@ import { z } from "zod";
 import { LIST_STATUSES } from "../domain/list.js";
 import { providerIdSchema } from "@src/modules/catalog/api/schemas.js";
 
+const persistedProviderIdSchema = z.enum(["mercadona", "bonpreuesclat"]);
+
 export const createListSchema = z.object({
-  title: z.string().trim().min(3).max(35),
+  title: z.string().trim().min(3).max(25),
 });
 
 export const addCatalogItemSchema = z
@@ -49,7 +51,7 @@ const autosaveCatalogItemSchema = z.object({
   name: z.string().min(1).max(120),
   qty: z.number().int().min(1).max(99),
   checked: z.boolean(),
-  source: providerIdSchema,
+  source: persistedProviderIdSchema,
   sourceProductId: z.string().min(1),
   thumbnail: z.string().optional().nullable(),
   price: z.number().optional().nullable(),
@@ -62,8 +64,8 @@ const autosaveCatalogItemSchema = z.object({
 });
 
 export const upsertAutosaveSchema = z.object({
-  title: z.string().trim().min(3).max(35),
-  providerId: providerIdSchema,
+  title: z.string().trim().min(3).max(25),
+  providerId: persistedProviderIdSchema,
   baseUpdatedAt: z.iso.datetime(),
   items: z.array(autosaveCatalogItemSchema),
 });

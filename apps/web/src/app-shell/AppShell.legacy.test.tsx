@@ -5,6 +5,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "@src/app-shell/AppShell";
 import { AppProviders } from "@src/providers/AppProviders";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
 vi.mock("@src/features/shopping-list", async () => {
@@ -235,21 +236,40 @@ describe("AppShell", () => {
 
     vi.stubGlobal("fetch", fetchMock);
 
-    render(
-      <AppProviders>
-        <AppShell />
-      </AppProviders>,
-    );
+    const originalMatchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) =>
+      ({
+        matches: query === "(max-width: 767px)",
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }) as MediaQueryList) as typeof window.matchMedia;
 
-    expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
+    try {
+      render(
+        <AppProviders>
+          <AppShell />
+        </AppProviders>,
+      );
 
-    await userEvent.click(screen.getByRole("button", { name: "Categorías" }));
-    await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Yogures" }),
-    );
+      expect(await screen.findByText("Ensaimada")).toBeInTheDocument();
 
-    expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
+      act(() => {
+        window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Lácteos" }));
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Yogures" }),
+      );
+
+      expect(await screen.findByText("Yogur natural")).toBeInTheDocument();
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
   });
 
   it("shows the user menu and blocks auth screens when logged in", async () => {
@@ -367,8 +387,6 @@ describe("AppShell", () => {
       screen.getByRole("button", { name: UI_TEXT.AUTH.LOGIN.SUBMIT_LABEL }),
     );
 
-    const greetingLabel = `${UI_TEXT.AUTH.USER_MENU.GREETING_PREFIX} Ada`;
-
     const menuButton = await screen.findByRole("button", {
       name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
     });
@@ -377,7 +395,10 @@ describe("AppShell", () => {
     expect(
       screen.queryByText(UI_TEXT.AUTH.ALREADY_LOGGED_IN.LOGIN_MESSAGE),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(greetingLabel)).toBeInTheDocument();
+    expect(menuButton).toHaveTextContent("AD");
+    expect(
+      screen.getByRole("button", { name: UI_TEXT.APP.MY_LISTS_LABEL }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: UI_TEXT.APP.LOGIN_LABEL }),
     ).not.toBeInTheDocument();
@@ -388,9 +409,6 @@ describe("AppShell", () => {
     await userEvent.click(menuButton);
     expect(
       screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.PROFILE }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LISTS }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("menuitem", { name: UI_TEXT.AUTH.USER_MENU.LOGOUT }),
@@ -515,7 +533,7 @@ describe("AppShell", () => {
       const userMenuButton = screen.getByRole("button", {
         name: UI_TEXT.AUTH.USER_MENU.MENU_BUTTON_LABEL,
       });
-      expect(userMenuButton).toHaveTextContent(/hola ana/i);
+      expect(userMenuButton).toHaveTextContent("AN");
     });
   });
 
@@ -624,7 +642,7 @@ describe("AppShell", () => {
     ).toBeInTheDocument();
 
     // Hacer clic fuera del menú (por ejemplo, en el título de la app)
-    await userEvent.click(screen.getByText(UI_TEXT.APP.TITLE));
+    await userEvent.click(screen.getByRole("button", { name: UI_TEXT.APP.TITLE_IMAGE_ALT }));
 
     // Verificar que el menú se cerró
     await waitFor(() => {

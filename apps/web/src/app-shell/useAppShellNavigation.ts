@@ -1,4 +1,4 @@
-import { Fragment, createElement, useCallback, useEffect, useMemo, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useState } from "react";
 import { Catalog } from "@src/features/catalog";
 import { ListsContainer, type ListDetail, type ListSummary } from "@src/features/lists";
 import {
@@ -6,10 +6,13 @@ import {
   AuthScreen,
   type AuthMode,
 } from "@src/features/auth";
+import { CatalogHome } from "@src/features/home";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
+import { SUPPORTED_PROVIDERS } from "@src/shared/constants/providers";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type { AuthUser } from "@src/context";
-import { CatalogHome } from "./components/CatalogHome";
+import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 
 const LOGIN_PATH = "/auth/login";
 const REGISTER_PATH = "/auth/register";
@@ -23,8 +26,6 @@ type UseAppShellNavigationArgs = {
   authRedirectPending: boolean;
   isAuthSubmitting: boolean;
   authError: string | null;
-  isCategoriesOpen: boolean;
-  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
@@ -37,6 +38,9 @@ type UseAppShellNavigationArgs = {
     currentProviderId: string;
     requestedProviderId: string;
   }) => void;
+  onRequestDraftProviderConflict?: (
+    input: DraftProviderConflictInput,
+  ) => Promise<boolean>;
 };
 
 type MainContentParams = {
@@ -46,12 +50,12 @@ type MainContentParams = {
   currentPath: string;
   isAuthSubmitting: boolean;
   authError: string | null;
-  isCategoriesOpen: boolean;
-  openMobileCategoriesRequestKey: number;
   linesCount: number;
   onLogin: (values: LoginFormValues) => Promise<void>;
   onRegister: (values: RegisterFormValues) => Promise<void>;
   onNavigateHome: () => void;
+  onNavigateLogin: () => void;
+  onNavigateRegister: () => void;
   onNavigateCatalogCategory: (providerId: string, categoryId: string) => void;
   onOpenList: (list: ListDetail) => void;
   onStartOpenList: (list: ListSummary) => void;
@@ -62,6 +66,9 @@ type MainContentParams = {
     currentProviderId: string;
     requestedProviderId: string;
   }) => void;
+  onRequestDraftProviderConflict?: (
+    input: DraftProviderConflictInput,
+  ) => Promise<boolean>;
 };
 
 export const useAppShellNavigation = ({
@@ -69,8 +76,6 @@ export const useAppShellNavigation = ({
   authRedirectPending,
   isAuthSubmitting,
   authError,
-  isCategoriesOpen,
-  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
@@ -80,6 +85,7 @@ export const useAppShellNavigation = ({
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
   onRequestActiveEditConflict,
+  onRequestDraftProviderConflict,
 }: UseAppShellNavigationArgs) => {
   const initialPath = resolveCatalogAlias(window.location.pathname);
   const [currentPath, setCurrentPath] = useState(() => initialPath);
@@ -103,6 +109,7 @@ export const useAppShellNavigation = ({
 
     persistLastProvider(nextPath);
     window.history.pushState({}, "", nextPath);
+    window.dispatchEvent(new Event(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU));
     setCurrentPath(nextPath);
     setAuthMode(resolveAuthMode(nextPath));
   }, []);
@@ -111,6 +118,10 @@ export const useAppShellNavigation = ({
     const handlePopState = () => {
       const path = resolveCatalogAlias(window.location.pathname);
       persistLastProvider(path);
+      if (window.location.pathname !== path) {
+        window.history.replaceState({}, "", path);
+      }
+      window.dispatchEvent(new Event(APP_EVENTS.CLOSE_MOBILE_HEADER_MENU));
       setCurrentPath(path);
       setAuthMode(resolveAuthMode(path));
     };
@@ -130,12 +141,12 @@ export const useAppShellNavigation = ({
         currentPath,
         isAuthSubmitting,
         authError,
-        isCategoriesOpen,
-        openMobileCategoriesRequestKey,
         linesCount,
         onLogin,
         onRegister,
         onNavigateHome: () => navigate("/"),
+        onNavigateLogin: () => navigate(LOGIN_PATH),
+        onNavigateRegister: () => navigate(REGISTER_PATH),
         onNavigateCatalogCategory: (providerId: string, categoryId: string) =>
           navigate(`/${providerId}/catalog/${categoryId}`),
         onOpenList,
@@ -144,6 +155,7 @@ export const useAppShellNavigation = ({
         showAnonymousDraftGuidance,
         onSelectHomeProvider,
         onRequestActiveEditConflict,
+        onRequestDraftProviderConflict,
       }),
     [
       authMode,
@@ -152,8 +164,6 @@ export const useAppShellNavigation = ({
       currentPath,
       isAuthSubmitting,
       authError,
-      isCategoriesOpen,
-      openMobileCategoriesRequestKey,
       linesCount,
       onLogin,
       onRegister,
@@ -164,6 +174,7 @@ export const useAppShellNavigation = ({
       showAnonymousDraftGuidance,
       onSelectHomeProvider,
       onRequestActiveEditConflict,
+      onRequestDraftProviderConflict,
     ],
   );
 
@@ -189,12 +200,12 @@ function resolveMainContent({
   currentPath,
   isAuthSubmitting,
   authError,
-  isCategoriesOpen,
-  openMobileCategoriesRequestKey,
   linesCount,
   onLogin,
   onRegister,
   onNavigateHome,
+  onNavigateLogin,
+  onNavigateRegister,
   onNavigateCatalogCategory,
   onOpenList,
   onStartOpenList,
@@ -202,13 +213,11 @@ function resolveMainContent({
   showAnonymousDraftGuidance,
   onSelectHomeProvider,
   onRequestActiveEditConflict,
+  onRequestDraftProviderConflict,
 }: MainContentParams) {
   if (authMode) {
     if (authUser && authRedirectPending) {
-      return createElement(Catalog, {
-        isCategoriesOpen,
-        openMobileCategoriesRequestKey,
-      });
+      return createElement(Catalog);
     }
 
     return authUser
@@ -220,6 +229,8 @@ function resolveMainContent({
           onLogin,
           onRegister,
           onBack: onNavigateHome,
+          onNavigateToLogin: onNavigateLogin,
+          onNavigateToRegister: onNavigateRegister,
         });
   }
 
@@ -230,6 +241,7 @@ function resolveMainContent({
           onStartOpenList,
           hasDraftItems: linesCount > 0,
           onRequestActiveEditConflict,
+          onRequestDraftProviderConflict,
         })
       : createElement(AuthScreen, {
           mode: "login",
@@ -238,6 +250,8 @@ function resolveMainContent({
           onLogin,
           onRegister,
           onBack: onNavigateHome,
+          onNavigateToLogin: onNavigateLogin,
+          onNavigateToRegister: onNavigateRegister,
         });
   }
 
@@ -246,24 +260,6 @@ function resolveMainContent({
   }
 
   if (currentPath === "/") {
-    if (authUser) {
-      return createElement(
-        Fragment,
-        null,
-        createElement(CatalogHome, {
-          draftProviderId: homeDraftProviderId,
-          showAnonymousDraftGuidance,
-          onSelectProvider: onSelectHomeProvider,
-        }),
-        createElement(ListsContainer, {
-          onOpenList,
-          onStartOpenList,
-          hasDraftItems: linesCount > 0,
-          onRequestActiveEditConflict,
-        }),
-      );
-    }
-
     return createElement(CatalogHome, {
       draftProviderId: homeDraftProviderId,
       showAnonymousDraftGuidance,
@@ -280,9 +276,8 @@ function resolveMainContent({
       onCategoryRouteChange: (categoryId: string) => {
         onNavigateCatalogCategory(catalogPath.providerId, categoryId);
       },
-      isCategoriesOpen,
-      openMobileCategoriesRequestKey,
       onRequestActiveEditConflict,
+      onRequestDraftProviderConflict,
     });
   }
 
@@ -306,12 +301,20 @@ function parseCatalogPath(pathname: string): { providerId: string; categoryId?: 
 }
 
 function resolveCatalogAlias(pathname: string): string {
-  if (pathname !== CATALOG_ALIAS_PATH) {
-    return pathname;
+  if (pathname === CATALOG_ALIAS_PATH) {
+    const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
+    return lastProvider ? resolveCatalogAlias(`/${lastProvider}/catalog`) : "/";
   }
 
-  const lastProvider = window.localStorage.getItem(LAST_PROVIDER_STORAGE_KEY);
-  return lastProvider ? `/${lastProvider}/catalog` : "/";
+  const catalogPath = parseCatalogPath(pathname);
+  if (
+    catalogPath &&
+    !SUPPORTED_PROVIDERS.some((provider) => provider.id === catalogPath.providerId)
+  ) {
+    return "/mercadona/catalog";
+  }
+
+  return pathname;
 }
 
 function persistLastProvider(pathname: string): void {

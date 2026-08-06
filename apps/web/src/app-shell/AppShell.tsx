@@ -11,11 +11,12 @@ import {
 import { useList } from "@src/context/useList";
 import { useAuth } from "@src/context/useAuth";
 import { useToast } from "@src/context/useToast";
-import { useApiAwake } from "@src/context/ApiAwakeContext";
+import { useApiAwake } from "@src/context/useApiAwake";
 import Toast from "@src/shared/components/toast/Toast";
 import { UI_TEXT } from "@src/shared/constants/ui";
 import { APP_EVENTS } from "@src/shared/constants/appState";
 import { AppHeader } from "@src/app-shell/components/AppHeader";
+import { AppFooter } from "@src/app-shell/components/AppFooter";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
 import type { LoginFormValues, RegisterFormValues } from "@src/features/auth";
 import type {
@@ -26,8 +27,9 @@ import {
   LIST_STATUS,
   type ListStatus as ShoppingListStatus,
 } from "@src/shared/domain/listStatus";
-import { isMobileCatalogInteractionMode } from "@src/shared/utils/isMobileCatalogInteractionMode";
 import { getProviderDisplayName } from "@src/shared/constants/providers";
+import type { DraftProviderConflictInput } from "@src/context/useDraftProviderConflict";
+import { DraftProviderConflictModal } from "@src/app-shell/components/DraftProviderConflictModal";
 
 const CATALOG_PATH = "/catalog";
 const EDIT_SESSION_STORAGE_KEY = "lists.editSession";
@@ -36,6 +38,11 @@ type HandshakeStatus = "WAITING" | "READY";
 type ActiveEditConflictState = {
   currentProviderId: string;
   requestedProviderId: string;
+};
+
+type DraftProviderConflictState = {
+  input: DraftProviderConflictInput;
+  resolve: (accepted: boolean) => void;
 };
 
 const loadEditSessionListId = (): string | null => {
@@ -64,9 +71,6 @@ const clearEditSessionMarker = (): void => {
 };
 
 export const AppShell = () => {
-  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
-  const [openMobileCategoriesRequestKey, setOpenMobileCategoriesRequestKey] =
-    useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [currentListId, setCurrentListId] = useState<string | null>(null);
   const [currentListStatus, setCurrentListStatus] =
@@ -77,7 +81,8 @@ export const AppShell = () => {
     UI_TEXT.SHOPPING_LIST.DEFAULT_LIST_TITLE,
   );
   const [authRedirectPending, setAuthRedirectPending] = useState(false);
-  const { linesCount, setItems, resetDraft, setDraftProviderId } = useList();
+  const { linesCount, draftProviderId, setItems, resetDraft, setDraftProviderId } =
+    useList();
   const { showToast } = useToast();
   const { apiAwake } = useApiAwake();
   const {
@@ -91,13 +96,15 @@ export const AppShell = () => {
     logout,
   } = useAuth();
   const userMenuRef = useRef<HTMLDivElement>(null);
-  const [handshakeStatus, setHandshakeStatus] = useState<HandshakeStatus>("WAITING");
   const [activeEditConflict, setActiveEditConflict] =
     useState<ActiveEditConflictState | null>(null);
+  const [draftProviderConflict, setDraftProviderConflict] =
+    useState<DraftProviderConflictState | null>(null);
   const hasShownReadyToastRef = useRef(false);
   const localDraft = loadLocalDraft();
   const homeDraftProviderId = !authUser ? (localDraft?.providerId ?? null) : null;
   const showAnonymousDraftGuidance = !authUser && Boolean(localDraft?.providerId);
+  const handshakeStatus: HandshakeStatus = !authUser || apiAwake ? "READY" : "WAITING";
 
   useEffect(() => {
     const handleOpenCart = () => setIsCartOpen(true);
@@ -196,6 +203,38 @@ export const AppShell = () => {
     setActiveEditConflict({ currentProviderId, requestedProviderId });
   };
 
+  const handleRequestDraftProviderConflict = (
+    input: DraftProviderConflictInput,
+  ): Promise<boolean> => {
+    if (activeEditConflict) {
+      return Promise.resolve(false);
+    }
+
+    return new Promise((resolve) => {
+      setDraftProviderConflict({ input, resolve });
+    });
+  };
+
+  const handleConfirmDraftProviderConflict = () => {
+    if (!draftProviderConflict) {
+      return;
+    }
+
+    resetDraft(draftProviderConflict.input.requestedProviderId);
+    navigate(`/${draftProviderConflict.input.requestedProviderId}/catalog`);
+    draftProviderConflict.resolve(true);
+    setDraftProviderConflict(null);
+  };
+
+  const handleDismissDraftProviderConflict = () => {
+    if (!draftProviderConflict) {
+      return;
+    }
+
+    draftProviderConflict.resolve(false);
+    setDraftProviderConflict(null);
+  };
+
   const handleDismissActiveEditConflict = () => {
     if (!activeEditConflict) {
       return;
@@ -251,8 +290,6 @@ export const AppShell = () => {
     authRedirectPending,
     isAuthSubmitting,
     authError,
-    isCategoriesOpen,
-    openMobileCategoriesRequestKey,
     linesCount,
     onLogin: handleLogin,
     onRegister: handleRegister,
@@ -262,16 +299,11 @@ export const AppShell = () => {
     showAnonymousDraftGuidance,
     onSelectHomeProvider: handleSelectHomeProvider,
     onRequestActiveEditConflict: handleRequestActiveEditConflict,
+    onRequestDraftProviderConflict: handleRequestDraftProviderConflict,
   });
-
-  useEffect(() => {
-    if (!authUser) {
-      setHandshakeStatus("READY");
-      return;
-    }
-
-    setHandshakeStatus(apiAwake ? "READY" : "WAITING");
-  }, [apiAwake, authUser]);
+  const isCatalogRoute = /^\/[^/]+\/catalog(?:\/[^/]+)?$/.test(currentPath);
+  const catalogProviderId = currentPath.match(/^\/([^/]+)\/catalog(?:\/[^/]+)?$/)?.[1] ?? null;
+  const footerContentLayout = isCatalogRoute ? "catalog" : "default";
 
   useEffect(() => {
     if (handshakeStatus !== "READY" || !authUser) {
@@ -290,23 +322,16 @@ export const AppShell = () => {
   }, [authUser, handshakeStatus, showToast]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <AppHeader
         authUser={authUser}
         isUserMenuOpen={isUserMenuOpen}
-        isCategoriesOpen={isCategoriesOpen}
+        currentPath={currentPath}
+        isCatalogRoute={isCatalogRoute}
+        catalogProviderId={catalogProviderId}
         linesCount={linesCount}
         onNavigateHome={() => navigate("/")}
         onOpenCart={() => setIsCartOpen(true)}
-        onToggleCategories={() => {
-          if (isMobileCatalogInteractionMode()) {
-            setIsCategoriesOpen(true);
-            setOpenMobileCategoriesRequestKey((prev) => prev + 1);
-            return;
-          }
-
-          setIsCategoriesOpen((prev) => !prev);
-        }}
         onNavigateDownloadApp={() => navigate("/app")}
         onNavigateLogin={() => navigate("/auth/login")}
         onNavigateRegister={() => navigate("/auth/register")}
@@ -316,7 +341,7 @@ export const AppShell = () => {
         onLogout={handleLogout}
         userMenuRef={userMenuRef}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         {handshakeStatus === "WAITING" ? (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {UI_TEXT.APP.HANDSHAKE_WAITING_BANNER}
@@ -326,7 +351,7 @@ export const AppShell = () => {
           {mainContent}
         </div>
         {activeEditConflict ? (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/30 p-4">
+          <div className="fixed inset-0 z-70 flex items-center justify-center bg-slate-900/30 p-4">
             <div
               role="dialog"
               aria-modal="true"
@@ -367,7 +392,22 @@ export const AppShell = () => {
             </div>
           </div>
         ) : null}
+        {draftProviderConflict ? (
+          <DraftProviderConflictModal
+            isOpen
+            message={draftProviderConflict.input.message}
+            currentProviderName={getProviderDisplayName(
+              draftProviderConflict.input.currentProviderId,
+            )}
+            requestedProviderName={getProviderDisplayName(
+              draftProviderConflict.input.requestedProviderId,
+            )}
+            onConfirm={handleConfirmDraftProviderConflict}
+            onDismiss={handleDismissDraftProviderConflict}
+          />
+        ) : null}
       </main>
+      <AppFooter contentLayout={footerContentLayout} />
       <ShoppingList
         key={`${currentListId ?? "local"}-${currentListTitle}`}
         isOpen={isCartOpen}
@@ -376,7 +416,13 @@ export const AppShell = () => {
           setIsListLoading(false);
         }}
         onAddMoreProducts={() => {
-          if (currentPath !== CATALOG_PATH) navigate(CATALOG_PATH);
+          const catalogPath = draftProviderId
+            ? `/${draftProviderId}/catalog`
+            : CATALOG_PATH;
+
+          if (currentPath !== catalogPath) {
+            navigate(catalogPath);
+          }
         }}
         initialListId={currentListId}
         initialListStatus={currentListStatus}

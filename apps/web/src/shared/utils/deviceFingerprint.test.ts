@@ -39,21 +39,52 @@ describe("deviceFingerprint", () => {
     });
 
     it("maneja error de localStorage y genera fingerprint temporal", () => {
-      const mockGetItem = vi.spyOn(Storage.prototype, "getItem");
-      mockGetItem.mockImplementation(() => {
+      const originalWindowStorage = window.localStorage;
+      const originalGlobalStorage = globalThis.localStorage;
+      const mockGetItem = vi.fn(() => {
         throw new Error("localStorage not available");
       });
+      const throwingStorage = new Proxy(originalWindowStorage, {
+        get(target, property, receiver) {
+          if (property === "getItem") {
+            return mockGetItem;
+          }
 
+          return Reflect.get(target, property, receiver);
+        },
+      });
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      const fingerprint = getDeviceFingerprint();
+      Object.defineProperty(window, "localStorage", {
+        configurable: true,
+        value: throwingStorage,
+      });
+      Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: throwingStorage,
+      });
 
-      expect(fingerprint).toBeTruthy();
-      expect(typeof fingerprint).toBe("string");
-      expect(warnSpy).toHaveBeenCalled();
+      try {
+        const fingerprint = getDeviceFingerprint();
 
-      mockGetItem.mockRestore();
-      warnSpy.mockRestore();
+        expect(fingerprint).toMatch(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+        );
+        expect(warnSpy).toHaveBeenCalledWith(
+          "Cannot persist device fingerprint:",
+          expect.any(Error),
+        );
+      } finally {
+        Object.defineProperty(window, "localStorage", {
+          configurable: true,
+          value: originalWindowStorage,
+        });
+        Object.defineProperty(globalThis, "localStorage", {
+          configurable: true,
+          value: originalGlobalStorage,
+        });
+        warnSpy.mockRestore();
+      }
     });
   });
 

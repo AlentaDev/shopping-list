@@ -4,6 +4,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AppShell } from "./AppShell";
+import { UI_TEXT } from "@src/shared/constants/ui";
 
 let navigationState = {
   authMode: "login" as "login" | "register" | null,
@@ -21,8 +22,10 @@ const saveLocalDraftMock = vi.fn();
 const loadLocalDraftMock = vi.fn(() => null);
 const listState = {
   linesCount: 3,
+  draftProviderId: "mercadona",
   setItems: vi.fn(),
   resetDraft: vi.fn(),
+  setDraftProviderId: vi.fn(),
 };
 
 vi.mock("@src/shared/components/toast/Toast", () => ({
@@ -50,7 +53,7 @@ vi.mock("@src/context/useAuth", () => ({
   }),
 }));
 
-vi.mock("@src/context/ApiAwakeContext", () => ({
+vi.mock("@src/context/useApiAwake", () => ({
   useApiAwake: () => ({ apiAwake: apiAwakeState.apiAwake }),
 }));
 
@@ -93,31 +96,40 @@ vi.mock("@src/features/shopping-list", () => ({
 vi.mock("@src/app-shell/components/AppHeader", () => ({
   AppHeader: ({
     onOpenCart,
-    onToggleCategories,
+    currentPath,
+    isCatalogRoute,
+    catalogProviderId,
   }: {
     onOpenCart: () => void;
-    onToggleCategories: () => void;
+    currentPath: string;
+    isCatalogRoute: boolean;
+    catalogProviderId: string | null;
   }) => (
     <>
+      <div data-testid="header-current-path">{currentPath}</div>
+      <div data-testid="header-is-catalog-route">{String(isCatalogRoute)}</div>
+      <div data-testid="header-catalog-provider-id">{catalogProviderId ?? ""}</div>
       <button type="button" onClick={onOpenCart}>
         open-cart
-      </button>
-      <button type="button" onClick={onToggleCategories}>
-        toggle-categories
       </button>
     </>
   ),
 }));
 
-describe("app-shell/AppShell", () => {
-  const setMatchMedia = (queries: Record<string, boolean>) => {
-    vi.mocked(window.matchMedia).mockImplementation(
-      (query: string) => ({
-        matches: queries[query] ?? false,
-      }) as MediaQueryList,
-    );
-  };
+vi.mock("@src/app-shell/components/AppFooter", () => ({
+  AppFooter: ({
+    contentLayout = "default",
+  }: {
+    contentLayout?: "default" | "catalog";
+  }) => (
+    <div
+      data-testid="app-footer-content"
+      data-content-layout={contentLayout}
+    />
+  ),
+}));
 
+describe("app-shell/AppShell", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.authUser = null;
@@ -139,8 +151,10 @@ describe("app-shell/AppShell", () => {
     loadLocalDraftMock.mockReturnValue(null);
     saveLocalDraftMock.mockReset();
     listState.linesCount = 3;
+    listState.draftProviderId = "mercadona";
     listState.setItems.mockReset();
     listState.resetDraft.mockReset();
+    listState.setDraftProviderId.mockReset();
   });
 
   it("persists the selected provider for an anonymous empty draft from Home", async () => {
@@ -189,7 +203,67 @@ describe("app-shell/AppShell", () => {
 
     expect(screen.getByText("auth-login-screen")).toBeInTheDocument();
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("false");
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
     expect(screen.queryByText("Tu lista ya está lista para continuar.")).not.toBeInTheDocument();
+  });
+
+  it("shows landing footer and landing header variant on home", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/",
+      navigate: vi.fn(),
+      mainContent: <div>home-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
+    expect(screen.getByTestId("app-footer-content")).toHaveAttribute(
+      "data-content-layout",
+      "default",
+    );
+  });
+
+  it("renders the catalog footer as a global footer aligned to the products column", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: vi.fn(),
+      mainContent: <div>catalog-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent("/mercadona/catalog");
+    expect(screen.getByTestId("header-is-catalog-route")).toHaveTextContent("true");
+    expect(screen.getByTestId("header-catalog-provider-id")).toHaveTextContent("mercadona");
+    const footer = screen.getByTestId("app-footer-content");
+    const main = screen.getByRole("main");
+
+    expect(footer).toBeInTheDocument();
+    expect(footer).toHaveAttribute("data-content-layout", "catalog");
+    expect(main).not.toContainElement(footer);
+    expect(main).toHaveClass("flex-1");
+  });
+
+  it("renders non-catalog pages with the default global content footer", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/lists",
+      navigate: vi.fn(),
+      mainContent: <div>lists-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
+    render(<AppShell />);
+
+    const footer = screen.getByTestId("app-footer-content");
+    const main = screen.getByRole("main");
+
+    expect(footer).toHaveAttribute("data-content-layout", "default");
+    expect(main).not.toContainElement(footer);
   });
 
   it("mantiene banner WAITING y bloquea mutaciones hasta handshake READY", async () => {
@@ -274,81 +348,48 @@ describe("app-shell/AppShell", () => {
     expect(screen.getByTestId("shopping-list-open")).toHaveTextContent("true");
   });
 
-  it("en desktop mantiene toggle de categorías como antes", async () => {
-    const user = userEvent.setup();
+  it("passes non-catalog routes to the header as inactive catalog state", () => {
+    navigationState = {
+      authMode: null,
+      currentPath: "/app",
+      navigate: vi.fn(),
+      mainContent: <div>download-screen</div>,
+    };
+    useAppShellNavigationMock.mockImplementation(() => navigationState);
+
     render(<AppShell />);
 
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-    };
-    expect(lastCallArgs.isCategoriesOpen).toBe(false);
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent("/app");
+    expect(screen.getByTestId("header-is-catalog-route")).toHaveTextContent("false");
+    expect(screen.getByTestId("header-catalog-provider-id")).toHaveTextContent("");
+    expect(screen.getByTestId("app-footer-content")).toBeInTheDocument();
+    expect(screen.queryByTestId("catalog-content-footer-layout")).not.toBeInTheDocument();
   });
 
-  it("en mobile fuerza categorías abiertas y dispara solicitud de overlay", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({ "(max-width: 767px)": true });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(true);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(1);
-  });
-
-  it("en mobile landscape mantiene comportamiento de overlay", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({
-      "(max-width: 767px)": false,
-      "(pointer: coarse)": true,
-      "(orientation: landscape)": true,
-      "(max-height: 500px)": true,
-    });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(true);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(1);
-  });
-
-  it("en desktop con pointer fine conserva toggle clásico", async () => {
-    const user = userEvent.setup();
-    setMatchMedia({
-      "(max-width: 767px)": false,
-      "(pointer: coarse)": false,
-      "(orientation: landscape)": true,
-      "(max-height: 500px)": true,
-    });
-    render(<AppShell />);
-
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-    await user.click(screen.getByRole("button", { name: "toggle-categories" }));
-
-    const lastCallArgs = useAppShellNavigationMock.mock.calls.at(-1)?.[0] as {
-      isCategoriesOpen: boolean;
-      openMobileCategoriesRequestKey: number;
-    };
-
-    expect(lastCallArgs.isCategoriesOpen).toBe(false);
-    expect(lastCallArgs.openMobileCategoriesRequestKey).toBe(0);
-  });
-
-  it("navega a /catalog al añadir más productos desde la lista", async () => {
+  it("navigates to the current draft provider catalog when adding more products", async () => {
     const user = userEvent.setup();
     const navigateMock = vi.fn();
+    listState.draftProviderId = "bonpreuesclat";
+
+    useAppShellNavigationMock.mockImplementation(() => ({
+      authMode: null,
+      currentPath: "/lists",
+      navigate: navigateMock,
+      mainContent: <div>lists-screen</div>,
+    }));
+
+    render(<AppShell />);
+
+    await user.click(screen.getByRole("button", { name: "add-more-products" }));
+
+    expect(navigateMock).toHaveBeenCalledWith("/bonpreuesclat/catalog");
+  });
+
+  it("falls back to the catalog alias when the draft provider is missing", async () => {
+    const user = userEvent.setup();
+    const navigateMock = vi.fn();
+    listState.draftProviderId = "";
+
     useAppShellNavigationMock.mockImplementation(() => ({
       authMode: null,
       currentPath: "/lists",
@@ -377,5 +418,196 @@ describe("app-shell/AppShell", () => {
 
     expect(screen.getByTestId("page-transition")).toBe(firstContainer);
     expect(screen.getByText("catalog-screen")).toBeInTheDocument();
+  });
+
+  it("renders the draft provider conflict modal and confirms reset + navigation", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+    } | null = null;
+
+    const navigateMock = vi.fn();
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: navigateMock,
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    if (!capturedArgs?.onRequestDraftProviderConflict) {
+      throw new Error("AppShell did not expose the draft provider conflict callback");
+    }
+
+    let resultPromise!: Promise<boolean>;
+
+    act(() => {
+      resultPromise = capturedArgs.onRequestDraftProviderConflict!({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    expect(
+      await screen.findByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.CONFIRM_LABEL,
+      }),
+    );
+
+    expect(listState.resetDraft).toHaveBeenCalledWith("bonpreuesclat");
+    expect(navigateMock).toHaveBeenCalledWith("/bonpreuesclat/catalog");
+    await expect(resultPromise).resolves.toBe(true);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves the draft unchanged when the draft provider conflict is dismissed", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+    } | null = null;
+
+    const navigateMock = vi.fn();
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: navigateMock,
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    let resultPromise!: Promise<boolean>;
+
+    act(() => {
+      if (!capturedArgs?.onRequestDraftProviderConflict) {
+        throw new Error("AppShell did not expose the draft provider conflict callback");
+      }
+
+      resultPromise = capturedArgs.onRequestDraftProviderConflict({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    await user.click(
+      screen.getByRole("button", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.DISMISS_LABEL,
+      }),
+    );
+
+    expect(listState.resetDraft).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalledWith("/bonpreuesclat/catalog");
+    await expect(resultPromise).resolves.toBe(false);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.getByTestId("header-current-path")).toHaveTextContent(
+      "/mercadona/catalog",
+    );
+    expect(navigateMock).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not render the draft provider conflict modal when active-edit conflict is active", async () => {
+    let capturedArgs: {
+      onRequestDraftProviderConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+        requestedProviderName?: string;
+        message: string;
+      }) => Promise<boolean>;
+      onRequestActiveEditConflict?: (input: {
+        currentProviderId: string;
+        requestedProviderId: string;
+      }) => void;
+    } | null = null;
+
+    navigationState = {
+      authMode: null,
+      currentPath: "/mercadona/catalog",
+      navigate: vi.fn(),
+      mainContent: <div>catalog-screen</div>,
+    };
+
+    useAppShellNavigationMock.mockImplementation((args: unknown) => {
+      capturedArgs = args as typeof capturedArgs;
+      return navigationState;
+    });
+
+    render(<AppShell />);
+
+    act(() => {
+      capturedArgs?.onRequestActiveEditConflict?.({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+      });
+    });
+
+    expect(
+      screen.getByRole("dialog"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
+
+    act(() => {
+      capturedArgs?.onRequestDraftProviderConflict?.({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message:
+          "Tu borrador actual pertenece a Mercadona. Si continúas, lo vaciaremos para empezar una nueva lista en Bonpreu Esclat.",
+      });
+    });
+
+    expect(
+      screen.queryByRole("dialog", {
+        name: UI_TEXT.CATALOG.DRAFT_PROVIDER_CONFLICT_MODAL.TITLE,
+      }),
+    ).not.toBeInTheDocument();
   });
 });

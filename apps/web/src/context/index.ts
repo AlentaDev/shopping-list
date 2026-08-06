@@ -7,7 +7,8 @@ export { useList } from "./useList";
 export type { ListContextType, ListItem } from "./ListContextValue";
 export { ToastProvider } from "./ToastContext";
 export { useToast } from "./useToast";
-export { ApiAwakeProvider, useApiAwake } from "./ApiAwakeContext";
+export { ApiAwakeProvider } from "./ApiAwakeContext";
+export { useApiAwake } from "./useApiAwake";
 export type {
   ToastContextType,
   ToastEntry,

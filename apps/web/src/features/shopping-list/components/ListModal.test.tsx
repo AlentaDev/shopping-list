@@ -185,6 +185,77 @@ describe("ListModal", () => {
     expect(onTitleSubmit).toHaveBeenCalledWith("Compra semanal");
   });
 
+  it("limits the edited title to 25 characters for typing and pasting", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        onTitleSubmit={vi.fn()}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Editar título" }));
+
+    const input = screen.getByRole("textbox", { name: "Título de la lista" });
+    await user.clear(input);
+    await user.type(input, "a".repeat(26));
+    expect(input).toHaveValue("a".repeat(25));
+
+    await user.clear(input);
+    await user.paste("b".repeat(26));
+    expect(input).toHaveValue("b".repeat(25));
+  });
+
+  it("submits the edited title when Enter is pressed", async () => {
+    const user = userEvent.setup();
+    const onTitleSubmit = vi.fn();
+
+    render(
+      <ListModal
+        isOpen
+        onClose={vi.fn()}
+        title="Mi lista"
+        onTitleSubmit={onTitleSubmit}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Editar título" }));
+
+    const input = screen.getByRole("textbox", { name: "Título de la lista" });
+    await user.clear(input);
+    await user.type(input, "Compra semanal{Enter}");
+
+    expect(onTitleSubmit).toHaveBeenCalledWith("Compra semanal");
+  });
+
+  it("keeps Escape cancellation available while editing the title", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+
+    render(
+      <ListModal
+        isOpen
+        onClose={onClose}
+        title="Mi lista"
+        onTitleSubmit={vi.fn()}
+      >
+        <p>Contenido</p>
+      </ListModal>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Editar título" }));
+    await user.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
 
 
   it("prioriza acciones explícitas de edición activa en el footer", () => {
@@ -260,7 +331,7 @@ describe("ListModal", () => {
     );
 
     expect(
-      screen.getByText("El título debe tener entre 3 y 35 caracteres."),
+      screen.getByText("El título debe tener entre 3 y 25 caracteres."),
     ).toBeInTheDocument();
     expect(onTitleSubmit).not.toHaveBeenCalled();
   });

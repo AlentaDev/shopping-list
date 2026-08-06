@@ -1,4 +1,4 @@
-export type CatalogProviderSlug = "mercadona" | "bonpreuesclat";
+export type CatalogProviderSlug = "mercadona";
 
 export type CatalogProviderMetadata = {
   id: string;
@@ -6,19 +6,22 @@ export type CatalogProviderMetadata = {
   displayName?: string;
 };
 
+export type MercadonaRootCategoryChild = {
+  id: string | number;
+  name: string;
+  order: number;
+  layout: string;
+  published: boolean;
+  is_extended: boolean;
+  categories?: MercadonaRootCategoryChild[];
+};
+
 export type MercadonaRootCategory = {
   id: string | number;
   name: string;
   order: number;
   is_extended: boolean;
-  categories: Array<{
-    id: string | number;
-    name: string;
-    order: number;
-    layout: string;
-    published: boolean;
-    is_extended: boolean;
-  }>;
+  categories: MercadonaRootCategoryChild[];
 };
 
 export type MercadonaRootCategoriesResponse = {
@@ -36,7 +39,7 @@ export type MercadonaCategoryProduct = {
   price_instructions: {
     unit_price: number;
     unit_size?: number | null;
-    bulk_price: number;
+    bulk_price: number | null;
     approx_size?: boolean | null;
     size_format?: string | null;
   };
@@ -56,6 +59,7 @@ export type MercadonaProductDetail = {
   id: string | number;
   display_name: string;
   thumbnail?: string | null;
+  packaging?: string | null;
   photos?: Array<{
     thumbnail?: string | null;
   }>;

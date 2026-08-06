@@ -6,16 +6,14 @@ import { Catalog } from "@src/features/catalog";
 import { ListsContainer } from "@src/features/lists";
 import { AuthLoggedInNotice, AuthScreen } from "@src/features/auth";
 import { MobileAppDownloadPage } from "@src/features/mobile-app";
+import { CatalogHome } from "@src/features/home";
 import { useAppShellNavigation } from "@src/app-shell/useAppShellNavigation";
-import { CatalogHome } from "@src/app-shell/components/CatalogHome";
 
 const baseArgs = {
   authUser: null,
   authRedirectPending: false,
   isAuthSubmitting: false,
   authError: null,
-  isCategoriesOpen: false,
-  openMobileCategoriesRequestKey: 0,
   linesCount: 0,
   onLogin: vi.fn(),
   onRegister: vi.fn(),
@@ -24,6 +22,7 @@ const baseArgs = {
   homeDraftProviderId: null,
   showAnonymousDraftGuidance: false,
   onSelectHomeProvider: vi.fn(),
+  onRequestActiveEditConflict: vi.fn(),
 };
 
 describe("useAppShellNavigation", () => {
@@ -89,6 +88,22 @@ describe("useAppShellNavigation", () => {
     );
 
     expect(result.current.mainContent.type).toBe(ListsContainer);
+  });
+
+  it("mantiene Home autenticado solo con contenido de landing", () => {
+    const { result } = renderHook(() =>
+      useAppShellNavigation({
+        ...baseArgs,
+        authUser: {
+          id: "user-1",
+          name: "Ada",
+          email: "ada@example.com",
+          postalCode: "28001",
+        },
+      }),
+    );
+
+    expect(result.current.mainContent.type).toBe(CatalogHome);
   });
 
   it("fuerza login en /lists si no hay usuario", () => {

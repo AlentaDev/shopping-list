@@ -13,21 +13,43 @@ const DRAFT_LOSS_MESSAGE =
 export const UI_TEXT = {
   APP: {
     TITLE: "Shopping List",
+    TITLE_IMAGE_ALT: "Shopping List",
+    HOME_LABEL: "Inicio",
     CART_BUTTON_LABEL: "Abrir carrito",
+    MY_LISTS_LABEL: "Mis Listas",
     CATEGORIES_LABEL: "Categorías",
     DOWNLOAD_APP_LABEL: "Descargar app",
     LOGIN_LABEL: "Login",
     REGISTER_LABEL: "Registro",
+    MOBILE_MENU_BUTTON_LABEL: "Abrir menú de navegación",
+    MOBILE_MENU_TITLE: "Menú de navegación",
     HANDSHAKE_WAITING_BANNER:
       "Estamos preparando tu lista para que puedas seguir comprando.",
     HANDSHAKE_READY_TOAST: "Tu lista ya está lista para continuar.",
   },
   HOME: {
-    TITLE: "Tu lista de compras",
-    SUBTITLE: "Elige un catálogo para empezar a crear tu lista.",
-    PROVIDER_ENTRY_LABEL: "Entrar en {provider}",
+    HERO_TITLE: "Organiza tu compra antes de salir de casa.",
+    HERO_SUBTITLE:
+      "Prepara tu lista, entra en el catálogo de tu súper y llega al pasillo con todo claro.",
+    PRIMARY_CTA_LABEL: "Ver supermercados disponibles",
+    DOWNLOAD_APP_CTA_LABEL: "Descargar app Android",
+    HERO_IMAGE_ALT: "Productos frescos preparados para tu compra semanal",
+    PROVIDERS_SECTION_TITLE: "Supermercados disponibles",
+    PROVIDERS_SECTION_SUBTITLE:
+      "Empieza con tu proveedor habitual y crea una lista lista para usar desde tu móvil.",
     ANONYMOUS_DRAFT_GUIDANCE:
       "Tienes un borrador asociado a {provider}. Puedes seguir ahí o elegir otro catálogo antes de añadir productos.",
+    PROVIDERS: {
+      MERCADONA: {
+        LOGO_ALT: "Logo de Mercadona",
+        CTA_LABEL: "Cátalogo Mercadona",
+      },
+    },
+  },
+  FOOTER: {
+    TAGLINE: "Shopping List te ayuda a preparar la compra con menos improvisación.",
+    SUPPORTING_COPY: "Elige tu súper, prepara la lista y úsala después desde la app móvil.",
+    COPYRIGHT: "© Shopping List - AlentaDev 2026. Todos los derechos reservados.",
   },
   PROVIDERS: {
     MERCADONA: {
@@ -38,31 +60,53 @@ export const UI_TEXT = {
     },
   },
   APP_DOWNLOAD: {
-    BADGE_LABEL: "Beta",
-    TITLE: "Shopping List para Android",
+    BADGE_LABEL: "Android v1.0",
+    TITLE: "Android para tus listas activas",
     SUBTITLE:
-      "Descarga la app beta para usar tus listas en el súper y seguir comprando aunque la conexión sea inestable.",
-    DOWNLOAD_BUTTON_LABEL: "Descargar APK Android",
+      "Tu acompañante estable para consultar y completar en el súper las listas que creaste y finalizaste en la web.",
+    DOWNLOAD_BUTTON_LABEL: "Descargar APK oficial",
     VERSION_LABEL: "Versión:",
-    UPDATED_AT_LABEL: "Última actualización:",
+    PUBLICATION_NOTE:
+      "La APK se publicará en la release oficial de GitHub cuando esté disponible.",
     RELEASE: {
-      VERSION: "v0.10.3",
-      UPDATED_AT: "15/06/2026",
+      VERSION: "v1.0.0",
       APK_URL:
-        "https://github.com/AlentaDev/shopping-list/releases/download/android-v0.10.3/shopping-list-android.apk",
+        "https://github.com/AlentaDev/shopping-list/releases/download/android-v1.0.0/shopping-list-android.apk",
+    },
+    HOW_IT_WORKS: {
+      TITLE: "Cómo funciona",
+      FIRST:
+        "Crea tu cuenta y prepara una lista en la web; finalízala para convertirla en una lista activa.",
+      SECOND: "Inicia sesión en Android con la misma cuenta.",
+      THIRD: "Elige una de tus listas activas para usarla durante la compra.",
+      FOURTH: "Marca los productos conforme los añades a la cesta.",
+      FIFTH:
+        "Consulta el avance y el total, que suma solo los productos de catálogo marcados que tienen precio.",
+      SIXTH: "Finaliza la lista al terminar la compra.",
+    },
+    CONNECTION: {
+      TITLE: "Conexión y sincronización",
+      FIRST:
+        "Las listas que ya descargaste permanecen disponibles aunque no tengas conexión.",
+      SECOND:
+        "Si un intento de sincronización se interrumpe por falta de conexión, se conserva el último estado de cada acción de marcar o desmarcar y se reintenta al recuperar la conectividad.",
+      THIRD:
+        "No todos los cambios sin conexión se sincronizan automáticamente: revisa que la conexión se haya recuperado para que el reintento pueda completarse.",
+    },
+    SCOPE_LIMITS: {
+      TITLE: "Qué se hace en la web",
+      FIRST:
+        "La creación y edición de cuentas, listas y productos se realiza desde la web.",
+      SECOND: "Android muestra listas activas; el historial se consulta en la web.",
     },
     INSTALL_STEPS: {
-      TITLE: "Cómo instalar",
-      FIRST: "Descarga el APK en tu dispositivo Android.",
+      TITLE: "Instalación y actualizaciones",
+      FIRST: "Descarga el APK desde la release oficial de GitHub en tu dispositivo Android.",
       SECOND: "Abre el archivo y confirma la instalación.",
       THIRD:
         "Si Android lo solicita, habilita 'Instalar apps desconocidas' para tu navegador o gestor de archivos.",
-    },
-    KNOWN_LIMITATIONS: {
-      TITLE: "Limitaciones conocidas de esta beta",
-      FIRST: "La sincronización puede requerir reintentos en conexiones inestables.",
-      SECOND: "Puede haber latencia puntual al refrescar listas con mala conexión.",
-      THIRD: "Soporte inicial solo para Android.",
+      FOURTH:
+        "Para actualizar, instala una APK más reciente sobre la aplicación que ya tienes instalada.",
     },
   },
   AUTH: {
@@ -113,6 +157,8 @@ export const UI_TEXT = {
       PASSWORD_LABEL: "Contraseña",
       PASSWORD_PLACEHOLDER: "Tu contraseña",
       SUBMIT_LABEL: "Entrar",
+      SECONDARY_PROMPT: "¿No tienes cuenta? Crea una pinchando",
+      SECONDARY_ACTION: "aquí",
     },
     REGISTER: {
       TITLE: "Crear cuenta",
@@ -127,6 +173,8 @@ export const UI_TEXT = {
       POSTAL_CODE_LABEL: "Código postal (opcional)",
       POSTAL_CODE_PLACEHOLDER: "Ej. 28001",
       SUBMIT_LABEL: "Registrarme",
+      SECONDARY_PROMPT: "¿Ya estás registrado? Logueate pinchando",
+      SECONDARY_ACTION: "aquí",
     },
   },
   CATALOG: {
@@ -142,9 +190,16 @@ export const UI_TEXT = {
     EMPTY_CATEGORIES_SUBTITLE: "Vuelve a intentarlo más tarde.",
     DRAFT_PROVIDER_CONFLICT:
       "Tu borrador actual pertenece a {currentProvider}. Si continúas, lo vaciaremos para empezar una nueva lista en {requestedProvider}.",
+    DRAFT_PROVIDER_CONFLICT_MODAL: {
+      TITLE: "¿Cambias de catálogo?",
+      CONFIRM_LABEL: "Si, cambio",
+      DISMISS_LABEL: "Cancel",
+    },
   },
   CATEGORIES_PANEL: {
     TITLE: "Categorías",
+    OPEN_BUTTON_LABEL: "Abrir categorías",
+    CLOSE_BUTTON_LABEL: "Cerrar categorías",
     LOAD_CATEGORIES_ERROR_MESSAGE: "No se pudieron cargar las categorías.",
     LOADING_CATEGORIES_MESSAGE: "Cargando categorías...",
     RETRY_BUTTON_LABEL: "Reintentar",
@@ -223,7 +278,7 @@ export const UI_TEXT = {
       BUTTON_LABEL: "Editar título",
       INPUT_LABEL: "Título de la lista",
       SUBMIT_LABEL: "Guardar título",
-      VALIDATION_ERROR: "El título debe tener entre 3 y 35 caracteres.",
+      VALIDATION_ERROR: "El título debe tener entre 3 y 25 caracteres.",
     },
   },
   LISTS: {
@@ -252,8 +307,7 @@ export const UI_TEXT = {
     CARD: {
       ITEM_COUNT_LABEL: "Productos:",
       ACTIVATED_AT_LABEL: "Activada:",
-      UPDATED_AT_LABEL: "Actualizada:",
-      PROVIDER_LABEL: "Proveedor:",
+      COMPLETED_AT_LABEL: "Completada:",      
     },
     EMPTY_STATE: {
       ACTIVE_TITLE: "No hay listas activas",
@@ -272,11 +326,11 @@ export const UI_TEXT = {
       CONFIRM_LABEL: "Continuar",
     },
     ACTIVE_EDIT_CONFLICT: {
-      TITLE: "Ya estás editando otra lista",
+      TITLE: "Estás editando una lista",
       MESSAGE:
         "Ahora mismo estás editando una lista de {currentProvider}. Solo puedes cancelar esa edición y empezar una nueva lista en {requestedProvider}, o volver al catálogo original.",
-      RETURN_LABEL: "Volver al catálogo original",
-      CONFIRM_LABEL: "Cancelar edición y empezar una lista nueva",
+      RETURN_LABEL: "Volver",
+      CONFIRM_LABEL: "Cancelar edición",
       CANCEL_ERROR: "Unable to cancel active editing.",
     },
     ACTIVATE_DISABLED_MESSAGE: "Añade productos para poder finalizarla.",

@@ -1,10 +1,80 @@
 version: 1
+schema: spec-driven
+
 project:
   name: shopping-list
-  repository: monorepo
+  repository: pnpm-monorepo
+
 defaults:
-  language: es
+  language: en
   artifact_store: openspec
+  execution_mode: interactive
+  pr_strategy: auto-forecast
+  review_workload_budget_lines: 400
+
+context: |
+  Stack: TypeScript 5.9, React 19, Vite 7, Express 5, Zod 4, PostgreSQL/in-memory persistence, Kotlin 2.2, and Android Compose.
+  Architecture: Modular monolith, feature-first; backend layers are domain, application, infrastructure, and web.
+  Web: UI components delegate use cases to feature services and DTO mapping to pure adapters; shared code stays feature-agnostic.
+  Android: Feature-first Clean Architecture with MVVM; UI depends on domain, which depends on data abstractions.
+  Testing: Vitest for web/API, Testing Library and Supertest for integration, Playwright for critical E2E, and JUnit/MockK/Turbine for Android.
+  Conventions: Mandatory TDD, small isolated changes, no new libraries or architecture changes without explicit approval.
+
+strict_tdd: true
+
+testing:
+  detected: "2026-07-26"
+  strict_tdd: true
+  strict_tdd_source: AGENTS.md
+  runners:
+    web:
+      framework: Vitest 4 with jsdom and Testing Library
+      command: pnpm --filter @app/web test:run
+    api:
+      framework: Vitest 4 with Supertest
+      command: pnpm --filter @app/api test
+    android:
+      framework: JUnit 4 with MockK, Turbine, and AndroidX Test
+      command: pnpm test:android
+    e2e:
+      framework: Playwright 1.57 (Chromium)
+      command: pnpm test:e2e
+  layers:
+    unit: true
+    integration: true
+    e2e: true
+    android_instrumented: true
+  coverage:
+    available: true
+    command: pnpm -C apps/web test:coverage
+    strategy: "100/80/0: CORE 100%, IMPORTANT 80%, INFRASTRUCTURE excluded"
+    global_thresholds:
+      lines: 80
+      functions: 80
+      branches: 70
+      statements: 80
+    limitations:
+      - API has the V8 coverage provider installed but no repository coverage command or threshold.
+      - No Android coverage task is configured.
+  quality:
+    linter:
+      available: true
+      command: pnpm lint
+      tools: ESLint 9 for web and API; Android Lint through Gradle
+    type_checker:
+      available: true
+      command: pnpm typecheck
+      tools: TypeScript compiler for web and API; Kotlin compiler for Android
+    formatter:
+      available: false
+      command: null
+    build:
+      available: true
+      command: pnpm -r build
+    full_verification:
+      available: true
+      command: pnpm verify
+
 workflow:
   phases:
     - explore
@@ -15,3 +85,35 @@ workflow:
     - apply
     - verify
     - archive
+
+rules:
+  proposal:
+    - State intent, scope, non-goals, risks, and rollback for risky changes.
+    - Forecast review size and split changes expected to exceed 400 changed lines.
+  specs:
+    - Use RFC 2119 keywords and Given/When/Then scenarios.
+    - Do not invent requirements; stop for clarification when behavior is unspecified.
+  design:
+    - Preserve the modular-monolith and feature-first boundaries.
+    - Document architecture decisions and cross-application contract impact.
+  tasks:
+    - Group work into small, reviewable units that keep tests and documentation with implementation.
+    - Keep each pull request forecast within the 400-line review workload budget when practical.
+  apply:
+    tdd: true
+    test_command: pnpm test
+    guidelines:
+      - Follow RED-GREEN-REFACTOR and implement the smallest behavior that satisfies the active spec.
+      - Do not add libraries or change architecture without explicit approval.
+      - Do not move or rename more than approximately 10 files per iteration without confirmation.
+  verify:
+    test_command: pnpm test
+    build_command: pnpm -r build
+    coverage_command: pnpm -C apps/web test:coverage
+    coverage_threshold: 80
+    guidelines:
+      - Run pnpm verify when PostgreSQL and browser prerequisites are available.
+      - Validate CORE web files manually against the 100% target.
+  archive:
+    - Preserve archived changes as an immutable audit trail.
+    - Warn before merging destructive or removing deltas into main specs.

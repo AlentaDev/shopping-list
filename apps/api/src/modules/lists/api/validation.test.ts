@@ -2,9 +2,17 @@ import { describe, expect, it } from "vitest";
 import { addCatalogItemSchema, createListSchema, upsertAutosaveSchema } from "./validation.js";
 
 describe("list title validation", () => {
-  it("accepts titles between 3 and 35 characters", () => {
+  it("accepts titles between 3 and 25 characters", () => {
     expect(() => createListSchema.parse({ title: "abc" })).not.toThrow();
-    expect(() => createListSchema.parse({ title: "a".repeat(35) })).not.toThrow();
+    expect(() => createListSchema.parse({ title: "a".repeat(25) })).not.toThrow();
+    expect(() =>
+      upsertAutosaveSchema.parse({
+        title: "a".repeat(25),
+        providerId: "mercadona",
+        baseUpdatedAt: new Date().toISOString(),
+        items: [],
+      }),
+    ).not.toThrow();
   });
 
   it("rejects titles shorter than 3 characters", () => {
@@ -18,18 +26,19 @@ describe("list title validation", () => {
     ).toThrow();
   });
 
-  it("rejects titles longer than 35 characters", () => {
-    expect(() => createListSchema.parse({ title: "a".repeat(36) })).toThrow();
+  it("rejects titles longer than 25 characters", () => {
+    expect(() => createListSchema.parse({ title: "a".repeat(26) })).toThrow();
     expect(() =>
       upsertAutosaveSchema.parse({
-        title: "a".repeat(36),
+        title: "a".repeat(26),
+        providerId: "mercadona",
         baseUpdatedAt: new Date().toISOString(),
         items: [],
       }),
     ).toThrow();
   });
 
-  it("accepts autosave catalog snapshots when present", () => {
+  it("accepts persisted Bonpreu snapshots for list compatibility", () => {
     expect(() =>
       upsertAutosaveSchema.parse({
         title: "Autosave",
@@ -75,6 +84,16 @@ describe("add catalog item validation", () => {
       addCatalogItemSchema.parse({
         source: "mercadona",
         provider: "otro-provider",
+        productId: "4706",
+      }),
+    ).toThrow();
+  });
+
+  it("rejects Bonpreu catalogue mutations", () => {
+    expect(() =>
+      addCatalogItemSchema.parse({
+        source: "bonpreuesclat",
+        provider: "bonpreuesclat",
         productId: "4706",
       }),
     ).toThrow();

@@ -1,5 +1,6 @@
 import type {
   CatalogProviderResolver,
+  CatalogProviderSlug,
   MercadonaProductDetail,
 } from "@src/modules/catalog/public.js";
 import { AppError } from "@src/shared/errors/appError.js";
@@ -118,7 +119,7 @@ function readOptionalSnapshot(
 type AddCatalogItemInput = {
   userId: string;
   listId: string;
-  provider: "mercadona" | "bonpreuesclat";
+  provider: CatalogProviderSlug;
   productId: string;
   qty?: number;
 };

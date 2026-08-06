@@ -11,6 +11,8 @@ type AuthScreenProps = {
   onLogin: (values: LoginFormValues) => void | Promise<void>;
   onRegister: (values: RegisterFormValues) => void | Promise<void>;
   onBack: () => void;
+  onNavigateToLogin: () => void;
+  onNavigateToRegister: () => void;
 };
 
 const AuthScreen = ({
@@ -20,6 +22,8 @@ const AuthScreen = ({
   onLogin,
   onRegister,
   onBack,
+  onNavigateToLogin,
+  onNavigateToRegister,
 }: AuthScreenProps) => {
   const isLogin = mode === "login";
 
@@ -49,6 +53,23 @@ const AuthScreen = ({
           ) : (
             <RegisterForm onSubmit={onRegister} isSubmitting={isSubmitting} />
           )}
+        </div>
+        <div className="mt-6 border-t border-slate-200 pt-4">
+          <p className="text-sm text-slate-600">
+            {isLogin
+              ? UI_TEXT.AUTH.LOGIN.SECONDARY_PROMPT
+              : UI_TEXT.AUTH.REGISTER.SECONDARY_PROMPT}
+            {" "}
+            <button
+              type="button"
+              onClick={isLogin ? onNavigateToRegister : onNavigateToLogin}
+              className="font-medium text-blue-600 underline underline-offset-2 transition hover:text-blue-700"
+            >
+              {isLogin
+                ? UI_TEXT.AUTH.LOGIN.SECONDARY_ACTION
+                : UI_TEXT.AUTH.REGISTER.SECONDARY_ACTION}
+            </button>
+          </p>
         </div>
         {errorMessage ? (
           <p className="mt-4 text-sm text-red-600">{errorMessage}</p>

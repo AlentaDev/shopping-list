@@ -1,4 +1,12 @@
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { z } from "zod";
 import { UI_TEXT } from "@src/shared/constants/ui";
 
@@ -20,7 +28,7 @@ const TITLE_SCHEMA = z.object({
     .string()
     .trim()
     .min(3, UI_TEXT.LIST_MODAL.EDIT_TITLE.VALIDATION_ERROR)
-    .max(35, UI_TEXT.LIST_MODAL.EDIT_TITLE.VALIDATION_ERROR),
+    .max(25, UI_TEXT.LIST_MODAL.EDIT_TITLE.VALIDATION_ERROR),
 });
 
 const ListModal = ({
@@ -41,16 +49,16 @@ const ListModal = ({
   const [draftTitle, setDraftTitle] = useState("");
   const [titleError, setTitleError] = useState<string | null>(null);
 
-  const resetTitleEditor = () => {
+  const resetTitleEditor = useCallback(() => {
     setIsEditingTitle(false);
     setTitleError(null);
     setDraftTitle(title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE);
-  };
+  }, [title]);
 
-  const handleDismissModal = () => {
+  const handleDismissModal = useCallback(() => {
     resetTitleEditor();
     onClose();
-  };
+  }, [onClose, resetTitleEditor]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -83,7 +91,7 @@ const ListModal = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, title]);
+  }, [handleDismissModal, isOpen]);
 
   if (!isOpen) {
     return null;
@@ -111,6 +119,11 @@ const ListModal = ({
     setIsEditingTitle(false);
   };
 
+  const handleTitleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    handleSubmitTitle();
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       <button
@@ -130,7 +143,10 @@ const ListModal = ({
           <div className="border-b border-slate-200 px-6 py-4">
             <div className="flex items-start justify-between gap-3">
               {isEditingTitle ? (
-                <div className="flex flex-1 items-center gap-2">
+                <form
+                  className="flex flex-1 items-center gap-2"
+                  onSubmit={handleTitleFormSubmit}
+                >
                   <label htmlFor={titleId} className="sr-only">
                     {UI_TEXT.LIST_MODAL.EDIT_TITLE.INPUT_LABEL}
                   </label>
@@ -138,6 +154,7 @@ const ListModal = ({
                     id={titleId}
                     type="text"
                     value={draftTitle}
+                    maxLength={25}
                     onChange={(event) => {
                       setDraftTitle(event.target.value);
                       setTitleError(null);
@@ -146,8 +163,7 @@ const ListModal = ({
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900"
                   />
                   <button
-                    type="button"
-                    onClick={handleSubmitTitle}
+                    type="submit"
                     aria-label={UI_TEXT.LIST_MODAL.EDIT_TITLE.SUBMIT_LABEL}
                     className="rounded-full border border-slate-300 p-2 text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
                   >
@@ -164,7 +180,7 @@ const ListModal = ({
                       <path d="m13 5 7 7-7 7" />
                     </svg>
                   </button>
-                </div>
+                </form>
               ) : (
                 <h2 id={titleId} className="text-xl font-semibold text-slate-900">
                   {title ?? UI_TEXT.LIST_MODAL.DEFAULT_LIST_TITLE}

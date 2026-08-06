@@ -6,11 +6,11 @@ import { AppError } from "@src/shared/errors/appError.js";
 import { createCatalogRouter } from "./catalogRouter.js";
 
 describe("catalog router", () => {
-  it("returns deterministic 404 when provider strategy is unknown", async () => {
+  it("rejects unknown providers before invoking a catalogue use case", async () => {
     const getRootCategoriesExecute = vi
       .fn()
       .mockImplementation(async (provider: string) => {
-        if (provider === "mercadona" || provider === "bonpreuesclat") {
+        if (provider === "mercadona") {
           return { categories: [] };
         }
 
@@ -31,9 +31,9 @@ describe("catalog router", () => {
 
     const response = await request(app).get("/api/catalog/invalid/categories");
 
-    expect(response.status).toBe(404);
-    expect(response.body.error).toBe("provider_not_found");
-    expect(response.body.provider).toBe("invalid");
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("validation_error");
+    expect(getRootCategoriesExecute).not.toHaveBeenCalled();
   });
 
   it("returns 400 when category id is invalid", async () => {
@@ -53,7 +53,7 @@ describe("catalog router", () => {
     expect(response.body.error).toBe("validation_error");
   });
 
-  it("uses provider-aware categories endpoint", async () => {
+  it("rejects Bonpreu catalogue routes before invoking a catalogue use case", async () => {
     const getRootCategoriesExecute = vi.fn().mockResolvedValue({ categories: [] });
     const app = express();
     app.use(
@@ -65,13 +65,11 @@ describe("catalog router", () => {
     );
     app.use(errorMiddleware);
 
-    const response = await request(app).get(
-      "/api/catalog/bonpreuesclat/categories",
-    );
+    const response = await request(app).get("/api/catalog/bonpreuesclat/categories");
 
-    expect(response.status).toBe(200);
-    expect(getRootCategoriesExecute).toHaveBeenCalledTimes(1);
-    expect(getRootCategoriesExecute).toHaveBeenCalledWith("bonpreuesclat");
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("validation_error");
+    expect(getRootCategoriesExecute).not.toHaveBeenCalled();
   });
 
   it("forwards provider and category id to category detail use case", async () => {
@@ -96,7 +94,7 @@ describe("catalog router", () => {
     expect(getCategoryDetailExecute).toHaveBeenCalledWith("mercadona", "123");
   });
 
-  it("accepts canonical Bonpreu string ids in category detail routes", async () => {
+  it("accepts string category ids for the supported catalogue", async () => {
     const getCategoryDetailExecute = vi
       .fn()
       .mockResolvedValue({ id: "leaf.uuid-1", name: "test", subcategories: [] });
@@ -111,13 +109,14 @@ describe("catalog router", () => {
     app.use(errorMiddleware);
 
     const response = await request(app).get(
-      "/api/catalog/bonpreuesclat/categories/08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123.leaf",
+      "/api/catalog/mercadona/categories/08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123.leaf",
     );
 
     expect(response.status).toBe(200);
     expect(getCategoryDetailExecute).toHaveBeenCalledWith(
-      "bonpreuesclat",
+      "mercadona",
       "08f4f6d0-4c2a-4d2b-a51b-8a6c9f16c123.leaf",
     );
   });
+
 });

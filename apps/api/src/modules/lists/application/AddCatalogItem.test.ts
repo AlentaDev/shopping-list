@@ -5,7 +5,6 @@ import type { List } from "../domain/list.js";
 import { InMemoryListRepository } from "../infrastructure/InMemoryListRepository.js";
 import { AddCatalogItem } from "./AddCatalogItem.js";
 import {
-  DraftProviderConflictError,
   ListStatusTransitionError,
   ProviderPayloadContractError,
 } from "./errors.js";
@@ -29,7 +28,7 @@ function createCatalogProvider(slug: CatalogProviderSlug): CatalogProvider {
     metadata: {
       id: `provider-${slug}`,
       slug,
-      displayName: slug === "mercadona" ? "Mercadona" : "BonpreuEsclat",
+      displayName: "Mercadona",
     },
     getProduct: vi.fn(async (productId: string) => ({
       id: productId,
@@ -247,121 +246,6 @@ describe("AddCatalogItem", () => {
         productId: "4706",
       }),
     ).resolves.toMatchObject({ id: "list-1:4706" });
-  });
-
-  it("returns deterministic 409 draft_provider_conflict payload for provider mismatch", async () => {
-    const listRepository = new InMemoryListRepository();
-    const idGenerator = { generate: vi.fn().mockReturnValue("item-1") };
-    const mercadonaProvider = createCatalogProvider("mercadona");
-    const bonpreuProvider = createCatalogProvider("bonpreuesclat");
-    const catalogProviderResolver = createCatalogProviderResolver([
-      mercadonaProvider,
-      bonpreuProvider,
-    ]);
-    const useCase = new AddCatalogItem(
-      listRepository,
-      idGenerator,
-      catalogProviderResolver,
-    );
-
-    await listRepository.save({
-      ...createDraftList(),
-      providerId: "provider-mercadona",
-      items: [
-        {
-          id: "list-1:111",
-          listId: "list-1",
-          kind: "catalog",
-          source: "mercadona",
-          sourceProductId: "111",
-          nameSnapshot: "Item",
-          thumbnailSnapshot: null,
-          priceSnapshot: 1,
-          unitSizeSnapshot: null,
-          unitFormatSnapshot: null,
-          unitPricePerUnitSnapshot: null,
-          isApproxSizeSnapshot: false,
-          categorySnapshot: "Lácteos",
-          subcategorySnapshot: null,
-          qty: 1,
-          checked: false,
-          createdAt: new Date("2024-01-01T10:00:00.000Z"),
-          updatedAt: new Date("2024-01-01T10:00:00.000Z"),
-        },
-      ],
-    });
-
-    const nowIso = "2024-01-01T10:00:00.000Z";
-    const expectedActions = ["switch_and_clear", "keep_draft_provider"];
-
-    await expect(
-      useCase.execute({
-        userId: "user-1",
-        listId: "list-1",
-        provider: "bonpreuesclat",
-        productId: "4706",
-      }),
-    ).rejects.toMatchObject({
-      status: 409,
-      code: "draft_provider_conflict",
-      details: {
-        errorCode: "draft_provider_conflict",
-        draftProvider: {
-          id: "provider-mercadona",
-          slug: "mercadona",
-          displayName: "Mercadona",
-        },
-        requestedProvider: {
-          id: "provider-bonpreuesclat",
-          slug: "bonpreuesclat",
-          displayName: "BonpreuEsclat",
-        },
-        allowedActions: expectedActions,
-        draftSummary: {
-          itemCount: 1,
-          updatedAt: nowIso,
-        },
-      },
-    });
-
-    expect(mercadonaProvider.getProduct).not.toHaveBeenCalled();
-    expect(bonpreuProvider.getProduct).not.toHaveBeenCalled();
-  });
-
-  it("uses the resolved bonpreu provider for bonpreu-owned drafts", async () => {
-    const listRepository = new InMemoryListRepository();
-    const idGenerator = { generate: vi.fn().mockReturnValue("item-1") };
-    const mercadonaProvider = createCatalogProvider("mercadona");
-    const bonpreuProvider = createCatalogProvider("bonpreuesclat");
-    const catalogProviderResolver = createCatalogProviderResolver([
-      mercadonaProvider,
-      bonpreuProvider,
-    ]);
-    const useCase = new AddCatalogItem(
-      listRepository,
-      idGenerator,
-      catalogProviderResolver,
-    );
-
-    await listRepository.save({
-      ...createDraftList(),
-      providerId: "provider-bonpreuesclat",
-    });
-
-    await expect(
-      useCase.execute({
-        userId: "user-1",
-        listId: "list-1",
-        provider: "bonpreuesclat",
-        productId: "bp-1",
-      }),
-    ).resolves.toMatchObject({
-      id: "list-1:bp-1",
-      source: "bonpreuesclat",
-    });
-
-    expect(bonpreuProvider.getProduct).toHaveBeenCalledWith("bp-1");
-    expect(mercadonaProvider.getProduct).not.toHaveBeenCalled();
   });
 
   it("fails with provider_not_found when the persisted draft provider cannot be resolved", async () => {

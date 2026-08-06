@@ -4,16 +4,12 @@ import { ProviderStrategyResolver } from "./application/ProviderStrategyResolver
 import type { CatalogCache } from "./domain/catalogCache.js";
 import type { CatalogProvider } from "./domain/catalogProvider.js";
 import { InMemoryCatalogCache } from "./infrastructure/InMemoryCatalogCache.js";
-import { BonpreuCatalogProvider } from "./infrastructure/BonpreuCatalogProvider.js";
-import { BonpreuHttpClient } from "./infrastructure/BonpreuHttpClient.js";
 import { MercadonaCatalogProvider } from "./infrastructure/MercadonaCatalogProvider.js";
 import { MercadonaHttpClient } from "./infrastructure/MercadonaHttpClient.js";
 import { createCatalogRouter } from "./api/catalogRouter.js";
 
 const MERCADONA_BASE_URL = "https://tienda.mercadona.es/api";
 const MERCADONA_TIMEOUT_MS = 8000;
-const BONPREU_BASE_URL = "https://www.compraonline.bonpreuesclat.cat";
-const BONPREU_TIMEOUT_MS = 8000;
 
 type CatalogModuleDependencies = {
   provider?: CatalogProvider;
@@ -25,16 +21,13 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   const mercadonaProvider = new MercadonaCatalogProvider(
     new MercadonaHttpClient(MERCADONA_BASE_URL, MERCADONA_TIMEOUT_MS),
   );
-  const bonpreuProvider = new BonpreuCatalogProvider(
-    new BonpreuHttpClient(BONPREU_BASE_URL, BONPREU_TIMEOUT_MS),
-  );
 
   const injectedProvider = deps.provider
     ? withFallbackMetadata(deps.provider)
     : undefined;
   const providers = injectedProvider
     ? [injectedProvider]
-    : [mercadonaProvider, bonpreuProvider];
+    : [mercadonaProvider];
   const resolver = new ProviderStrategyResolver(providers);
 
   const router = createCatalogRouter({

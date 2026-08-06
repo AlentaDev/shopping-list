@@ -17,7 +17,7 @@ import {
   type RegisterInput,
   type AuthUser,
 } from "@src/features/auth/services/AuthService";
-import { useApiAwake } from "./ApiAwakeContext";
+import { useApiAwake } from "./useApiAwake";
 
 export type AuthContextType = {
   authUser: AuthUser | null;

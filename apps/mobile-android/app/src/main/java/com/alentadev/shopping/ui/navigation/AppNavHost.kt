@@ -1,19 +1,28 @@
 package com.alentadev.shopping.ui.navigation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.alentadev.shopping.feature.auth.ui.navigation.LOGIN_ROUTE_PATTERN
+import com.alentadev.shopping.R
 import com.alentadev.shopping.feature.auth.ui.navigation.loginScreen
 import com.alentadev.shopping.feature.auth.ui.navigation.loginRoute
 import com.alentadev.shopping.feature.lists.ui.navigation.ACTIVE_LISTS_REFRESH_KEY
@@ -146,7 +155,7 @@ fun AppNavHost(
             }
         )
         composable(route = HEALTH_CHECK_ROUTE) {
-            HealthCheckScreen()
+            HealthCheckScreen(onBackToMain = { navController.popBackStack() })
         }
     }
 }
@@ -169,11 +178,35 @@ private fun BootstrapRoute(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        BootstrapSplash()
+    }
+}
+
+@Composable
+private fun BootstrapSplash() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(
+            painter = painterResource(R.drawable.brand_logo),
+            contentDescription = stringResource(R.string.brand_logo_description),
+            modifier = Modifier.size(96.dp)
+        )
+        Image(
+            painter = painterResource(R.drawable.brand_title),
+            contentDescription = stringResource(R.string.brand_title_description),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .height(56.dp)
+                .padding(top = 8.dp)
+        )
+        Image(
+            painter = painterResource(R.drawable.brand_landing_products),
+            contentDescription = stringResource(R.string.brand_landing_description),
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .size(220.dp)
+                .padding(top = 24.dp)
+        )
     }
 }
 

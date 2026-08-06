@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Catalog from "./Catalog";
+import { APP_EVENTS } from "@src/shared/constants/appState";
 import { ListProvider } from "@src/context/ListContext";
 import { ToastProvider } from "@src/context/ToastContext";
 import Toast from "@src/shared/components/toast/Toast";
@@ -116,11 +117,32 @@ vi.mock("./services/useCatalog", () => ({
   }),
 }));
 
-vi.mock("@src/shared/utils/isMobileCatalogInteractionMode", () => ({
-  isMobileCatalogInteractionMode: () => isMobileCatalogInteractionModeMock,
+vi.mock("@src/shared/hooks/useMobileCatalogInteractionMode", () => ({
+  useMobileCatalogInteractionMode: () => isMobileCatalogInteractionModeMock,
 }));
 
+const createMockStorage = (): Storage => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    length: 0,
+  } as Storage;
+};
+
 describe("Catalog", () => {
+  beforeEach(() => {
+    window.localStorage = createMockStorage();
+  });
   it("setea snapshots al agregar producto desde catálogo", async () => {
     const user = userEvent.setup();
 
@@ -211,12 +233,15 @@ describe("Catalog", () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(false);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -224,21 +249,30 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+      }),
+    );
     expect(addItemMock).not.toHaveBeenCalled();
     expect(resetDraftMock).not.toHaveBeenCalled();
   });
 
-  it("resets the draft only when a cross-provider mutation is confirmed", async () => {
+  it("resets the draft only when a cross-provider conflict is confirmed", async () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -246,11 +280,13 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Mercadona"),
-    );
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Bonpreu Esclat"),
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message: expect.stringContaining("Mercadona") as unknown,
+      }),
     );
     expect(resetDraftMock).toHaveBeenCalledWith("bonpreuesclat");
     expect(addItemMock).toHaveBeenCalledTimes(1);
@@ -260,11 +296,15 @@ describe("Catalog", () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [];
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="bonpreuesclat" />
+          <Catalog
+            providerId="bonpreuesclat"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -272,21 +312,25 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(setDraftProviderIdMock).toHaveBeenCalledWith("bonpreuesclat");
     expect(addItemMock).toHaveBeenCalledTimes(1);
     expect(resetDraftMock).not.toHaveBeenCalled();
   });
 
-  it("adds the item without confirm when draft matches the requested provider and has items", async () => {
+  it("adds the item without conflict callback when draft matches the requested provider and has items", async () => {
     const user = userEvent.setup();
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm");
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog providerId="mercadona" />
+          <Catalog
+            providerId="mercadona"
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+          />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -294,7 +338,7 @@ describe("Catalog", () => {
 
     await user.click(screen.getByRole("button", { name: "Añadir Ensaimada" }));
 
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(addItemMock).toHaveBeenCalledTimes(1);
     expect(resetDraftMock).not.toHaveBeenCalled();
     expect(setDraftProviderIdMock).not.toHaveBeenCalled();
@@ -303,13 +347,13 @@ describe("Catalog", () => {
   it("delegates cross-provider mutation to the active-edit conflict flow when an edit session exists", async () => {
     const user = userEvent.setup();
     const onRequestActiveEditConflict = vi.fn();
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
     draftProviderIdMock = "mercadona";
     listItemsMock = [{ id: "item-1" }];
     localStorage.setItem(
       "lists.editSession",
       JSON.stringify({ listId: "active-list-1", isEditing: true }),
     );
-    const confirmSpy = vi.spyOn(window, "confirm");
 
     render(
       <ToastProvider>
@@ -317,6 +361,7 @@ describe("Catalog", () => {
           <Catalog
             providerId="bonpreuesclat"
             onRequestActiveEditConflict={onRequestActiveEditConflict}
+            onRequestDraftProviderConflict={onRequestDraftProviderConflict}
           />
           <Toast />
         </ListProvider>
@@ -329,11 +374,13 @@ describe("Catalog", () => {
       currentProviderId: "mercadona",
       requestedProviderId: "bonpreuesclat",
     });
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(addItemMock).not.toHaveBeenCalled();
   });
 
   it("uses a 2-column mobile product grid while preserving md+ classes", () => {
+    isMobileCatalogInteractionModeMock = true;
+
     render(
       <ToastProvider>
         <ListProvider>
@@ -354,31 +401,109 @@ describe("Catalog", () => {
     expect(productGrid).toHaveClass("lg:grid-cols-4");
   });
 
-  it("keeps desktop panel hidden on mobile classes and opens mobile overlay from external trigger", () => {
-    isMobileCatalogInteractionModeMock = true;
+  it("restores the desktop categories panel as a fixed sidebar without a floating opener", () => {
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen openMobileCategoriesRequestKey={1} />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
     );
 
-    expect(
-      screen.queryByRole("button", {
-        name: "Categorías",
-      }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("catalog-desktop-categories-panel")).toHaveClass(
+      "md:fixed",
+      "md:top-24",
+      "md:w-80",
+    );
+    expect(screen.getByTestId("catalog-desktop-categories-panel")).not.toHaveClass(
+      "md:sticky",
+    );
+    expect(screen.getByTestId("categories-panel-scroll")).toBeInTheDocument();
+    expect(screen.queryByTestId("mobile-categories-overlay")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Abrir categorías" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cerrar categorías" })).not.toBeInTheDocument();
+  });
 
-    const desktopPanelContainer = screen
-      .getAllByText("Categorías")
-      .map((element) => element.closest("div.pointer-events-none"))
-      .find(Boolean);
-    expect(desktopPanelContainer).toHaveClass("hidden", "md:block");
+  it("shifts the desktop products grid as part of the always-visible panel layout", () => {
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+    const dulcesHeading = screen.getByRole("heading", {
+      name: "Dulces",
+      level: 2,
+    });
+    const productGrid = dulcesHeading.nextElementSibling;
+    expect(productGrid).toHaveClass("md:grid-cols-1");
+    expect(screen.getByTestId("categories-panel-scroll")).toBeInTheDocument();
+  });
+
+  it("opens the mobile categories overlay from the header event without desktop hiding classes", async () => {
+    isMobileCatalogInteractionModeMock = true;
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByTestId("categories-panel-scroll")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Abrir categorías" })).not.toBeInTheDocument();
+
+    act(() => {
+      window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+    });
 
     const mobileOverlay = screen.getByTestId("mobile-categories-overlay");
-    expect(mobileOverlay).toHaveClass("fixed", "inset-0", "z-50", "md:hidden");
+    expect(mobileOverlay).toHaveClass("fixed", "inset-0", "z-50");
+    expect(mobileOverlay).not.toHaveClass("md:hidden");
+    expect(screen.getByTestId("mobile-categories-panel")).toHaveClass("right-4", "top-32");
+  });
+
+  it("retains the mobile categories panel state across a desktop interaction mode", () => {
+    isMobileCatalogInteractionModeMock = true;
+    const { rerender } = render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    act(() => {
+      window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+    });
+    expect(screen.getByTestId("mobile-categories-overlay")).toBeInTheDocument();
+
+    isMobileCatalogInteractionModeMock = false;
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+    expect(screen.queryByTestId("mobile-categories-overlay")).not.toBeInTheDocument();
+
+    isMobileCatalogInteractionModeMock = true;
+    rerender(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+    expect(screen.getByTestId("mobile-categories-overlay")).toBeInTheDocument();
   });
 
   it("uses 3 columns on mobile-landscape mode even with categories open", () => {
@@ -387,7 +512,7 @@ describe("Catalog", () => {
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -411,7 +536,7 @@ describe("Catalog", () => {
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -431,34 +556,36 @@ describe("Catalog", () => {
   it("keeps mobile panel open on parent click and closes + scrolls on subcategory click", async () => {
     const user = userEvent.setup();
     selectedCategoryIdMock = "child-1";
+    isMobileCatalogInteractionModeMock = true;
     document.documentElement.scrollTop = 999;
     document.body.scrollTop = 999;
 
     render(
-      <ToastProvider>
-        <ListProvider>
-          <Catalog isCategoriesOpen openMobileCategoriesRequestKey={1} />
+        <ToastProvider>
+          <ListProvider>
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
     );
 
-    await user.click(screen.getAllByRole("button", { name: "Frutas" })[1]);
+    act(() => {
+      window.dispatchEvent(new Event(APP_EVENTS.TOGGLE_CATALOG_CATEGORIES));
+    });
+
+    await user.click(screen.getByRole("button", { name: "Frutas" }));
 
     expect(selectCategoryMock).not.toHaveBeenCalled();
     expect(screen.getByTestId("mobile-categories-overlay")).toBeInTheDocument();
-    const subcategoryButtons = screen.getAllByRole("button", {
-      name: "Cítricos",
-    });
-    await user.click(subcategoryButtons[1]);
+    await user.click(screen.getByRole("button", { name: "Cítricos" }));
 
     expect(selectCategoryMock).toHaveBeenCalledWith("child-1");
-    expect(screen.getAllByRole("button", { name: "Cítricos" })).toHaveLength(1);
+    expect(screen.queryByTestId("mobile-categories-overlay")).not.toBeInTheDocument();
     expect(document.documentElement.scrollTop).toBe(0);
     expect(document.body.scrollTop).toBe(0);
   });
 
-  it("renders Bonpreu deeper navigation buttons from detail ids", async () => {
+  it("renders deeper navigation buttons from detail subcategory ids", async () => {
     const user = userEvent.setup();
     categoryDetailMock = {
       categoryName: "Frescos",
@@ -521,11 +648,11 @@ describe("Catalog", () => {
     expect(screen.queryByText("Cargando productos...")).not.toBeInTheDocument();
   });
 
-  it("preserves categories panel scroll position on category route updates", () => {
+  it("preserves categories panel scroll position on category route updates", async () => {
     const { rerender } = render(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -538,7 +665,7 @@ describe("Catalog", () => {
     rerender(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,
@@ -575,13 +702,12 @@ describe("Catalog", () => {
     );
   });
 
-  it("shows categories loading skeleton and hides categories loading text", () => {
+  it("shows categories loading skeleton and hides categories loading text", async () => {
     categoriesStatusMock = "loading";
-
     render(
       <ToastProvider>
         <ListProvider>
-          <Catalog isCategoriesOpen />
+          <Catalog />
           <Toast />
         </ListProvider>
       </ToastProvider>,

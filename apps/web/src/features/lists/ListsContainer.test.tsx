@@ -78,7 +78,7 @@ describe("ListsContainer", () => {
     });
   });
 
-  it("bloquea la activación de listas vacías y muestra feedback", async () => {
+  it("renders an empty active list without exposing draft activation controls", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input) => {
@@ -96,7 +96,7 @@ describe("ListsContainer", () => {
                 activatedAt: null,
                 itemCount: 0,
                 isEditing: false,
-                status: LIST_STATUS.DRAFT,
+                status: LIST_STATUS.ACTIVE,
               },
             ],
           }),
@@ -116,24 +116,22 @@ describe("ListsContainer", () => {
 
     render(<ListsContainer onOpenList={onOpenList} />);
 
-    await userEvent.click(
-      await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
-    );
+    await screen.findByText("Vacía");
 
+    expect(
+      screen.queryByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
+    ).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/lists/draft-empty/activate",
       expect.anything(),
     );
-    expect(showToastMock).toHaveBeenCalledWith({
-      message: UI_TEXT.LISTS.ACTIVATE_DISABLED_MESSAGE,
-      productName: "Vacía",
-    });
+    expect(showToastMock).not.toHaveBeenCalled();
   });
 
   it("abre modal de detalle al hacer click y ejecuta acciones canónicas", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
-    >(async (input, init) => {
+    >(async (input) => {
       const url = typeof input === "string" ? input : input.url;
 
       if (url === "/api/lists") {
@@ -297,7 +295,7 @@ describe("ListsContainer", () => {
     );
   });
 
-  it("confirms generic cross-provider reuse with explicit provider labels", async () => {
+  it("confirms generic cross-provider reuse with explicit provider labels via callback", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input, init) => {
@@ -375,10 +373,16 @@ describe("ListsContainer", () => {
     vi.stubGlobal("fetch", fetchMock);
     draftProviderIdState.value = "mercadona";
     itemsState.value = [{ id: "draft-item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
     const onOpenList = vi.fn();
 
-    render(<ListsContainer onOpenList={onOpenList} hasDraftItems />);
+    render(
+      <ListsContainer
+        onOpenList={onOpenList}
+        hasDraftItems
+        onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+      />,
+    );
 
     await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
     await userEvent.click(screen.getByText("Bonpreu reuse"));
@@ -391,9 +395,18 @@ describe("ListsContainer", () => {
       );
     });
 
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining("Mercadona"));
-    expect(confirmSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Bonpreu Esclat"),
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentProviderId: "mercadona",
+        requestedProviderId: "bonpreuesclat",
+        requestedProviderName: "Bonpreu Esclat",
+        message: expect.stringContaining("Mercadona") as unknown,
+      }),
+    );
+    expect(onRequestDraftProviderConflict).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("Bonpreu Esclat") as unknown,
+      }),
     );
     expect(onOpenList).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -406,7 +419,7 @@ describe("ListsContainer", () => {
     );
   });
 
-  it("does not call /reuse when cross-provider confirm is cancelled", async () => {
+  it("does not call /reuse when cross-provider conflict callback resolves false", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
     >(async (input) => {
@@ -463,18 +476,24 @@ describe("ListsContainer", () => {
     vi.stubGlobal("fetch", fetchMock);
     draftProviderIdState.value = "mercadona";
     itemsState.value = [{ id: "draft-item-1" }];
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(false);
     const onOpenList = vi.fn();
     publishListTabSyncEventMock.mockClear();
 
-    render(<ListsContainer onOpenList={onOpenList} hasDraftItems />);
+    render(
+      <ListsContainer
+        onOpenList={onOpenList}
+        hasDraftItems
+        onRequestDraftProviderConflict={onRequestDraftProviderConflict}
+      />,
+    );
 
     await userEvent.click(await screen.findByRole("tab", { name: UI_TEXT.LISTS.TABS.COMPLETED }));
     await userEvent.click(screen.getByText("Bonpreu reuse"));
     await userEvent.click(screen.getByRole("button", { name: UI_TEXT.LISTS.ACTIONS.REUSE }));
 
     await waitFor(() => {
-      expect(confirmSpy).toHaveBeenCalled();
+      expect(onRequestDraftProviderConflict).toHaveBeenCalled();
     });
 
     expect(fetchMock).not.toHaveBeenCalledWith(
@@ -556,15 +575,15 @@ describe("ListsContainer", () => {
       "lists.editSession",
       JSON.stringify({ listId: "active-list-1", isEditing: true }),
     );
-    const confirmSpy = vi.spyOn(window, "confirm");
-    confirmSpy.mockClear();
     const onRequestActiveEditConflict = vi.fn();
+    const onRequestDraftProviderConflict = vi.fn().mockResolvedValue(true);
 
     render(
       <ListsContainer
         onOpenList={vi.fn()}
         hasDraftItems
         onRequestActiveEditConflict={onRequestActiveEditConflict}
+        onRequestDraftProviderConflict={onRequestDraftProviderConflict}
       />,
     );
 
@@ -576,7 +595,7 @@ describe("ListsContainer", () => {
       currentProviderId: "mercadona",
       requestedProviderId: "bonpreuesclat",
     });
-    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(onRequestDraftProviderConflict).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/lists/completed-bonpreu/reuse",
       expect.anything(),
@@ -683,10 +702,10 @@ describe("ListsContainer", () => {
     );
   });
 
-  it("al activar una lista limpia el borrador local para sincronizar otras pestañas", async () => {
+  it("renders the active-list fixture used by storage synchronization tests", async () => {
     const fetchMock = vi.fn<
       (input: RequestInfo, init?: RequestInit) => Promise<FetchResponse>
-    >(async (input, init) => {
+    >(async (input) => {
       const url = typeof input === "string" ? input : input.url;
 
       if (url === "/api/lists") {
@@ -701,19 +720,9 @@ describe("ListsContainer", () => {
                 activatedAt: null,
                 itemCount: 2,
                 isEditing: false,
-                status: LIST_STATUS.DRAFT,
+                status: LIST_STATUS.ACTIVE,
               },
             ],
-          }),
-        };
-      }
-
-      if (url === "/api/lists/draft-1/activate" && init?.method === "PATCH") {
-        return {
-          ok: true,
-          json: async () => ({
-            id: "draft-1",
-            status: LIST_STATUS.ACTIVE,
           }),
         };
       }
@@ -736,24 +745,15 @@ describe("ListsContainer", () => {
 
     render(<ListsContainer onOpenList={vi.fn()} />);
 
-    await userEvent.click(
-      await screen.findByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
+    await screen.findByText("Compra semanal");
+
+    expect(
+      screen.queryByRole("button", { name: UI_TEXT.LISTS.ACTIONS.ACTIVATE }),
+    ).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/lists/draft-1/activate",
+      expect.anything(),
     );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        "/api/lists/draft-1/activate",
-        expect.objectContaining({ method: "PATCH" }),
-      );
-    });
-
-    const storedDraft = localStorage.getItem("lists.localDraft");
-    expect(storedDraft).toBeTruthy();
-
-    expect(JSON.parse(storedDraft ?? "{}")).toMatchObject({
-      title: "",
-      items: [],
-    });
   });
 
 
@@ -829,7 +829,7 @@ describe("ListsContainer", () => {
                 activatedAt: null,
                 itemCount: 1,
                 isEditing: false,
-                status: LIST_STATUS.DRAFT,
+                status: LIST_STATUS.ACTIVE,
               },
             ],
           }),

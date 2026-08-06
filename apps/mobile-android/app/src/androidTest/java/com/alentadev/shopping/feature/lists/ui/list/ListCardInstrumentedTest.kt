@@ -20,7 +20,7 @@ class ListCardInstrumentedTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun listCard_displaysProviderAlongsideTitle_whenProviderExists() {
+    fun listCard_displaysProviderLogoInsteadOfName_whenProviderIsSupported() {
         val list = ShoppingList(
             id = "list-1",
             title = "Compra semanal",
@@ -36,7 +36,8 @@ class ListCardInstrumentedTest {
             }
         }
 
-        composeRule.onNodeWithText("Compra semanal · Mercadona").assertIsDisplayed()
+        composeRule.onNodeWithText("Compra semanal").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Mercadona").assertCountEquals(0)
     }
 
     @Test

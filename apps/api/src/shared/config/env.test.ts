@@ -20,4 +20,5 @@ describe("api config", () => {
   it("uses port 3000 when PORT is missing", () => {
     expect(resolvePort({})).toBe(3000);
   });
+
 });
