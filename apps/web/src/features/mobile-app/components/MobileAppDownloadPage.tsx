@@ -23,10 +23,47 @@ export const MobileAppDownloadPage = () => {
           {UI_TEXT.APP_DOWNLOAD.DOWNLOAD_BUTTON_LABEL}
         </a>
         <p className="mt-3 text-sm text-slate-600">
-          {UI_TEXT.APP_DOWNLOAD.VERSION_LABEL} {release.VERSION} · {" "}
-          {UI_TEXT.APP_DOWNLOAD.UPDATED_AT_LABEL} {release.UPDATED_AT}
+          {UI_TEXT.APP_DOWNLOAD.VERSION_LABEL} {release.VERSION}
+        </p>
+        <p className="mt-2 text-sm text-slate-600">
+          {UI_TEXT.APP_DOWNLOAD.PUBLICATION_NOTE}
         </p>
       </div>
+
+      <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.TITLE}
+        </h2>
+        <ol className="list-decimal space-y-2 pl-5 text-sm text-slate-700">
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FIRST}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.SECOND}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.THIRD}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FOURTH}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FIFTH}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.SIXTH}</li>
+        </ol>
+      </article>
+
+      <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {UI_TEXT.APP_DOWNLOAD.CONNECTION.TITLE}
+        </h2>
+        <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
+          <li>{UI_TEXT.APP_DOWNLOAD.CONNECTION.FIRST}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.CONNECTION.SECOND}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.CONNECTION.THIRD}</li>
+        </ul>
+      </article>
+
+      <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-slate-900">
+          {UI_TEXT.APP_DOWNLOAD.SCOPE_LIMITS.TITLE}
+        </h2>
+        <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
+          <li>{UI_TEXT.APP_DOWNLOAD.SCOPE_LIMITS.FIRST}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.SCOPE_LIMITS.SECOND}</li>
+        </ul>
+      </article>
 
       <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">
@@ -36,18 +73,8 @@ export const MobileAppDownloadPage = () => {
           <li>{UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.FIRST}</li>
           <li>{UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.SECOND}</li>
           <li>{UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.THIRD}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.FOURTH}</li>
         </ol>
-      </article>
-
-      <article className="space-y-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
-          {UI_TEXT.APP_DOWNLOAD.KNOWN_LIMITATIONS.TITLE}
-        </h2>
-        <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
-          <li>{UI_TEXT.APP_DOWNLOAD.KNOWN_LIMITATIONS.FIRST}</li>
-          <li>{UI_TEXT.APP_DOWNLOAD.KNOWN_LIMITATIONS.SECOND}</li>
-          <li>{UI_TEXT.APP_DOWNLOAD.KNOWN_LIMITATIONS.THIRD}</li>
-        </ul>
       </article>
     </section>
   );

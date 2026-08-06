@@ -60,31 +60,53 @@ export const UI_TEXT = {
     },
   },
   APP_DOWNLOAD: {
-    BADGE_LABEL: "Beta",
-    TITLE: "Shopping List para Android",
+    BADGE_LABEL: "Android v1.0",
+    TITLE: "Android para tus listas activas",
     SUBTITLE:
-      "Descarga la app beta para usar tus listas en el súper y seguir comprando aunque la conexión sea inestable.",
-    DOWNLOAD_BUTTON_LABEL: "Descargar APK Android",
+      "Tu acompañante estable para consultar y completar en el súper las listas que creaste y finalizaste en la web.",
+    DOWNLOAD_BUTTON_LABEL: "Descargar APK oficial",
     VERSION_LABEL: "Versión:",
-    UPDATED_AT_LABEL: "Última actualización:",
+    PUBLICATION_NOTE:
+      "La APK se publicará en la release oficial de GitHub cuando esté disponible.",
     RELEASE: {
-      VERSION: "v0.10.3",
-      UPDATED_AT: "15/06/2026",
+      VERSION: "v1.0.0",
       APK_URL:
-        "https://github.com/AlentaDev/shopping-list/releases/download/android-v0.10.3/shopping-list-android.apk",
+        "https://github.com/AlentaDev/shopping-list/releases/download/android-v1.0.0/shopping-list-android.apk",
+    },
+    HOW_IT_WORKS: {
+      TITLE: "Cómo funciona",
+      FIRST:
+        "Crea tu cuenta y prepara una lista en la web; finalízala para convertirla en una lista activa.",
+      SECOND: "Inicia sesión en Android con la misma cuenta.",
+      THIRD: "Elige una de tus listas activas para usarla durante la compra.",
+      FOURTH: "Marca los productos conforme los añades a la cesta.",
+      FIFTH:
+        "Consulta el avance y el total, que suma solo los productos de catálogo marcados que tienen precio.",
+      SIXTH: "Finaliza la lista al terminar la compra.",
+    },
+    CONNECTION: {
+      TITLE: "Conexión y sincronización",
+      FIRST:
+        "Las listas que ya descargaste permanecen disponibles aunque no tengas conexión.",
+      SECOND:
+        "Si un intento de sincronización se interrumpe por falta de conexión, se conserva el último estado de cada acción de marcar o desmarcar y se reintenta al recuperar la conectividad.",
+      THIRD:
+        "No todos los cambios sin conexión se sincronizan automáticamente: revisa que la conexión se haya recuperado para que el reintento pueda completarse.",
+    },
+    SCOPE_LIMITS: {
+      TITLE: "Qué se hace en la web",
+      FIRST:
+        "La creación y edición de cuentas, listas y productos se realiza desde la web.",
+      SECOND: "Android muestra listas activas; el historial se consulta en la web.",
     },
     INSTALL_STEPS: {
-      TITLE: "Cómo instalar",
-      FIRST: "Descarga el APK en tu dispositivo Android.",
+      TITLE: "Instalación y actualizaciones",
+      FIRST: "Descarga el APK desde la release oficial de GitHub en tu dispositivo Android.",
       SECOND: "Abre el archivo y confirma la instalación.",
       THIRD:
         "Si Android lo solicita, habilita 'Instalar apps desconocidas' para tu navegador o gestor de archivos.",
-    },
-    KNOWN_LIMITATIONS: {
-      TITLE: "Limitaciones conocidas de esta beta",
-      FIRST: "La sincronización puede requerir reintentos en conexiones inestables.",
-      SECOND: "Puede haber latencia puntual al refrescar listas con mala conexión.",
-      THIRD: "Soporte inicial solo para Android.",
+      FOURTH:
+        "Para actualizar, instala una APK más reciente sobre la aplicación que ya tienes instalada.",
     },
   },
   AUTH: {

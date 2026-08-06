@@ -70,9 +70,10 @@ Resultado: menos olvidos, menos compra impulsiva, mejor planificación.
 
 ## 7. Flujo de uso real (durante y después)
 
-- En el supermercado, uso la lista activa desde Android.
-- Marco avances y completo la compra.
-- Queda historial de listas/compras para revisar gasto con el tiempo.
+- En el supermercado, inicio sesión en Android y uso una lista activa creada en la web.
+- Marco productos, consulto el avance y el total de los productos de catálogo marcados con precio, y completo la compra.
+- Android muestra listas activas; el historial se consulta desde la web.
+- Las listas ya descargadas siguen disponibles sin conexión. Si falla una sincronización, se conserva el último estado de marcar o desmarcar y se reintenta al recuperar conectividad; no todos los cambios sin conexión se sincronizan automáticamente.
 
 También se puede **reusar una lista `COMPLETED`** del historial:
 
@@ -133,8 +134,9 @@ Importante para revisión:
 
 ## 12. Android: descarga e instalación
 
-- La app Android se descarga directamente desde la web en la ruta `/app`.
-- Desde ahí se accede a la APK beta actual y se instala en el teléfono.
+- Android `v1.0.0` se prepara para distribuirse desde la web en la ruta `/app`, mediante su release oficial de GitHub.
+- La publicación de la APK sigue pendiente; no se declara publicada ni verificada en producción.
+- Para instalarla, Android puede solicitar permiso para instalar aplicaciones desconocidas. Una actualización se instala descargando una APK más reciente sobre la existente.
 
 ---
 

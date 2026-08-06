@@ -151,7 +151,7 @@ Según el estado actual documentado en código y docs del repo, el sistema cubre
 Además:
 
 - el catálogo actual está centrado en productos de Mercadona,
-- la APK Android beta se descarga desde la web en la ruta `/app`.
+- Android `v1.0.0` acompaña las listas activas creadas en la web y se distribuye desde la ruta `/app` cuando se publique su release oficial.
 
 Para detalle por módulo:
 
@@ -195,10 +195,13 @@ Esto es esperado en este entorno y no implica un error funcional de la aplicaci�
 
 ### Descarga de Android desde web
 
-La app Android se descarga directamente desde la web, entrando en `/app`,
-donde se publica el enlace a la APK beta actual.
+Android se prepara y edita desde la web: se crea una cuenta y una lista, se finaliza para activarla y luego se inicia sesión en Android para marcar productos y completar la compra. Android muestra listas activas, mientras que la creación y edición de cuentas, listas y productos, y el historial, permanecen en la web.
 
-Referencia: `docs/features/web/android-beta-download.md`.
+Las listas descargadas permanecen disponibles sin conexión. Si falla una sincronización por conectividad, se conserva el último estado de marcar o desmarcar y se reintenta al recuperarla; no todos los cambios sin conexión se sincronizan automáticamente.
+
+La APK de Android `v1.0.0` se distribuirá desde `/app` mediante la release oficial de GitHub. La publicación sigue pendiente; no se declara publicada ni verificada en producción. Para instalarla, Android puede pedir permiso para instalar aplicaciones desconocidas. Las actualizaciones se instalan descargando una APK más reciente sobre la aplicación existente.
+
+Referencia: `docs/features/web/android-download.md`.
 
 ---
 
