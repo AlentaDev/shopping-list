@@ -30,6 +30,8 @@ Si un PR toca `apps/web`, `apps/api` o `apps/mobile-android` y no incluye change
 
 Workflow: `.github/workflows/versioning-release.yml`
 
+El workflow de release no reemplaza la validación de pull requests: versiona, crea tags y releases, pero no vuelve a ejecutar las suites de calidad, build, E2E ni Android. Consulta [Quality gates de desarrollo](development-quality-gates.md) para conocer el flujo canónico de validación local, CI y release.
+
 En cada push a `main`:
 
 1. Aplica `changeset version`.
