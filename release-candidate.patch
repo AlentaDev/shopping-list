@@ -1,0 +1,38 @@
+diff --git a/.changeset/ci-validation-web-api-release.md b/.changeset/ci-validation-web-api-release.md
+deleted file mode 100644
+index 73f8bb4..0000000
+--- a/.changeset/ci-validation-web-api-release.md
++++ /dev/null
+@@ -1,6 +0,0 @@
+----
+-"@app/web": patch
+-"@app/api": patch
+----
+-
+-Validate Web and API releases with the new technical CI gates.
+diff --git a/apps/api/package.json b/apps/api/package.json
+index 8bba895..7bfec95 100644
+--- a/apps/api/package.json
++++ b/apps/api/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@app/api",
+   "private": true,
+-  "version": "2.0.0",
++  "version": "2.0.1",
+   "type": "module",
+   "scripts": {
+     "dev": "tsx watch --env-file=.env src/server.ts",
+diff --git a/apps/web/package.json b/apps/web/package.json
+index a34a1cd..d26ed94 100644
+--- a/apps/web/package.json
++++ b/apps/web/package.json
+@@ -1,7 +1,7 @@
+ {
+   "name": "@app/web",
+   "private": true,
+-  "version": "2.0.0",
++  "version": "2.0.1",
+   "type": "module",
+   "scripts": {
+     "dev": "vite",
