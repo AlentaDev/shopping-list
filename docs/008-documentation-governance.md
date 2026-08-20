@@ -24,6 +24,7 @@ Se establece una política explícita para mantener la documentación consistent
 - **Comportamiento actual de API:** `docs/api/design.md`
 - **Política transversal de listas/draft/recovery:** `docs/usecases/list-use-cases.md`
 - **Roadmap canónico Android:** `apps/mobile-android/docs/implementation/006-implementation-plan.md`
+- **Quality gates locales, de CI y de release:** `docs/development-quality-gates.md`
 
 ### 3) Documentos derivados
 

@@ -175,6 +175,8 @@ Para detalle por módulo:
 - Web y API se despliegan de forma automática tras integración en `main`.
 - Android es **semi-manual**: tiene guardrails de CI para versionado/tag, pero el build/firma/publicación final sigue siendo manual.
 
+La guía canónica de las verificaciones locales de Husky, la validación de PR y las responsabilidades de release es [Quality gates de desarrollo](docs/development-quality-gates.md).
+
 Referencias:
 
 - `.github/workflows/versioning-pr-check.yml`
