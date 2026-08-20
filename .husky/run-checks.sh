@@ -43,7 +43,15 @@ changed_files_for_hook() {
     return
   fi
 
-  git diff --name-only HEAD
+  local base_ref
+  for base_ref in origin/HEAD origin/main origin/master; do
+    if git rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null; then
+      git diff --name-only "$base_ref"...HEAD
+      return
+    fi
+  done
+
+  printf '%s\n' "apps/mobile-android/" "apps/web/" "apps/api/"
 }
 
 is_android_only_change() {
@@ -68,10 +76,44 @@ is_android_only_change() {
   return 0
 }
 
+has_android_changes() {
+  local files="$1"
+
+  while IFS= read -r file; do
+    case "$file" in
+      apps/mobile-android/*)
+        return 0
+        ;;
+    esac
+  done <<< "$files"
+
+  return 1
+}
+
+has_web_or_api_changes() {
+  local files="$1"
+
+  while IFS= read -r file; do
+    case "$file" in
+      apps/web/*|apps/api/*)
+        return 0
+        ;;
+    esac
+  done <<< "$files"
+
+  return 1
+}
+
 run_android_checks() {
   echo "🤖 Ejecutando tests de Android..."
   echo "───────────────────────────────────────────────────────"
   run_cmd "pnpm test:android"
+}
+
+run_quality_checks() {
+  echo "🔍 Running quality checks..."
+  echo "───────────────────────────────────────────────────────"
+  run_cmd "pnpm quality"
 }
 
 run_global_checks() {
@@ -104,9 +146,24 @@ main() {
   run_optional_gga
 
   if [ "${HUSKY_FULL_CHECKS:-0}" != "1" ]; then
-    echo "🧪 Running mandatory web tests..."
-    run_cmd "pnpm --filter @app/web test:run"
-    echo "ℹ️ Checks pesados omitidos. Usá HUSKY_FULL_CHECKS=1 para ejecutarlos localmente."
+    local changed_files
+    changed_files="$(changed_files_for_hook)"
+    local ran_checks=0
+
+    if has_android_changes "$changed_files"; then
+      run_android_checks
+      ran_checks=1
+    fi
+
+    if has_web_or_api_changes "$changed_files"; then
+      run_quality_checks
+      ran_checks=1
+    fi
+
+    if [ "$ran_checks" -eq 0 ]; then
+      echo "ℹ️ No application changes detected; skipping validation suites."
+    fi
+
     return
   fi
 

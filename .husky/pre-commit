@@ -1,5 +1,3 @@
-echo "✓ Pre-commit liviano: validaciones pesadas viven en CI."
-echo "  Para ejecutar checks locales: HUSKY_FULL_CHECKS=1 bash .husky/run-checks.sh pre-commit"
-echo "  Para ejecutar GGA local: HUSKY_GGA=1 bash .husky/run-checks.sh pre-commit"
+#!/usr/bin/env sh
 
-bash .husky/run-checks.sh pre-commit
+echo "Pre-commit: checks run during development and in CI."

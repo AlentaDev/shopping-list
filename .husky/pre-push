@@ -1,8 +1,7 @@
 set -e
 
-echo "🔍 Pre-push liviano: no ejecuta quality/e2e/build por defecto."
-echo "  CI es el guardrail fuerte."
-echo "  Para ejecutar checks locales completos: HUSKY_FULL_CHECKS=1 bash .husky/run-checks.sh pre-push"
+echo "🔍 Pre-push runs checks only for changed application areas."
+echo "  Use HUSKY_FULL_CHECKS=1 for the existing full local checks."
 
 bash .husky/run-checks.sh pre-push
 
