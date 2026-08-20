@@ -53,7 +53,7 @@ El proyecto sigue arquitectura **feature-first**, separación de responsabilidad
 
 ### Requisitos
 
-- Node.js 20+
+- Node.js 24+
 - pnpm
 - Docker (para PostgreSQL local)
 
@@ -104,7 +104,7 @@ pnpm verify
 pnpm test:e2e
 ```
 
-> Nota: los E2E requieren PostgreSQL levantado porque preparan la DB de test en modo `postgres`.
+> Nota: los E2E requieren PostgreSQL levantado porque preparan la DB de test en modo `postgres`. Ejecutalos con Node.js 24: Playwright 1.57 emite la deprecación `DEP0205` bajo Node.js 26.
 
 ---
 
