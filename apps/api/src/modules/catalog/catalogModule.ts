@@ -1,3 +1,4 @@
+import { GetProductDetail } from "./application/getProductDetail.js";
 import { GetCategoryDetail } from "./application/getCategoryDetail.js";
 import { GetRootCategories } from "./application/getRootCategories.js";
 import { ProviderStrategyResolver } from "./application/ProviderStrategyResolver.js";
@@ -31,6 +32,10 @@ export function createCatalogModule(deps: CatalogModuleDependencies = {}) {
   const resolver = new ProviderStrategyResolver(providers);
 
   const router = createCatalogRouter({
+    getProductDetail: {
+      execute: async (provider: string, productId: string) =>
+        new GetProductDetail(resolver.resolve(provider), cache).execute(productId),
+    },
     getRootCategories: {
       execute: async (provider: string) => {
         const strategy = resolver.resolve(provider);
