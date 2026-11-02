@@ -13,8 +13,8 @@ Issue: #281. Branch: `feature/product-detail-modal`.
 ## Tasks
 
 - T1 [done] S1-S3 API product detail, cache and tests; inline; commit 2e61534.
-- T2 [done] S1-S5 Web modal, service and tests; delegated; commits 6f80eb5 and 77c57f7; coverage tests in follow-up commit.
-- T3 [in_progress] S1-S5 Documentation and verification; inline; commit pending.
+- T2 [done] S1-S5 Web modal, service and tests; delegated; commits 6f80eb5, 77c57f7 and 916fff6.
+- T3 [done] S1-S5 Documentation and verification; inline; documentation commits 2e61534 and 77c57f7.
 
 ## Log
 
@@ -25,3 +25,7 @@ Para las fotos la primera es el producto y la segunda es la etiqueta. Que hacemo
 L3: Lo mismo que para las listas
 L4: Si. Para las listas da igual al precio que se confeccionaron. No es lo primordial que sean exactos los precios al comprar
 L5: si por supuesto
+L6: Playwright Chromium passed desktop (1280×800) and mobile (390×844) functional checks with mocked API responses; image URLs were mocked as unavailable.
+L7: Review slice boundary: API 2e61534, web service 6f80eb5, modal 77c57f7 and coverage tests 916fff6. The modal commit has 578 changed lines and exceeds the approximate 400-line review target.
+L8: API suite, lint and typecheck passed; web lint, typecheck, coverage suite and build passed. New product-detail CORE files reached 100% across coverage metrics; existing CORE debt remains globally.
+L9: Playwright Chromium loaded both supplied real product photos at 600×600.
