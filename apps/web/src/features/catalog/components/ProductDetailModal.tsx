@@ -69,7 +69,12 @@ const ProductDetailModal = ({
         [UI_TEXT.PRODUCT_DETAIL_MODAL.USAGE_LABEL, detail.usageInstructions],
         [UI_TEXT.PRODUCT_DETAIL_MODAL.STORAGE_LABEL, detail.storageInstructions],
         [UI_TEXT.PRODUCT_DETAIL_MODAL.INGREDIENTS_LABEL, detail.ingredients],
-        [UI_TEXT.PRODUCT_DETAIL_MODAL.ALLERGENS_LABEL, detail.allergens],
+        [
+          UI_TEXT.PRODUCT_DETAIL_MODAL.ALLERGENS_LABEL,
+          detail.allergens && /^x99\.?$/i.test(detail.allergens.trim())
+            ? UI_TEXT.PRODUCT_DETAIL_MODAL.ALLERGENS_UNAVAILABLE_LABEL
+            : detail.allergens,
+        ],
       ] as const
     : [];
 

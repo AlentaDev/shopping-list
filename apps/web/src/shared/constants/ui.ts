@@ -224,6 +224,8 @@ export const UI_TEXT = {
     STORAGE_LABEL: "Conservación",
     INGREDIENTS_LABEL: "Ingredientes",
     ALLERGENS_LABEL: "Alérgenos",
+    ALLERGENS_UNAVAILABLE_LABEL:
+      "Información de alérgenos no disponible. Consulta la etiqueta del producto",
   },
   SHOPPING_LIST: {
     DEFAULT_LIST_TITLE: "Tu lista",

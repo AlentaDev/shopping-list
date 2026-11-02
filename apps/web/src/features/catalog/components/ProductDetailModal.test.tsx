@@ -59,6 +59,22 @@ describe("ProductDetailModal", () => {
     );
   });
 
+  it("explains that allergen information is unavailable for the x99 code", () => {
+    render(
+      <ProductDetailModal
+        product={product}
+        detail={{ ...detail, allergens: "x99." }}
+        loading={false}
+        error={null}
+        onClose={vi.fn()}
+        onRetry={vi.fn()}
+        triggerElement={null}
+      />,
+    );
+    expect(screen.getByText("Información de alérgenos no disponible. Consulta la etiqueta del producto")).toBeInTheDocument();
+    expect(screen.queryByText("x99.")).not.toBeInTheDocument();
+  });
+
   it("shows loading and retryable errors", () => {
     const onRetry = vi.fn();
     const { rerender } = render(
