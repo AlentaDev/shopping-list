@@ -23,6 +23,26 @@ describe("ProductCard", () => {
     vi.useRealTimers();
   });
 
+  it("opens product detail without opening it when adding the product", () => {
+    const onSelect = vi.fn();
+    const onAdd = vi.fn();
+    render(<ProductCard product={productFixture} onAdd={onAdd} onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ver detalle de Manzanas Fuji" }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "Añadir Manzanas Fuji" }));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens details when the product name is activated", () => {
+    const onSelect = vi.fn();
+    render(<ProductCard product={productFixture} onAdd={vi.fn()} onSelect={onSelect} />);
+
+    fireEvent.click(screen.getByRole("heading", { name: "Manzanas Fuji" }));
+
+    expect(onSelect).toHaveBeenCalledOnce();
+  });
+
   it("shows a temporary adding state and ignores repeated clicks", async () => {
     vi.useFakeTimers();
     const onAdd = vi.fn();

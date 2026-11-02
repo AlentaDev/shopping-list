@@ -4,6 +4,8 @@ import { afterEach, describe, it, expect, vi } from "vitest";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Catalog from "./Catalog";
+import * as CatalogService from "./services/CatalogService";
+import type { CatalogProductDetail } from "./services/types";
 import { APP_EVENTS } from "@src/shared/constants/appState";
 import { ListProvider } from "@src/context/ListContext";
 import { ToastProvider } from "@src/context/ToastContext";
@@ -24,6 +26,19 @@ type CategoryNode = {
   order: number;
   level: number;
   parentId?: string;
+};
+
+const productDetailFixture: CatalogProductDetail = {
+  id: "prod-1",
+  name: "Ensaimada",
+  brand: "Hacendado",
+  origin: "España",
+  photos: [],
+  description: null,
+  usageInstructions: null,
+  storageInstructions: null,
+  ingredients: "<p>Ingredientes: <strong>harina</strong></p>",
+  allergens: null,
 };
 
 const categoriesFixture: CategoryNode[] = [
@@ -143,6 +158,62 @@ describe("Catalog", () => {
   beforeEach(() => {
     window.localStorage = createMockStorage();
   });
+  it("opens details from the product name, retries failed loads, and closes", async () => {
+    const user = userEvent.setup();
+    const getProductDetail = vi.spyOn(CatalogService, "getProductDetail")
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce(productDetailFixture);
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    const triggerHeading = screen.getByRole("heading", { name: "Ensaimada" });
+    const triggerButton = triggerHeading.closest("button");
+    await user.click(triggerHeading);
+    expect(screen.getByRole("dialog", { name: "Ensaimada" })).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reintentar" }));
+    expect(await screen.findByText("Hacendado")).toBeInTheDocument();
+    expect(getProductDetail).toHaveBeenCalledTimes(2);
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cerrar detalle" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(triggerButton);
+  });
+
+  it("ignores a late product response after closing and selecting another product", async () => {
+    const user = userEvent.setup();
+    let resolveFirst!: (value: CatalogProductDetail) => void;
+    let resolveSecond!: (value: CatalogProductDetail) => void;
+    vi.spyOn(CatalogService, "getProductDetail")
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockImplementationOnce(() => new Promise((resolve) => { resolveSecond = resolve; }));
+
+    render(
+      <ToastProvider>
+        <ListProvider>
+          <Catalog />
+          <Toast />
+        </ListProvider>
+      </ToastProvider>,
+    );
+
+    await user.click(screen.getByRole("heading", { name: "Ensaimada" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Cerrar detalle" }));
+    await user.click(screen.getByRole("heading", { name: "Empanada" }));
+
+    resolveFirst({ ...productDetailFixture, name: "Respuesta antigua" });
+    resolveSecond({ ...productDetailFixture, id: "prod-2", name: "Respuesta actual" });
+
+    expect(await screen.findByText("Hacendado")).toBeInTheDocument();
+    expect(screen.queryByText("Respuesta antigua")).not.toBeInTheDocument();
+  });
+
   it("setea snapshots al agregar producto desde catálogo", async () => {
     const user = userEvent.setup();
 

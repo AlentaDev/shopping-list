@@ -6,11 +6,12 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 type ProductCardProps = {
   product: CatalogProductSummary;
   onAdd: () => void;
+  onSelect?: (trigger: HTMLButtonElement) => void;
 };
 
 const ADDING_DELAY_MS = 500;
 
-const ProductCard = ({ product, onAdd }: ProductCardProps) => {
+const ProductCard = ({ product, onAdd, onSelect }: ProductCardProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const timerRef = useRef<number | null>(null);
 
@@ -42,33 +43,44 @@ const ProductCard = ({ product, onAdd }: ProductCardProps) => {
       className="flex h-full flex-col rounded-2xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
     >
       <div className="flex flex-col p-3">
-        <div className="aspect-square overflow-hidden rounded-xl bg-slate-100">
-          {product.thumbnail ? (
-            <img
-              src={product.thumbnail}
-              alt={product.name}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
-              {UI_TEXT.PRODUCT_CARD.NO_IMAGE_LABEL}
-            </div>
-          )}
-        </div>
-        <div className="mt-3 space-y-1">
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-slate-900">
-            {product.name}
-          </h3>
-          <div className="text-base font-semibold text-slate-900">
-            {formatPrice(product.price)}
-          </div>
-          {product.unitPrice != null && product.unitFormat ? (
-            <div className="text-xs text-slate-500">
-              {formatUnitPrice(product.unitPrice, product.unitFormat)}
-            </div>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          onClick={(event) => onSelect?.(event.currentTarget)}
+          aria-label={`${UI_TEXT.PRODUCT_CARD.DETAIL_LABEL} ${product.name}`}
+          className="flex w-full flex-col text-left focus-visible:rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
+        >
+          <span className="aspect-square w-full overflow-hidden rounded-xl bg-slate-100">
+            {product.thumbnail ? (
+              <img
+                src={product.thumbnail}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">
+                {UI_TEXT.PRODUCT_CARD.NO_IMAGE_LABEL}
+              </span>
+            )}
+          </span>
+          <span className="mt-3 space-y-1">
+            <span
+              role="heading"
+              aria-level={3}
+              className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-slate-900"
+            >
+              {product.name}
+            </span>
+            <span className="block text-base font-semibold text-slate-900">
+              {formatPrice(product.price)}
+            </span>
+            {product.unitPrice != null && product.unitFormat ? (
+              <span className="block text-xs text-slate-500">
+                {formatUnitPrice(product.unitPrice, product.unitFormat)}
+              </span>
+            ) : null}
+          </span>
+        </button>
         <button
           type="button"
           onClick={handleAdd}

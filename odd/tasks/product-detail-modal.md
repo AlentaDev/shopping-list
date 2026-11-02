@@ -12,9 +12,9 @@ Issue: #281. Branch: `feature/product-detail-modal`.
 
 ## Tasks
 
-- T1 [done] S1-S3 API product detail, cache and tests; inline; commit pending.
-- T2 [in_progress] S1-S5 Web modal, service and tests; inline; commit pending.
-- T3 [pending] S1-S5 Documentation and verification; inline; commit pending.
+- T1 [done] S1-S3 API product detail, cache and tests; inline; commit 2e61534.
+- T2 [done] S1-S5 Web modal, service and tests; delegated; commits 6f80eb5 and pending.
+- T3 [in_progress] S1-S5 Documentation and verification; inline; commit pending.
 
 ## Log
 

@@ -11,6 +11,8 @@ import { APP_EVENTS, FETCH_STATUS } from "@src/shared/constants/appState";
 import type { SupportedProviderId } from "@src/shared/constants/providers";
 import { useMobileCatalogInteractionMode } from "@src/shared/hooks/useMobileCatalogInteractionMode";
 import type { CatalogCategorySection, CatalogProductSummary } from "./services/types";
+import ProductDetailModal from "./components/ProductDetailModal";
+import { useProductDetail } from "./services/useProductDetail";
 
 const ITEMS_ERROR_MESSAGE = UI_TEXT.CATALOG.LOAD_PRODUCTS_ERROR_MESSAGE;
 const SWITCHING_PRODUCTS_MESSAGE = UI_TEXT.CATALOG.SWITCHING_PRODUCTS_MESSAGE;
@@ -100,6 +102,7 @@ type CatalogContentProps = {
   onRetryLoadDetail: () => void;
   onSelectCategory: (id: string) => void;
   onAddProduct: (product: CatalogProductSummary, subcategoryName: string) => void;
+  onSelectProduct: (product: CatalogProductSummary, trigger: HTMLButtonElement) => void;
 };
 
 const CatalogContent = ({
@@ -116,6 +119,7 @@ const CatalogContent = ({
   onRetryLoadDetail,
   onSelectCategory,
   onAddProduct,
+  onSelectProduct,
 }: CatalogContentProps) => (
   <>
     {isInitialProductsLoading ? (
@@ -163,6 +167,7 @@ const CatalogContent = ({
               products={section.products}
               gridClassName={getGridClasses(isDesktopPanelOpen, isMobileInteractionMode)}
               onAddProduct={(product) => onAddProduct(product, section.subcategoryName)}
+              onSelectProduct={onSelectProduct}
             />
           ))}
         </div>
@@ -208,6 +213,8 @@ const Catalog = ({
 }: CatalogProps) => {
   const isMobileInteractionMode = useMobileCatalogInteractionMode();
   const [isMobileCategoriesOpen, setIsMobileCategoriesOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProductSummary | null>(null);
+  const [productDetailTrigger, setProductDetailTrigger] = useState<HTMLButtonElement | null>(null);
   const { addItem } = useList();
   const { confirmAndReset } = useDraftProviderConflict({
     onActiveEditConflict: ({ currentProviderId, requestedProviderId }) => {
@@ -231,6 +238,25 @@ const Catalog = ({
   } = useCatalog({ providerId, initialCategoryId, userId: authUser?.id });
 
   const sections = categoryDetail?.sections ?? [];
+  const {
+    detail: productDetail,
+    loading: productDetailLoading,
+    error: productDetailError,
+    retry: retryProductDetail,
+    clear: clearProductDetail,
+  } = useProductDetail(providerId, selectedProduct);
+  const handleSelectProduct = useCallback(
+    (product: CatalogProductSummary, trigger: HTMLButtonElement) => {
+      setProductDetailTrigger(trigger);
+      setSelectedProduct(product);
+    },
+    [],
+  );
+  const handleCloseProductDetail = useCallback(() => {
+    clearProductDetail();
+    setSelectedProduct(null);
+    setProductDetailTrigger(null);
+  }, [clearProductDetail]);
   const totalProducts = sections.reduce(
     (total, section) => total + section.products.length,
     0,
@@ -395,9 +421,22 @@ const Catalog = ({
             onRetryLoadDetail={reloadDetail}
             onSelectCategory={handleSelectCategory}
             onAddProduct={handleAddProduct}
+            onSelectProduct={handleSelectProduct}
           />
         </section>
       </div>
+      {selectedProduct ? (
+        <ProductDetailModal
+          key={selectedProduct.id}
+          product={selectedProduct}
+          triggerElement={productDetailTrigger}
+          detail={productDetail}
+          loading={productDetailLoading}
+          error={productDetailError}
+          onClose={handleCloseProductDetail}
+          onRetry={retryProductDetail}
+        />
+      ) : null}
     </>
   );
 };
