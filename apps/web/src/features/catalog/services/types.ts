@@ -19,6 +19,19 @@ export type CatalogProductSummary = {
   isApproxSize: boolean;
 };
 
+export type CatalogProductDetail = {
+  id: string;
+  name: string;
+  brand: string | null;
+  origin: string | null;
+  photos: string[];
+  description: string | null;
+  usageInstructions: string | null;
+  storageInstructions: string | null;
+  ingredients: string | null;
+  allergens: string | null;
+};
+
 export type CatalogCategorySection = {
   subcategoryId: string;
   subcategoryName: string;
