@@ -266,7 +266,11 @@ private fun SuccessState(
                     }
 
                     items(items = group.items, key = { it.id }) { item ->
-                        ItemCard(item = item, onCheckedChange = { checked -> onItemCheckedChange(item.id, checked) })
+                        ItemCard(
+                            item = item,
+                            onCheckedChange = { checked -> onItemCheckedChange(item.id, checked) },
+                            isConnected = isConnected
+                        )
                     }
                 }
             }
