@@ -367,6 +367,8 @@ features/<feature>/
 - `skills/external-provider-mercadona/SKILL.md` — Reglas para integración backend-only con Mercadona, providers externos, cache, fallback y adapters.
 - `skills/deployment-environments/SKILL.md` — Reglas para Render, Vercel, Neon, env vars, CORS y comandos de despliegue.
 - `skills/android-release-safety/SKILL.md` — Reglas de seguridad para flavors, BuildConfig, variantes release, APK/AAB y publicación Android.
+- `skills/release-pr/SKILL.md` — Preparación del PR, notas por aplicación y comprobaciones de publicación de releases.
 - `skills/react-web/SKILL.md` — Reglas operativas para cambios en `apps/web` (React/Vite/Vitest) con TDD y límites de arquitectura frontend.
 - `skills/express-api/SKILL.md` — Reglas operativas para cambios en `apps/api` (Express/TypeScript) con capas backend, Zod, autorización y TDD.
 - `skills/android-kotlin/SKILL.md` — Reglas operativas para cambios en `apps/mobile-android` (Kotlin/Gradle/red/auth) con foco en seguridad de release y separación por capas.
+- `skills/android-adb-wsl/SKILL.md` — Acceso y verificación del emulador Android de Windows desde WSL mediante ADB.

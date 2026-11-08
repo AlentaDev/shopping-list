@@ -6,6 +6,19 @@ import { AppError } from "@src/shared/errors/appError.js";
 import { createCatalogRouter } from "./catalogRouter.js";
 
 describe("catalog router", () => {
+  it("forwards product detail requests to the use case", async () => {
+    const execute = vi.fn().mockResolvedValue({ id: "4740", name: "Aceite" });
+    const app = express();
+    app.use("/api/catalog", createCatalogRouter({
+      getRootCategories: { execute: vi.fn() } as never,
+      getCategoryDetail: { execute: vi.fn() } as never,
+      getProductDetail: { execute } as never,
+    }));
+    const response = await request(app).get("/api/catalog/mercadona/products/4740");
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ id: "4740", name: "Aceite" });
+    expect(execute).toHaveBeenCalledWith("mercadona", "4740");
+  });
   it("rejects unknown providers before invoking a catalogue use case", async () => {
     const getRootCategoriesExecute = vi
       .fn()
@@ -23,6 +36,7 @@ describe("catalog router", () => {
     app.use(
       "/api/catalog",
       createCatalogRouter({
+        getProductDetail: { execute: vi.fn() } as never,
         getRootCategories: { execute: getRootCategoriesExecute } as never,
         getCategoryDetail: { execute: vi.fn() } as never,
       }),
@@ -41,6 +55,7 @@ describe("catalog router", () => {
     app.use(
       "/api/catalog",
       createCatalogRouter({
+        getProductDetail: { execute: vi.fn() } as never,
         getRootCategories: { execute: vi.fn() } as never,
         getCategoryDetail: { execute: vi.fn() } as never,
       }),
@@ -59,6 +74,7 @@ describe("catalog router", () => {
     app.use(
       "/api/catalog",
       createCatalogRouter({
+        getProductDetail: { execute: vi.fn() } as never,
         getRootCategories: { execute: getRootCategoriesExecute } as never,
         getCategoryDetail: { execute: vi.fn() } as never,
       }),
@@ -80,6 +96,7 @@ describe("catalog router", () => {
     app.use(
       "/api/catalog",
       createCatalogRouter({
+        getProductDetail: { execute: vi.fn() } as never,
         getRootCategories: { execute: vi.fn() } as never,
         getCategoryDetail: { execute: getCategoryDetailExecute } as never,
       }),
@@ -102,6 +119,7 @@ describe("catalog router", () => {
     app.use(
       "/api/catalog",
       createCatalogRouter({
+        getProductDetail: { execute: vi.fn() } as never,
         getRootCategories: { execute: vi.fn() } as never,
         getCategoryDetail: { execute: getCategoryDetailExecute } as never,
       }),

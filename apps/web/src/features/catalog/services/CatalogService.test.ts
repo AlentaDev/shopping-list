@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { fetchWithAuth } from "@src/infrastructure/http/fetchWithAuthRuntime";
-import { getCategoryDetail, getRootCategories } from "./CatalogService";
+import { getCategoryDetail, getProductDetail, getRootCategories } from "./CatalogService";
 
 vi.mock("@src/infrastructure/http/fetchWithAuthRuntime", () => ({
   fetchWithAuth: vi.fn(),
@@ -107,6 +107,43 @@ describe("CatalogService", () => {
 
     await expect(getRootCategories("mercadona")).rejects.toThrow(
       "Unable to load categories."
+    );
+  });
+
+  it("requests the provider-aware product detail endpoint", async () => {
+    const responsePayload = {
+      id: "prod-1",
+      name: "Manzanas Fuji",
+      brand: "Hacendado",
+      origin: "España",
+      photos: ["https://example.test/front.jpg", "https://example.test/label.jpg"],
+      description: "<img src=x onerror=alert(1)>Descripción",
+      usageInstructions: null,
+      storageInstructions: "Conservar refrigerado",
+      ingredients: "<p>Ingredientes: <strong>leche</strong>, harina</p>",
+      allergens: "<p><strong>Alérgenos:</strong> Puede contener frutos de cáscara</p><img src=x onerror=alert(1)><script>alert('xss')</script>",
+    };
+    fetchWithAuthMock.mockResolvedValue({
+      ok: true,
+      json: async () => responsePayload,
+    } as Response);
+
+    await expect(getProductDetail("mercadona", "prod-1")).resolves.toEqual({
+      ...responsePayload,
+      description: "Descripción",
+      ingredients: "Ingredientes: leche, harina",
+      allergens: "Alérgenos: Puede contener frutos de cáscara",
+    });
+    expect(fetchWithAuthMock).toHaveBeenCalledWith(
+      "/api/catalog/mercadona/products/prod-1",
+    );
+  });
+
+  it("throws error when getProductDetail fails", async () => {
+    fetchWithAuthMock.mockResolvedValue({ ok: false } as Response);
+
+    await expect(getProductDetail("mercadona", "prod-1")).rejects.toThrow(
+      "Unable to load product detail.",
     );
   });
 

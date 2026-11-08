@@ -60,7 +60,16 @@ export type MercadonaProductDetail = {
   display_name: string;
   thumbnail?: string | null;
   packaging?: string | null;
+  brand?: string | null;
+  origin?: string | null;
+  details?: {
+    description?: string | null;
+    usage_instructions?: string | null;
+    storage_instructions?: string | null;
+  } | null;
+  nutrition_information?: { ingredients?: string | null; allergens?: string | null } | null;
   photos?: Array<{
+    regular?: string | null;
     thumbnail?: string | null;
   }>;
   price_instructions: {

@@ -6,9 +6,17 @@ import { UI_TEXT } from "@src/shared/constants/ui";
 import { MobileAppDownloadPage } from "@src/features/mobile-app/components/MobileAppDownloadPage";
 
 describe("MobileAppDownloadPage", () => {
-  it("presenta Android 1.0 estable, su recorrido y los límites reales", () => {
+  it("muestra la novedad de la ficha de productos de catálogo", () => {
+    render(<MobileAppDownloadPage />);
+    expect(screen.getByText("Nuevo")).toHaveClass("bg-emerald-100");
+    expect(
+      screen.getByText("Toca un producto de catálogo para ver su ficha en grande."),
+    ).toBeInTheDocument();
+  });
+  it("presenta Android 1.1 estable, su recorrido y los límites reales", () => {
     render(<MobileAppDownloadPage />);
 
+    expect(screen.getByText("Android v1.1.0")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: UI_TEXT.APP_DOWNLOAD.TITLE }),
     ).toBeInTheDocument();
@@ -16,8 +24,11 @@ describe("MobileAppDownloadPage", () => {
       screen.getByRole("link", {
         name: UI_TEXT.APP_DOWNLOAD.DOWNLOAD_BUTTON_LABEL,
       }),
-    ).toHaveAttribute("href", UI_TEXT.APP_DOWNLOAD.RELEASE.APK_URL);
-    expect(screen.getByText(/v1\.0\.0/)).toBeInTheDocument();
+    ).toHaveAttribute(
+      "href",
+      "https://github.com/AlentaDev/shopping-list/releases/download/android-v1.1.0/shopping-list-android.apk",
+    );
+    expect(screen.getByText("Versión: v1.1.0")).toBeInTheDocument();
     expect(
       screen.getByText(UI_TEXT.APP_DOWNLOAD.INSTALL_STEPS.TITLE),
     ).toBeInTheDocument();

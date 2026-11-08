@@ -1,4 +1,4 @@
-# Descarga de Android 1.0
+# Descarga de Android 1.1
 
 ## Objetivo
 
@@ -9,9 +9,10 @@ Android es el acompañante estable para usar en el supermercado las listas activ
 1. Crea una cuenta y una lista en la web, y finalízala para dejarla activa.
 2. Inicia sesión en Android con la misma cuenta.
 3. Elige una lista activa.
-4. Marca los productos que incorporas a la cesta.
-5. Consulta el avance y el total, que solo suma productos de catálogo marcados con precio.
-6. Finaliza la lista al terminar la compra.
+4. Toca un producto de catálogo para ver su ficha en grande.
+5. Marca los productos que incorporas a la cesta.
+6. Consulta el avance y el total, que solo suma productos de catálogo marcados con precio.
+7. Finaliza la lista al terminar la compra.
 
 ## Conexión y alcance
 
@@ -30,11 +31,11 @@ Android es el acompañante estable para usar en el supermercado las listas activ
 3. Si Android lo solicita, permite instalar aplicaciones desconocidas para el navegador o gestor de archivos utilizado.
 4. Para actualizar, instala una APK más reciente sobre la aplicación existente.
 
-## Publicación 1.0
+## Publicación 1.1
 
-- La versión preparada es Android `v1.0.0`.
-- La URL prevista del artefacto oficial es `https://github.com/AlentaDev/shopping-list/releases/download/android-v1.0.0/shopping-list-android.apk`.
-- La publicación de la release sigue pendiente; no se declara publicada ni verificada en producción hasta completar ese proceso.
+- La versión prevista es Android `v1.1.0`.
+- La URL prevista del artefacto oficial es `https://github.com/AlentaDev/shopping-list/releases/download/android-v1.1.0/shopping-list-android.apk`.
+- La publicación de esta versión y su descarga deben verificarse tras subir la APK firmada.
 
 ## Implementación
 

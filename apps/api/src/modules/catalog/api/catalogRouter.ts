@@ -6,6 +6,7 @@ import type {
 import { categoryDetailParamsSchema, providerParamsSchema } from "./schemas.js";
 
 type CatalogRouterDependencies = {
+  getProductDetail: { execute: (provider: string, id: string) => Promise<unknown> };
   getRootCategories: {
     execute: (provider: string) => Promise<GetRootCategoriesResponse>;
   };
@@ -35,6 +36,15 @@ export function createCatalogRouter(deps: CatalogRouterDependencies): Router {
         params.id,
       );
       res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get("/:provider/products/:id", async (req, res, next) => {
+    try {
+      const params = categoryDetailParamsSchema.parse(req.params);
+      res.status(200).json(await deps.getProductDetail.execute(params.provider, params.id));
     } catch (error) {
       next(error);
     }

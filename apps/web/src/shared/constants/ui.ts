@@ -60,7 +60,7 @@ export const UI_TEXT = {
     },
   },
   APP_DOWNLOAD: {
-    BADGE_LABEL: "Android v1.0",
+    BADGE_LABEL: "Android v1.1.0",
     TITLE: "Android para tus listas activas",
     SUBTITLE:
       "Tu acompañante estable para consultar y completar en el súper las listas que creaste y finalizaste en la web.",
@@ -69,9 +69,9 @@ export const UI_TEXT = {
     PUBLICATION_NOTE:
       "La APK se publicará en la release oficial de GitHub cuando esté disponible.",
     RELEASE: {
-      VERSION: "v1.0.0",
+      VERSION: "v1.1.0",
       APK_URL:
-        "https://github.com/AlentaDev/shopping-list/releases/download/android-v1.0.0/shopping-list-android.apk",
+        "https://github.com/AlentaDev/shopping-list/releases/download/android-v1.1.0/shopping-list-android.apk",
     },
     HOW_IT_WORKS: {
       TITLE: "Cómo funciona",
@@ -79,10 +79,12 @@ export const UI_TEXT = {
         "Crea tu cuenta y prepara una lista en la web; finalízala para convertirla en una lista activa.",
       SECOND: "Inicia sesión en Android con la misma cuenta.",
       THIRD: "Elige una de tus listas activas para usarla durante la compra.",
-      FOURTH: "Marca los productos conforme los añades a la cesta.",
-      FIFTH:
+      NEW_BADGE: "Nuevo",
+      FOURTH: "Toca un producto de catálogo para ver su ficha en grande.",
+      FIFTH: "Marca los productos conforme los añades a la cesta.",
+      SIXTH:
         "Consulta el avance y el total, que suma solo los productos de catálogo marcados que tienen precio.",
-      SIXTH: "Finaliza la lista al terminar la compra.",
+      SEVENTH: "Finaliza la lista al terminar la compra.",
     },
     CONNECTION: {
       TITLE: "Conexión y sincronización",
@@ -209,6 +211,23 @@ export const UI_TEXT = {
     NO_IMAGE_LABEL: "Sin imagen",
     ADD_LABEL: "Añadir",
     ADDING_LABEL: "Añadiendo",
+    DETAIL_LABEL: "Ver detalle de",
+  },
+  PRODUCT_DETAIL_MODAL: {
+    CLOSE_LABEL: "Cerrar detalle",
+    LOADING_LABEL: "Cargando detalles del producto...",
+    ERROR_LABEL: "No se pudieron cargar los detalles del producto.",
+    PREVIOUS_PHOTO_LABEL: "Foto anterior",
+    NEXT_PHOTO_LABEL: "Siguiente foto",
+    BRAND_LABEL: "Marca",
+    ORIGIN_LABEL: "Origen",
+    DESCRIPTION_LABEL: "Descripción",
+    USAGE_LABEL: "Modo de empleo",
+    STORAGE_LABEL: "Conservación",
+    INGREDIENTS_LABEL: "Ingredientes",
+    ALLERGENS_LABEL: "Alérgenos",
+    ALLERGENS_UNAVAILABLE_LABEL:
+      "Información de alérgenos no disponible. Consulta la etiqueta del producto",
   },
   SHOPPING_LIST: {
     DEFAULT_LIST_TITLE: "Tu lista",

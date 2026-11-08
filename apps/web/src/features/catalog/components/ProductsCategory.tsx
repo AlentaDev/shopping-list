@@ -6,6 +6,7 @@ type ProductsCategoryProps = {
   products: CatalogProductSummary[];
   gridClassName: string;
   onAddProduct: (product: CatalogProductSummary) => void;
+  onSelectProduct: (product: CatalogProductSummary, trigger: HTMLButtonElement) => void;
 };
 
 const ProductsCategory = ({
@@ -13,6 +14,7 @@ const ProductsCategory = ({
   products,
   gridClassName,
   onAddProduct,
+  onSelectProduct,
 }: ProductsCategoryProps) => (
   <div className="space-y-4">
     <h2 className="text-lg font-semibold text-slate-900">{subcategoryName}</h2>
@@ -22,6 +24,7 @@ const ProductsCategory = ({
           key={product.id}
           product={product}
           onAdd={() => onAddProduct(product)}
+          onSelect={(trigger) => onSelectProduct(product, trigger)}
         />
       ))}
     </div>

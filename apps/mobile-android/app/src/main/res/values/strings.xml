@@ -94,4 +94,6 @@
     <string name="item_quantity">Cantidad: %.1f</string>
     <string name="item_price_detail">%1$.2f € × %2$.1f</string>
     <string name="item_subtotal">%.2f €</string>
+    <string name="item_unit_size">Tamaño: %1$.1f %2$s</string>
+    <string name="item_unit_price">Precio por unidad: %.2f €</string>
 </resources>
