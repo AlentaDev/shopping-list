@@ -38,9 +38,15 @@ export const MobileAppDownloadPage = () => {
           <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FIRST}</li>
           <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.SECOND}</li>
           <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.THIRD}</li>
-          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FOURTH}</li>
+          <li>
+            <span className="mr-2 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+              {UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.NEW_BADGE}
+            </span>
+            <span>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FOURTH}</span>
+          </li>
           <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.FIFTH}</li>
           <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.SIXTH}</li>
+          <li>{UI_TEXT.APP_DOWNLOAD.HOW_IT_WORKS.SEVENTH}</li>
         </ol>
       </article>
 
